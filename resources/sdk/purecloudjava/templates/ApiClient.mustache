@@ -815,6 +815,11 @@ public class ApiClient implements AutoCloseable {
             return this;
         }
 
+        public Builder withProperty(String name, Object value) {
+            properties.setProperty(name, value);
+            return this;
+        }
+
         public ApiClient build() {
             return new ApiClient(this);
         }
@@ -844,7 +849,14 @@ public class ApiClient implements AutoCloseable {
         }
 
         public void setProperty(String key, Object value) {
-            properties.put(key, value);
+            if (key != null) {
+                if (value != null) {
+                    properties.put(key, value);
+                }
+                else {
+                    properties.remove(key);
+                }
+            }
         }
 
         public ConnectorProperties copy() {
