@@ -23,6 +23,11 @@ public class OkHttpResponse implements ApiClientConnectorResponse {
     }
 
     @Override
+    public String getStatusReasonPhrase() {
+        return response.message();
+    }
+
+    @Override
     public Map<String, String> getHeaders() {
         Map<String, String> map = new HashMap<>();
         Headers headers = response.headers();

@@ -1,11 +1,11 @@
 package com.mypurecloud.sdk.v2;
 
-import java.util.List;
 import java.util.Map;
 
 public interface ApiResponse<T> extends AutoCloseable {
     Exception getException();
     Integer getStatusCode();
+    String getStatusReasonPhrase();
     boolean hasRawBody();
     String getRawBody();
     T getBody();
