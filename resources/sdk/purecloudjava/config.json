@@ -68,12 +68,14 @@
           "failOnError": true
         }, {
           "type": "command",
-          "comamnd": "git",
+          "command": "git",
           "args": [
             "config",
             "user.email",
             "devops-jenkins@inin.com"
-          ]
+          ],
+          "cwd": "${SDK_REPO}",
+          "failOnError": true
         }
       ],
       "compileScripts": [
