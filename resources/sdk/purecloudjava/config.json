@@ -103,8 +103,8 @@
             "${SDK_REPO}/build",
             { "$ref": "#/settings/mavenSettingsFilePath" },
             "${DPGP_PASSPHRASE}",
-            "https://oss.sonatype.org/service/local/repositories/releases/content/com/mypurecloud",
-            "mypurecloud"
+            "https://oss.sonatype.org/service/local/repositories/releases/content",
+            "ossrh"
           ],
           "appendIsNewReleaseArg": true,
           "appendVersionArg": true,
