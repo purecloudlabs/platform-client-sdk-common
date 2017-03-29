@@ -38,6 +38,11 @@ class ApacheHttpResponse implements ApiClientConnectorResponse {
     }
 
     @Override
+    public String getStatusReasonPhrase() {
+        return response.getStatusLine().getReasonPhrase();
+    }
+
+    @Override
     public boolean hasBody() {
         return (response.getEntity() != null);
     }

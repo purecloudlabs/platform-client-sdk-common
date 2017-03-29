@@ -6,6 +6,7 @@ import java.util.Map;
 
 public interface ApiClientConnectorResponse extends AutoCloseable {
     int getStatusCode();
+    String getStatusReasonPhrase();
     Map<String, String> getHeaders();
     boolean hasBody();
     String readBody() throws IOException;
