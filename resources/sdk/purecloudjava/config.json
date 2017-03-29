@@ -4,7 +4,7 @@
   },
   "settings": {
     "sdkRepo": {
-      "repo": "https://github.com/MyPureCloud/platform-client-sdk-java",
+      "repo": "git@github.com:MyPureCloud/platform-client-sdk-java.git",
       "branch": "master"
     },
     "versionFile": "${SDK_REPO}/version.json",
@@ -65,16 +65,6 @@
           "args": [
             "build-prerun"
           ],
-          "failOnError": true
-        }, {
-          "type": "command",
-          "command": "git",
-          "args": [
-            "config",
-            "user.email",
-            "devops-jenkins@inin.com"
-          ],
-          "cwd": "${SDK_REPO}",
           "failOnError": true
         }
       ],
