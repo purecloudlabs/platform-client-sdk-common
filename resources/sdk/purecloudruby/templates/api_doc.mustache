@@ -1,0 +1,83 @@
+---
+title: {{classname}}
+---
+
+## {{moduleName}}::{{classname}}{{#description}}
+{{description}}{{/description}}
+
+All URIs are relative to *{{basePath}}*
+
+Method | Description
+------------- | ------------- | -------------
+{{#operations}}{{#operation}}[**{{operationId}}**]({{classname}}.html#{{operationId}}) | {{#summary}}{{summary}}{{/summary}}
+{{/operation}}{{/operations}}{: class="table table-striped"}
+
+{{#operations}}
+{{#operation}}
+<a name="{{operationId}}"></a>
+
+## -{{#returnType}}{{#returnTypeIsPrimitive}}{{returnType}}**{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}[**{{returnType}}**]({{returnBaseType}}.html){{/returnTypeIsPrimitive}}{{/returnType}} {{operationId}}{{#hasParams}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/hasOptionalParams}}){{/hasParams}}
+
+{{{summary}}}{{#notes}}
+
+{{{notes}}}{{/notes}}
+
+Wraps {{httpMethod}} {{path}} 
+
+
+### Example
+~~~ruby
+# load the gem
+require '{{{gemName}}}'
+{{#hasAuthMethods}}
+# setup authorization
+@secret = ENV['PURECLOUD_SECRET']
+@id = ENV['PURECLOUD_CLIENT_ID']
+environment = "mypurecloud.com"
+
+@authToken = PureCloud.authenticate_with_client_credentials @id, @secret, environment
+
+{{{moduleName}}}.configure do |config|
+  config.access_token = @authToken
+end
+{{/hasAuthMethods}}
+
+api_instance = {{{moduleName}}}::{{{classname}}}.new{{#hasParams}}
+{{#vendorExtensions.x-codegen-hasRequiredParams}}{{#allParams}}{{#required}}
+{{{paramName}}} = {{{example}}} # {{{dataType}}} | {{{description}}}
+{{/required}}{{/allParams}}{{/vendorExtensions.x-codegen-hasRequiredParams}}{{#hasOptionalParams}}
+opts = { {{#allParams}}{{^required}}
+  {{{paramName}}}: {{{example}}}{{#vendorExtensions.x-codegen-hasMoreOptional}},{{/vendorExtensions.x-codegen-hasMoreOptional}} # {{{dataType}}} | {{{description}}}{{/required}}{{/allParams}}
+}{{/hasOptionalParams}}{{/hasParams}}
+
+begin
+{{#summary}}  #{{{.}}}
+{{/summary}}  {{#returnType}}result = {{/returnType}}api_instance.{{{operationId}}}{{#hasParams}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/hasOptionalParams}}){{/hasParams}}{{#returnType}}
+  p result{{/returnType}}
+rescue {{{moduleName}}}::ApiError => e
+  puts "Exception when calling {{classname}}->{{{operationId}}}: #{e}"
+end
+~~~
+
+### Parameters
+{{^allParams}}This endpoint does not need any parameter.{{/allParams}}{{#allParams}}{{#-last}}
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------{{/-last}}{{/allParams}}
+{{#allParams}} **{{paramName}}** | {{#isPrimitiveType}}**{{dataType}}**{{/isPrimitiveType}}{{^isPrimitiveType}}{{#isFile}}**{{dataType}}**{{/isFile}}{{^isFile}}[**{{dataType}}**]({{baseType}}.html){{/isFile}}{{/isPrimitiveType}}| {{description}} | {{^required}}[optional] {{/required}}{{#defaultValue}}[default to {{defaultValue}}]{{/defaultValue}}
+{{/allParams}}
+{: class="table table-striped"}
+
+
+### Return type
+
+{{#returnType}}{{#returnTypeIsPrimitive}}**{{returnType}}**{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}[**{{returnType}}**]({{returnBaseType}}.html){{/returnTypeIsPrimitive}}{{/returnType}}{{^returnType}}nil (empty response body){{/returnType}}
+
+### HTTP request headers
+
+ - **Content-Type**: {{#consumes}}{{mediaType}}{{#hasMore}}, {{/hasMore}}{{/consumes}}{{^consumes}}Not defined{{/consumes}}
+ - **Accept**: {{#produces}}{{mediaType}}{{#hasMore}}, {{/hasMore}}{{/produces}}{{^produces}}Not defined{{/produces}}
+
+
+
+{{/operation}}
+{{/operations}}

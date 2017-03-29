@@ -1,0 +1,15 @@
+---
+title: {{classname}}
+---
+{{#models}}{{#model}}## {{classname}}
+
+## Properties
+
+|Name | Type | Description | Notes|
+|------------ | ------------- | ------------- | -------------|
+{{#vars}}
+| **{{name}}** | {{#isPrimitiveType}}**{{datatype}}**{{/isPrimitiveType}}{{^isPrimitiveType}}[**{{datatype}}**]({{complexType}}.html){{/isPrimitiveType}} | {{description}} | {{^required}}[optional] {{/required}}{{#readOnly}}[readonly] {{/readOnly}}{{#defaultValue}}[default to {{defaultValue}}]{{/defaultValue}}|
+{{/vars}}
+{: class="table table-striped"}
+
+{{/model}}{{/models}}

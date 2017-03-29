@@ -1,0 +1,64 @@
+package {{package}};
+
+import com.fasterxml.jackson.core.type.TypeReference;
+
+import {{invokerPackage}}.AsyncApiCallback;
+import {{invokerPackage}}.ApiException;
+import {{invokerPackage}}.ApiClient;
+import {{invokerPackage}}.ApiRequest;
+import {{invokerPackage}}.ApiResponse;
+import {{invokerPackage}}.Configuration;
+import {{modelPackage}}.*;
+import {{invokerPackage}}.Pair;
+
+{{#imports}}import {{import}};
+{{/imports}}
+
+{{#operations}}{{#operation}}
+import {{package}}.request.{{requestClassname}};{{/operation}}{{/operations}}
+
+{{^fullJavaUtil}}
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Future;
+{{/fullJavaUtil}}
+
+{{>generatedAnnotation}}
+{{#operations}}
+public class {{classname}}Async {
+  private final ApiClient {{localVariablePrefix}}apiClient;
+
+  public {{classname}}Async() {
+    this(Configuration.getDefaultApiClient());
+  }
+
+  public {{classname}}Async(ApiClient apiClient) {
+    this.{{localVariablePrefix}}apiClient = apiClient;
+  }
+
+  {{#operation}}
+  /**
+   * {{summary}}
+   * {{notes}}
+   * @request The request object
+   * @throws ApiException if fails to make API call
+   */
+  public Future<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> {{operationId}}Async({{requestClassname}} request, AsyncApiCallback<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> callback) throws ApiException {
+    return {{localVariablePrefix}}apiClient.<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>invokeAPIAsync(request.withHttpInfo(), {{#returnType}}new TypeReference<{{{returnType}}}>() {}{{/returnType}}{{^returnType}}null{{/returnType}}, callback);
+  }
+
+  /**
+   * {{summary}}
+   * {{notes}}
+   * @request The request object
+   * @throws ApiException if fails to make API call
+   */
+  public Future<{{#returnType}}ApiResponse<{{{returnType}}}>{{/returnType}}{{^returnType}}ApiResponse<Void>{{/returnType}}> {{operationId}}Async(ApiRequest<{{#bodyParam}}{{{dataType}}}{{/bodyParam}}{{^bodyParam}}Void{{/bodyParam}}> request, AsyncApiCallback<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>> callback) throws ApiException {
+    return {{localVariablePrefix}}apiClient.<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>invokeAPIVerboseAsync(request, {{#returnType}}new TypeReference<{{{returnType}}}>() {}{{/returnType}}{{^returnType}}null{{/returnType}}, callback);
+  }
+
+  {{/operation}}
+}
+{{/operations}}

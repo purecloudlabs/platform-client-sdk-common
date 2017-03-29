@@ -1,0 +1,80 @@
+{
+  "name": "Ruby SDK",
+  "envVars": {
+  },
+  "settings": {
+    "sdkRepo": {
+      "repo": "https://github.com/MyPureCloud/sdk_test",
+      "branch": "master"
+    },
+    "versionFile": "${SDK_REPO}/version.json",
+    "logLevel": "debug",
+    "extensionsDestination": "${SDK_TEMP}/extensions",
+    "swagger": {
+      "oldSwaggerPath": "${SDK_REPO}/swagger.json",
+      "newSwaggerPath": "https://api.mypurecloud.com/api/v2/docs/swagger",
+      "saveNewSwaggerPath": "${SDK_REPO}/swagger.json"
+    },
+    "swaggerCodegen": {
+      "resourceLanguage": "purecloudruby",
+      "codegenLanguage": "purecloudruby",
+      "jarPath": "${WORKSPACE}/swagger-codegen/modules/swagger-codegen-cli/target/swagger-codegen-cli.jar",
+      "configFile": "${SDK_TEMP}/config.json",
+      "extraGeneratorOptions": []
+    },
+    "releaseNoteTemplatePath": "${COMMON_ROOT}/resources/templates/githubSdkReleaseNotes.md",
+    "releaseNoteSummaryTemplatePath": "${COMMON_ROOT}/resources/templates/githubSdkReleaseNoteSummary.md",
+    "debugConfig": false,
+    "enableLoggerColor": false,
+    "gemName": "purecloudplatformclientv2",
+    "moduleName": "PureCloud"
+  },
+  "stageSettings": {
+    "prebuild": {
+      "preRunScripts": [],
+      "postRunScripts": [
+        {
+          "type": "node",
+          "path": "prebuild-postrun.js",
+          "args": [
+            {
+              "$ref": "#/settings/swaggerCodegen/configFile"
+            },
+            {
+              "$ref": "#/settings/versionFile"
+            },
+            {
+              "$ref": "#/settings/gemName"
+            },
+            {
+              "$ref": "#/settings/moduleName"
+            }
+          ],
+          "failOnError": true
+        }
+      ]
+    },
+    "build": {
+      "preRunScripts": [],
+      "compileScripts": [
+        {
+          "type": "shell",
+          "path": "compile.sh",
+          "args": [
+            "${SDK_REPO}/build",
+            {
+              "$ref": "#/settings/extensionsDestination"
+            }
+          ]
+        }
+      ],
+      "postRunScripts": []
+    },
+    "postbuild": {
+      "gitCommit": false,
+      "publishRelease": false,
+      "preRunScripts": [],
+      "postRunScripts": []
+    }
+  }
+}
