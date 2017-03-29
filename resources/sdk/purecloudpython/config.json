@@ -4,7 +4,7 @@
   },
   "settings": {
     "sdkRepo": {
-      "repo": "https://github.com/MyPureCloud/sdk_test",
+      "repo": "https://github.com/MyPureCloud/platform-client-sdk-python",
       "branch": "master"
     },
     "versionFile": "${SDK_REPO}/version.json",
