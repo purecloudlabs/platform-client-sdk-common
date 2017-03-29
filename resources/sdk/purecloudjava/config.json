@@ -66,6 +66,14 @@
             "build-prerun"
           ],
           "failOnError": true
+        }, {
+          "type": "command",
+          "comamnd": "git",
+          "args": [
+            "config",
+            "user.email",
+            "devops-jenkins@inin.com"
+          ]
         }
       ],
       "compileScripts": [
