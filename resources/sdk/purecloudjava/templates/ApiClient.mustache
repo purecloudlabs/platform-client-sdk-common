@@ -372,15 +372,35 @@ public class ApiClient implements AutoCloseable {
     private ApiClientConnectorRequest prepareConnectorRequest(ApiRequest<?> request) throws Exception {
         final String path = request.getPath();
         final List<Pair> queryParams = new ArrayList<>(request.getQueryParams());
-        final Map<String, String> headers = new HashMap<>(request.getHeaderParams());
-        headers.putAll(request.getCustomHeaders());
+
+        // Add headers
+        final Map<String, String> headers = new HashMap<>();
+        String accept = request.getAccepts();
+        if (accept != null && !accept.isEmpty()) {
+            headers.put("Accept", accept);
+        }
+        String contentType = request.getContentType();
+        if (contentType != null && !contentType.isEmpty()) {
+            headers.put("Content-Type", contentType);
+        }
+        Map<String, String> headerParams = request.getHeaderParams();
+        if (headerParams != null && !headerParams.isEmpty()) {
+            for (Map.Entry<String, String> headerParam : headerParams.entrySet()) {
+                headers.put(headerParam.getKey(), headerParam.getValue());
+            }
+        }
+        Map<String, String> customHeaders = request.getCustomHeaders();
+        if (customHeaders != null && !customHeaders.isEmpty()) {
+            for (Map.Entry<String, String> customHeader : customHeaders.entrySet()) {
+                headers.put(customHeader.getKey(), customHeader.getValue());
+            }
+        }
+        for (Map.Entry<String, String> defaultHeader : defaultHeaderMap.entrySet()) {
+            headers.putIfAbsent(defaultHeader.getKey(), defaultHeader.getValue());
+        }
 
         updateParamsForAuth(request.getAuthNames(), queryParams, headers);
         final String url = buildUrl(path, request.getPathParams(), queryParams);
-
-        for (String key : defaultHeaderMap.keySet()) {
-            headers.putIfAbsent(key, defaultHeaderMap.get(key));
-        }
 
         final Object body = request.getBody();
         final Map<String, Object> formParams = request.getFormParams();
