@@ -99,12 +99,12 @@
           "type": "shell",
           "path": "mavenDeploy.sh",
           "args": [
-            "platform-client-internal-v2",
+            "platform-client-v2",
             "${SDK_REPO}/build",
             { "$ref": "#/settings/mavenSettingsFilePath" },
             "${DPGP_PASSPHRASE}",
-            "https://purecloud.artifactoryonline.com/purecloud/inin-release",
-            "inin-release"
+            "https://oss.sonatype.org/service/local/repositories/releases/content/com/mypurecloud",
+            "mypurecloud"
           ],
           "appendIsNewReleaseArg": true,
           "appendVersionArg": true,
