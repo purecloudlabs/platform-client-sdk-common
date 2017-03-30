@@ -47,7 +47,6 @@ public class AsyncHttpClientConnector implements ApiClientConnector {
 
     @Override
     public Future<ApiClientConnectorResponse> invokeAsync(ApiClientConnectorRequest request, AsyncApiCallback<ApiClientConnectorResponse> callback) {
-
         try {
             String method = request.getMethod();
 
