@@ -43,8 +43,8 @@ echo '<?xml version="1.0" encoding="utf-8"?>'\
 '		</dependencies>'\
 '	</metadata>'\
 '	<files>'\
-'		<file src="ININ.PureCloudApi.dll" target="lib/ININ.PureCloudApi.dll" />'\
-'		<file src="ININ.PureCloudApi.xml" target="lib/ININ.PureCloudApi.xml" />'\
+"		<file src=\"$NAMESPACE.dll\" target=\"lib/$NAMESPACE.dll\" />"\
+"		<file src=\"$NAMESPACE.xml\" target=\"lib/$NAMESPACE.xml\" />"\
 '	</files>'\
 '</package>' > $BUILD_DIR/bin/$NAMESPACE.nuspec
 
