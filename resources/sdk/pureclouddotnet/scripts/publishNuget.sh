@@ -49,7 +49,9 @@ echo '<?xml version="1.0" encoding="utf-8"?>'\
 '</package>' > $BUILD_DIR/bin/$NAMESPACE.nuspec
 
 # Pack nuspec
-mono $COMMON_DIR/resources/sdk/pureclouddotnet/bin/nuget.exe pack $BUILD_DIR/bin/$NAMESPACE.nuspec -Verbosity detailed
+mono $COMMON_DIR/resources/sdk/pureclouddotnet/bin/nuget.exe pack \
+$BUILD_DIR/bin/$NAMESPACE.nuspec \
+-Verbosity detailed
 
 # --WORKAROUND--
 # There is an issue with mono/nuget and the nupkg file. Probably this: https://github.com/NuGet/Home/issues/2833
@@ -58,8 +60,12 @@ mkdir package
 unzip $NAMESPACE.$VERSION.nupkg -d package
 cd package
 zip -r $NAMESPACE.$VERSION.repack.nupkg *
-cd $WORKSPACE/repo
+cd $BUILD_DIR
 cp package/$NAMESPACE.$VERSION.repack.nupkg $NAMESPACE.$VERSION.repack.nupkg
 
 # Publish to nuget
-mono nuget.exe push $NAMESPACE.$VERSION.repack.nupkg $NUGET_API_KEY -source "https://www.nuget.org" -Verbosity detailed
+mono $COMMON_DIR/resources/sdk/pureclouddotnet/bin/nuget.exe push \
+$NAMESPACE.$VERSION.repack.nupkg \
+$NUGET_API_KEY \
+-source "https://www.nuget.org" \
+-Verbosity detailed
