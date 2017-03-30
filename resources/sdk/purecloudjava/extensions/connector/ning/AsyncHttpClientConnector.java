@@ -1,7 +1,6 @@
 package com.mypurecloud.sdk.v2.connector.ning;
 
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.SettableFuture;
 import com.mypurecloud.sdk.v2.AsyncApiCallback;
 import com.mypurecloud.sdk.v2.connector.ApiClientConnector;
 import com.mypurecloud.sdk.v2.connector.ApiClientConnectorRequest;
@@ -21,12 +20,17 @@ public class AsyncHttpClientConnector implements ApiClientConnector {
 
     @Override
     public ApiClientConnectorResponse invoke(ApiClientConnectorRequest request) throws Exception {
-        return null;
+        return invokeAsync(request, new AsyncApiCallback<ApiClientConnectorResponse>() {
+            @Override
+            public void onCompleted(ApiClientConnectorResponse response) { }
+
+            @Override
+            public void onFailed(Throwable exception) { }
+        }).get();
     }
 
     @Override
     public Future<ApiClientConnectorResponse> invokeAsync(ApiClientConnectorRequest request, AsyncApiCallback<ApiClientConnectorResponse> callback) {
-
         try {
             RequestBuilder builder = new RequestBuilder()
                     .setUri(Uri.create(request.getUrl()))
