@@ -103,7 +103,7 @@
             "${SDK_REPO}/build",
             { "$ref": "#/settings/mavenSettingsFilePath" },
             "${DPGP_PASSPHRASE}",
-            "https://oss.sonatype.org/service/local/staging/deploy/maven2/",
+            "https://oss.sonatype.org/content/repositories/releases",
             "ossrh"
           ],
           "appendIsNewReleaseArg": true,
