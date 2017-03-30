@@ -58,5 +58,7 @@ mvn $MAVEN_SETTINGS_FILE jar:jar gpg:sign-and-deploy-file \
 $DPGP_PASSPHRASE
 
 # release
-echo "Executing mvn nexus-staging:release..."
-mvn $MAVEN_SETTINGS_FILE nexus-staging:release -DstagingRepositoryId=commypurecloud-1062
+echo "Executing mvn nexus-staging:rc-close..."
+mvn $MAVEN_SETTINGS_FILE nexus-staging:rc-close -DstagingRepositoryId=commypurecloud-1062
+echo "Executing mvn nexus-staging:rc-release..."
+mvn $MAVEN_SETTINGS_FILE nexus-staging:rc-release -DstagingRepositoryId=commypurecloud-1062
