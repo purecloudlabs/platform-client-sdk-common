@@ -1,10 +1,12 @@
 BUILD_DIR=$1
-NAMESPACE=$2
-NUGET_API_KEY=$3
-IS_NEW_RELEASE=$4
-VERSION=$5
+COMMON_DIR=$2
+NAMESPACE=$3
+NUGET_API_KEY=$4
+IS_NEW_RELEASE=$5
+VERSION=$6
 
 echo "BUILD_DIR=$BUILD_DIR"
+echo "COMMON_DIR=$COMMON_DIR"
 echo "NAMESPACE=$NAMESPACE"
 echo "IS_NEW_RELEASE=$IS_NEW_RELEASE"
 echo "VERSION=$VERSION"
@@ -47,7 +49,7 @@ echo '<?xml version="1.0" encoding="utf-8"?>'\
 '</package>' > $BUILD_DIR/bin/$NAMESPACE.nuspec
 
 # Pack nuspec
-mono nuget.exe pack $BUILD_DIR/bin/$NAMESPACE.nuspec -Verbosity detailed
+mono $COMMON_DIR/resources/sdk/pureclouddotnet/bin/nuget.exe pack $BUILD_DIR/bin/$NAMESPACE.nuspec -Verbosity detailed
 
 # --WORKAROUND--
 # There is an issue with mono/nuget and the nupkg file. Probably this: https://github.com/NuGet/Home/issues/2833
