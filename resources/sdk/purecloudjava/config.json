@@ -97,13 +97,13 @@
       "postRunScripts": [
         {
           "type": "shell",
-          "path": "mavenDeploy.sh",
+          "path": "sonatypeDeploy.sh",
           "args": [
             "platform-client-v2",
             "${SDK_REPO}/build",
             { "$ref": "#/settings/mavenSettingsFilePath" },
             "${DPGP_PASSPHRASE}",
-            "https://oss.sonatype.org/content/repositories/snapshots",
+            "https://oss.sonatype.org/service/local/staging/deploy/maven2/",
             "ossrh"
           ],
           "appendIsNewReleaseArg": true,
