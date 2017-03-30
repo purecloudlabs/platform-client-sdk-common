@@ -59,4 +59,4 @@ $DPGP_PASSPHRASE
 
 # release
 echo "Executing mvn nexus-staging:release..."
-mvn $MAVEN_SETTINGS_FILE nexus-staging:release
+mvn $MAVEN_SETTINGS_FILE nexus-staging:release -DstagingRepositoryId=commypurecloud-1062
