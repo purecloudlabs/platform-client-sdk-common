@@ -73,9 +73,10 @@
           "type": "shell",
           "path": "compile.sh",
           "args": [
-            "package",
+            "deploy",
             "${SDK_REPO}/build",
-            { "$ref": "#/settings/mavenSettingsFilePath" }
+            { "$ref": "#/settings/mavenSettingsFilePath" },
+            "${DPGP_PASSPHRASE}"
           ]
         }
       ],
@@ -94,23 +95,7 @@
       "gitCommit": false,
       "publishRelease": false,
       "preRunScripts": [],
-      "postRunScripts": [
-        {
-          "type": "shell",
-          "path": "sonatypeDeploy.sh",
-          "args": [
-            "platform-client-v2",
-            "${SDK_REPO}/build",
-            { "$ref": "#/settings/mavenSettingsFilePath" },
-            "${DPGP_PASSPHRASE}",
-            "https://oss.sonatype.org/service/local/staging/deploy/maven2/",
-            "ossrh"
-          ],
-          "appendIsNewReleaseArg": true,
-          "appendVersionArg": true,
-          "failOnError": true
-        }
-      ]
+      "postRunScripts": []
     }
   }
 }
