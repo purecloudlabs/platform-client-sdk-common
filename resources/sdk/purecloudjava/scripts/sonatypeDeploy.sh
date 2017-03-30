@@ -47,6 +47,7 @@ cd $BUILD_DIR
 
 # Sonatype URLs: http://central.sonatype.org/pages/apache-maven.html
 # Sign and deploy
+echo "Executing mvn gpg:sign-and-deploy-file..."
 mvn $MAVEN_SETTINGS_FILE jar:jar gpg:sign-and-deploy-file \
 -Durl=$MAVEN_REPO_URL \
 -DrepositoryId=$MAVEN_REPO_ID \
@@ -57,4 +58,5 @@ mvn $MAVEN_SETTINGS_FILE jar:jar gpg:sign-and-deploy-file \
 $DPGP_PASSPHRASE
 
 # release
-mvn nexus-staging:release
+echo "Executing mvn nexus-staging:release..."
+mvn $MAVEN_SETTINGS_FILE nexus-staging:release
