@@ -17,6 +17,7 @@ import {{invokerPackage}}.Pair;
 {{#operations}}{{#operation}}
 import {{package}}.request.{{requestClassname}};{{/operation}}{{/operations}}
 
+import java.io.IOException;
 {{^fullJavaUtil}}
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,7 +46,7 @@ public class {{classname}}Async {
    * @request The request object
    * @throws ApiException if fails to make API call
    */
-  public Future<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> {{operationId}}Async({{requestClassname}} request, AsyncApiCallback<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> callback) throws ApiException {
+  public Future<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> {{operationId}}Async({{requestClassname}} request, AsyncApiCallback<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> callback) {
     return {{localVariablePrefix}}apiClient.<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>invokeAPIAsync(request.withHttpInfo(), {{#returnType}}new TypeReference<{{{returnType}}}>() {}{{/returnType}}{{^returnType}}null{{/returnType}}, callback);
   }
 
@@ -55,7 +56,7 @@ public class {{classname}}Async {
    * @request The request object
    * @throws ApiException if fails to make API call
    */
-  public Future<{{#returnType}}ApiResponse<{{{returnType}}}>{{/returnType}}{{^returnType}}ApiResponse<Void>{{/returnType}}> {{operationId}}Async(ApiRequest<{{#bodyParam}}{{{dataType}}}{{/bodyParam}}{{^bodyParam}}Void{{/bodyParam}}> request, AsyncApiCallback<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>> callback) throws ApiException {
+  public Future<{{#returnType}}ApiResponse<{{{returnType}}}>{{/returnType}}{{^returnType}}ApiResponse<Void>{{/returnType}}> {{operationId}}Async(ApiRequest<{{#bodyParam}}{{{dataType}}}{{/bodyParam}}{{^bodyParam}}Void{{/bodyParam}}> request, AsyncApiCallback<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>> callback) {
     return {{localVariablePrefix}}apiClient.<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>invokeAPIVerboseAsync(request, {{#returnType}}new TypeReference<{{{returnType}}}>() {}{{/returnType}}{{^returnType}}null{{/returnType}}, callback);
   }
 
