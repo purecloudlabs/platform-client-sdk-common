@@ -61,11 +61,11 @@ public class {{requestClassname}} {
         return this;
     }
 
-    public ApiRequest<{{#bodyParam}}{{{dataType}}}{{/bodyParam}}{{^bodyParam}}Void{{/bodyParam}}> withHttpInfo() throws ApiException {
+    public ApiRequest<{{#bodyParam}}{{{dataType}}}{{/bodyParam}}{{^bodyParam}}Void{{/bodyParam}}> withHttpInfo() {
         {{#allParams}}{{#required}}
         // verify the required parameter '{{paramName}}' is set
         if (this.{{paramName}} == null) {
-            throw new ApiException(400, "Missing the required parameter '{{paramName}}' when building request for {{classname}}.");
+            throw new IllegalStateException("Missing the required parameter '{{paramName}}' when building request for {{classname}}.");
         }
         {{/required}}{{/allParams}}
 

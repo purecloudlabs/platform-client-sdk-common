@@ -572,48 +572,55 @@ public class ApiClient implements AutoCloseable {
      * @param authNames    The authentications to apply
      * @return The response body in type of string
      */
-    public <T> ApiResponse<T> invokeAPIVerbose(String path, String method, List<Pair> queryParams, Object body, Map<String, String> headerParams, Map<String, Object> formParams, String accept, String contentType, String[] authNames, TypeReference<T> returnType) throws ApiException {
+    public <T> ApiResponse<T> invokeAPIVerbose(String path, String method, List<Pair> queryParams, Object body, Map<String, String> headerParams, Map<String, Object> formParams, String accept, String contentType, String[] authNames, TypeReference<T> returnType) throws ApiException, IOException {
         return invokeAPIVerbose(new ApiRequestWrapper<>(path, method, queryParams, body, headerParams, formParams, accept, contentType, authNames), returnType);
     }
 
-    public <T> ApiResponse<T> invokeAPIVerbose(ApiRequest<?> request, TypeReference<T> returnType) throws ApiException {
+    public <T> ApiResponse<T> invokeAPIVerbose(ApiRequest<?> request, TypeReference<T> returnType) throws ApiException, IOException {
         try {
             return getAPIResponse(request, returnType);
         }
-        catch (Exception exception) {
+        catch (ApiException exception) {
+            @SuppressWarnings("unchecked")
+            ApiResponse<T> response = (ApiResponse<T>)exception;
+            return response;
+        }
+        catch (Throwable exception) {
             if (shouldThrowErrors) {
-                if (exception instanceof ApiException) {
-                    throw (ApiException)exception;
+                if (exception instanceof IOException) {
+                    throw (IOException) exception;
                 }
-                throw new ApiException(exception);
+                throw new IOException("Failed to complete HTTP request.", exception);
             }
             return new ApiExceptionResponse<>(exception);
         }
     }
 
     public <T> Future<ApiResponse<T>> invokeAPIVerboseAsync(ApiRequest<?> request, TypeReference<T> returnType, AsyncApiCallback<ApiResponse<T>> callback) {
-        if (shouldThrowErrors) {
-            return getAPIResponseAsync(request, returnType, callback);
-        }
-        else {
-            SettableFuture<ApiResponse<T>> future = SettableFuture.create();
-            getAPIResponseAsync(request, returnType, new AsyncApiCallback<ApiResponse<T>>() {
-                @Override
-                public void onCompleted(ApiResponse<T> response) {
+        SettableFuture<ApiResponse<T>> future = SettableFuture.create();
+        getAPIResponseAsync(request, returnType, new AsyncApiCallback<ApiResponse<T>>() {
+            @Override
+            public void onCompleted(ApiResponse<T> response) {
+                notifySuccess(future, callback, response);
+            }
+
+            @Override
+            public void onFailed(Throwable exception) {
+                if (exception instanceof ApiException) {
+                    @SuppressWarnings("unchecked")
+                    ApiResponse<T> response = (ApiResponse<T>)exception;
                     notifySuccess(future, callback, response);
                 }
-
-                @Override
-                public void onFailed(Throwable exception) {
-                    if (!(exception instanceof Exception)) {
-                        exception = new ExecutionException(exception);
-
-                    }
-                    notifySuccess(future, callback, new ApiExceptionResponse<>((Exception)exception));
+                else if (shouldThrowErrors) {
+                    notifyFailure(future, callback, exception);
                 }
-            });
-            return future;
-        }
+                else {
+                    notifySuccess(future, callback, new ApiExceptionResponse<>(exception));
+
+                }
+            }
+        });
+        return future;
     }
 
     /**
@@ -630,7 +637,7 @@ public class ApiClient implements AutoCloseable {
      * @param authNames    The authentications to apply
      * @return The response body in type of string
      */
-    public <T> T invokeAPI(String path, String method, List<Pair> queryParams, Object body, Map<String, String> headerParams, Map<String, Object> formParams, String accept, String contentType, String[] authNames, TypeReference<T> returnType) throws ApiException {
+    public <T> T invokeAPI(String path, String method, List<Pair> queryParams, Object body, Map<String, String> headerParams, Map<String, Object> formParams, String accept, String contentType, String[] authNames, TypeReference<T> returnType) throws ApiException, IOException {
         T response = null;
         try {
             response = invokeAPIVerbose(path, method, queryParams, body, headerParams, formParams, accept, contentType, authNames, returnType).getBody();
@@ -649,7 +656,7 @@ public class ApiClient implements AutoCloseable {
      * @param request The request object
      * @return The response body in type of string
      */
-    public <T> T invokeAPI(ApiRequest<?> request, TypeReference<T> returnType) throws ApiException {
+    public <T> T invokeAPI(ApiRequest<?> request, TypeReference<T> returnType) throws ApiException, IOException {
         T response = null;
         try {
             response = invokeAPIVerbose(request, returnType).getBody();
@@ -672,7 +679,7 @@ public class ApiClient implements AutoCloseable {
 
             @Override
             public void onFailed(Throwable exception) {
-                notifySuccess(future, callback, null);
+                notifyFailure(future, callback, exception);
             }
         });
         return future;
@@ -996,8 +1003,8 @@ public class ApiClient implements AutoCloseable {
     private static class ApiExceptionResponse<T> implements ApiResponse<T> {
         private final Exception exception;
 
-        public ApiExceptionResponse(Exception exception) {
-            this.exception = exception;
+        public ApiExceptionResponse(Throwable exception) {
+            this.exception = (exception instanceof Exception) ? (Exception)exception : new RuntimeException(exception);
         }
 
         @Override
