@@ -319,16 +319,12 @@ public class ApiClient implements AutoCloseable {
         }
     }
 
-    /**
+/**
      * Serialize the given Java object into string according the given
      * Content-Type (only JSON is supported for now).
      */
-    public String serialize(Object obj) throws ApiException {
-        try {
-            return objectMapper.writeValueAsString(obj);
-        } catch (JsonProcessingException e) {
-            throw new ApiException(e);
-        }
+    public String serialize(Object obj) throws IOException {
+        return objectMapper.writeValueAsString(obj);
     }
 
     /**
@@ -369,7 +365,7 @@ public class ApiClient implements AutoCloseable {
         return url.toString();
     }
 
-    private ApiClientConnectorRequest prepareConnectorRequest(ApiRequest<?> request) throws Exception {
+    private ApiClientConnectorRequest prepareConnectorRequest(ApiRequest<?> request) throws IOException {
         final String path = request.getPath();
         final List<Pair> queryParams = new ArrayList<>(request.getQueryParams());
 
@@ -406,7 +402,7 @@ public class ApiClient implements AutoCloseable {
         final Map<String, Object> formParams = request.getFormParams();
         final String serializedBody;
         if (body != null && !formParams.isEmpty()) {
-            throw new ApiException(500, "Cannot have body and form params");
+            throw new IllegalStateException("Request cannot have both form and body parameters.");
         }
         else if (body != null) {
             serializedBody = serialize(body);
@@ -451,7 +447,7 @@ public class ApiClient implements AutoCloseable {
         };
     }
 
-    private <T> ApiResponse<T> interpretConnectorResponse(ApiClientConnectorResponse response, TypeReference<T> returnType) throws Exception {
+    private <T> ApiResponse<T> interpretConnectorResponse(ApiClientConnectorResponse response, TypeReference<T> returnType) throws ApiException, IOException {
         int statusCode = response.getStatusCode();
         String reasonPhrase = response.getStatusReasonPhrase();
         Map<String, String> headers = response.getHeaders();
@@ -470,55 +466,7 @@ public class ApiClient implements AutoCloseable {
             else {
                 entity = null;
             }
-            return new ApiResponse<T>() {
-                @Override
-                public Exception getException() {
-                    return null;
-                }
-
-                @Override
-                public Integer getStatusCode() {
-                    return statusCode;
-                }
-
-                @Override
-                public String getStatusReasonPhrase() {
-                    return reasonPhrase;
-                }
-
-                @Override
-                public boolean hasRawBody() {
-                    return (body != null);
-                }
-
-                @Override
-                public String getRawBody() {
-                    return body;
-                }
-
-                @Override
-                public T getBody() {
-                    return entity;
-                }
-
-                @Override
-                public Map<String, String> getHeaders() {
-                    return headers;
-                }
-
-                @Override
-                public String getHeader(String key) {
-                    return headers.get(key);
-                }
-
-                @Override
-                public String getCorrelationId() {
-                    return getHeader("ININ-Correlation-ID");
-                }
-
-                @Override
-                public void close() throws Exception { }
-            };
+            return new ApiResponseWrapper<>(statusCode, reasonPhrase, headers, body, entity);
         }
         else {
             String message = "error";
@@ -527,10 +475,22 @@ public class ApiClient implements AutoCloseable {
         }
     }
 
-    private <T> ApiResponse<T> getAPIResponse(ApiRequest<?> request, TypeReference<T> returnType) throws Exception {
+    private <T> ApiResponse<T> getAPIResponse(ApiRequest<?> request, TypeReference<T> returnType) throws IOException, ApiException {
         ApiClientConnectorRequest connectorRequest = prepareConnectorRequest(request);
-        try (ApiClientConnectorResponse connectorResponse = connector.invoke(connectorRequest)) {
+        ApiClientConnectorResponse connectorResponse = null;
+        try {
+            connectorResponse = connector.invoke(connectorRequest);
             return interpretConnectorResponse(connectorResponse, returnType);
+        }
+        finally {
+            if (connectorResponse != null) {
+                try {
+                    connectorResponse.close();
+                }
+                catch (Throwable exception) {
+                    throw new RuntimeException(exception);
+                }
+            }
         }
     }
 
@@ -967,6 +927,70 @@ public class ApiClient implements AutoCloseable {
         public String[] getAuthNames() {
             return authNames;
         }
+    }
+
+    private static class ApiResponseWrapper<T> implements ApiResponse<T> {
+        private final int statusCode;
+        private final String reasonPhrase;
+        private final Map<String, String> headers;
+        private final String body;
+        private final T entity;
+
+        public ApiResponseWrapper(int statusCode, String reasonPhrase, Map<String, String> headers, String body, T entity) {
+            this.statusCode = statusCode;
+            this.reasonPhrase = reasonPhrase;
+            this.headers = Collections.unmodifiableMap(headers);
+            this.body = body;
+            this.entity = entity;
+        }
+
+        @Override
+        public Exception getException() {
+            return null;
+        }
+
+        @Override
+        public Integer getStatusCode() {
+            return statusCode;
+        }
+
+        @Override
+        public String getStatusReasonPhrase() {
+            return reasonPhrase;
+        }
+
+        @Override
+        public boolean hasRawBody() {
+            return (body != null && !body.isEmpty());
+        }
+
+        @Override
+        public String getRawBody() {
+            return body;
+        }
+
+        @Override
+        public T getBody() {
+            return entity;
+        }
+
+        @Override
+        public Map<String, String> getHeaders() {
+            return headers;
+        }
+
+        @Override
+        public String getHeader(String key) {
+            return headers.get(key);
+        }
+
+        @Override
+        public String getCorrelationId() {
+            return headers.get("ININ-Correlation-ID");
+        }
+
+        @Override
+        public void close() throws Exception { }
     }
 
     private static class ApiExceptionResponse<T> implements ApiResponse<T> {
