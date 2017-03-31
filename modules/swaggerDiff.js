@@ -331,7 +331,7 @@ function checkOperations(oldSwagger, newSwagger) {
                 var oldOperation = oldPath[methodKey];
                 if (!oldOperation) {
                     // Operation was added
-                    addChange(pathKey, methodKey.toUpperCase(), LOCATION_OPERATION, IMPACT_MINOR, undefined, methodKey);
+                    addChange(pathKey, methodKey.toUpperCase(), LOCATION_OPERATION, IMPACT_MINOR, undefined, methodKey, newOperation.summary ? `Operation ${methodKey} was added. Summary: ${newOperation.summary}` : undefined);
                 } else {
                     var operationMethodAndPath = `${methodKey.toUpperCase()} ${pathKey}`;
 
