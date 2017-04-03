@@ -479,7 +479,12 @@ function checkModels(oldSwagger, newSwagger) {
                     if (!type)
                         type = newProperty['$ref'] ? newProperty['$ref'].replace('#/definitions/', '') : undefined;
 
-                    addChange(modelKey, propertyKey, LOCATION_PROPERTY, self.useSdkVersioning ? IMPACT_MAJOR : IMPACT_MINOR, undefined, type);
+                    // New required properties are major changes
+                    if (newModel.required && newModel.required.includes(propertyKey)) {
+                        addChange(modelKey, propertyKey, LOCATION_PROPERTY, IMPACT_MAJOR, undefined, type, `Required property ${propertyKey} was added`);
+                    } else {
+                        addChange(modelKey, propertyKey, LOCATION_PROPERTY, IMPACT_MINOR, undefined, type, `Optional property ${propertyKey} was added`);
+                    }
                 } else {
                     /*
                     checkForChange(modelKey, propertyKey, LOCATION_PROPERTY, IMPACT_MAJOR, 'type', oldProperty, newProperty);
