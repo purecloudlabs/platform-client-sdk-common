@@ -23,7 +23,7 @@ then
     echo "Found API key"
 else
 	echo "Adding API key"
-    printf "\n:$GEM_KEY_NAME: $GEM_KEY" >> $GEM_CREDENTIALS_FILE
+    echo -e "\n:$GEM_KEY_NAME: $GEM_KEY" >> $GEM_CREDENTIALS_FILE
 fi
 
 # Ensure file has correct permissions
