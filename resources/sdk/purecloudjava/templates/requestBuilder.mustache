@@ -23,10 +23,7 @@ import java.util.regex.Pattern;
 
 {{#operation}}
 public class {{requestClassname}} {
-    private static final Pattern JSON_MIME_PATTERN = Pattern.compile("(?i)application\\/json(;.*)?");
-    private static final String[] AUTH_NAMES = new String[] { };
-
-	{{#allParams}}
+    {{#allParams}}
 	private {{{dataType}}} {{paramName}};
 	public {{{dataType}}} get{{paramTitle}}() {
 		return this.{{paramName}};
@@ -122,6 +119,12 @@ public class {{requestClassname}} {
 
 
 		public {{requestClassname}} build() {
+            {{#allParams}}{{#required}}
+            // verify the required parameter '{{paramName}}' is set
+            if (request.{{paramName}} == null) {
+                throw new IllegalStateException("Missing the required parameter '{{paramName}}' when building request for {{classname}}.");
+            }
+            {{/required}}{{/allParams}}
 			return request;
 		}
 	}
