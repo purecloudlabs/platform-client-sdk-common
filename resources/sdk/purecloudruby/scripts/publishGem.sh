@@ -9,14 +9,12 @@ echo "GEM_NAME=$GEM_NAME"
 echo "IS_NEW_RELEASE=$IS_NEW_RELEASE"
 echo "VERSION=$VERSION"
 
-# Why?
-#export PATH=$PATH:/home/jenkins/bin
-
 GEM_CREDENTIALS_FILE=~/.gem/credentials
 GEM_KEY_NAME="developer_evangelists"
 
 cd $BUILD_DIR
 
+# Write files
 echo "require 'rubygems'
 require 'gems'
 task :release do
@@ -30,6 +28,8 @@ end" > rakefile
 echo "source 'https://rubygems.org'
 gem 'gems'" > Gemfile
 
+# Install gems
 bundle install
 
+# Publish gem
 rake release
