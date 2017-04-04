@@ -28,6 +28,7 @@ fi
 
 # Ensure file has correct permissions
 chmod 600 $GEM_CREDENTIALS_FILE
+cat $GEM_CREDENTIALS_FILE
 
 # Publish gem
 gem push $GEM_NAME-$VERSION.gem --key $GEM_KEY_NAME
