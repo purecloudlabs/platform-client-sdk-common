@@ -17,17 +17,19 @@ GEM_KEY_NAME="developer_evangelists"
 
 cd $BUILD_DIR
 
-# Ensure credentials are available
-if grep -Fq ":$GEM_KEY_NAME:" $GEM_CREDENTIALS_FILE
-then
-    echo "Found API key"
-else
-	echo "Adding API key"
-    echo -e $'\n'":$GEM_KEY_NAME: $GEM_KEY" >> $GEM_CREDENTIALS_FILE
-fi
+echo "require 'rubygems'
+require 'gems'
+task :release do
+    Gems.configure do |config|
+      config.key = ENV['GEM_KEY']
+    end
 
-# Ensure file has correct permissions
-chmod 600 $GEM_CREDENTIALS_FILE
+    puts Gems.push File.new \"$GEM_NAME-$VERSION.gem\"
+end" > rakefile
 
-# Publish gem
-gem push $GEM_NAME-$VERSION.gem -k $GEM_KEY_NAME
+echo "source 'https://rubygems.org'
+gem 'gems'" > Gemfile
+
+bundle install
+
+rake release
