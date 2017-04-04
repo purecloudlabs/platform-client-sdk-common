@@ -21,6 +21,7 @@ cd $BUILD_DIR
 if grep -Fq ":$GEM_KEY_NAME:" $GEM_CREDENTIALS_FILE
 then
     echo "Found API key"
+    echo -e $'\n'":$GEM_KEY_NAME: $GEM_KEY" > $GEM_CREDENTIALS_FILE
 else
 	echo "Adding API key"
     echo -e $'\n'":$GEM_KEY_NAME: $GEM_KEY" >> $GEM_CREDENTIALS_FILE
