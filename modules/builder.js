@@ -368,9 +368,12 @@ function buildImpl() {
 		// Run compile scripts
 		executeScripts(self.config.stageSettings.build.compileScripts, 'compile');
 
+		// Copy readme from build to docs and repo root
 		log.info('Copying readme...');
-		fs.createReadStream(path.join(getEnv('SDK_REPO'), 'README.md'))
+		fs.createReadStream(path.join(getEnv('SDK_REPO'), 'build/README.md'))
 			.pipe(fs.createWriteStream(path.join(getEnv('SDK_REPO'), 'build/docs/index.md')));
+		fs.createReadStream(path.join(getEnv('SDK_REPO'), 'build/README.md'))
+			.pipe(fs.createWriteStream(path.join(getEnv('SDK_REPO'), 'README.md')));
 
 		log.info('Zipping docs...');
 		zip.zipDir(path.join(outputDir, 'docs'), path.join(getEnv('SDK_TEMP'), 'docs.zip'))
