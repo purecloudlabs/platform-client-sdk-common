@@ -30,7 +30,7 @@ end" > rakefile
 echo "source 'https://rubygems.org'
 gem 'gems'" > Gemfile
 
-if [ ! "$INSTALL_RAKE" == "true" ]
+if [ "$INSTALL_RAKE" == "true" ]
 then
 	export PATH=$PATH:/home/jenkins/bin
 
