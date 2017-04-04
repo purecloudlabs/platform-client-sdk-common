@@ -18,18 +18,16 @@ GEM_KEY_NAME="developer_evangelists"
 cd $BUILD_DIR
 
 # Ensure credentials are available
-if grep -Fq $GEM_KEY_NAME $GEM_CREDENTIALS_FILE
+if grep -Fq ":$GEM_KEY_NAME:" $GEM_CREDENTIALS_FILE
 then
     echo "Found API key"
 else
 	echo "Adding API key"
-    echo "
-:$GEM_KEY_NAME: $GEM_KEY" >> $GEM_CREDENTIALS_FILE
+    printf "\n:$GEM_KEY_NAME: $GEM_KEY" >> $GEM_CREDENTIALS_FILE
 fi
 
 # Ensure file has correct permissions
 chmod 600 $GEM_CREDENTIALS_FILE
-cat $GEM_CREDENTIALS_FILE
 
 # Publish gem
-gem push $GEM_NAME-$VERSION.gem --key $GEM_KEY_NAME
+gem push $GEM_NAME-$VERSION.gem -k $GEM_KEY_NAME
