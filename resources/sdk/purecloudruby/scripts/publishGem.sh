@@ -26,5 +26,8 @@ else
     echo "\n:$GEM_KEY_NAME: $GEM_KEY" >> $GEM_CREDENTIALS_FILE
 fi
 
+# Ensure file has correct permissions
+chmod 600 $GEM_CREDENTIALS_FILE
+
 # Publish gem
 gem push $GEM_NAME-$VERSION.gem --key $GEM_KEY_NAME
