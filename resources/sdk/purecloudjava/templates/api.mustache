@@ -43,10 +43,11 @@ public class {{classname}} {
    * {{notes}}{{#allParams}}
    * @param {{paramName}} {{description}}{{#required}} (required){{/required}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}{{/allParams}}{{#returnType}}
    * @return {{{returnType}}}{{/returnType}}
-   * @throws ApiException if fails to make API call
+   * @throws ApiException if the request fails on the server
+   * @throws IOException if the request fails to be processed
    */
   public {{#returnType}}{{{returnType}}} {{/returnType}}{{^returnType}}void {{/returnType}}{{operationId}}({{#allParams}}{{{dataType}}} {{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}}) throws IOException, ApiException {
-    {{#returnType}}return {{/returnType}}{{operationId}}WithHttpInfo({{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}}){{#returnType}}.getBody(){{/returnType}};
+    {{#returnType}}return {{/returnType}} {{operationId}}(create{{requestClassname}}({{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}}));
   }
 
   /**
@@ -54,70 +55,65 @@ public class {{classname}} {
    * {{notes}}{{#allParams}}
    * @param {{paramName}} {{description}}{{#required}} (required){{/required}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}{{/allParams}}{{#returnType}}
    * @return {{{returnType}}}{{/returnType}}
-   * @throws ApiException if fails to make API call
+   * @throws IOException if the request fails to be processed
    */
-  public {{#returnType}}ApiResponse<{{{returnType}}}>{{/returnType}}{{^returnType}}ApiResponse<Void>{{/returnType}} {{operationId}}WithHttpInfo({{#allParams}}{{{dataType}}} {{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}}) throws IOException, ApiException {
-    Object {{localVariablePrefix}}localVarPostBody = {{#bodyParam}}{{paramName}}{{/bodyParam}}{{^bodyParam}}null{{/bodyParam}};
-    {{#allParams}}{{#required}}
-    // verify the required parameter '{{paramName}}' is set
-    if ({{paramName}} == null) {
-      throw new IllegalArgumentException("Missing the required parameter '{{paramName}}' when calling {{operationId}}");
-    }
-    {{/required}}{{/allParams}}
-    // create path and map variables
-    String {{localVariablePrefix}}localVarPath = "{{{path}}}".replaceAll("\\{format\\}","json"){{#pathParams}}
-      .replaceAll("\\{" + "{{baseName}}" + "\\}", {{localVariablePrefix}}apiClient.escapeString({{{paramName}}}.toString())){{/pathParams}};
+  public ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> {{operationId}}WithHttpInfo({{#allParams}}{{{dataType}}} {{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}}) throws IOException {
+    return {{operationId}}(create{{requestClassname}}({{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}}).withHttpInfo());
+  }
 
-    // query params
-    {{javaUtilPrefix}}List<Pair> {{localVariablePrefix}}localVarQueryParams = new {{javaUtilPrefix}}ArrayList<Pair>();
-    {{javaUtilPrefix}}Map<String, String> {{localVariablePrefix}}localVarHeaderParams = new {{javaUtilPrefix}}HashMap<String, String>();
-    {{javaUtilPrefix}}Map<String, Object> {{localVariablePrefix}}localVarFormParams = new {{javaUtilPrefix}}HashMap<String, Object>();
-
-    {{#queryParams}}
-    {{localVariablePrefix}}localVarQueryParams.addAll({{localVariablePrefix}}apiClient.parameterToPairs("{{#collectionFormat}}{{{collectionFormat}}}{{/collectionFormat}}", "{{baseName}}", {{paramName}}));
-    {{/queryParams}}
-
-    {{#headerParams}}if ({{paramName}} != null)
-      {{localVariablePrefix}}localVarHeaderParams.put("{{baseName}}", {{localVariablePrefix}}apiClient.parameterToString({{paramName}}));
-    {{/headerParams}}
-
-    {{#formParams}}if ({{paramName}} != null)
-      {{localVariablePrefix}}localVarFormParams.put("{{baseName}}", {{paramName}});
-    {{/formParams}}
-
-    final String[] {{localVariablePrefix}}localVarAccepts = {
-      {{#produces}}"{{mediaType}}"{{#hasMore}}, {{/hasMore}}{{/produces}}
-    };
-    final String {{localVariablePrefix}}localVarAccept = {{localVariablePrefix}}apiClient.selectHeaderAccept({{localVariablePrefix}}localVarAccepts);
-
-    final String[] {{localVariablePrefix}}localVarContentTypes = {
-      {{#consumes}}"{{mediaType}}"{{#hasMore}}, {{/hasMore}}{{/consumes}}
-    };
-    final String {{localVariablePrefix}}localVarContentType = {{localVariablePrefix}}apiClient.selectHeaderContentType({{localVariablePrefix}}localVarContentTypes);
-
-    String[] {{localVariablePrefix}}localVarAuthNames = new String[] { {{#authMethods}}"{{name}}"{{#hasMore}}, {{/hasMore}}{{/authMethods}} };
-
-    return {{localVariablePrefix}}apiClient.invokeAPIVerbose({{localVariablePrefix}}localVarPath, "{{httpMethod}}", {{localVariablePrefix}}localVarQueryParams, {{localVariablePrefix}}localVarPostBody, {{localVariablePrefix}}localVarHeaderParams, {{localVariablePrefix}}localVarFormParams, {{localVariablePrefix}}localVarAccept, {{localVariablePrefix}}localVarContentType, {{localVariablePrefix}}localVarAuthNames, {{#returnType}}new TypeReference<{{{returnType}}}>() {}{{/returnType}}{{^returnType}}null{{/returnType}});
+  private {{requestClassname}} create{{requestClassname}}({{#allParams}}{{{dataType}}} {{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}}) {
+    return {{requestClassname}}.builder(){{#allParams}}
+            .with{{paramTitle}}({{paramName}})
+    {{/allParams}}
+            .build();
   }
 
   /**
    * {{summary}}
    * {{notes}}
-   * @request The request object
-   * @throws ApiException if fails to make API call
+   * @param request The request object{{#returnType}}
+   * @return {{{returnType}}}{{/returnType}}
+   * @throws ApiException if the request fails on the server
+   * @throws IOException if the request fails to be processed
    */
   public {{#returnType}}{{{returnType}}} {{/returnType}}{{^returnType}}void {{/returnType}}{{operationId}}({{requestClassname}} request) throws IOException, ApiException {
-    {{#returnType}}return {{/returnType}}{{localVariablePrefix}}apiClient.invokeAPI(request.withHttpInfo(), {{#returnType}}new TypeReference<{{{returnType}}}>() {}{{/returnType}}{{^returnType}}null{{/returnType}});
+    try {
+      ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> response = {{localVariablePrefix}}apiClient.invoke(request.withHttpInfo(), {{#returnType}}new TypeReference<{{{returnType}}}>() {}{{/returnType}}{{^returnType}}null{{/returnType}});
+      {{#returnType}}return response.getBody();{{/returnType}}
+    }
+    catch (ApiException | IOException exception) {
+      if ({{localVariablePrefix}}apiClient.getShouldThrowErrors()) throw exception;
+      {{#returnType}}return null;{{/returnType}}
+    }
   }
 
   /**
    * {{summary}}
    * {{notes}}
-   * @request The request object
-   * @throws ApiException if fails to make API call
+   * @param request The request object
+   * @return the response
+   * @throws IOException if the request fails to be processed
    */
-  public {{#returnType}}ApiResponse<{{{returnType}}}>{{/returnType}}{{^returnType}}ApiResponse<Void>{{/returnType}} {{operationId}}(ApiRequest<{{#bodyParam}}{{{dataType}}}{{/bodyParam}}{{^bodyParam}}Void{{/bodyParam}}> request) throws IOException, ApiException {
-    return {{localVariablePrefix}}apiClient.<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>invokeAPIVerbose(request, {{#returnType}}new TypeReference<{{{returnType}}}>() {}{{/returnType}}{{^returnType}}null{{/returnType}});
+  public {{#returnType}}ApiResponse<{{{returnType}}}>{{/returnType}}{{^returnType}}ApiResponse<Void>{{/returnType}} {{operationId}}(ApiRequest<{{#bodyParam}}{{{dataType}}}{{/bodyParam}}{{^bodyParam}}Void{{/bodyParam}}> request) throws IOException {
+    try {
+      return {{localVariablePrefix}}apiClient.invoke(request, {{#returnType}}new TypeReference<{{{returnType}}}>() {}{{/returnType}}{{^returnType}}null{{/returnType}});
+    }
+    catch (ApiException exception) {
+      @SuppressWarnings("unchecked")
+      ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> response = (ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>)(ApiResponse<?>)exception;
+      return response;
+    }
+    catch (Throwable exception) {
+      if ({{localVariablePrefix}}apiClient.getShouldThrowErrors()) {
+        if (exception instanceof IOException) {
+          throw (IOException)exception;
+        }
+        throw new RuntimeException(exception);
+      }
+      @SuppressWarnings("unchecked")
+      ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> response = (ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>)(ApiResponse<?>)(new ApiException(exception));
+      return response;
+    }
   }
 
   {{/operation}}
