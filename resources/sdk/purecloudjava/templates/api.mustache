@@ -43,7 +43,8 @@ public class {{classname}} {
    * {{notes}}{{#allParams}}
    * @param {{paramName}} {{description}}{{#required}} (required){{/required}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}{{/allParams}}{{#returnType}}
    * @return {{{returnType}}}{{/returnType}}
-   * @throws ApiException if fails to make API call
+   * @throws ApiException if the request fails on the server
+   * @throws IOException if the request fails to be processed
    */
   public {{#returnType}}{{{returnType}}} {{/returnType}}{{^returnType}}void {{/returnType}}{{operationId}}({{#allParams}}{{{dataType}}} {{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}}) throws IOException, ApiException {
     {{#returnType}}return {{/returnType}} {{operationId}}(create{{requestClassname}}({{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}}));
@@ -54,9 +55,9 @@ public class {{classname}} {
    * {{notes}}{{#allParams}}
    * @param {{paramName}} {{description}}{{#required}} (required){{/required}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}{{/allParams}}{{#returnType}}
    * @return {{{returnType}}}{{/returnType}}
-   * @throws ApiException if fails to make API call
+   * @throws IOException if the request fails to be processed
    */
-  public ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> {{operationId}}WithHttpInfo({{#allParams}}{{{dataType}}} {{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}}) throws IOException, ApiException {
+  public ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> {{operationId}}WithHttpInfo({{#allParams}}{{{dataType}}} {{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}}) throws IOException {
     return {{operationId}}(create{{requestClassname}}({{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}}).withHttpInfo());
   }
 
@@ -70,8 +71,10 @@ public class {{classname}} {
   /**
    * {{summary}}
    * {{notes}}
-   * @request The request object
-   * @throws ApiException if fails to make API call
+   * @param request The request object{{#returnType}}
+   * @return {{{returnType}}}{{/returnType}}
+   * @throws ApiException if the request fails on the server
+   * @throws IOException if the request fails to be processed
    */
   public {{#returnType}}{{{returnType}}} {{/returnType}}{{^returnType}}void {{/returnType}}{{operationId}}({{requestClassname}} request) throws IOException, ApiException {
     try {
@@ -87,10 +90,11 @@ public class {{classname}} {
   /**
    * {{summary}}
    * {{notes}}
-   * @request The request object
-   * @throws ApiException if fails to make API call
+   * @param request The request object
+   * @return the response
+   * @throws IOException if the request fails to be processed
    */
-  public {{#returnType}}ApiResponse<{{{returnType}}}>{{/returnType}}{{^returnType}}ApiResponse<Void>{{/returnType}} {{operationId}}(ApiRequest<{{#bodyParam}}{{{dataType}}}{{/bodyParam}}{{^bodyParam}}Void{{/bodyParam}}> request) throws IOException, ApiException {
+  public {{#returnType}}ApiResponse<{{{returnType}}}>{{/returnType}}{{^returnType}}ApiResponse<Void>{{/returnType}} {{operationId}}(ApiRequest<{{#bodyParam}}{{{dataType}}}{{/bodyParam}}{{^bodyParam}}Void{{/bodyParam}}> request) throws IOException {
     try {
       return {{localVariablePrefix}}apiClient.invoke(request, {{#returnType}}new TypeReference<{{{returnType}}}>() {}{{/returnType}}{{^returnType}}null{{/returnType}});
     }
