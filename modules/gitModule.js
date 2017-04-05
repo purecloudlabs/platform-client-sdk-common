@@ -1,4 +1,5 @@
 const _ = require('lodash');
+const fs = require('fs-extra');
 const spawn = require('child_process').spawn;
 const Q = require('q');
 
@@ -18,6 +19,17 @@ Git.prototype.clone = function(repo, branch, target) {
 	var deferred = Q.defer();
 
 	try {
+		// Skip cloning if no repo was provided
+		if (!repo || repo === '') {
+			log.info('Repo was undefined. Skipping clone.');
+
+			// Ensure repo dir exists anyway, we still need to build the SDK
+			fs.ensureDirSync(target);
+
+			deferred.resolve();
+			return deferred.promise;
+		}
+
 		repo = injectAuthToken(repo, this.authToken);
 		var args = [];
 		args.push('clone');
@@ -45,6 +57,13 @@ Git.prototype.saveChanges = function(repo, localDir, message) {
 	var deferred = Q.defer();
 
 	try {
+		// Skip commit if no repo was provided
+		if (!repo || repo === '') {
+			log.info('Repo was undefined. Skipping commit/push.');
+			deferred.resolve();
+			return deferred.promise;
+		}
+
 		repo = injectAuthToken(repo, this.authToken);
 		spawnProcess([ 'add', '-A' ], localDir)
 			.then(() => { 

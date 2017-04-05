@@ -1,6 +1,7 @@
 # Custom rules
 swagger.json
 /temp
+/output
 /local
 /test.js
 localConfig.json

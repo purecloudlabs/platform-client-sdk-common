@@ -26,9 +26,7 @@ var newSwaggerTempFile = '';
 /* PUBLIC PROPERTIES */
 
 Builder.prototype.config = {};
-Builder.prototype.repository = {};
 Builder.prototype.resourcePaths = {};
-Builder.prototype.repository = {};
 Builder.prototype.releaseNoteTemplatePath = '';
 
 
@@ -71,6 +69,7 @@ function Builder(configPath, localConfigPath) {
 		maybeInit(this, 'localConfig', {});
 		maybeInit(this.config, 'settings', {});
 		maybeInit(this.config.settings, 'swagger', {});
+		maybeInit(this.config.settings, 'sdkRepo', {"repo": undefined,"branch":  undefined});
 		maybeInit(this.config.settings, 'swaggerCodegen', {});
 		maybeInit(this.config.settings.swaggerCodegen, 'generateApiTests', false);
 		maybeInit(this.config.settings.swaggerCodegen, 'generateModelTests', false);
@@ -81,7 +80,6 @@ function Builder(configPath, localConfigPath) {
 		maybeInit(this.config.stageSettings, 'postbuild', {});
 
 		// Check for required settings
-		checkAndThrow(this.config.settings, 'sdkRepo');
 		checkAndThrow(this.config.settings.swagger, 'oldSwaggerPath');
 		checkAndThrow(this.config.settings.swagger, 'newSwaggerPath');
 		checkAndThrow(this.config.settings, 'swaggerCodegen');
@@ -242,7 +240,6 @@ function prebuildImpl() {
 		git.clone(self.config.settings.sdkRepo.repo, self.config.settings.sdkRepo.branch, getEnv('SDK_REPO'))
 			.then(function(repository) {
 				log.debug(`Clone operation completed in ${measureDurationFrom(startTime)}`);
-				self.repository = repository;
 			})
 			.then(function() {
 				// Diff swagger
@@ -432,6 +429,11 @@ function applyOverrides(original, overrides) {
 function createRelease() {
 	var deferred = Q.defer();
 
+	if (!self.config.settings.sdkRepo.repo || self.config.settings.sdkRepo.repo === "") {
+		log.warn('Skipping github release creation! Repo is undefined.');
+		deferred.resolve();
+		return deferred.promise;
+	}
 	if (self.config.stageSettings.postbuild.gitCommit !== true) {
 		log.warn('Skipping git commit and github release creation! Set postbuild.gitCommit=true to commit changes.');
 		deferred.resolve();
