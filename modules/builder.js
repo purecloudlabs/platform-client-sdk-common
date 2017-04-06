@@ -354,9 +354,12 @@ function buildImpl() {
 		log.debug(`command: ${command}`);
 		var code = childProcess.execSync(command, {stdio:'inherit'});
 
-		log.info('Copying extensions...');
-		fs.copySync(self.resourcePaths.extensions, self.config.settings.extensionsDestination);
-
+		if (fs.existsSync(self.resourcePaths.extensions)) {
+			log.info('Copying extensions...');
+			fs.copySync(self.resourcePaths.extensions, self.config.settings.extensionsDestination);
+		} else {
+			log.warn(`Extensions path does not exist! Path: ${self.resourcePaths.extensions}`);
+		}
 		// Ensure compile scripts fail on error
 		_.forEach(self.config.stageSettings.build.compileScripts, function(script) {
 			script.failOnError = true;
