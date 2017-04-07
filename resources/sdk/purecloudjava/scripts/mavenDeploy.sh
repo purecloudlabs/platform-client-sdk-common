@@ -22,12 +22,6 @@ then
 	exit 0
 fi
 
-if [ ! "$IS_NEW_RELEASE" == "true" ]
-then
-	echo "Skipping maven deploy2"
-	exit 0
-fi
-
 # Verify settings
 if [ ! -z "$MAVEN_SETTINGS_FILE" ]
 then
