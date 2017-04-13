@@ -5,7 +5,7 @@ echo "BUILD_DIR=$BUILD_DIR"
 echo "EXTENSIONS_TEMP=$EXTENSIONS_TEMP"
 
 # Add auth extension
-cat $BUILD_DIR/lib/purecloudplatformclientv2.rb extensions/auth.rb > $EXTENSIONS_TEMP/purecloudplatformclientv2.tmp
+cat $BUILD_DIR/lib/purecloudplatformclientv2.rb $EXTENSIONS_TEMP/auth.rb > $EXTENSIONS_TEMP/purecloudplatformclientv2.tmp
 mv $EXTENSIONS_TEMP/purecloudplatformclientv2.tmp $BUILD_DIR/lib/purecloudplatformclientv2.rb
 
 # Build
