@@ -49,10 +49,10 @@ public class {{classname}}Async {
    * @param callback the action to perform when the request is completed
    * @return the future indication when the request has completed
    */
-  public Future<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> {{operationId}}Async({{requestClassname}} request, AsyncApiCallback<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> callback) {
+  public Future<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> {{operationId}}Async({{requestClassname}} request, final AsyncApiCallback<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> callback) {
     try {
-      SettableFuture<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> future = SettableFuture.create();
-      boolean shouldThrowErrors = {{localVariablePrefix}}apiClient.getShouldThrowErrors();
+      final SettableFuture<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> future = SettableFuture.create();
+      final boolean shouldThrowErrors = {{localVariablePrefix}}apiClient.getShouldThrowErrors();
       {{localVariablePrefix}}apiClient.invokeAsync(request.withHttpInfo(), {{#returnType}}new TypeReference<{{{returnType}}}>() {}{{/returnType}}{{^returnType}}null{{/returnType}}, new AsyncApiCallback<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>>() {
         @Override
         public void onCompleted(ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> response) {
@@ -83,10 +83,10 @@ public class {{classname}}Async {
    * @param callback the action to perform when the request is completed
    * @return the future indication when the request has completed
    */
-  public Future<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>> {{operationId}}Async(ApiRequest<{{#bodyParam}}{{{dataType}}}{{/bodyParam}}{{^bodyParam}}Void{{/bodyParam}}> request, AsyncApiCallback<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>> callback) {
+  public Future<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>> {{operationId}}Async(ApiRequest<{{#bodyParam}}{{{dataType}}}{{/bodyParam}}{{^bodyParam}}Void{{/bodyParam}}> request, final AsyncApiCallback<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>> callback) {
     try {
-      SettableFuture<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>> future = SettableFuture.create();
-      boolean shouldThrowErrors = {{localVariablePrefix}}apiClient.getShouldThrowErrors();
+      final SettableFuture<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>> future = SettableFuture.create();
+      final boolean shouldThrowErrors = {{localVariablePrefix}}apiClient.getShouldThrowErrors();
       {{localVariablePrefix}}apiClient.invokeAsync(request, {{#returnType}}new TypeReference<{{{returnType}}}>() {}{{/returnType}}{{^returnType}}null{{/returnType}}, new AsyncApiCallback<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>>() {
         @Override
         public void onCompleted(ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> response) {
