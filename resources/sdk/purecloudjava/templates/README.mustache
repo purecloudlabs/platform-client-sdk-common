@@ -35,7 +35,7 @@ The Java SDK does not currently contain helper methods to complete an OAuth flow
 
 ### Building an ApiClient Instance
 
-`ApiClient` implements a builder pattern to construct new instances. Use the `ApiClient.Builder` class to set your access token and environment/base path (optional, defaults to `"https://api.mypurecloud.com"`):
+`ApiClient` implements a builder pattern to construct new instances:
 
 ~~~
 // Create ApiClient instance
@@ -48,6 +48,46 @@ ApiClient apiClient = ApiClient.Builder.standard()
 Configuration.setDefaultApiClient(apiClient);
 ~~~
 
+#### Setting the access token
+
+Provide the access token to use for API requests:
+
+~~~
+.withAccessToken("aisuefh89734hfkhsaldkh348jf")
+~~~
+
+#### Setting the environment
+
+Provide the full base url if not using `https://api.mypurecloud.com`:
+
+~~~
+.withBasePath("https://api.mypurecloud.ie")
+~~~
+
+#### Setting the HTTP connector
+
+The SDK supports the following HTTP connectors:
+
+* Apache (_default_, synchronous), use `ApacheHttpClientConnectorProvider`
+* Ning (async), use `AsyncHttpClientConnectorProvider`
+* OkHTTP (synchronous, recommended for Android), use `OkHttpClientConnectorProvider`
+
+Specify the connector in the builder:
+
+~~~
+.withProperty(ApiClientConnectorProperty.CONNECTOR_PROVIDER, new OkHttpClientConnectorProvider())
+~~~
+
+#### Other ApiClient.Builder methods
+
+* `withDefaultHeader(String header, String value)` Specifies additional headers to be sent with every request
+* `withUserAgent(String userAgent)` Overrides the default user agent header
+* `withObjectMapper(ObjectMapper objectMapper)` Overrides the default `ObjectMapper` used for deserialization
+* `withDateFormat(DateFormat dateFormat)` Overrides the default `DateFormat`
+* `withConnectionTimeout(int connectionTimeout)` Overrides the default connection timeout
+* `withShouldThrowErrors(boolean shouldThrowErrors)` Set to `false` to suppress throwing of all errors
+* `withProxy(Proxy proxy)` Sets a proxy to use for requests
+
 ### Making Requests
 
 There are two steps to making requests:
@@ -57,13 +97,9 @@ There are two steps to making requests:
 
 Example of getting the authenticated user's information:
 
-~~~
-UsersApi usersApi = new UsersApi();
-UserMe me = usersApi.getUsersMe(Collections.singletonList("presence"));
-System.out.println("Hello " + me.getName());
-~~~
+#### Using a request builder
 
-Request builders allow requests to be constructed by only providing values for the properties you want to set. This is useful for methods with long signatures when you only need to set some properties. Here's an example of the same request, but using a request builder:
+Request builders allow requests to be constructed by only providing values for the properties you want to set. This is useful for methods with long signatures when you only need to set some properties and will help future-proof your code if the method signature changes (i.e. new parameters added).
 
 ~~~
 UsersApi usersApi = new UsersApi();
@@ -71,6 +107,16 @@ GetUsersMeRequest request = GetUsersMeRequest.builder()
         .withExpand(Collections.singletonList("presence"))
         .build();
 UserMe me = usersApi.getUsersMe(request);
+System.out.println("Hello " + me.getName());
+~~~
+
+#### Using method parameters
+
+This request is identical to the request above, but uses the method with explicit parameters instead of a builder. These methods construct the request builder behind the scenes.
+
+~~~
+UsersApi usersApi = new UsersApi();
+UserMe me = usersApi.getUsersMe(Collections.singletonList("presence"));
 System.out.println("Hello " + me.getName());
 ~~~
 
