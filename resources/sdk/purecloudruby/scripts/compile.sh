@@ -11,3 +11,7 @@ mv $EXTENSIONS_TEMP/purecloudplatformclientv2.tmp $BUILD_DIR/lib/purecloudplatfo
 # Build
 cd $BUILD_DIR
 gem build purecloudplatformclientv2.gemspec
+
+#test
+gem install $BUILD_DIR/purecloudplatformclientv2*
+ruby resources/sdk/purecloudruby/tests/test.rb
