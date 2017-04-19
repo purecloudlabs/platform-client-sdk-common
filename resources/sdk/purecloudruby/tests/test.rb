@@ -8,7 +8,7 @@ class PureCloudGemTest < Minitest::Test
     def setup
         @secret = ENV['PURECLOUD_CLIENT_SECRET']
         @id = ENV['PURECLOUD_CLIENT_ID']
-        environment = ENV['PURECLOUD_ENV']
+        environment = ENV['PURECLOUD_ENVIRONMENT']
 
         @authToken = PureCloud.authenticate_with_client_credentials @id, @secret, environment
         PureCloud.configure.debugging = true
