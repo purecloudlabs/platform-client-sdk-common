@@ -65,7 +65,8 @@
             {
               "$ref": "#/settings/extensionsDestination"
             }
-          ]
+          ],
+          "appendVersionArg": true
         }
       ],
       "postRunScripts": []
