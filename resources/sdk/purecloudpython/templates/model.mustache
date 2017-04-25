@@ -79,7 +79,7 @@ class {{classname}}(object):
             # print "Invalid value for {{name}} -> " + {{name}}
             self._{{name}} = "outdated_sdk_version"
         else:
-            self._{{name}} = {{name}}.lower()
+            self._{{name}} = {{name}}
 {{/isEnum}}
 {{^isEnum}}
 {{#hasValidation}}
