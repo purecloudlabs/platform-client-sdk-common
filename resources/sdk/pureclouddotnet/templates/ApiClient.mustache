@@ -31,6 +31,9 @@ namespace {{packageName}}.Client
         /// </summary>
         public ApiClient()
         {
+            // Use TLS 1.2
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
             Configuration = Configuration.Default;
             RestClient = new RestClient("{{basePath}}");
             AddSerializerSettings();
@@ -43,6 +46,9 @@ namespace {{packageName}}.Client
         /// <param name="config">An instance of Configuration.</param>
         public ApiClient(Configuration config = null)
         {
+            // Use TLS 1.2
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
             if (config == null)
                 Configuration = Configuration.Default;
             else
@@ -59,7 +65,10 @@ namespace {{packageName}}.Client
         /// <param name="basePath">The base path.</param>
         public ApiClient(String basePath = "{{basePath}}")
         {
-           if (String.IsNullOrEmpty(basePath))
+            // Use TLS 1.2
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
+            if (String.IsNullOrEmpty(basePath))
                 throw new ArgumentException("basePath cannot be empty");
 
             RestClient = new RestClient(basePath);
