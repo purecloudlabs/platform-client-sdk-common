@@ -105,7 +105,7 @@ function Builder(configPath, localConfigPath) {
 		// Load env vars from config
 		_.forOwn(this.config.envVars, (value, key) => setEnv(key, value));
 		_.forOwn(this.localConfig.envVars, (group, groupKey) => {
-			if (group.groupDisabled !== true)
+			if (group && group.groupDisabled !== true)
 				_.forOwn(group, (value, key) => setEnv(key, value));
 		});
 
