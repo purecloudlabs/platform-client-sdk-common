@@ -347,7 +347,10 @@ function buildImpl() {
 		command += `-l ${self.config.settings.swaggerCodegen.codegenLanguage} `;
 		command += `-o ${outputDir} `;
 		command += `-c ${self.config.settings.swaggerCodegen.configFile} `;
-		command += `-t ${self.resourcePaths.templates} `;
+		// Don't append empty templates directory
+		if (getFileCount(self.resourcePaths.templates) > 0)
+			command += `-t ${self.resourcePaths.templates} `;
+
 		_.forEach(self.config.settings.swaggerCodegen.extraGeneratorOptions, (option) => command += ' ' + option);
 
 		log.info('Running swagger-codegen...');
@@ -775,4 +778,20 @@ function measureDurationFrom(startTime, endTime) {
 	if (!endTime) endTime = moment();
 
 	return moment.duration(endTime.diff(startTime)).humanize();
+}
+
+function getFileCount(dir) {
+	if (!fs.existsSync(dir)) {
+		log.silly(`Directory doesn't exist: ${dir}`);
+		return 0;
+	}
+	var files = fs.readdirSync(dir);
+	log.silly(`There are ${files.length} files in ${dir}`);
+
+	if (files.length == 1 && files[0] === '.DS_Store') {
+		log.silly(`...and it's named .DS_Store   ಠ_ಠ`);
+		return 0;
+	}
+
+	return files.length;
 }
