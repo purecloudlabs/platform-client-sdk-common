@@ -53,4 +53,10 @@ public class ApiDateFormat extends DateFormat {
 
         return null;
     }
+
+    @Override
+    public Object clone()
+    {
+        return new ApiDateFormat();
+    }
 }
