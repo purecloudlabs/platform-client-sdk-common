@@ -14,7 +14,7 @@ public class ApiRequestBuilder<T> {
         DATE_FORMAT.set(dateFormat);
     }
 
-    private static DateFormat getDateFormat() {
+    public static DateFormat getDateFormat() {
         // Lazy load ApiDateFormat
         synchronized (EMPTY) {
             if (DATE_FORMAT == null) {
@@ -31,7 +31,7 @@ public class ApiRequestBuilder<T> {
     /**
      * Format the given Date object into string.
      */
-    private static String formatDate(Date date) {
+    public static String formatDate(Date date) {
         return getDateFormat().format(date);
     }
 
