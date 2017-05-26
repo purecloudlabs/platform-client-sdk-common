@@ -9,7 +9,7 @@ public class ApiRequestBuilder<T> {
     private static ThreadLocal<DateFormat> DATE_FORMAT;
     private static final String[] EMPTY = new String[0];
 
-    private static void setDateFormat(DateFormat dateFormat) {
+    public static void setDateFormat(DateFormat dateFormat) {
         DATE_FORMAT = new ThreadLocal<>();
         DATE_FORMAT.set(dateFormat);
     }
