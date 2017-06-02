@@ -50,7 +50,7 @@
       }
 {{/vars}}    }
     return obj;
-  }
+  };
 {{#useInheritance}}{{#parentModel}}
   exports.prototype = Object.create({{classname}}.prototype);
   exports.prototype.constructor = exports;
@@ -86,7 +86,7 @@ exports.prototype['{{baseName}}'] = {{#defaultValue}}{{{defaultValue}}}{{/defaul
 {{/emitJSDoc}}
   exports.prototype.{{getter}} = function() {
     return this['{{baseName}}'];
-  }
+  };
 
 {{#emitJSDoc}}
   /**{{#description}}
@@ -96,7 +96,7 @@ exports.prototype['{{baseName}}'] = {{#defaultValue}}{{{defaultValue}}}{{/defaul
 {{/emitJSDoc}}
   exports.prototype.{{setter}} = function({{name}}) {
     this['{{baseName}}'] = {{name}};
-  }
+  };
 
 {{/vars}}{{/emitModelMethods}}
 {{#vars}}{{#isEnum}}{{>partial_model_inner_enum}}{{/isEnum}}{{#items.isEnum}}{{#items}}
