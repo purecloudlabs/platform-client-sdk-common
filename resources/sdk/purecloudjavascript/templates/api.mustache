@@ -1,18 +1,18 @@
 (function(root, factory) {
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
-    define(['{{#invokerPackage}}{{invokerPackage}}/{{/invokerPackage}}ApiClient'{{#imports}}, '{{#invokerPackage}}{{invokerPackage}}/{{/invokerPackage}}{{#modelPackage}}{{modelPackage}}/{{/modelPackage}}{{import}}'{{/imports}}], factory);
+    define(['{{#invokerPackage}}{{invokerPackage}}/{{/invokerPackage}}ApiClient'], factory);
   } else if (typeof module === 'object' && module.exports) {
     // CommonJS-like environments that support module.exports, like Node.
-    module.exports = factory(require('../ApiClient'){{#imports}}, require('../{{#modelPackage}}{{modelPackage}}/{{/modelPackage}}{{import}}'){{/imports}});
+    module.exports = factory(require('../ApiClient'));
   } else {
     // Browser globals (root is window)
     if (!root.{{moduleName}}) {
       root.{{moduleName}} = {};
     }
-    root.{{moduleName}}.{{classname}} = factory(root.{{moduleName}}.ApiClient{{#imports}}, root.{{moduleName}}.{{import}}{{/imports}});
+    root.{{moduleName}}.{{classname}} = factory(root.{{moduleName}}.ApiClient);
   }
-}(this, function(ApiClient{{#imports}}, {{import}}{{/imports}}) {
+}(this, function(ApiClient) {
   'use strict';
 
 {{#emitJSDoc}}  /**
@@ -47,15 +47,14 @@
      * @param {{&vendorExtensions.x-jsdoc-type}} {{paramName}} {{description}}{{/required}}{{/allParams}}{{#hasOptionalParams}}
      * @param {Object} opts Optional parameters{{#allParams}}{{^required}}
      * @param {{&vendorExtensions.x-jsdoc-type}} opts.{{paramName}} {{description}}{{#defaultValue}} (default to {{.}}){{/defaultValue}}{{/required}}{{/allParams}}{{/hasOptionalParams}}{{^usePromises}}
-     * @param {module:{{#invokerPackage}}{{invokerPackage}}/{{/invokerPackage}}{{#apiPackage}}{{apiPackage}}/{{/apiPackage}}{{classname}}~{{nickname}}Callback} callback The callback function, accepting three arguments: error, data, response{{/usePromises}}{{#returnType}}
-     * data is of type: {{&vendorExtensions.x-jsdoc-type}}{{/returnType}}
+     * @param {module:{{#invokerPackage}}{{invokerPackage}}/{{/invokerPackage}}{{#apiPackage}}{{apiPackage}}/{{/apiPackage}}{{classname}}~{{nickname}}Callback} callback The callback function, accepting three arguments: error, data, response{{/usePromises}}
      */
 {{/emitJSDoc}}    this.{{nickname}} = function({{vendorExtensions.x-codegen-argList}}) { {{#hasOptionalParams}}
       opts = opts || {};{{/hasOptionalParams}}
       var postBody = {{#bodyParam}}{{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}{{/bodyParam}}{{^bodyParam}}null{{/bodyParam}};
 {{#allParams}}{{#required}}
       // verify the required parameter '{{paramName}}' is set
-      if ({{paramName}} == undefined || {{paramName}} == null) {
+      if ({{paramName}} === undefined || {{paramName}} === null) {
         throw "Missing the required parameter '{{paramName}}' when calling {{nickname}}";
       }
 {{/required}}{{/allParams}}
@@ -76,14 +75,13 @@
       var authNames = [{{#authMethods}}'{{name}}'{{#hasMore}}, {{/hasMore}}{{/authMethods}}];
       var contentTypes = [{{#consumes}}'{{mediaType}}'{{#hasMore}}, {{/hasMore}}{{/consumes}}];
       var accepts = [{{#produces}}'{{mediaType}}'{{#hasMore}}, {{/hasMore}}{{/produces}}];
-      var returnType = {{#returnType}}{{&returnType}}{{/returnType}}{{^returnType}}null{{/returnType}};
 
       return this.apiClient.callApi(
         '{{&path}}', '{{httpMethod}}',
         pathParams, queryParams, headerParams, formParams, postBody,
-        authNames, contentTypes, accepts, returnType{{^usePromises}}, callback{{/usePromises}}
+        authNames, contentTypes, accepts{{^usePromises}}, callback{{/usePromises}}
       );
-    }
+    };
 {{/operation}}{{/operations}}  };
 
   return exports;
