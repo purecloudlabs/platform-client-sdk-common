@@ -15,11 +15,14 @@ echo "PACKAGE_NAME=$PACKAGE_NAME"
 cd $BUILD_DIR
 mkdir web
 
+# https://github.com/substack/node-browserify
 #npm install browserify -g
+
+# https://github.com/mishoo/UglifyJS2
 #npm install uglify-es -g
 
 echo "Browserifying..."
 browserify -r "$BUILD_DIR/src/$PACKAGE_NAME/index.js:${MODULE_NAME}" "$BUILD_DIR/src/$PACKAGE_NAME/index.js" > "$BUILD_DIR/web/$PACKAGE_NAME.js" || { echo "Browserify failed"; exit 1;}
 
 echo "Minifying...."
-uglifyjs "$BUILD_DIR/web/$PACKAGE_NAME.js" --compress --output "$BUILD_DIR/web/$PACKAGE_NAME.min.js" || { echo "Minify failed"; exit 1;}
+uglifyjs "$BUILD_DIR/web/$PACKAGE_NAME.js" --compress --mangle --output "$BUILD_DIR/web/$PACKAGE_NAME.min.js" || { echo "Minify failed"; exit 1;}
