@@ -103,17 +103,27 @@
    * @param {xxxtypexxx} xxxnamexxx - (Optional, default "xxx") xxx
    */
 {{/emitJSDoc}}  exports.prototype.loginImplicitGrant = function(clientId, redirectUri) {
+    var self = this;
     this.clientId = clientId;
     this.redirectUri = redirectUri;
 
-    var query = {
-        client_id: encodeURIComponent(this.clientId),
-        redirect_uri: encodeURI(this.redirectUri)
-    };
+    return new Promise(function(resolve, reject) {
+      self._testTokenAccess()
+        .then(function() {
+          resolve();
+        })
+        .catch(function(error) {
+          var query = {
+              client_id: encodeURIComponent(self.clientId),
+              redirect_uri: encodeURI(self.redirectUri),
+              response_type: 'token'
+          };
 
-    var url = this._buildAuthUrl('oauth/authorize', query);
-    console.log(`Implicit grant: redirecting to ${url} for authentication...`);
-    window.location.replace(url);
+          var url = self._buildAuthUrl('oauth/authorize', query);
+          console.log(`Implicit grant: redirecting to ${url} for authorization...`);
+          window.location.replace(url);
+        });
+    });
   };
 
 {{#emitJSDoc}}  /**
@@ -123,6 +133,35 @@
 {{/emitJSDoc}}  exports.prototype.loginClientCredentialsGrant = function(clientId, clientSecret) {
     //TODO
     throw new Error('Not implemented');
+  };
+
+{{#emitJSDoc}}  /**
+   * @description xxx
+   * @param {xxxtypexxx} xxxnamexxx - (Optional, default "xxx") xxx
+   */
+{{/emitJSDoc}}  exports.prototype._testTokenAccess = function() {
+    var self = this;
+    return new Promise(function(resolve, reject) {
+      // Check if there is a token to test
+      if (!self.authentications['PureCloud Auth'].accessToken) {
+        console.log('Token is not set');
+        reject(new Error('Token is not set'));
+        return;
+      }
+
+      // Test token
+      console.log('Testing token...');
+      self.callApi('/api/v2/authorization/permissions', 'GET', 
+        null, null, null, null, null, ['PureCloud Auth'], ['application/json'], ['application/json'])
+        .then(function(roles) {
+          console.log('Auth token valid');
+          resolve();
+        })
+        .catch(function(error) {
+          console.error('token is invalid');
+          reject(error);
+        });
+    });
   };
 
 {{#emitJSDoc}}  /**
@@ -143,24 +182,27 @@
       }, {});
 
     // Set access token
-    if(hash.access_token) this.setAccessToken(hash.access_token);
+    if(hash.access_token) {
+      // Set access token
+      this.setAccessToken(hash.access_token);
 
-    // Remove hash from URL
-    // Credit: https://stackoverflow.com/questions/1397329/how-to-remove-the-hash-from-window-location-with-javascript-without-page-refresh/5298684#5298684
-    var scrollV, scrollH, loc = window.location;
-    if ('replaceState' in history) {
-      history.replaceState('', document.title, loc.pathname + loc.search);
-    } else {
-      // Prevent scrolling by storing the page's current scroll offset
-      scrollV = document.body.scrollTop;
-      scrollH = document.body.scrollLeft;
+      // Remove hash from URL
+      // Credit: https://stackoverflow.com/questions/1397329/how-to-remove-the-hash-from-window-location-with-javascript-without-page-refresh/5298684#5298684
+      var scrollV, scrollH, loc = window.location;
+      if ('replaceState' in history) {
+        history.replaceState('', document.title, loc.pathname + loc.search);
+      } else {
+        // Prevent scrolling by storing the page's current scroll offset
+        scrollV = document.body.scrollTop;
+        scrollH = document.body.scrollLeft;
 
-      // Remove hash
-      loc.hash = '';
+        // Remove hash
+        loc.hash = '';
 
-      // Restore the scroll offset, should be flicker free
-      document.body.scrollTop = scrollV;
-      document.body.scrollLeft = scrollH;
+        // Restore the scroll offset, should be flicker free
+        document.body.scrollTop = scrollV;
+        document.body.scrollLeft = scrollH;
+      }
     }
   };
 
@@ -253,7 +295,7 @@
    * @returns {String} The string representation of <code>param</code>.
    */
 {{/emitJSDoc}}  exports.prototype.paramToString = function(param) {
-    if (param == undefined || param == null) {
+    if (param === undefined || param === null) {
       return '';
     }
     if (param instanceof Date) {
@@ -299,7 +341,7 @@
    * @returns {Boolean} <code>true</code> if <code>contentType</code> represents JSON, otherwise <code>false</code>.
    */
 {{/emitJSDoc}}  exports.prototype.isJsonMime = function(contentType) {
-    return Boolean(contentType != null && contentType.match(/^application\/json(;.*)?$/i));
+    return Boolean(contentType !== null && contentType.match(/^application\/json(;.*)?$/i));
   };
 
 {{#emitJSDoc}}  /**
@@ -357,7 +399,7 @@
 {{/emitJSDoc}}  exports.prototype.normalizeParams = function(params) {
     var newParams = {};
     for (var key in params) {
-      if (params.hasOwnProperty(key) && params[key] != undefined && params[key] != null) {
+      if (params.hasOwnProperty(key) && params[key] !== undefined && params[key] !== null) {
         var value = params[key];
         if (this.isFileParam(value) || Array.isArray(value)) {
           newParams[key] = value;
@@ -410,7 +452,7 @@
    * <code>param</code> as is if <code>collectionFormat</code> is <code>multi</code>.
    */
 {{/emitJSDoc}}  exports.prototype.buildCollectionParam = function buildCollectionParam(param, collectionFormat) {
-    if (param == null) {
+    if (param === null) {
       return null;
     }
     switch (collectionFormat) {
@@ -481,13 +523,13 @@
    * @returns A value of the specified type.
    */
 {{/emitJSDoc}}  exports.prototype.deserialize = function deserialize(response, returnType) {
-    if (response == null || returnType == null) {
+    if (response === null || returnType === null) {
       return null;
     }
     // Rely on SuperAgent for parsing response body.
     // See http://visionmedia.github.io/superagent/#parsing-response-bodies
     var data = response.body;
-    if (data == null) {
+    if (data === null) {
       // SuperAgent does not always produce a body; use the unparsed response as a fallback
       data = response.text;
     }
@@ -645,18 +687,18 @@
         } else if (typeof type === 'object') {
           // for plain object type like: {'String': 'Integer'}
           var keyType, valueType;
-          for (var k in type) {
-            if (type.hasOwnProperty(k)) {
-              keyType = k;
-              valueType = type[k];
+          for (var typeKey in type) {
+            if (type.hasOwnProperty(typeKey)) {
+              keyType = typeKey;
+              valueType = type[typeKey];
               break;
             }
           }
           var result = {};
-          for (var k in data) {
-            if (data.hasOwnProperty(k)) {
-              var key = exports.convertToType(k, keyType);
-              var value = exports.convertToType(data[k], valueType);
+          for (var dataKey in data) {
+            if (data.hasOwnProperty(dataKey)) {
+              var key = exports.convertToType(dataKey, keyType);
+              var value = exports.convertToType(data[dataKey], valueType);
               result[key] = value;
             }
           }
