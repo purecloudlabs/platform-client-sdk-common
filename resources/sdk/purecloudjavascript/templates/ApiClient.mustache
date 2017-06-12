@@ -513,29 +513,6 @@
     });
   };
 
-{{#emitJSDoc}}  /**
-   * Deserializes an HTTP response body into a value of the specified type.
-   * @param {Object} response A SuperAgent response object.
-   * @param {(String|Array.<String>|Object.<String, Object>|Function)} returnType The type to return. Pass a string for simple types
-   * or the constructor function for a complex type. Pass an array containing the type name to return an array of that type. To
-   * return an object, pass an object with one property whose name is the key type and whose value is the corresponding value type:
-   * all properties on <code>data<code> will be converted to this type.
-   * @returns A value of the specified type.
-   */
-{{/emitJSDoc}}  exports.prototype.deserialize = function deserialize(response, returnType) {
-    if (response === null || returnType === null) {
-      return null;
-    }
-    // Rely on SuperAgent for parsing response body.
-    // See http://visionmedia.github.io/superagent/#parsing-response-bodies
-    var data = response.body;
-    if (data === null) {
-      // SuperAgent does not always produce a body; use the unparsed response as a fallback
-      data = response.text;
-    }
-    return exports.convertToType(data, returnType);
-  };
-
 {{#emitJSDoc}}{{^usePromises}}  /**
    * Callback function to receive the result of the operation.
    * @callback module:{{#invokerPackage}}{{invokerPackage}}/{{/invokerPackage}}ApiClient~callApiCallback
@@ -648,85 +625,6 @@
    */
 {{/emitJSDoc}}  exports.parseDate = function(str) {
     return new Date(str.replace(/T/i, ' '));
-  };
-
-{{#emitJSDoc}}  /**
-   * Converts a value to the specified type.
-   * @param {(String|Object)} data The data to convert, as a string or object.
-   * @param {(String|Array.<String>|Object.<String, Object>|Function)} type The type to return. Pass a string for simple types
-   * or the constructor function for a complex type. Pass an array containing the type name to return an array of that type. To
-   * return an object, pass an object with one property whose name is the key type and whose value is the corresponding value type:
-   * all properties on <code>data<code> will be converted to this type.
-   * @returns An instance of the specified type.
-   */
-{{/emitJSDoc}}  exports.convertToType = function(data, type) {
-    switch (type) {
-      case 'Boolean':
-        return Boolean(data);
-      case 'Integer':
-        return parseInt(data, 10);
-      case 'Number':
-        return parseFloat(data);
-      case 'String':
-        return String(data);
-      case 'Date':
-        return this.parseDate(String(data));
-      default:
-        if (type === Object) {
-          // generic object, return directly
-          return data;
-        } else if (typeof type === 'function') {
-          // for model type like: User
-          return type.constructFromObject(data);
-        } else if (Array.isArray(type)) {
-          // for array type like: ['String']
-          var itemType = type[0];
-          return data.map(function(item) {
-            return exports.convertToType(item, itemType);
-          });
-        } else if (typeof type === 'object') {
-          // for plain object type like: {'String': 'Integer'}
-          var keyType, valueType;
-          for (var typeKey in type) {
-            if (type.hasOwnProperty(typeKey)) {
-              keyType = typeKey;
-              valueType = type[typeKey];
-              break;
-            }
-          }
-          var result = {};
-          for (var dataKey in data) {
-            if (data.hasOwnProperty(dataKey)) {
-              var key = exports.convertToType(dataKey, keyType);
-              var value = exports.convertToType(data[dataKey], valueType);
-              result[key] = value;
-            }
-          }
-          return result;
-        } else {
-          // for unknown type, return the data directly
-          return data;
-        }
-    }
-  };
-
-{{#emitJSDoc}}  /**
-   * Constructs a new map or array model from REST data.
-   * @param data {Object|Array} The REST data.
-   * @param obj {Object|Array} The target object or array.
-   */
-{{/emitJSDoc}}  exports.constructFromObject = function(data, obj, itemType) {
-    if (Array.isArray(data)) {
-      for (var i = 0; i < data.length; i++) {
-        if (data.hasOwnProperty(i))
-          obj[i] = exports.convertToType(data[i], itemType);
-      }
-    } else {
-      for (var k in data) {
-        if (data.hasOwnProperty(k))
-          result[k] = exports.convertToType(data[k], itemType);
-      }
-    }
   };
 
 {{#emitJSDoc}}  /**
