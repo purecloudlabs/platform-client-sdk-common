@@ -6,6 +6,7 @@ swagger.json
 /test.js
 localConfig.json
 localConfig.yml
+resources/sdk/*/scripts/local.sh
 
 
 
