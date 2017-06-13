@@ -110,16 +110,14 @@ client.setEnvironment('mypurecloud.ie');
 ~~~
 
 
-## Local Storage
+## Access token persistence
 
-To persist a token across web pages when navigating between them, set the `storageKey` in `PureCloudSession`.
-`storageKey` will be used to store the token in LocalStorage if supported so make it unique if multiple sessions may exist in the same page.
+In a web environment, it is possible to persist the access token to prevent an authentication request from being made on each page load. To enable this function, simply enable settings persistence prior to attempting a login. To maintain multiple auth tokens in storage, specify the prefix to use for storage/retrieval when enabling persistence. Otherwise, the prefix is optional and will default to `purecloud`.
 
 ~~~ js
-var session = purecloud.platform.PureCloudSession({
-  // ... your other settings
-  storageKey: 'myAuthToken'
-});
+var platformClient = require('platformClient');
+var client = platformClient.ApiClient.instance;
+client.setPersistSettings(true, 'optional_prefix');
 ~~~
 
 

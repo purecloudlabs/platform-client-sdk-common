@@ -59,11 +59,70 @@
      */
     this.timeout = 16000;
 
+    this.settingsPrefix = 'purecloud';
+
     // Check for auth token in hash
     this._setValuesFromUrlHash();
   };
 
-/////////////////////
+{{#emitJSDoc}}  /**
+   * @description xxx
+   * @param {string} xxx - (Optional, default false) xxx
+   */
+{{/emitJSDoc}}  exports.prototype.setPersistSettings = function setPersistSettings(doPersist, prefix) {
+    this.persistSettings = doPersist;
+    this.settingsPrefix = prefix ? prefix.replace(/\W+/g, '_') : 'purecloud';
+    console.log(`this.settingsPrefix=${this.settingsPrefix}`);
+  };
+
+{{#emitJSDoc}}  /**
+   * @description xxx
+   * @param {string} xxx - (Optional, default false) xxx
+   */
+{{/emitJSDoc}}  exports.prototype.saveSettings = function saveSettings(doPersist) {
+    try {
+      // Don't save settings if we aren't supposed to be persisting them
+      if (this.persistSettings !== true) return;
+
+      // Ensure we can access local storage
+      if (!exports.hasLocalStorage) {
+        console.log('Warning: Cannot access local storage. Settings will not be saved.');
+        return;
+      }
+
+      // Save settings
+      if (this.authentications['PureCloud Auth'].accessToken) {
+        localStorage.setItem(`${this.settingsPrefix}_access_token`, this.authentications['PureCloud Auth'].accessToken);
+        console.log('Access token saved to local storage');
+      } else {
+        console.log('Access token cleared');
+        localStorage.removeItem(`${this.settingsPrefix}_access_token`);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+{{#emitJSDoc}}  /**
+   * @description xxx
+   * @param {string} xxx - (Optional, default false) xxx
+   */
+{{/emitJSDoc}}  exports.prototype.loadSettings = function loadSettings(doPersist) {
+    // Don't load settings if we aren't supposed to be persisting them
+    if (this.persistSettings !== true) return;
+
+    // Ensure we can access local storage
+    if (!exports.hasLocalStorage) {
+      console.log('Warning: Cannot access local storage. Settings will not be loaded.');
+      return;
+    }
+
+    var token = localStorage.getItem(`${this.settingsPrefix}_access_token`);
+    if (token) {
+      this.setAccessToken(token);
+      console.log('Access token retrieved from local storage');
+    }
+  };
 
 {{#emitJSDoc}}  /**
    * @description Sets the environment used by the session
@@ -85,6 +144,7 @@
       environment = environment.substring(4);
 
     // Set vars
+    this.environment = environment;
     this.basePath = `https://api.${environment}`;
     this.authUrl = `https://login.${environment}`;
   };
@@ -133,23 +193,24 @@
 {{/emitJSDoc}}  exports.prototype._testTokenAccess = function() {
     var self = this;
     return new Promise(function(resolve, reject) {
+      // Load from storage
+      self.loadSettings();
+
       // Check if there is a token to test
       if (!self.authentications['PureCloud Auth'].accessToken) {
-        console.log('Token is not set');
         reject(new Error('Token is not set'));
         return;
       }
 
       // Test token
-      console.log('Testing token...');
       self.callApi('/api/v2/authorization/permissions', 'GET', 
         null, null, null, null, null, ['PureCloud Auth'], ['application/json'], ['application/json'])
         .then(function(roles) {
-          console.log('Auth token valid');
+          self.saveSettings();
           resolve();
         })
         .catch(function(error) {
-          console.error('token is invalid');
+          self.setAccessToken(undefined);
           reject(error);
         });
     });
@@ -205,14 +266,7 @@
     // Set token for API use
     this.authentications['PureCloud Auth'].accessToken = token;
 
-    // Store token?
-    if (this.storageKey && exports.hasLocalStorage) {
-      if (token) {
-        localStorage.setItem(this.storageKey, token);
-      } else {
-        localStorage.removeItem(this.storageKey);
-      }
-    }
+    this.saveSettings();
   };
 
 {{#emitJSDoc}}  /**
@@ -233,8 +287,8 @@
    */
 {{/emitJSDoc}}  exports.hasLocalStorage = (function() {
     try {
-      localStorage.setItem("mod", "mod");
-      localStorage.removeItem("mod");
+      localStorage.setItem('purecloud_local_storage_test', 'purecloud_local_storage_test');
+      localStorage.removeItem('purecloud_local_storage_test');
       return true;
     } catch(e) {
       return false;
