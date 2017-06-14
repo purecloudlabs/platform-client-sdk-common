@@ -69,6 +69,14 @@
    * @description xxx
    * @param {string} xxx - (Optional, default false) xxx
    */
+{{/emitJSDoc}}  exports.prototype.setDebugLog = function setDebugLoggingEnabled(debugLog) {
+    this.debugLog = debugLog;
+  };
+
+{{#emitJSDoc}}  /**
+   * @description xxx
+   * @param {string} xxx - (Optional, default false) xxx
+   */
 {{/emitJSDoc}}  exports.prototype.setReturnExtendedResponses = function setReturnExtendedResponses(returnExtended) {
     this.returnExtended = returnExtended;
   };
@@ -639,8 +647,27 @@
       request.accept(accept);
     }
 
+    if(this.debugLog){
+      var trace = `[REQUEST] ${httpMethod} ${url}`;
+      if(pathParams && Object.keys(pathParams).count > 0 && pathParams[Object.keys(pathParams)[0]]){
+        trace += "\nPath Params: " + JSON.stringify(pathParams);
+      }
+
+      if(queryParams && Object.keys(queryParams).count > 0 && queryParams[Object.keys(queryParams)[0]]){
+        trace += "\nQuery Params: " + JSON.stringify(queryParams);
+      }
+
+      if(bodyParam){
+        trace += "\nBody: " + JSON.stringify(bodyParam);
+      }
+
+      this.debugLog(trace);
+    }
+
 {{#usePromises}}    return new Promise(function(resolve, reject) {
       request.end(function(error, response) {
+
+        // Build response object
         var data = (_this.returnExtended === true || error) ? {
               status: response.status,
               statusText: response.statusText,
@@ -649,6 +676,24 @@
               text: response.text,
               error: error
             } : response.body ? response.body : response.text;
+
+        // Debug logging
+        if (_this.debugLog) {
+          var trace = `[RESPONSE] ${response.status}: ${response.req.method} ${response.req.url}`;
+          if (response.headers)
+            trace += `\ninin-correlation-id: ${response.headers['inin-correlation-id']}`;
+          if (response.body)
+            trace += `\nBody: ${JSON.stringify(response.body,null,2)}`;
+
+          // Log trace message
+          _this.debugLog(trace);
+
+          // Log stack trace
+          if (error)
+            _this.debugLog(error);
+        }
+
+        // Resolve promise
         if (error) {
           reject(data);
         } else {

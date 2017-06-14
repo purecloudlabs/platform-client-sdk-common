@@ -157,7 +157,7 @@ client.loginImplicitGrant(clientId, redirectUri)
 
 ### Extended Responses
 
-By default, the SDK will return only the response body as the result of an API function call. To retrieve additional information about the response, enable extended responses. This will return the extended response for all API function calls. 
+By default, the SDK will return only the response body as the result of an API function call. To retrieve additional information about the response, enable extended responses. This will return the extended response for all API function calls:
 
 ~~~ js
 var {{moduleName}} = require('{{projectName}}');
@@ -226,17 +226,10 @@ Example error response object:
 
 ## Debug Logging
 
-There are hooks to trace requests and responses.  To enable tracing, override the .debugLog method on the session object.
+There are hooks to trace requests and responses.  To enable debug tracing, provide a log object:
 
 ~~~ js
-pureCloudSession.debugLog = console.log;
-~~~
-
-
-## Proxy Support
-
-If behind a corporate proxy, provide an ```options.proxy``` property when creating a session:
-
-~~~ js
-var session = purecloud.PureCloudSession({proxy: 'http://my-corporate-proxy:1080'})
+var {{moduleName}} = require('{{projectName}}');
+var client = {{projectName}}.ApiClient.instance;
+client.setDebugLog(console.log);
 ~~~
