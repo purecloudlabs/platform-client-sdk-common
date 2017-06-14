@@ -105,18 +105,19 @@ client.setAccessToken(yourAccessToken);
 If connecting to a PureCloud environment other than mypurecloud.com (e.g. mypurecloud.ie), set the environment on the `ApiClient` instance.
 
 ~~~ js
+var {{moduleName}} = require('{{projectName}}');
 var client = {{moduleName}}.ApiClient.instance;
 client.setEnvironment('mypurecloud.ie');
 ~~~
 
 
-## Access token persistence
+## Access Token persistence
 
 In a web environment, it is possible to persist the access token to prevent an authentication request from being made on each page load. To enable this function, simply enable settings persistence prior to attempting a login. To maintain multiple auth tokens in storage, specify the prefix to use for storage/retrieval when enabling persistence. Otherwise, the prefix is optional and will default to `purecloud`.
 
 ~~~ js
-var platformClient = require('platformClient');
-var client = platformClient.ApiClient.instance;
+var {{moduleName}} = require('{{projectName}}');
+var client = {{projectName}}.ApiClient.instance;
 client.setPersistSettings(true, 'optional_prefix');
 ~~~
 
