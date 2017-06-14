@@ -155,30 +155,70 @@ client.loginImplicitGrant(clientId, redirectUri)
 ~~~
 
 
-### Error Responses
+### Extended Responses
 
-Error responses will contain an object with the HTTP status code, response headers, and the body of the error response.  e.g.
+By default, the SDK will return only the response body as the result of an API function call. To retrieve additional information about the response, enable extended responses. This will return the extended response for all API function calls. 
 
 ~~~ js
+var {{moduleName}} = require('{{projectName}}');
+var client = {{projectName}}.ApiClient.instance;
+client.setReturnExtendedResponses(true);
+~~~
+
+Extended response object example (`body` and `text` have been truncated):
+
+~~~ json
 {
-  "statusCode": 400,
+  "status": 200,
+  "statusText": "",
   "headers": {
-    "date": "Fri, 24 Feb 2017 16:36:21 GMT",
-    "content-type": "application/json",
-    "content-length": "135",
-    "connection": "close",
-    "inin-correlation-id": "391a2855-53ae-4f2b-bc9d-728ef989fd08",
-    "inin-ratelimit-count": "1",
-    "inin-ratelimit-allowed": "300",
-    "inin-ratelimit-reset": "60",
-    "cache-control": "no-cache, no-store, must-revalidate",
+    "inin-ratelimit-allowed": "180",
+    "inin-ratelimit-count": "3",
+    "inin-ratelimit-reset": "3",
     "pragma": "no-cache",
+    "inin-correlation-id": "ec35f2a8-289b-42d4-8893-c50eaf81a3c1",
+    "content-type": "application/json",
+    "cache-control": "no-cache, no-store, must-revalidate",
+    "expires": "0"
+  },
+  "body": {},
+  "text": "",
+  "error": null
+}
+~~~
+
+
+### Error Responses
+
+Error responses will always be thrown as an extended response object. Note that the `error` property will contain a JavaScript [Error](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) object.
+
+Example error response object:
+
+~~~ json
+{
+  "status": 404,
+  "statusText": "",
+  "headers": {
+    "inin-ratelimit-allowed": "300",
+    "inin-ratelimit-count": "6",
+    "inin-ratelimit-reset": "38",
+    "pragma": "no-cache",
+    "inin-correlation-id": "d11bd3b3-ab7e-4fd4-9687-d04af9f30a63",
+    "content-type": "application/json",
+    "cache-control": "no-cache, no-store, must-revalidate",
     "expires": "0"
   },
   "body": {
-    "status": 400,
-    "code": "invalid.value",
-    "message": "Value [] is not valid for field type [QueryFilterType]. Allowable values are: and, or"
+    "status": 404,
+    "code": "not.found",
+    "message": "The requested operation failed with status 404",
+    "contextId": "d11bd3b3-ab7e-4fd4-9687-d04af9f30a63",
+    "details": [],
+    "errors": []
+  },
+  "text": "{\"status\":404,\"code\":\"not.found\",\"message\":\"The requested operation failed with status 404\",\"contextId\":\"d11bd3b3-ab7e-4fd4-9687-d04af9f30a63\",\"details\":[],\"errors\":[]}",
+  "error": {
+    "original": null
   }
 }
 ~~~

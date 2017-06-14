@@ -69,6 +69,14 @@
    * @description xxx
    * @param {string} xxx - (Optional, default false) xxx
    */
+{{/emitJSDoc}}  exports.prototype.setReturnExtendedResponses = function setReturnExtendedResponses(returnExtended) {
+    this.returnExtended = returnExtended;
+  };
+
+{{#emitJSDoc}}  /**
+   * @description xxx
+   * @param {string} xxx - (Optional, default false) xxx
+   */
 {{/emitJSDoc}}  exports.prototype.setPersistSettings = function setPersistSettings(doPersist, prefix) {
     this.persistSettings = doPersist;
     this.settingsPrefix = prefix ? prefix.replace(/\W+/g, '_') : 'purecloud';
@@ -633,17 +641,17 @@
 
 {{#usePromises}}    return new Promise(function(resolve, reject) {
       request.end(function(error, response) {
+        var data = (_this.returnExtended === true || error) ? {
+              status: response.status,
+              statusText: response.statusText,
+              headers: response.headers,
+              body: response.body,
+              text: response.text,
+              error: error
+            } : response.body ? response.body : response.text;
         if (error) {
-          reject(error);
+          reject(data);
         } else {
-          // Get the parsed body
-          var data = response.body;
-
-          // Fall back to the string body
-          if (!data)
-            data = response.text;
-
-          // Resolve the promise
           resolve(data);
         }
       });
