@@ -69,8 +69,9 @@ client.loginClientCredentialsGrant(clientId, clientSecret)
   .then(function() {
     // Do authenticated things
   })
-  .catch(function(error) {
-    console.log(error);
+  .catch(function(response) {
+    console.log(`${response.status} - ${response.error.message}`);
+    console.log(response.error);
   });
 ~~~
 
@@ -85,8 +86,9 @@ client.loginImplicitGrant(clientId, redirectUri)
   .then(function() {
     // Do authenticated things
   })
-  .catch(function(error) {
-    console.log(error);
+  .catch(function(response) {
+    console.log(`${response.status} - ${response.error.message}`);
+    console.log(response.error);
   });
 ~~~
 
@@ -129,7 +131,24 @@ All API requests return a Promise which resolves to the response body, otherwise
 **Node.js**
 
 ~~~ js
-//TODO: include example of getting permissions
+// Create API instance
+var authorizationApi = new platformClient.AuthorizationApi();
+
+// Authenticate
+client.loginClientCredentialsGrant(clientId, clientSecret)
+  .then(function() 
+    // Make request to GET /api/v2/authorization/permissions
+    return authorizationApi.getAuthorizationPermissions();
+  })
+  .then(function(permissions) {
+    // Handle successful result
+    console.log(permissions);
+  })
+  .catch(function(response) {
+    // Handle failure response
+    console.log(`${response.status} - ${response.error.message}`);
+    console.log(response.error);
+  });
 ~~~
 
 **Web**
@@ -148,9 +167,10 @@ client.loginImplicitGrant(clientId, redirectUri)
     // Handle successful result
     console.log(`Hello, ${userMe.name}!`);
   })
-  .catch(function(error) {
-    // Handle failure result
-    console.error(error);
+  .catch(function(response) {
+    // Handle failure response
+    console.log(`${response.status} - ${response.error.message}`);
+    console.log(response.error);
   });
 ~~~
 

@@ -197,9 +197,31 @@
    * @description xxx
    * @param {xxxtypexxx} xxxnamexxx - (Optional, default "xxx") xxx
    */
-{{/emitJSDoc}}  exports.prototype.loginClientCredentialsGrant = function(clientId, clientSecret) {
-    //TODO
-    throw new Error('Not implemented');
+{{/emitJSDoc}}  exports.prototype.loginClientCredentialsGrant = function loginClientCredentialsGrant(clientId, clientSecret) {
+    var self = this;
+    this.clientId = clientId;
+    var authHeader = new Buffer(clientId + ':' + clientSecret).toString('base64');
+
+    return new Promise(function(resolve, reject) {
+      console.log('Requesting token');
+      // Build token request
+      var request = superagent('POST', `https://login.${self.environment}/oauth/token`);
+      request.set('Authorization', `Basic ${authHeader}`);
+      request.send('grant_type=client_credentials');
+
+      // Execute request
+      request.end(function(error, response) {
+        if (error) {
+          console.log('Error authenticating!');
+          console.log(error);
+          reject(error);
+        } else {
+          self.setAccessToken(response.body['access_token']);
+          console.log(`Access token expires in ${response.body['expires_in']} seconds`);
+          resolve();
+        }
+      });
+    });
   };
 
 {{#emitJSDoc}}  /**
