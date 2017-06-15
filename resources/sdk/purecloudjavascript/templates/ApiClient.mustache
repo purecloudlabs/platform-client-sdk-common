@@ -76,16 +76,17 @@
   };
 
 {{#emitJSDoc}}  /**
-   * @description xxx
-   * @param {string} xxx - (Optional, default false) xxx
+   * @description If set to `true`, the response object will contain additional information about the HTTP response. When `false` (default) only the body object will be returned.
+   * @param {boolean} returnExtended - `true` to return extended responses
    */
 {{/emitJSDoc}}  exports.prototype.setReturnExtendedResponses = function setReturnExtendedResponses(returnExtended) {
     this.returnExtended = returnExtended;
   };
 
 {{#emitJSDoc}}  /**
-   * @description xxx
-   * @param {string} xxx - (Optional, default false) xxx
+   * @description When `true`, persists the auth token to local storage to avoid a redirect to the login page on each page load. Defaults to `false`.
+   * @param {boolean} doPersist - `true` to persist the auth token to local storage
+   * @param {string} prefix - (Optional, default 'purecloud') The name prefix used for the local storage key
    */
 {{/emitJSDoc}}  exports.prototype.setPersistSettings = function setPersistSettings(doPersist, prefix) {
     this.persistSettings = doPersist;
@@ -94,10 +95,9 @@
   };
 
 {{#emitJSDoc}}  /**
-   * @description xxx
-   * @param {string} xxx - (Optional, default false) xxx
+   * @description Saves the auth token to local storage, if enabled.
    */
-{{/emitJSDoc}}  exports.prototype.saveSettings = function saveSettings(doPersist) {
+{{/emitJSDoc}}  exports.prototype._saveSettings = function _saveSettings() {
     try {
       // Don't save settings if we aren't supposed to be persisting them
       if (this.persistSettings !== true) return;
@@ -122,10 +122,9 @@
   };
 
 {{#emitJSDoc}}  /**
-   * @description xxx
-   * @param {string} xxx - (Optional, default false) xxx
+   * @description Loads settings from local storage, if enabled.
    */
-{{/emitJSDoc}}  exports.prototype.loadSettings = function loadSettings(doPersist) {
+{{/emitJSDoc}}  exports.prototype._loadSettings = function _loadSettings() {
     // Don't load settings if we aren't supposed to be persisting them
     if (this.persistSettings !== true) return;
 
@@ -168,8 +167,9 @@
   };
 
 {{#emitJSDoc}}  /**
-   * @description xxx
-   * @param {xxxtypexxx} xxxnamexxx - (Optional, default "xxx") xxx
+   * @description Initiates the implicit grant login flow. Will attempt to load the token from local storage, if enabled.
+   * @param {string} clientId - The client ID of an OAuth Implicit Grant client
+   * @param {string} redirectUri - The redirect URI of the OAuth Implicit Grant client
    */
 {{/emitJSDoc}}  exports.prototype.loginImplicitGrant = function loginImplicitGrant(clientId, redirectUri) {
     var self = this;
@@ -196,8 +196,9 @@
   };
 
 {{#emitJSDoc}}  /**
-   * @description xxx
-   * @param {xxxtypexxx} xxxnamexxx - (Optional, default "xxx") xxx
+   * @description Initiates the client credentials login flow. Only available in node apps.
+   * @param {string} clientId - The client ID of an OAuth Implicit Grant client
+   * @param {string} clientSecret - The client secret of an OAuth Implicit Grant client
    */
 {{/emitJSDoc}}  exports.prototype.loginClientCredentialsGrant = function loginClientCredentialsGrant(clientId, clientSecret) {
     var self = this;
@@ -233,14 +234,13 @@
   };
 
 {{#emitJSDoc}}  /**
-   * @description xxx
-   * @param {xxxtypexxx} xxxnamexxx - (Optional, default "xxx") xxx
+   * @description Loads token from storage, if enabled, and checks to ensure it works.
    */
 {{/emitJSDoc}}  exports.prototype._testTokenAccess = function _testTokenAccess() {
     var self = this;
     return new Promise(function(resolve, reject) {
       // Load from storage
-      self.loadSettings();
+      self._loadSettings();
 
       // Check if there is a token to test
       if (!self.authentications['PureCloud Auth'].accessToken) {
@@ -252,7 +252,7 @@
       self.callApi('/api/v2/authorization/permissions', 'GET', 
         null, null, null, null, null, ['PureCloud Auth'], ['application/json'], ['application/json'])
         .then(function(roles) {
-          self.saveSettings();
+          self._saveSettings();
           resolve();
         })
         .catch(function(error) {
@@ -263,8 +263,7 @@
   };
 
 {{#emitJSDoc}}  /**
-   * @description xxx
-   * @param {xxxtypexxx} xxxnamexxx - (Optional, default "xxx") xxx
+   * @description Parses the URL hash, grabs the access token, and clears the hash. If no access token is found, no action is taken.
    */
 {{/emitJSDoc}}  exports.prototype._setValuesFromUrlHash = function() {
     // Check for window
@@ -305,19 +304,19 @@
   };
 
 {{#emitJSDoc}}  /**
-   * @description xxx
-   * @param {xxxtypexxx} xxxnamexxx - (Optional, default "xxx") xxx
+   * @description Sets the access token to be used with requests
+   * @param {string} token - The access token
    */
 {{/emitJSDoc}}  exports.prototype.setAccessToken = function(token) {
     // Set token for API use
     this.authentications['PureCloud Auth'].accessToken = token;
 
-    this.saveSettings();
+    this._saveSettings();
   };
 
 {{#emitJSDoc}}  /**
-   * @description xxx
-   * @param {xxxtypexxx} xxxnamexxx - (Optional, default "xxx") xxx
+   * @description Sets the storage key to use when persisting the access token
+   * @param {string} storageKey - The storage key name
    */
 {{/emitJSDoc}}  exports.prototype.setStorageKey = function(storageKey) {
     // Set storage key
@@ -328,8 +327,7 @@
   };
 
 {{#emitJSDoc}}  /**
-   * @description xxx
-   * @param {xxxtypexxx} xxxnamexxx - (Optional, default "xxx") xxx
+   * @description Value is `true` if local storage exists. Otherwise, false.
    */
 {{/emitJSDoc}}  exports.hasLocalStorage = (function() {
     try {
@@ -342,8 +340,7 @@
   }).call(this);
 
 {{#emitJSDoc}}  /**
-   * @description xxx
-   * @param {xxxtypexxx} xxxnamexxx - (Optional, default "xxx") xxx
+   * @description Redirects the user to the PureCloud logout page
    */
 {{/emitJSDoc}}  exports.prototype.logout = function() {
     if(exports.hasLocalStorage) {
@@ -360,8 +357,9 @@
 };
 
 {{#emitJSDoc}}  /**
-   * @description xxx
-   * @param {xxxtypexxx} xxxnamexxx - (Optional, default "xxx") xxx
+   * @description Constructs a URL to the auth server
+   * @param {string} path - The path for the URL
+   * @param {object} query - An object of key/value pairs to use for querystring keys/values
    */
 {{/emitJSDoc}}  exports.prototype._buildAuthUrl = function(path, query) {
   function qs(url, key) {
@@ -745,7 +743,7 @@
 {{/usePromises}}  };
 
 {{#emitJSDoc}}  /**
-   * Parses an ISO-8601 string representation of a date value.
+   * @description Parses an ISO-8601 string representation of a date value.
    * @param {String} str The date value as a string.
    * @returns {Date} The parsed date object.
    */
