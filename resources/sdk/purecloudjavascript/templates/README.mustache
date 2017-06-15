@@ -246,10 +246,10 @@ Example error response object:
 
 ## Debug Logging
 
-There are hooks to trace requests and responses.  To enable debug tracing, provide a log object:
+There are hooks to trace requests and responses.  To enable debug tracing, provide a log object. Optionally, specify a maximum number of lines. If specified, the response body trace will be truncated. If not specified, the entire response body will be traced out.
 
 ~~~ js
 var {{moduleName}} = require('{{projectName}}');
 var client = {{projectName}}.ApiClient.instance;
-client.setDebugLog(console.log);
+client.setDebugLog(console.log, 25);
 ~~~
