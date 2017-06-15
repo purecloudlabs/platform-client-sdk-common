@@ -169,7 +169,7 @@
    * @description xxx
    * @param {xxxtypexxx} xxxnamexxx - (Optional, default "xxx") xxx
    */
-{{/emitJSDoc}}  exports.prototype.loginImplicitGrant = function(clientId, redirectUri) {
+{{/emitJSDoc}}  exports.prototype.loginImplicitGrant = function loginImplicitGrant(clientId, redirectUri) {
     var self = this;
     this.clientId = clientId;
     this.redirectUri = redirectUri;
@@ -206,7 +206,7 @@
    * @description xxx
    * @param {xxxtypexxx} xxxnamexxx - (Optional, default "xxx") xxx
    */
-{{/emitJSDoc}}  exports.prototype._testTokenAccess = function() {
+{{/emitJSDoc}}  exports.prototype._testTokenAccess = function _testTokenAccess() {
     var self = this;
     return new Promise(function(resolve, reject) {
       // Load from storage
@@ -605,6 +605,23 @@
     var url = this.buildUrl(path, pathParams);
     var request = superagent(httpMethod, url);
 
+    if(this.debugLog){
+      var trace = `[REQUEST] ${httpMethod} ${url}`;
+      if(pathParams && Object.keys(pathParams).count > 0 && pathParams[Object.keys(pathParams)[0]]){
+        trace += "\nPath Params: " + JSON.stringify(pathParams);
+      }
+
+      if(queryParams && Object.keys(queryParams).count > 0 && queryParams[Object.keys(queryParams)[0]]){
+        trace += "\nQuery Params: " + JSON.stringify(queryParams);
+      }
+
+      if(bodyParam){
+        trace += "\nBody: " + JSON.stringify(bodyParam);
+      }
+
+      this.debugLog(trace);
+    }
+
     // apply authentications
     this.applyAuthToRequest(request, authNames);
 
@@ -647,23 +664,6 @@
       request.accept(accept);
     }
 
-    if(this.debugLog){
-      var trace = `[REQUEST] ${httpMethod} ${url}`;
-      if(pathParams && Object.keys(pathParams).count > 0 && pathParams[Object.keys(pathParams)[0]]){
-        trace += "\nPath Params: " + JSON.stringify(pathParams);
-      }
-
-      if(queryParams && Object.keys(queryParams).count > 0 && queryParams[Object.keys(queryParams)[0]]){
-        trace += "\nQuery Params: " + JSON.stringify(queryParams);
-      }
-
-      if(bodyParam){
-        trace += "\nBody: " + JSON.stringify(bodyParam);
-      }
-
-      this.debugLog(trace);
-    }
-
 {{#usePromises}}    return new Promise(function(resolve, reject) {
       request.end(function(error, response) {
 
@@ -679,11 +679,22 @@
 
         // Debug logging
         if (_this.debugLog) {
-          var trace = `[RESPONSE] ${response.status}: ${response.req.method} ${response.req.url}`;
+          var trace = `[RESPONSE] ${response.status}: ${httpMethod} ${url}`;
           if (response.headers)
             trace += `\ninin-correlation-id: ${response.headers['inin-correlation-id']}`;
           if (response.body)
             trace += `\nBody: ${JSON.stringify(response.body,null,2)}`;
+
+          // Truncate to 25 lines
+          var truncTrace = '';
+          var lines = trace.split('\n');
+          if (lines.length > 25) {
+            for  (var i = 0; i < 25; i++) {
+              truncTrace += lines[i] + '\n';
+            }
+            truncTrace += '...response truncated...';
+            trace = truncTrace;
+          }
 
           // Log trace message
           _this.debugLog(trace);
