@@ -66,11 +66,13 @@
   };
 
 {{#emitJSDoc}}  /**
-   * @description xxx
-   * @param {string} xxx - (Optional, default false) xxx
+   * @description Sets the debug log to enable debug logging
+   * @param {log} debugLog - In most cases use `console.log`
+   * @param {integer} maxLines - (optional) The max number of lines to write to the log. Must be > 0.
    */
-{{/emitJSDoc}}  exports.prototype.setDebugLog = function setDebugLoggingEnabled(debugLog) {
+{{/emitJSDoc}}  exports.prototype.setDebugLog = function setDebugLoggingEnabled(debugLog, maxLines) {
     this.debugLog = debugLog;
+    this.debugLogMaxLines = (maxLines && maxLines > 0) ? maxLines : undefined;
   };
 
 {{#emitJSDoc}}  /**
@@ -370,8 +372,6 @@
   return Object.keys(query).reduce(qs, baseUrl);
 };
 
-/////////////////////
-
 {{#emitJSDoc}}  /**
    * Returns a string representation for an actual parameter.
    * @param param The actual parameter.
@@ -641,7 +641,7 @@
         trace += "\nBody: " + JSON.stringify(bodyParam);
       }
 
-      this.debugLog(trace);
+      this._debugTrace(trace);
     }
 
     // apply authentications
@@ -707,23 +707,12 @@
           if (response.body)
             trace += `\nBody: ${JSON.stringify(response.body,null,2)}`;
 
-          // Truncate to 25 lines
-          var truncTrace = '';
-          var lines = trace.split('\n');
-          if (lines.length > 25) {
-            for  (var i = 0; i < 25; i++) {
-              truncTrace += lines[i] + '\n';
-            }
-            truncTrace += '...response truncated...';
-            trace = truncTrace;
-          }
-
           // Log trace message
-          _this.debugLog(trace);
+          _this._debugTrace(trace);
 
           // Log stack trace
           if (error)
-            _this.debugLog(error);
+            _this._debugTrace(error);
         }
 
         // Resolve promise
@@ -759,7 +748,31 @@
   };
 
 {{#emitJSDoc}}  /**
-   * The default API client implementation.
+   * @description Logs to the debug log
+   * @param {String} str The date value as a string.
+   * @returns {Date} The parsed date object.
+   */
+{{/emitJSDoc}}  exports.prototype._debugTrace = function _debugTrace(trace) {
+    if (!this.debugLog) return;
+
+    console.log('debuggggg');
+
+    if (typeof(trace) === 'string') {
+      // Truncate
+      var truncTrace = '';
+      var lines = trace.split('\n');
+      if (this.debugLogMaxLines && lines.length > this.debugLogMaxLines) {
+        for  (var i = 0; i < this.debugLogMaxLines; i++) {
+          truncTrace += lines[i] + '\n';
+        }
+        truncTrace += '...response truncated...';
+        trace = truncTrace;
+      }
+    }
+  };
+
+{{#emitJSDoc}}  /**
+   * @description The default API client implementation.
    * @type {module:{{#invokerPackage}}{{invokerPackage}}/{{/invokerPackage}}ApiClient}
    */
 {{/emitJSDoc}}  exports.instance = new exports();
