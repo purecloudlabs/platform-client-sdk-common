@@ -205,6 +205,12 @@
     var authHeader = new Buffer(clientId + ':' + clientSecret).toString('base64');
 
     return new Promise(function(resolve, reject) {
+      // Block browsers from using client credentials
+      if (typeof window !== 'undefined') {
+        reject(new Error('The client credentials grant is not supported in a browser.'));
+        return;
+      }
+
       console.log('Requesting token');
       // Build token request
       var request = superagent('POST', `https://login.${self.environment}/oauth/token`);
