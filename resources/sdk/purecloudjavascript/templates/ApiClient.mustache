@@ -755,8 +755,6 @@
 {{/emitJSDoc}}  exports.prototype._debugTrace = function _debugTrace(trace) {
     if (!this.debugLog) return;
 
-    console.log('debuggggg');
-
     if (typeof(trace) === 'string') {
       // Truncate
       var truncTrace = '';
@@ -769,6 +767,8 @@
         trace = truncTrace;
       }
     }
+
+    this.debugLog(trace);
   };
 
 {{#emitJSDoc}}  /**
