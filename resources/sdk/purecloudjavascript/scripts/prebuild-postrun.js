@@ -18,7 +18,7 @@ try {
             "emitModelMethods": true,
             "emitJSDoc": true,
             "localVariablePrefix": "pc",
-            "invokerPackage": "purecloud-platform-client-v2"
+            "invokerPackage": projectName || "purecloud-platform-client-v2"
       };
 
 	fs.writeFileSync(swaggerCodegenConfigFilePath, JSON.stringify(config, null, 2));
