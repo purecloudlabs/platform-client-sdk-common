@@ -1,0 +1,78 @@
+(function(root, factory) {
+  if (typeof define === 'function' && define.amd) {
+    // AMD. Register as an anonymous module.
+    define(['{{#invokerPackage}}{{invokerPackage}}/{{/invokerPackage}}ApiClient'], factory);
+  } else if (typeof module === 'object' && module.exports) {
+    // CommonJS-like environments that support module.exports, like Node.
+    module.exports = factory(require('../ApiClient'));
+  } else {
+    // Browser globals (root is window)
+    if (!root.{{moduleName}}) {
+      root.{{moduleName}} = {};
+    }
+    root.{{moduleName}}.{{classname}} = factory(root.{{moduleName}}.ApiClient);
+  }
+}(this, function(ApiClient) {
+  'use strict';
+
+{{#emitJSDoc}}  /**
+   * {{baseName}} service.
+   * @module {{#invokerPackage}}{{invokerPackage}}/{{/invokerPackage}}{{#apiPackage}}{{apiPackage}}/{{/apiPackage}}{{classname}}
+   * @version {{projectVersion}}
+   */
+
+  /**
+   * Constructs a new {{classname}}. {{#description}}
+   * {{description}}{{/description}}
+   * @alias module:{{#invokerPackage}}{{invokerPackage}}/{{/invokerPackage}}{{#apiPackage}}{{apiPackage}}/{{/apiPackage}}{{classname}}
+   * @class
+   * @param {module:{{#invokerPackage}}{{invokerPackage}}/{{/invokerPackage}}ApiClient} apiClient Optional API client implementation to use,
+   * default to {@link module:{{#invokerPackage}}{{invokerPackage}}/{{/invokerPackage}}ApiClient#instance} if unspecified.
+   */
+{{/emitJSDoc}}  var exports = function(apiClient) {
+    this.apiClient = apiClient || ApiClient.instance;
+
+{{#operations}}{{#operation}}{{#emitJSDoc}}{{^usePromises}}
+    /**
+     * Callback function to receive the result of the {{nickname}} operation.
+     * @callback module:{{#invokerPackage}}{{invokerPackage}}/{{/invokerPackage}}{{#apiPackage}}{{apiPackage}}/{{/apiPackage}}{{classname}}~{{nickname}}Callback
+     * @param {String} error Error message, if any.
+     * @param {{#vendorExtensions.x-jsdoc-type}}{{&vendorExtensions.x-jsdoc-type}} data The data returned by the service call.{{/vendorExtensions.x-jsdoc-type}}{{^vendorExtensions.x-jsdoc-type}}data This operation does not return a value.{{/vendorExtensions.x-jsdoc-type}}
+     * @param {String} response The complete HTTP response.
+     */{{/usePromises}}
+
+    /**{{#summary}}
+     * {{summary}}{{/summary}}{{#notes}}
+     * {{notes}}{{/notes}}{{#allParams}}{{#required}}
+     * @param {{&vendorExtensions.x-jsdoc-type}} {{paramName}} {{description}}{{/required}}{{/allParams}}{{#hasOptionalParams}}
+     * @param {Object} opts Optional parameters{{#allParams}}{{^required}}
+     * @param {{&vendorExtensions.x-jsdoc-type}} opts.{{paramName}} {{description}}{{#defaultValue}} (default to {{.}}){{/defaultValue}}{{/required}}{{/allParams}}{{/hasOptionalParams}}{{^usePromises}}
+     * @param {module:{{#invokerPackage}}{{invokerPackage}}/{{/invokerPackage}}{{#apiPackage}}{{apiPackage}}/{{/apiPackage}}{{classname}}~{{nickname}}Callback} callback The callback function, accepting three arguments: error, data, response{{/usePromises}}
+     */
+{{/emitJSDoc}}    this.{{nickname}} = function({{vendorExtensions.x-codegen-argList}}) { {{#hasOptionalParams}}
+      opts = opts || {};{{/hasOptionalParams}}
+{{#allParams}}{{#required}}
+      // verify the required parameter '{{paramName}}' is set
+      if ({{paramName}} === undefined || {{paramName}} === null) {
+        throw "Missing the required parameter '{{paramName}}' when calling {{nickname}}";
+      }
+{{/required}}{{/allParams}}
+
+      return this.apiClient.callApi(
+        '{{&path}}', 
+        '{{httpMethod}}', 
+        { {{#pathParams}}'{{baseName}}': {{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}{{#hasMore}},{{/hasMore}}{{/pathParams}} }, 
+        { {{#queryParams}}'{{baseName}}': {{#collectionFormat}}this.apiClient.buildCollectionParam({{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}, '{{collectionFormat}}'){{/collectionFormat}}{{^collectionFormat}}{{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}{{/collectionFormat}}{{#hasMore}},{{/hasMore}}{{/queryParams}} }, 
+        { {{#headerParams}}'{{baseName}}': {{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}{{#hasMore}},{{/hasMore}}{{/headerParams}} }, 
+        { {{#formParams}}'{{baseName}}': {{#collectionFormat}}this.apiClient.buildCollectionParam({{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}, '{{collectionFormat}}'){{/collectionFormat}}{{^collectionFormat}}{{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}{{/collectionFormat}}{{#hasMore}},{{/hasMore}}{{/formParams}} }, 
+        {{#bodyParam}}{{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}{{/bodyParam}}{{^bodyParam}}null{{/bodyParam}}, 
+        ['PureCloud Auth'], 
+        [{{#consumes}}'{{mediaType}}'{{#hasMore}}, {{/hasMore}}{{/consumes}}], 
+        [{{#produces}}'{{mediaType}}'{{#hasMore}}, {{/hasMore}}{{/produces}}]{{^usePromises}}, 
+        callback{{/usePromises}}
+      );
+    };
+{{/operation}}{{/operations}}  };
+
+  return exports;
+}));

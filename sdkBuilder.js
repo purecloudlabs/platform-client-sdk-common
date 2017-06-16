@@ -4,7 +4,7 @@ const fs = require('fs');
 
 const swaggerDiff = require('./modules/swaggerDiff');
 const Builder = require('./modules/builder');
-const sdkLanguageRegex = /^(purecloudjava|pureclouddotnet|purecloudruby|purecloudpython)$/i;
+const sdkLanguageRegex = /^(purecloudjava|purecloudjavascript|pureclouddotnet|purecloudruby|purecloudpython)$/i;
 
 try {
 	program
