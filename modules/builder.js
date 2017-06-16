@@ -44,8 +44,10 @@ function Builder(configPath, localConfigPath) {
 
 		if (fs.existsSync(localConfigPath))
 			this.localConfig = loadConfig(localConfigPath);
-		else
+		else {
+			this.localConfig = {};
 			log.warn(`No local config provided. Path: ${localConfigPath}`);
+		}
 
 		// Apply overrides
 		log.info('Applying overrides...');
@@ -113,8 +115,7 @@ function Builder(configPath, localConfigPath) {
 		resolveEnvVars(this.config);
 		resolveEnvVars(this.localConfig);
 		if (this.config.settings.debugConfig === true) {
-			if (this.localConfig)
-				log.debug('Local config file: \n' + JSON.stringify(this.localConfig,null,2));
+			log.debug('Local config file: \n' + JSON.stringify(this.localConfig,null,2));
 			log.debug('Config file: \n' + JSON.stringify(this.config,null,2));
 		}
 
