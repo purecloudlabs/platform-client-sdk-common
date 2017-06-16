@@ -17,7 +17,7 @@ cd $BUILD_DIR
 
 aws s3 cp \
 	$BUILD_DIR/web \
-	s3://inin-index-files-prod/developercenter-cdn/javascript/$SDK_VERSION \
+	s3://inin-index-files-prod/developercenter-cdn/javascript/$VERSION \
 	--recursive --acl "public-read"
 aws s3 cp \
 	$BUILD_DIR/web \
