@@ -53,7 +53,7 @@ var opts = { {{#allParams}}{{^required}}
 {{#usePromises}}
 apiInstance.{{{operationId}}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/hasOptionalParams}})
   .then(function({{#returnType}}data{{/returnType}}) {
-    {{#returnType}}console.log(`{{{operationId}}} success! data: ${data}`);{{/returnType}}{{^returnType}}console.log('{{{operationId}}} returned successfully.');{{/returnType}}
+    {{#returnType}}console.log(`{{{operationId}}} success! data: ${JSON.stringify(data, null, 2)}`);{{/returnType}}{{^returnType}}console.log('{{{operationId}}} returned successfully.');{{/returnType}}
   })
   .catch(function(error) {
   	console.log('There was a failure calling {{{operationId}}}');
