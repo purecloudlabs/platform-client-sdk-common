@@ -1,3 +1,5 @@
+Platform API version: {{#def.data.apiVersionData.BuildVersion}}
+
 {{ if ({{#def.data.hasExtraNotes === true}}) { }}
 {{#def.data.extraNotes}}
 {{ } }}

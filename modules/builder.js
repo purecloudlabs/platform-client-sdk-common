@@ -3,6 +3,7 @@ const childProcess = require('child_process');
 const deref = require('json-schema-deref-sync');
 const fs = require('fs-extra');
 const githubApi = require('github-api-promise');
+const https = require('https');
 const moment = require('moment-timezone');
 const path = require('path');
 const pluralize = require('pluralize');
@@ -297,11 +298,38 @@ function prebuildImpl() {
 				if (self.isNewVersion === true && self.config.settings.versionFile) {
 					fs.writeFileSync(self.config.settings.versionFile, JSON.stringify(self.version, null, 2));
 				}
+
+				// Get API version from health check endpoint
+				var deferred = Q.defer();
+				var resString = '';
+				log.info('Getting API version...');
+				https.get('https://api.mypurecloud.com/api/v2/health/check', function(res) {
+					res.on('data', function (chunk) {
+			              resString += chunk;
+			        });
+			        res.on('end', function() {
+			        	deferred.resolve(JSON.parse(resString));
+			        });
+			        res.on('error', function(err) {
+			        	deferred.reject(err);
+			        });
+				});
+
+				return deferred.promise;
 			})
-			.then(function() {
+			.then(function(apiVersionData) {
+				// Sanitize and store API version data
+				var apiVersionDataClean = {};
+				_.forIn(apiVersionData, function(value, key) {
+					apiVersionDataClean[key.replace(/\W+/g, '')] = value;
+				});
+				self.apiVersionData = apiVersionDataClean;
+			    log.debug(`API version data: ${JSON.stringify(apiVersionDataClean,null,2)}`);
+
 				// Get extra release note data
 				var data = { extraNotes: getEnv('RELEASE_NOTES') };
 				data.hasExtraNotes = data.extraNotes !== undefined;
+				data.apiVersionData = self.apiVersionData;
 
 				// Get release notes
 				log.info('Generating release notes...');
