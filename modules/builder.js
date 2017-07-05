@@ -302,8 +302,8 @@ function prebuildImpl() {
 				// Get API version from health check endpoint
 				var deferred = Q.defer();
 				var resString = '';
-				log.info('Getting API version...');
-				https.get('https://api.mypurecloud.com/api/v2/health/check', function(res) {
+				log.info(`Getting API version from ${self.config.settings.apiHealthCheckUrl}`);
+				https.get(self.config.settings.apiHealthCheckUrl, function(res) {
 					res.on('data', function (chunk) {
 			              resString += chunk;
 			        });

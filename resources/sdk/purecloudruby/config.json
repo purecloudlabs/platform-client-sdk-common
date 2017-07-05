@@ -27,7 +27,8 @@
     "debugConfig": false,
     "enableLoggerColor": false,
     "gemName": "purecloudplatformclientv2",
-    "moduleName": "PureCloud"
+    "moduleName": "PureCloud",
+    "apiHealthCheckUrl": "https://api.mypurecloud.com/api/v2/health/check"
   },
   "stageSettings": {
     "prebuild": {

@@ -27,7 +27,8 @@
     "debugConfig": false,
     "enableLoggerColor": false,
     "packageName": "purecloud-platform-client-v2",
-    "moduleName": "platformClient"
+    "moduleName": "platformClient",
+    "apiHealthCheckUrl": "https://api.mypurecloud.com/api/v2/health/check"
   },
   "stageSettings": {
     "prebuild": {
