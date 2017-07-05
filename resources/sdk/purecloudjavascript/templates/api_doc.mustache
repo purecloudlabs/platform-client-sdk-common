@@ -15,7 +15,7 @@ All URIs are relative to *{{basePath}}*
 {{#operation}}
 <a name="{{operationId}}"></a>
 
-# {{#returnType}}{{#returnTypeIsPrimitive}}**{{returnType}}**{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}[**{{returnType}}**]({{returnBaseType}}.html){{/returnTypeIsPrimitive}}{{/returnType}}{{^returnType}}null{{/returnType}} {{operationId}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/hasOptionalParams}})
+# {{#returnType}}{{#returnTypeIsPrimitive}}**{{returnType}}**{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}[**{{returnType}}**]({{returnBaseType}}.html){{/returnTypeIsPrimitive}}{{/returnType}}{{^returnType}}void{{/returnType}} {{operationId}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/hasOptionalParams}})
 
 {{httpMethod}} {{path}}
 
@@ -36,7 +36,7 @@ var {{{name}}} = {{{moduleName}}}.ApiClient.instance.authentications['{{{name}}}
 // Configure API key authorization: {{{name}}}
 var {{{name}}} = {{{moduleName}}}.ApiClient.instance.authentications['{{{name}}}'];
 {{{name}}}.apiKey = 'YOUR API KEY';
-// Uncomment the following line to set a prefix for the API key, e.g. "Token" (defaults to null)
+// Uncomment the following line to set a prefix for the API key, e.g. "Token" (defaults to void)
 //{{{name}}}.apiKeyPrefix = 'Token';{{/isApiKey}}{{#isOAuth}}
 // Configure OAuth2 access token for authorization: {{{name}}}
 {{{moduleName}}}.ApiClient.instance.authentications['{{{name}}}'].accessToken = 'YOUR ACCESS TOKEN';{{/isOAuth}}
@@ -82,7 +82,7 @@ apiInstance.{{{operationId}}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendo
 
 ### Return type
 
-{{#returnType}}{{#returnTypeIsPrimitive}}**{{returnType}}**{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}[**{{returnType}}**]({{returnBaseType}}.html){{/returnTypeIsPrimitive}}{{/returnType}}{{^returnType}}null (empty response body){{/returnType}}
+{{#returnType}}{{#returnTypeIsPrimitive}}**{{returnType}}**{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}[**{{returnType}}**]({{returnBaseType}}.html){{/returnTypeIsPrimitive}}{{/returnType}}{{^returnType}}void (no response body){{/returnType}}
 
 {{/operation}}
 {{/operations}}
