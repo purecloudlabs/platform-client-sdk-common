@@ -7,11 +7,14 @@ const Builder = require('./modules/builder');
 const sdkLanguageRegex = /^(purecloudjava|purecloudjavascript|pureclouddotnet|purecloudruby|purecloudpython)$/i;
 
 try {
+	// Parse language regex for hoomans
+	var sdkLanguages = sdkLanguageRegex.toString().substring(3,sdkLanguageRegex.toString().length - 4).replace(/\|/gi, ", ");
+
 	program
 		.version('1.0.0')
 		.option('--config <path>', 'Path to SDK config file')
 		.option('--localconfig <path>', 'Path to SDK local config file')
-		.option('--sdk [language]', 'Generate the SDK for the given swager-codegen language using the default config', sdkLanguageRegex)
+		.option('--sdk [language]', `Generate the SDK for the given swager-codegen language using the default config. Languages: ${sdkLanguages}`, sdkLanguageRegex)
 		.parse(process.argv);
 
 	if (program.sdk) {
