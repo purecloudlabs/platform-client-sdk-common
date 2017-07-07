@@ -176,18 +176,14 @@ namespace {{packageName}}.Api
         {{#allParams}}/// <param name="{{paramName}}">{{description}}{{^required}} (optional{{#defaultValue}}, default to {{.}}{{/defaultValue}}){{/required}}</param>
         {{/allParams}}/// <returns>ApiResponse of {{#returnType}}{{returnType}}{{/returnType}}{{^returnType}}Object(void){{/returnType}}</returns>
         public ApiResponse<{{#returnType}} {{{returnType}}} {{/returnType}}{{^returnType}}Object{{/returnType}}> {{operationId}}WithHttpInfo ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{#hasMore}}, {{/hasMore}}{{/allParams}})
-        {
-            {{#allParams}}
-            {{#required}}
+        { {{#allParams}}{{#required}}
             // verify the required parameter '{{paramName}}' is set
             if ({{paramName}} == null)
-                throw new ApiException(400, "Missing required parameter '{{paramName}}' when calling {{classname}}->{{operationId}}");
-            {{/required}}
-            {{/allParams}}
+                throw new ApiException(400, "Missing required parameter '{{paramName}}' when calling {{classname}}->{{operationId}}");{{/required}}{{/allParams}}
 
             var localVarPath = "{{path}}";
             var localVarPathParams = new Dictionary<String, String>();
-            var localVarQueryParams = new Dictionary<String, String>();
+            var localVarQueryParams = new List<Tuple<String, String>>();
             var localVarHeaderParams = new Dictionary<String, String>(Configuration.DefaultHeader);
             var localVarFormParams = new Dictionary<String, String>();
             var localVarFileParams = new Dictionary<String, FileParameter>();
@@ -214,59 +210,47 @@ namespace {{packageName}}.Api
             // set "format" to json by default
             // e.g. /pet/{petId}.{format} becomes /pet/{petId}.json
             localVarPathParams.Add("format", "json");
-            {{#pathParams}}
-            if ({{paramName}} != null) localVarPathParams.Add("{{baseName}}", Configuration.ApiClient.ParameterToString({{paramName}})); // path parameter
-            {{/pathParams}}
-            {{#queryParams}}
-            if ({{paramName}} != null) localVarQueryParams.Add("{{baseName}}", Configuration.ApiClient.ParameterToString({{paramName}})); // query parameter
-            {{/queryParams}}
-            {{#headerParams}}
-            if ({{paramName}} != null) localVarHeaderParams.Add("{{baseName}}", Configuration.ApiClient.ParameterToString({{paramName}})); // header parameter
-            {{/headerParams}}
-            {{#formParams}}
-            if ({{paramName}} != null) {{#isFile}}localVarFileParams.Add("{{baseName}}", Configuration.ApiClient.ParameterToFile("{{baseName}}", {{paramName}}));{{/isFile}}{{^isFile}}localVarFormParams.Add("{{baseName}}", Configuration.ApiClient.ParameterToString({{paramName}})); // form parameter{{/isFile}}
-            {{/formParams}}
-            {{#bodyParam}}
+
+            // Path params{{#pathParams}}
+            if ({{paramName}} != null) localVarPathParams.Add("{{baseName}}", Configuration.ApiClient.ParameterToString({{paramName}}));{{/pathParams}}
+
+            // Query params{{#queryParams}}{{#isListContainer}}
+            if ({{paramName}} != null) {{paramName}}.ForEach(obj => { localVarQueryParams.Add(new Tuple<string, string>("{{paramName}}", Configuration.ApiClient.ParameterToString(obj))); });{{/isListContainer}}{{^isListContainer}}
+            if ({{paramName}} != null) localVarQueryParams.Add(new Tuple<string, string>("{{baseName}}", Configuration.ApiClient.ParameterToString({{paramName}})));{{/isListContainer}}{{/queryParams}}
+
+            // Header params{{#headerParams}}
+            if ({{paramName}} != null) localVarHeaderParams.Add("{{baseName}}", Configuration.ApiClient.ParameterToString({{paramName}})); // header parameter{{/headerParams}}
+
+            // Form params{{#formParams}}
+            if ({{paramName}} != null) {{#isFile}}localVarFileParams.Add("{{baseName}}", Configuration.ApiClient.ParameterToFile("{{baseName}}", {{paramName}}));{{/isFile}}{{^isFile}}localVarFormParams.Add("{{baseName}}", Configuration.ApiClient.ParameterToString({{paramName}})); // form parameter{{/isFile}}{{/formParams}}
+            
+            // Body param{{#bodyParam}}
             if ({{paramName}} != null && {{paramName}}.GetType() != typeof(byte[]))
-            {
                 localVarPostBody = Configuration.ApiClient.Serialize({{paramName}}); // http body (model) parameter
-            }
             else
-            {
                 localVarPostBody = {{paramName}}; // byte array
-            }
             {{/bodyParam}}
 
             {{#authMethods}}
-            // authentication ({{name}}) required
-            {{#isApiKey}}
-            {{#isKeyInHeader}}
+            // authentication ({{name}}) required{{#isApiKey}}{{#isKeyInHeader}}
             if (!String.IsNullOrEmpty(Configuration.GetApiKeyWithPrefix("{{keyParamName}}")))
             {
                 localVarHeaderParams["{{keyParamName}}"] = Configuration.GetApiKeyWithPrefix("{{keyParamName}}");
-            }
-            {{/isKeyInHeader}}
-            {{#isKeyInQuery}}
+            }{{/isKeyInHeader}}{{#isKeyInQuery}}
             if (!String.IsNullOrEmpty(Configuration.GetApiKeyWithPrefix("{{keyParamName}}")))
             {
                 localVarQueryParams["{{keyParamName}}"] = Configuration.GetApiKeyWithPrefix("{{keyParamName}}");
-            }
-            {{/isKeyInQuery}}
-            {{/isApiKey}}
-            {{#isBasic}}
+            }{{/isKeyInQuery}}{{/isApiKey}}{{#isBasic}}
             // http basic authentication required
             if (!String.IsNullOrEmpty(Configuration.Username) || !String.IsNullOrEmpty(Configuration.Password))
             {
                 localVarHeaderParams["Authorization"] = "Basic " + ApiClient.Base64Encode(Configuration.Username + ":" + Configuration.Password);
-            }
-            {{/isBasic}}
-            {{#isOAuth}}
+            }{{/isBasic}}{{#isOAuth}}
             // oauth required
             if (!String.IsNullOrEmpty(Configuration.AccessToken))
             {
                 localVarHeaderParams["Authorization"] = "Bearer " + Configuration.AccessToken;
-            }{{/isOAuth}}
-            {{/authMethods}}
+            }{{/isOAuth}}{{/authMethods}}
 
             // make the HTTP request
             IRestResponse localVarResponse = (IRestResponse) Configuration.ApiClient.CallApi(localVarPath,
@@ -311,18 +295,15 @@ namespace {{packageName}}.Api
         {{#allParams}}/// <param name="{{paramName}}">{{description}}{{^required}} (optional{{#defaultValue}}, default to {{.}}{{/defaultValue}}){{/required}}</param>
         {{/allParams}}/// <returns>Task of ApiResponse{{#returnType}} ({{returnType}}){{/returnType}}</returns>
         public async System.Threading.Tasks.Task<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Object{{/returnType}}>> {{operationId}}AsyncWithHttpInfo ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{#hasMore}}, {{/hasMore}}{{/allParams}})
-        {
-            {{#allParams}}
-            {{#required}}
+        { {{#allParams}}{{#required}}
             // verify the required parameter '{{paramName}}' is set
             if ({{paramName}} == null)
                 throw new ApiException(400, "Missing required parameter '{{paramName}}' when calling {{classname}}->{{operationId}}");
-            {{/required}}
-            {{/allParams}}
+            {{/required}}{{/allParams}}
 
             var localVarPath = "{{path}}";
             var localVarPathParams = new Dictionary<String, String>();
-            var localVarQueryParams = new Dictionary<String, String>();
+            var localVarQueryParams = new List<Tuple<String, String>>();
             var localVarHeaderParams = new Dictionary<String, String>(Configuration.DefaultHeader);
             var localVarFormParams = new Dictionary<String, String>();
             var localVarFileParams = new Dictionary<String, FileParameter>();
@@ -349,60 +330,47 @@ namespace {{packageName}}.Api
             // set "format" to json by default
             // e.g. /pet/{petId}.{format} becomes /pet/{petId}.json
             localVarPathParams.Add("format", "json");
-            {{#pathParams}}
-            if ({{paramName}} != null) localVarPathParams.Add("{{baseName}}", Configuration.ApiClient.ParameterToString({{paramName}})); // path parameter
-            {{/pathParams}}
-            {{#queryParams}}
-            if ({{paramName}} != null) localVarQueryParams.Add("{{baseName}}", Configuration.ApiClient.ParameterToString({{paramName}})); // query parameter
-            {{/queryParams}}
-            {{#headerParams}}
-            if ({{paramName}} != null) localVarHeaderParams.Add("{{baseName}}", Configuration.ApiClient.ParameterToString({{paramName}})); // header parameter
-            {{/headerParams}}
-            {{#formParams}}
-            if ({{paramName}} != null) {{#isFile}}localVarFileParams.Add("{{baseName}}", Configuration.ApiClient.ParameterToFile("{{baseName}}", {{paramName}}));{{/isFile}}{{^isFile}}localVarFormParams.Add("{{baseName}}", Configuration.ApiClient.ParameterToString({{paramName}})); // form parameter{{/isFile}}
-            {{/formParams}}
-            {{#bodyParam}}
+
+            // Path params{{#pathParams}}
+            if ({{paramName}} != null) localVarPathParams.Add("{{baseName}}", Configuration.ApiClient.ParameterToString({{paramName}}));{{/pathParams}}
+
+            // Query params{{#queryParams}}{{#isListContainer}}
+            if ({{paramName}} != null) {{paramName}}.ForEach(obj => { localVarQueryParams.Add(new Tuple<string, string>("{{paramName}}", Configuration.ApiClient.ParameterToString(obj))); });{{/isListContainer}}{{^isListContainer}}
+            if ({{paramName}} != null) localVarQueryParams.Add(new Tuple<string, string>("{{baseName}}", Configuration.ApiClient.ParameterToString({{paramName}})));{{/isListContainer}}{{/queryParams}}
+
+            // Header params{{#headerParams}}
+            if ({{paramName}} != null) localVarHeaderParams.Add("{{baseName}}", Configuration.ApiClient.ParameterToString({{paramName}})); // header parameter{{/headerParams}}
+
+            // Form params{{#formParams}}
+            if ({{paramName}} != null) {{#isFile}}localVarFileParams.Add("{{baseName}}", Configuration.ApiClient.ParameterToFile("{{baseName}}", {{paramName}}));{{/isFile}}{{^isFile}}localVarFormParams.Add("{{baseName}}", Configuration.ApiClient.ParameterToString({{paramName}})); // form parameter{{/isFile}}{{/formParams}}
+            
+            // Body param{{#bodyParam}}
             if ({{paramName}} != null && {{paramName}}.GetType() != typeof(byte[]))
-            {
                 localVarPostBody = Configuration.ApiClient.Serialize({{paramName}}); // http body (model) parameter
-            }
             else
-            {
                 localVarPostBody = {{paramName}}; // byte array
-            }
             {{/bodyParam}}
 
             {{#authMethods}}
-            // authentication ({{name}}) required
-            {{#isApiKey}}
-            {{#isKeyInHeader}}
+            // authentication ({{name}}) required{{#isApiKey}}{{#isKeyInHeader}}
             if (!String.IsNullOrEmpty(Configuration.GetApiKeyWithPrefix("{{keyParamName}}")))
             {
                 localVarHeaderParams["{{keyParamName}}"] = Configuration.GetApiKeyWithPrefix("{{keyParamName}}");
-            }
-            {{/isKeyInHeader}}
-            {{#isKeyInQuery}}
+            }{{/isKeyInHeader}}{{#isKeyInQuery}}
             if (!String.IsNullOrEmpty(Configuration.GetApiKeyWithPrefix("{{keyParamName}}")))
             {
                 localVarQueryParams["{{keyParamName}}"] = Configuration.GetApiKeyWithPrefix("{{keyParamName}}");
-            }
-            {{/isKeyInQuery}}
-            {{/isApiKey}}
-            {{#isBasic}}
+            }{{/isKeyInQuery}}{{/isApiKey}}{{#isBasic}}
             // http basic authentication required
             if (!String.IsNullOrEmpty(Configuration.Username) || !String.IsNullOrEmpty(Configuration.Password))
             {
                 localVarHeaderParams["Authorization"] = "Basic " + ApiClient.Base64Encode(Configuration.Username + ":" + Configuration.Password);
-            }
-            {{/isBasic}}
-            {{#isOAuth}}
+            }{{/isBasic}}{{#isOAuth}}
             // oauth required
             if (!String.IsNullOrEmpty(Configuration.AccessToken))
             {
                 localVarHeaderParams["Authorization"] = "Bearer " + Configuration.AccessToken;
-            }
-            {{/isOAuth}}
-            {{/authMethods}}
+            }{{/isOAuth}}{{/authMethods}}
 
             // make the HTTP request
             IRestResponse localVarResponse = (IRestResponse) await Configuration.ApiClient.CallApiAsync(localVarPath,
