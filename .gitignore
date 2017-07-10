@@ -10,6 +10,7 @@ resources/sdk/*/scripts/local.sh
 resources/sdk/pureclouddotnet/extensions/Client/NotificationTopics.cs
 
 
+package-lock.json
 
 
 ##################################################################
