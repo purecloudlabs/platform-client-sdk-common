@@ -1,0 +1,19 @@
+using System;
+using System.Collections.Generic;
+using {{namespace}}.Model;
+
+namespace {{namespace}}.Client
+{
+    public static class NotificationTopics
+    {
+        public static Dictionary<string, Type> Topics;
+
+        static NotificationTopics()
+        {
+            Topics = new Dictionary<string, Type>
+            { {{#notifications}}
+              {"{{topic}}", typeof({{class}})},{{/notifications}}
+            };
+        }
+    }
+}

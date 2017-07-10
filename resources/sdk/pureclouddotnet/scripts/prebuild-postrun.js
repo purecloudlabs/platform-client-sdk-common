@@ -1,33 +1,33 @@
 const fs = require('fs-extra');
 const path = require('path');
 
-//var Mustache = require('mustache');
+var Mustache = require('mustache');
 
-/*
-//TODO: Implement this
-function generateNotificationTopicsFile() {
-	try {
-		var notificationsRaw = fs.readFileSync('bin/notificationMappings.json', 'UTF-8');
-		var notifications = JSON.parse(notificationsRaw);
-		var notificationsTemplate = fs.readFileSync('buildScripts/notifications.mustache', 'UTF-8');
+function generateNotificationTopicsFile(templatePath, dataPath, outPath, namespace) {
+	var notificationsRaw = fs.readFileSync(dataPath, 'UTF-8');
+	var notifications = JSON.parse(notificationsRaw);
+	notifications.namespace = namespace;
+	var notificationsTemplate = fs.readFileSync(templatePath, 'UTF-8');
 
-		var notificationsClass = Mustache.render(notificationsTemplate, notifications);
-		fs.writeFileSync('Extensions/Client/NotificationTopics.cs', notificationsClass, 'UTF-8');
-	} catch(e) {
-		if (e.code === 'ENOENT') {
-			console.log('File not found!');
-			console.log(e);
-		} else {
-			deferred.reject(e);
-		}
-	}
+	var notificationsClass = Mustache.render(notificationsTemplate, notifications);
+	fs.writeFileSync(outPath, notificationsClass, 'UTF-8');
+	console.log('File written to ${outPath}');
 }
-*/
 
 try {
 	var swaggerCodegenConfigFilePath = process.argv[2];
 	var version = require(path.resolve(process.argv[3]));
 	var packageName = process.argv[4];
+	var notificationsTemplatePath = process.argv[5];
+	var notificationsDataPath = process.argv[6];
+	var notificationsOutPath = process.argv[7];
+
+	console.log(`swaggerCodegenConfigFilePath=${swaggerCodegenConfigFilePath}`);
+	console.log(`version=${version}`);
+	console.log(`packageName=${packageName}`);
+	console.log(`notificationsTemplatePath=${notificationsTemplatePath}`);
+	console.log(`notificationsDataPath=${notificationsDataPath}`);
+	console.log(`notificationsOutPath=${notificationsOutPath}`);
 
 	var config = {
 		"packageName": packageName || "PureCloudPlatform.Client",
@@ -42,6 +42,8 @@ try {
 
 	fs.writeFileSync(swaggerCodegenConfigFilePath, JSON.stringify(config, null, 2));
 	console.log(`Config file written to ${swaggerCodegenConfigFilePath}`);
+
+	generateNotificationTopicsFile(notificationsTemplatePath, notificationsDataPath, notificationsOutPath, packageName);
 } catch(err) {
 	process.exitCode = 1;
 	console.log(err);
