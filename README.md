@@ -5,7 +5,7 @@ This repository contains scripts, templates, and configuration files that are us
 ## SDK Repos
 
 * [Java](https://github.com/MyPureCloud/platform-client-sdk-java)
-* [Javascript](https://github.com/MyPureCloud/purecloud_api_sdk_javascript)
+* [Javascript](https://github.com/MyPureCloud/platform-client-sdk-javascript)
 * [.NET](https://github.com/MyPureCloud/platform-client-sdk-dotnet)
 * [Python](https://github.com/MyPureCloud/platform-client-sdk-python)
 * [Ruby](https://github.com/MyPureCloud/platform-client-sdk-ruby)
