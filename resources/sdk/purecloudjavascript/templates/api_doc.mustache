@@ -77,12 +77,12 @@ apiInstance.{{{operationId}}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendo
 {{^allParams}}This endpoint does not need any parameter.{{/allParams}}{{#allParams}}{{#-last}}
 | Name | Type | Description  | Notes |
 | ------------- | ------------- | ------------- | ------------- |{{/-last}}{{/allParams}}
-{{#allParams}} **{{paramName}}** | {{#isPrimitiveType}}**{{dataType}}**{{/isPrimitiveType}}{{^isPrimitiveType}}{{#isFile}}**{{dataType}}**{{/isFile}}{{^isFile}}[**{{dataType}}**]({{baseType}}.html){{/isFile}}{{/isPrimitiveType}}| {{description}} | {{^required}}[optional] {{/required}}{{#defaultValue}}[default to {{defaultValue}}]{{/defaultValue}}{{#allowableValues}}<br />**Values**: {{#values}}{{.}}{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}} |
+{{#allParams}} **{{paramName}}** | **{{dataType}}** | {{description}} | {{^required}}[optional] {{/required}}{{#defaultValue}}[default to {{defaultValue}}]{{/defaultValue}}{{#allowableValues}}<br />**Values**: {{#values}}{{.}}{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}} |
 {{/allParams}}{: class="table table-striped"}
 
 ### Return type
 
-{{#returnType}}{{#returnTypeIsPrimitive}}**{{returnType}}**{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}[**{{returnType}}**]({{returnBaseType}}.html){{/returnTypeIsPrimitive}}{{/returnType}}{{^returnType}}void (no response body){{/returnType}}
+{{#returnType}}**{{returnType}}**{{/returnType}}{{^returnType}}void (no response body){{/returnType}}
 
 {{/operation}}
 {{/operations}}
