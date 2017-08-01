@@ -20,7 +20,7 @@ mkdir $PACKAGE_DIR
 mkdir $PACKAGE_DIR/src
 
 cp $BUILD_DIR/package.json $PACKAGE_DIR/package.json
-cp -r $BUILD_DIR/src $PACKAGE_DIR/src
+cp -r $BUILD_DIR/src $PACKAGE_DIR
 
 cd $PACKAGE_DIR
 
