@@ -10,6 +10,9 @@ then
 	exit 0
 fi
 
+# Upgrade to latest version of setuptools
+pip install -U pip setuptools
+
 # Publish egg on PyPi
 python setup.py register -r pypi-sdk
 python setup.py sdist upload -r pypi-sdk
