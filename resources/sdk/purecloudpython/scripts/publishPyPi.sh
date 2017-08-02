@@ -11,7 +11,9 @@ then
 fi
 
 # Upgrade to latest version of setuptools
-pip install -U pip setuptools
+echo "PIP setuptools version info:"
+pip show setuptools
+pip install --user -U pip setuptools
 
 # Publish egg on PyPi
 python setup.py register -r pypi-sdk
