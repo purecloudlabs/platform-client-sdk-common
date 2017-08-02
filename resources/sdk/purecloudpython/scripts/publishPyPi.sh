@@ -14,6 +14,7 @@ fi
 echo "PIP setuptools version info:"
 pip show setuptools
 pip install --user -U pip setuptools
+pip show setuptools
 
 # Publish egg on PyPi
 python setup.py register -r pypi-sdk
