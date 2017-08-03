@@ -652,7 +652,7 @@
 
     // set header parameters
     request.set(this.defaultHeaders).set(this.normalizeParams(headerParams));
-    request.set({ 'purecloud-sdk': '{{projectVersion}}' });
+    //request.set({ 'purecloud-sdk': '{{projectVersion}}' });
 
     // set request timeout
     request.timeout(this.timeout);
