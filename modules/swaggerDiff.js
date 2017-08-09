@@ -486,15 +486,12 @@ function checkModels(oldSwagger, newSwagger) {
                         addChange(modelKey, propertyKey, LOCATION_PROPERTY, IMPACT_MINOR, undefined, type, `Optional property ${propertyKey} was added`);
                     }
                 } else {
-                    /*
-                    checkForChange(modelKey, propertyKey, LOCATION_PROPERTY, IMPACT_MAJOR, 'type', oldProperty, newProperty);
-                    checkForChange(modelKey, propertyKey, LOCATION_PROPERTY, IMPACT_MAJOR, 'format', oldProperty, newProperty);
-                    */
                     checkForChange(modelKey, propertyKey, LOCATION_PROPERTY, IMPACT_MAJOR, undefined, getSchemaType(oldProperty), getSchemaType(newProperty));
 
                     // Check enums
-                    var oldEnums = oldProperty.items ? oldProperty.items.enum ? oldProperty.items.enum : undefined : undefined;
-                    var newEnums = newProperty.items ? newProperty.items.enum ? newProperty.items.enum : undefined : undefined;
+                    var oldEnums = getEnumValues(oldProperty);
+                    var newEnums = getEnumValues(newProperty);
+
                     if (!oldEnums && newEnums) {
                         // Is an enum now
                         addChange(modelKey, propertyKey, LOCATION_PROPERTY, IMPACT_MAJOR, oldEnums, newEnums, `Values are now constrained by enum members`);
@@ -524,6 +521,16 @@ function checkModels(oldSwagger, newSwagger) {
             });
         }
     });
+}
+
+function getEnumValues(property) {
+    if (property.enum)
+        return property.enum;
+
+    if (property.items && property.items.enum)
+        return property.items.enum;
+
+    return undefined;
 }
 
 function getEnv(varname, defaultValue, isDefaultValue) {
