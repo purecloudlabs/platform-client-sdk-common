@@ -68,4 +68,5 @@ mono $COMMON_DIR/resources/sdk/pureclouddotnet/bin/nuget.exe push \
 $NAMESPACE.$VERSION.repack.nupkg \
 $NUGET_API_KEY \
 -source "https://www.nuget.org" \
--Verbosity detailed
+-Verbosity detailed \
+-Timeout 900
