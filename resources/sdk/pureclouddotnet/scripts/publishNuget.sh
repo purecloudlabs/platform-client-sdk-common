@@ -64,7 +64,7 @@ cd $BUILD_DIR
 cp package/$NAMESPACE.$VERSION.repack.nupkg $NAMESPACE.$VERSION.repack.nupkg
 
 # Publish to nuget
-sudo mono $COMMON_DIR/resources/sdk/pureclouddotnet/bin/nuget.exe push \
+mono $COMMON_DIR/resources/sdk/pureclouddotnet/bin/nuget.exe push \
 $NAMESPACE.$VERSION.repack.nupkg \
 $NUGET_API_KEY \
 -source "https://www.nuget.org" \
