@@ -1,6 +1,6 @@
 {
   "name": "purecloud-api-sdk-common",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Build tools for the PureCloud Platform API SDKs",
   "main": "main.js",
   "files": [
