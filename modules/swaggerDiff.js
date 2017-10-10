@@ -488,6 +488,16 @@ function checkModels(oldSwagger, newSwagger) {
                 } else {
                     checkForChange(modelKey, propertyKey, LOCATION_PROPERTY, IMPACT_MAJOR, undefined, getSchemaType(oldProperty), getSchemaType(newProperty));
 
+                    // Newly made readonly
+                    if (newProperty.readOnly === true && oldProperty.readOnly !== true) {
+                        addChange(modelKey, propertyKey, LOCATION_PROPERTY, IMPACT_MAJOR, oldProperty.readOnly, newProperty.readOnly, `${propertyKey} has been made readonly`);
+                    }
+
+                    // No longer readonly
+                    if (oldProperty.readOnly === true && newProperty.readOnly !== true) {
+                        addChange(modelKey, propertyKey, LOCATION_PROPERTY, IMPACT_MINOR, oldProperty.readOnly, newProperty.readOnly, `${propertyKey} is no longer readonly`);
+                    }
+
                     // Check enums
                     var oldEnums = getEnumValues(oldProperty);
                     var newEnums = getEnumValues(newProperty);
