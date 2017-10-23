@@ -11,7 +11,7 @@ function generateNotificationTopicsFile(templatePath, dataPath, outPath, namespa
 
 	var notificationsClass = Mustache.render(notificationsTemplate, notifications);
 	fs.writeFileSync(outPath, notificationsClass, 'UTF-8');
-	console.log('File written to ${outPath}');
+	console.log(`File written to ${outPath}`);
 }
 
 try {
@@ -23,7 +23,7 @@ try {
 	var notificationsOutPath = process.argv[7];
 
 	console.log(`swaggerCodegenConfigFilePath=${swaggerCodegenConfigFilePath}`);
-	console.log(`version=${version}`);
+	console.log(`version=${JSON.stringify(version)}`);
 	console.log(`packageName=${packageName}`);
 	console.log(`notificationsTemplatePath=${notificationsTemplatePath}`);
 	console.log(`notificationsDataPath=${notificationsDataPath}`);
