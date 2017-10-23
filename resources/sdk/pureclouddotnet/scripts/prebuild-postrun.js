@@ -30,14 +30,14 @@ try {
 	console.log(`notificationsOutPath=${notificationsOutPath}`);
 
 	var config = {
-		"packageName": packageName || "PureCloudPlatform.Client",
-		"packageVersion": version.displayFull,
-		"packageTitle":"PureCloud Platform Client SDK",
-	    "packageProductName":"PureCloudPlatformClient",
-	    "packageDescription":"A .NET library to interface with the PureCloud Public API",
-	    "packageCompany":"Genesys",
-	    "packageCopyright":"Copyright © Genesys 2017",
-	    "httpUserAgent":"PureCloud SDK"
+		'packageName': packageName || 'PureCloudPlatform.Client',
+		'packageVersion': version.displayFull,
+		'packageTitle':'PureCloud Platform Client SDK',
+		'packageProductName':'PureCloudPlatformClient',
+		'packageDescription':'A .NET library to interface with the PureCloud Public API',
+		'packageCompany':'Genesys',
+		'packageCopyright':'Copyright © Genesys 2017',
+		'httpUserAgent':'PureCloud SDK'
 	};
 
 	fs.writeFileSync(swaggerCodegenConfigFilePath, JSON.stringify(config, null, 2));
