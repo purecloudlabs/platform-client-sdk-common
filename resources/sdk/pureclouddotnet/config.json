@@ -48,7 +48,8 @@
             },
             "${COMMON_ROOT}/resources/sdk/pureclouddotnet/templates/NotificationTopics.mustache",
             "${SDK_REPO}/notificationMappings.json",
-            "${COMMON_ROOT}/resources/sdk/pureclouddotnet/extensions/Client/NotificationTopics.cs"
+            "${COMMON_ROOT}/resources/sdk/pureclouddotnet/extensions/Client/NotificationTopics.cs",
+            "${COMMON_ROOT}/resources/sdk/pureclouddotnet/bin/nuget.exe"
           ],
           "failOnError": true
         }
