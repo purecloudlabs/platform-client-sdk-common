@@ -41,7 +41,6 @@ public class {{requestClassname}} {
 	} {{#allowableValuesForEnum}}
 
 	{{#isContainer}}public {{requestClassname}} with{{paramTitle}}EnumValues(List<{{paramName}}Values> {{paramName}}) {
-	    //this.set{{paramTitle}}({{paramName}}.stream().map({{paramName}}::toString).collect(Collectors.toList()));
 	    List<String> stringList = new ArrayList<>();
       for ({{paramName}}Values e : {{paramName}}) {
         stringList.add(e.toString());
