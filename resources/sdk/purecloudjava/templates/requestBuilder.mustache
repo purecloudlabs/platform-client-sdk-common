@@ -40,6 +40,19 @@ public class {{requestClassname}} {
 	    return this;
 	} {{#allowableValuesForEnum}}
 
+	{{#isContainer}}public {{requestClassname}} with{{paramTitle}}EnumValues(List<{{paramName}}Values> {{paramName}}) {
+	    //this.set{{paramTitle}}({{paramName}}.stream().map({{paramName}}::toString).collect(Collectors.toList()));
+	    List<String> stringList = new ArrayList<>();
+      for ({{paramName}}Values e : {{paramName}}) {
+        stringList.add(e.toString());
+      }
+      this.set{{paramTitle}}(stringList);
+	    return this;
+	}{{/isContainer}}{{^isContainer}}public {{requestClassname}} with{{paramTitle}}({{paramName}}Values {{paramName}}) {
+	    this.set{{paramTitle}}({{paramName}}.toString());
+	    return this;
+	}{{/isContainer}}
+
 	public enum {{paramName}}Values { {{#values}}
 		{{Item1}}("{{Item2}}"){{^-last}}, {{/-last}}{{/values}};
 
