@@ -40,18 +40,6 @@ public class {{requestClassname}} {
 	    return this;
 	} {{#allowableValuesForEnum}}
 
-	{{#isContainer}}public {{requestClassname}} with{{paramTitle}}EnumValues(List<{{paramName}}Values> {{paramName}}) {
-	    List<String> stringList = new ArrayList<>();
-      for ({{paramName}}Values e : {{paramName}}) {
-        stringList.add(e.toString());
-      }
-      this.set{{paramTitle}}(stringList);
-	    return this;
-	}{{/isContainer}}{{^isContainer}}public {{requestClassname}} with{{paramTitle}}({{paramName}}Values {{paramName}}) {
-	    this.set{{paramTitle}}({{paramName}}.toString());
-	    return this;
-	}{{/isContainer}}
-
 	public enum {{paramName}}Values { {{#values}}
 		{{Item1}}("{{Item2}}"){{^-last}}, {{/-last}}{{/values}};
 
@@ -148,7 +136,19 @@ public class {{requestClassname}} {
 		public Builder with{{paramTitle}}({{{dataType}}} {{paramName}}) {
 			request.set{{paramTitle}}({{paramName}});
 			return this;
-		}
+		}{{#allowableValuesForEnum}}
+
+		{{#isContainer}}public Builder with{{paramTitle}}EnumValues(List<{{paramName}}Values> {{paramName}}) {
+		    List<String> stringList = new ArrayList<>();
+	      for ({{paramName}}Values e : {{paramName}}) {
+	        stringList.add(e.toString());
+	      }
+	      request.set{{paramTitle}}(stringList);
+		    return this;
+		}{{/isContainer}}{{^isContainer}}public Builder with{{paramTitle}}({{paramName}}Values {{paramName}}) {
+		    request.set{{paramTitle}}({{paramName}}.toString());
+		    return this;
+		}{{/isContainer}}{{/allowableValuesForEnum}}
 		{{/allParams}}
 
 		{{#hasRequiredParams}}
@@ -158,7 +158,6 @@ public class {{requestClassname}} {
 			return this;
 		}
 		{{/hasRequiredParams}}
-
 
 		public {{requestClassname}} build() {
             {{#allParams}}{{#required}}
