@@ -1,5 +1,7 @@
 package {{package}};
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import {{invokerPackage}}.ApiException;
 import {{invokerPackage}}.ApiClient;
 import {{invokerPackage}}.ApiRequest;
@@ -36,8 +38,36 @@ public class {{requestClassname}} {
 	public {{requestClassname}} with{{paramTitle}}({{{dataType}}} {{paramName}}) {
 	    this.set{{paramTitle}}({{paramName}});
 	    return this;
-	}
+	} {{#allowableValuesForEnum}}
 
+	public enum {{paramName}}Values { {{#values}}
+		{{Item1}}("{{Item2}}"){{^-last}}, {{/-last}}{{/values}};
+
+		private {{#baseType}}{{.}}{{/baseType}}{{^baseType}}{{dataType}}{{/baseType}} value;
+
+		{{paramName}}Values({{#baseType}}{{.}}{{/baseType}}{{^baseType}}{{dataType}}{{/baseType}} value) {
+		  this.value = value;
+		}
+
+		@JsonCreator
+		public static {{paramName}}Values fromString(String key) {
+			if (key == null) return null;
+
+			for ({{paramName}}Values value : {{paramName}}Values.values()) {
+				if (key.equalsIgnoreCase(value.toString())) {
+					return value;
+				}
+			}
+
+			return {{paramName}}Values.values()[0];
+		}
+
+		@Override
+		@JsonValue
+		public String toString() {
+			return String.valueOf(value);
+		}
+	}{{/allowableValuesForEnum}}
 	{{/allParams}}
 	private final Map<String, String> customHeaders = new HashMap<>();
     public Map<String, String> getCustomHeaders() {
