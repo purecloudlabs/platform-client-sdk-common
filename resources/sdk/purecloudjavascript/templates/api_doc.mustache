@@ -58,9 +58,9 @@ apiInstance.{{{operationId}}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendo
   .then(function({{#returnType}}data{{/returnType}}) {
     {{#returnType}}console.log(`{{{operationId}}} success! data: ${JSON.stringify(data, null, 2)}`);{{/returnType}}{{^returnType}}console.log('{{{operationId}}} returned successfully.');{{/returnType}}
   })
-  .catch(function(error) {
+  .catch(function(err) {
   	console.log('There was a failure calling {{{operationId}}}');
-    console.error(error);
+    console.error(err);
   });
 
 {{/usePromises}}{{^usePromises}}
