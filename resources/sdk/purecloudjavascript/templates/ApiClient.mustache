@@ -61,6 +61,9 @@
 
     this.settingsPrefix = 'purecloud';
 
+    // Expose superagent module for use with superagent-proxy
+    this.superagent = superagent;
+
     // Check for auth token in hash
     this._setValuesFromUrlHash();
   };
@@ -214,6 +217,9 @@
 
       // Build token request
       var request = superagent('POST', `https://login.${self.environment}/oauth/token`);
+      if (this.proxy && request.proxy) {
+		    request.proxy(this.proxy);
+		  }
       request.set('Authorization', `Basic ${authHeader}`);
       request.send('grant_type=client_credentials');
 
@@ -626,6 +632,10 @@
     var _this = this;
     var url = this.buildUrl(path, pathParams);
     var request = superagent(httpMethod, url);
+
+    if (this.proxy && request.proxy) {
+	    request.proxy(this.proxy);
+	  }
 
     if(this.debugLog){
       var trace = `[REQUEST] ${httpMethod} ${url}`;

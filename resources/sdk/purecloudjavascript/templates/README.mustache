@@ -222,6 +222,32 @@ Extended response object example (`body` and `text` have been truncated):
 ~~~
 
 
+### Using a Proxy (Node.js only)
+
+Using a proxy is accomplished in two steps:
+
+1. Apply the `superagent-proxy` package to the `client.superagent` object
+2. Set proxy settings on the `client` object
+
+After both steps have been completed, the configured proxy server will be used for all requests.
+
+NOTE: SDK proxy configuration is only available in the node.js package due to `superagent-proxy`'s incompatibility with browserify. Additionally, `superagent-proxy` is not included a dependency of the SDK and must be provided by your node application's dependencies.
+
+~~~ js
+const {{moduleName}} = require('{{projectName}}');
+
+var client = {{projectName}}.ApiClient.instance;
+require('superagent-proxy')(client.superagent);
+// Configure settings for your proxy here
+// Documentation: https://www.npmjs.com/package/proxy-agent
+client.proxy = {
+	host: '172.1.1.100',
+	port: 443,
+	protocol: 'https',
+};
+~~~
+
+
 ### Error Responses
 
 Error responses will always be thrown as an extended response object. Note that the `error` property will contain a JavaScript [Error](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) object.
