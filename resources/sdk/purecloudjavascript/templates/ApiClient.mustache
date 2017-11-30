@@ -217,8 +217,8 @@
 
       // Build token request
       var request = superagent('POST', `https://login.${self.environment}/oauth/token`);
-      if (this.proxy && request.proxy) {
-		    request.proxy(this.proxy);
+      if (self.proxy && request.proxy) {
+		    request.proxy(self.proxy);
 		  }
       request.set('Authorization', `Basic ${authHeader}`);
       request.send('grant_type=client_credentials');
