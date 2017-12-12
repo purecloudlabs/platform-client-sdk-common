@@ -1,6 +1,7 @@
 {
   "name": ".NET SDK",
   "envVars": {
+  	"DOTNET_NAMESPACE": "PureCloudPlatform.Client.V2"
   },
   "settings": {
     "sdkRepo": {
@@ -9,7 +10,10 @@
     },
     "versionFile": "${SDK_REPO}/version.json",
     "logLevel": "debug",
-    "extensionsDestination": "${SDK_REPO}/build/src/PureCloudPlatform.Client.V2",
+    "resourcePaths": {
+    	"extensions": "${SDK_TEMP}/pureclouddotnet/extensions"
+    },
+    "extensionsDestination": "${SDK_REPO}/build/src/${DOTNET_NAMESPACE}",
     "swagger": {
       "oldSwaggerPath": "${SDK_REPO}/swagger.json",
       "newSwaggerPath": "https://api.mypurecloud.com/api/v2/docs/swagger",
@@ -26,7 +30,7 @@
     "releaseNoteSummaryTemplatePath": "${COMMON_ROOT}/resources/templates/githubSdkReleaseNoteSummary.md",
     "debugConfig": false,
     "enableLoggerColor": false,
-    "namespace": "PureCloudPlatform.Client.V2",
+    "namespace": "${DOTNET_NAMESPACE}",
     "apiHealthCheckUrl": "https://api.mypurecloud.com/api/v2/health/check"
   },
   "stageSettings": {
@@ -56,7 +60,22 @@
       ]
     },
     "build": {
-      "preRunScripts": [],
+      "preRunScripts": [
+        {
+          "type": "node",
+          "path": "processExtensions.js",
+          "args": [
+            "${COMMON_ROOT}/resources/sdk/pureclouddotnet/extensions",
+            {
+              "$ref": "#/settings/resourcePaths.extensions"
+            },
+            {
+              "$ref": "#/settings/namespace"
+            }
+          ],
+          "failOnError": true
+        }
+      ],
       "compileScripts": [
         {
           "type": "shell",

@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace PureCloudPlatform.Client.V2.Extensions
+namespace {{=it.packageName}}.Extensions
 {
     /// <summary>
     /// Contains information about the access token from the authorization code OAuth flow

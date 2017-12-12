@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using PureCloudPlatform.Client.V2.Client;
-using PureCloudPlatform.Client.V2.Extensions;
+using {{=it.packageName}}.Client;
+using {{=it.packageName}}.Extensions;
 using RestSharp;
 
-namespace PureCloudPlatform.Client.V2.Extensions
+namespace {{=it.packageName}}.Extensions
 {
     public static class AuthExtensions
     {

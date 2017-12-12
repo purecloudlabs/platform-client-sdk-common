@@ -2,7 +2,7 @@ using System;
 using System.Globalization;
 using Newtonsoft.Json;
 
-namespace PureCloudPlatform.Client.V2.Client
+namespace {{=it.packageName}}.Client
 {
     public class Iso8601DateTimeConverter : JsonConverter
     {
