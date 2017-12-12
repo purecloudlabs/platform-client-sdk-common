@@ -3,7 +3,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 
-namespace PureCloudPlatform.Client.V2.Client
+namespace {{=it.packageName}}.Client
 {
     class UpgradeSdkEnumConverter : JsonConverter
     {

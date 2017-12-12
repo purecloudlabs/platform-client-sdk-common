@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using PureCloudPlatform.Client.V2.Api;
-using PureCloudPlatform.Client.V2.Model;
+using {{=it.packageName}}.Api;
+using {{=it.packageName}}.Model;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WebSocketSharp;
 
-namespace PureCloudPlatform.Client.V2.Extensions.Notifications
+namespace {{=it.packageName}}.Extensions.Notifications
 {
     /// <summary>
     /// A helper class for handling PureCloud notifications

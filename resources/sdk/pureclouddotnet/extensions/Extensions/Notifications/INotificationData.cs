@@ -1,4 +1,4 @@
-namespace PureCloudPlatform.Client.V2.Extensions.Notifications
+namespace {{=it.packageName}}.Extensions.Notifications
 {
     public interface INotificationData
     {

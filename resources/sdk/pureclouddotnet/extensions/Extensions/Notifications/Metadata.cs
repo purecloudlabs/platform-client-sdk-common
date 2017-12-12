@@ -1,6 +1,6 @@
 using System.Runtime.Serialization;
 
-namespace PureCloudPlatform.Client.V2.Extensions.Notifications
+namespace {{=it.packageName}}.Extensions.Notifications
 {
     public class Metadata
     {
