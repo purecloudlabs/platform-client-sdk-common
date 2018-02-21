@@ -12,8 +12,8 @@ try {
             "packageTitle": "PureCloud Platform API SDK",
             "packageDescription": "A Python library to interface with the PureCloud Platform API",
             "packageAuthor": "Genesys Developer Evangelists",
-            "packageAuthorEmail": "DeveloperEvangelists@inin.com",
-            "packageUrl": "https://developer.mypurecloud.com/api/rest/client-libraries/python/latest/",
+            "packageAuthorEmail": "DeveloperEvangelists@Genesys.com",
+            "packageUrl": "https://developer.mypurecloud.com/api/rest/client-libraries/python/",
             "packageKeywords": "PureCloud Platform API Genesys",
             "install_requires": "",
             "httpUserAgent":"PureCloud SDK"
