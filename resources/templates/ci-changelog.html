@@ -120,6 +120,11 @@
 		h2 {
 			font-size: 18pt;
 		}
+
+		.subheader {
+	    margin: 0 !important;
+	    font-size: 18px !important;
+		}
 	</style>
 </head>
 <body>
@@ -127,7 +132,9 @@
 	<div class="jumbotron jumbotron-fluid">
 		<div class="container">
 			<h1 class="display-3">CI Build Changelog</h1>
-			<p>Branch: {{=it.data.gitBranch}}</p>
+			<p class="subheader">Branch: {{=it.data.gitBranch}}</p>
+			<p class="subheader">Build <a href="{{= it.data.buildLink }}" target="_blank">{{= it.data.buildNumber }}</a></p>
+			<p class="subheader">{{= it.data.timestamp }}</p>
 		</div>
 	</div>
 
