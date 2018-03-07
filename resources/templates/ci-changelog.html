@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>CI Build Changelog</title>
+
+	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+	<!-- https://octicons.github.com/ -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/octicons/4.4.0/font/octicons.css" />
+
+	<style type="text/css">
+		td {
+			vertical-align: middle !important;
+		}
+
+		a, a:hover, a:visited, a:active {
+			color: #FF4F1F;
+			text-decoration: none;
+		}
+
+		span[class^=repo-status-] {
+			margin: 1pt auto;
+			border-radius: 4pt;
+			padding: 1pt;
+			width: 65pt;
+			display: block;
+			text-align: center;
+		}
+
+		.repo-status-active {
+			background: #2fbc52;
+			color: #ffffff;
+		}
+
+		.repo-status-idle {
+			background: #8dd6a0;
+			color: #222222;
+		}
+
+		.repo-status-stagnant {
+			background: #b9bc2f;
+			color: #ffffff;
+		}
+
+		.repo-status-inactive {
+			background: #bc2f2f;
+			color: #ffffff;
+		}
+
+		span[class^=repo-badge-] {
+	    margin: 1pt 3pt;
+	    border-radius: 4pt;
+	    padding: 1pt;
+	    display: inline-block;
+	    text-align: center;
+	    padding: 0pt 3pt;
+		}
+
+		.repo-badge-private {
+			background-color: #f9d77f;
+		}
+
+		.repo-badge-fork {
+			background-color: #c3d6f7;
+		}
+
+		.repo-badge-oss {
+			background-color: #bbe7ed;
+		}
+
+		.report-footer {
+			background-color: #eee;
+		}
+
+		.report-footer-content {
+			padding: 15pt;
+    	text-align: center;
+		}
+
+		.table-clear td {
+			border: none !important;
+		}
+
+		.glyphicon-ok-circle {
+			color: #2fbc52;
+		}
+
+		.glyphicon-remove-circle {
+			color: #bc2f2f;
+		}
+
+		.sla-failed-text {
+			color: #bc2f2f;
+			margin-left: 3pt;
+		}
+
+		.icon-pad-right {
+			margin-right: 3pt;
+		}
+
+		.icon-pad-left {
+			margin-left: 3pt;
+		}
+
+		.gray-text {
+			color: #CCCCCC;
+		}
+
+		.user-avatar {
+			width: 20px;
+			height: 20px;
+			display: inline-block;
+	    overflow: hidden;
+	    line-height: 1;
+	    vertical-align: middle;
+	    border-radius: 3px;
+	    margin-right: 3pt;
+		}
+
+
+		h2 {
+			font-size: 18pt;
+		}
+	</style>
+</head>
+<body>
+
+	<div class="jumbotron jumbotron-fluid">
+		<div class="container">
+			<h1 class="display-3">CI Build Changelog</h1>
+			<p>Branch: {{=it.data.gitBranch}}</p>
+		</div>
+	</div>
+
+	<div class="container">
+		<div class="row">
+			<div class="col-sm-12">
+				<h1>Major Changes ({{=it.changes.majorCount}} {{=it.pluralize('change',it.changes.majorCount)}})</h1>
+				{{~it.changes.major :changeGroup}}
+				<h2>{{=changeGroup.key}} ({{=changeGroup.changeCount}} {{=it.pluralize('change',changeGroup.changeCount)}})</h2>
+
+				<ul>{{~changeGroup.changes :change}}<li>{{=change.description}}</li>{{~}}</ul>
+				{{~}}
+
+				<br />
+				<h1>Minor Changes ({{=it.changes.minorCount}} {{=it.pluralize('change',it.changes.minorCount)}})</h1>
+				{{~it.changes.minor :changeGroup}}
+				<h2>{{=changeGroup.key}} ({{=changeGroup.changeCount}} {{=it.pluralize('change',changeGroup.changeCount)}})</h2>
+
+				<ul>{{~changeGroup.changes :change}}<li>{{=change.description}}</li>{{~}}</ul>
+				{{~}}
+
+				<br />
+				<h1>Point Changes ({{=it.changes.pointCount}} {{=it.pluralize('change',it.changes.pointCount)}})</h1>
+				{{~it.changes.point :changeGroup}}
+				<h2>{{=changeGroup.key}} ({{=changeGroup.changeCount}} {{=it.pluralize('change',changeGroup.changeCount)}})</h2>
+
+				<ul>{{~changeGroup.changes :change}}<li>{{=change.description}}</li>{{~}}</ul>
+				{{~}}
+
+				<br />
+			</div>
+		</div>
+	</div>
+
+	<div class="container-fluid report-footer">
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="container">
+					<div class="row">
+						<div class="col-sm-12 report-footer-content">
+							<p>
+								Report generated at {{= it.data.timestamp }}
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+</body>
+</html>
