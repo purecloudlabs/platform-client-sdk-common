@@ -475,16 +475,16 @@ function createRelease() {
 		return deferred.promise;
 	}
 
+	if (self.isNewVersion !== true) {
+		log.warn('Skipping github release creation! Build did not produce a new version.');
+		deferred.resolve();
+		return deferred.promise;
+	}
+
 	git.saveChanges(self.config.settings.sdkRepo.repo, getEnv('SDK_REPO'), self.version.displayFull)
 		.then(() => {
 			if (self.config.stageSettings.postbuild.publishRelease !== true) {
 				log.warn('Skipping github release creation! Set postbuild.publishRelease=true to release.');
-				deferred.resolve();
-				return deferred.promise;
-			}
-
-			if (self.isNewVersion !== true) {
-				log.warn('Skipping github release creation! Build did not produce a new version.');
 				deferred.resolve();
 				return deferred.promise;
 			}
