@@ -78,7 +78,9 @@
             "${SDK_REPO}/build",
             { "$ref": "#/settings/mavenSettingsFilePath" },
             "${DPGP_PASSPHRASE}"
-          ]
+          ],
+	        "appendIsNewReleaseArg": true,
+	        "failOnError": true
         }
       ],
       "postRunScripts": [
