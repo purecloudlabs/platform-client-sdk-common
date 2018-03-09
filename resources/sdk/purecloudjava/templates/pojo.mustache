@@ -3,7 +3,7 @@
  */{{#description}}
 @ApiModel(description = "{{{description}}}"){{/description}}
 {{>generatedAnnotation}}
-public class {{classname}} {{#parent}}extends {{{parent}}}{{/parent}} {{#serializableModel}}{{#isPagedResource}}implements Serializable, PagedResource<{{pagedResourceType}}>{{/isPagedResource}}{{^isPagedResource}}implements Serializable{{/isPagedResource}}{{/serializableModel}}{{#isPagedResource}}{{^serializableModel}}implements PagedResource<{{pagedResourceType}}>{{/serializableModel}}{{/isPagedResource}} {
+public class {{classname}} {{#parent}}extends {{{parent}}}{{/parent}} {{#serializableModel}}{{#isPagedResource}}implements Serializable, PagedResource<{{{pagedResourceType}}}>{{/isPagedResource}}{{^isPagedResource}}implements Serializable{{/isPagedResource}}{{/serializableModel}}{{#isPagedResource}}{{^serializableModel}}implements PagedResource<{{{pagedResourceType}}}>{{/serializableModel}}{{/isPagedResource}} {
   {{#vars}}{{#isEnum}}
 
 {{>modelInnerEnum}}{{/isEnum}}{{#items.isEnum}}{{#items}}
