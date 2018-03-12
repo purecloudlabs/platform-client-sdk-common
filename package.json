@@ -9,7 +9,8 @@
     "modules"
   ],
   "scripts": {
-    "test": "jasmine"
+    "test": "jasmine",
+    "browserify": "browserify modules/swaggerDiffImpl.js -o web/swaggerDiffImpl.js"
   },
   "repository": {
     "type": "git",
@@ -51,5 +52,8 @@
   "homepage": "https://github.com/MyPureCloud/purecloud_api_sdk_common",
   "bin": {
     "sdk-builder": "./sdkBuilder.js"
+  },
+  "devDependencies": {
+    "browserify": "^16.1.1"
   }
 }
