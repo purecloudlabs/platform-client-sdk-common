@@ -186,6 +186,7 @@ if (typeof(window) !== 'undefined') {
 }
 
 
+
 /* PRIVATE FUNCTIONS */
 
 function addChange(id, key, location, impact, oldValue, newValue, description) {
