@@ -30,6 +30,6 @@ public interface PagedResource<T> {
     String getLastUri();
     void setLastUri(String lastUri);
 
-    T getEntities();
-    void setEntities(T entities);
+    List<T> getEntities();
+    void setEntities(List<T> entities);
 }
