@@ -88,7 +88,7 @@ const {{moduleName}} = require('{{moduleName}}');
 var client = {{moduleName}}.ApiClient.instance;
 client.loginImplicitGrant(clientId, redirectUri, { state: state })
   .then(function(data) {
-  	console.log(data);
+    console.log(data);
     // Do authenticated things
   })
   .catch(function(err) {
