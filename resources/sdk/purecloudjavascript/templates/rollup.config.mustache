@@ -1,0 +1,48 @@
+import resolve from 'rollup-plugin-node-resolve';
+import commonjs from 'rollup-plugin-commonjs';
+import json from 'rollup-plugin-json';
+import replace from 'rollup-plugin-re';
+
+export default {
+	input: 'src/{{#invokerPackage}}{{invokerPackage}}{{/invokerPackage}}/index.js',
+	output: {
+		file: 'bundle.js',
+		format: 'cjs'
+	},
+	plugins: [ 
+		resolve(),
+		replace({
+			// https://github.com/rollup/rollup-plugin-commonjs/issues/166#issuecomment-328853157
+			// do replace before commonjs
+			patterns: [
+				{
+					// regexp match with resolved path
+					match: /formidable(\/|\\)lib/, 
+					// string or regexp
+					test: 'if (global.GENTLY) require = GENTLY.hijack(require);', 
+					// string or function to replaced with
+					replace: '',
+				}
+			]
+		}),
+		commonjs(),
+		json()
+	],
+	external: [
+		'util',
+		'string_decoder',
+		'url',
+		'stream',
+		'https',
+		'http',
+		'fs',
+		'zlib',
+		'path',
+		'events',
+		'buffer',
+		'querystring',
+		'tty',
+		'crypto',
+		'os'
+	]
+};

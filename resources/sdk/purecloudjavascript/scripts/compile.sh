@@ -10,7 +10,10 @@ echo "RESOURCE_DIR=$RESOURCE_DIR"
 echo "MODULE_NAME=$MODULE_NAME"
 echo "PACKAGE_NAME=$PACKAGE_NAME"
 
-#exit 0
+cd $BUILD_DIR
+
+npm i
+npm run rollup
 
 cd $BUILD_DIR
 mkdir web
@@ -22,7 +25,7 @@ npm install browserify -g
 npm install uglify-es -g
 
 echo "Browserifying..."
-browserify -r "$BUILD_DIR/src/$PACKAGE_NAME/index.js:${MODULE_NAME}" > "$BUILD_DIR/web/$PACKAGE_NAME.js" || { echo "Browserify failed"; exit 1; }
+browserify -r "$BUILD_DIR/bundle.js:${MODULE_NAME}" > "$BUILD_DIR/web/$PACKAGE_NAME.js" || { echo "Browserify failed"; exit 1; }
 
 # Each file
 
