@@ -254,14 +254,14 @@ class ApiClient {
 
 		if (!opts) opts = {};
 
-		return new Promise(function(resolve, reject) {
+		return new Promise((resolve, reject) => {
 			self._testTokenAccess()
-				.then(function() {
+				.then(() => {
 					if (!self.authData.state && opts.state)
 						self.authData.state = opts.state;
 					resolve(self.authData);
 				})
-				.catch(function(error) {
+				.catch((error) => {
 					self._debugTrace('Error encountered during login. This is normal if the application has not yet been authorized.');
 					self._debugTrace(error);
 					var query = {
@@ -287,9 +287,9 @@ class ApiClient {
 	loginClientCredentialsGrant(clientId, clientSecret) {
 		var self = this;
 		this.clientId = clientId;
-		var authHeader = new Buffer(clientId + ':' + clientSecret).toString('base64');
+		var authHeader = new Buffer(`${clientId}:${clientSecret}`).toString('base64');
 
-		return new Promise(function(resolve, reject) {
+		return new Promise((resolve, reject) => {
 			// Block browsers from using client credentials
 			if (typeof window !== 'undefined') {
 				reject(new Error('The client credentials grant is not supported in a browser.'));
@@ -305,7 +305,7 @@ class ApiClient {
 			request.send('grant_type=client_credentials');
 
 			// Execute request
-			request.end(function(error, response) {
+			request.end((error, response) => {
 				if (error) {
 					reject(error);
 				} else {
@@ -322,7 +322,7 @@ class ApiClient {
 	 */
 	_testTokenAccess() {
 		var self = this;
-		return new Promise(function(resolve, reject) {
+		return new Promise((resolve, reject) => {
 			// Load from storage
 			self._loadSettings();
 
@@ -335,10 +335,10 @@ class ApiClient {
 			// Test token
 			self.callApi('/api/v2/authorization/permissions', 'GET', 
 				null, null, null, null, null, ['PureCloud Auth'], ['application/json'], ['application/json'])
-				.then(function() {
+				.then(() => {
 					resolve();
 				})
-				.catch(function(error) {
+				.catch((error) => {
 					self._saveSettings({ accessToken: undefined });
 					reject(error);
 				});
@@ -355,7 +355,7 @@ class ApiClient {
 		// Process hash string into object
 		var hash = window.location.hash
 			.slice(1).split('&')
-			.reduce(function(obj, pair) {
+			.reduce((obj, pair) => {
 				var keyValue = pair.split('=');
 				obj[keyValue[0]] = keyValue[1];
 				return obj;
@@ -450,16 +450,8 @@ class ApiClient {
 	 * @param {object} query - An object of key/value pairs to use for querystring keys/values
 	 */
 	_buildAuthUrl(path, query) {
-		function qs(url, key) {
-			var val = query[key];
-			if(!val) return url;
-			return `${url}&${key}=${val}`;
-		}
-
 		if (!query) query = {};
-
-		var baseUrl = `${this.authUrl}/${path}?`;
-		return Object.keys(query).reduce(qs, baseUrl);
+		return Object.keys(query).reduce((url, key) => !val ? url : `${url}&${key}=${query[key]}`, `${this.authUrl}/${path}?`);
 	}
 
 	/**
@@ -486,11 +478,11 @@ class ApiClient {
 	 */
 	buildUrl(path, pathParams) {
 		if (!path.match(/^\//)) {
-			path = '/' + path;
+			path = `/${path}`;
 		}
 		var url = this.basePath + path;
 		var _this = this;
-		url = url.replace(/\{([\w-]+)\}/g, function(fullMatch, key) {
+		url = url.replace(/\{([\w-]+)\}/g, (fullMatch, key) => {
 			var value;
 			if (pathParams.hasOwnProperty(key)) {
 				value = _this.paramToString(pathParams[key]);
@@ -607,7 +599,7 @@ class ApiClient {
 				// return the array directly as SuperAgent will handle it as expected
 				return param.map(this.paramToString);
 			default:
-				throw new Error('Unknown collection format: ' + collectionFormat);
+				throw new Error(`Unknown collection format: ${collectionFormat}`);
 		}
 	}
 
@@ -618,7 +610,7 @@ class ApiClient {
 	 */
 	applyAuthToRequest(request, authNames) {
 		var _this = this;
-		authNames.forEach(function(authName) {
+		authNames.forEach((authName) => {
 			var auth = _this.authentications[authName];
 			switch (auth.type) {
 				case 'basic':
@@ -630,7 +622,7 @@ class ApiClient {
 					if (auth.apiKey) {
 						var data = {};
 						if (auth.apiKeyPrefix) {
-							data[auth.name] = auth.apiKeyPrefix + ' ' + auth.apiKey;
+							data[auth.name] = `${auth.apiKeyPrefix} ${auth.apiKey}`;
 						} else {
 							data[auth.name] = auth.apiKey;
 						}
@@ -643,11 +635,11 @@ class ApiClient {
 					break;
 				case 'oauth2':
 					if (auth.accessToken) {
-						request.set({'Authorization': 'Bearer ' + auth.accessToken});
+						request.set({'Authorization': `Bearer ${auth.accessToken}`);
 					}
 					break;
 				default:
-					throw new Error('Unknown authentication type: ' + auth.type);
+					throw new Error(`Unknown authentication type: ${auth.type}`);
 			}
 		});
 	}
@@ -737,8 +729,8 @@ class ApiClient {
 			request.accept(accept);
 		}
 
-		return new Promise(function(resolve, reject) {
-			request.end(function(error, response) {
+		return new Promise( =>(resolve, reject) => {
+			request.end((error, response) => {
 				if (error) {
 					console.log(error);
 					if (!response) {
@@ -814,7 +806,7 @@ class ApiClient {
 			var lines = trace.split('\n');
 			if (this.debugLogMaxLines && lines.length > this.debugLogMaxLines) {
 				for  (var i = 0; i < this.debugLogMaxLines; i++) {
-					truncTrace += lines[i] + '\n';
+					truncTrace += `${lines[i]}\n`;
 				}
 				truncTrace += '...response truncated...';
 				trace = truncTrace;
