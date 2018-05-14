@@ -13,7 +13,7 @@ echo "PACKAGE_NAME=$PACKAGE_NAME"
 cd $BUILD_DIR
 
 npm i
-npm run rollup
+npm run rollup || { echo "rollup failed"; exit 1; }
 
 cd $BUILD_DIR
 mkdir web
