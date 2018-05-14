@@ -258,7 +258,7 @@ class ApiClient {
 				.then(() => {
 					if (!this.authData.state && opts.state)
 						this.authData.state = opts.state;
-					resolve(this.authData.state);
+					resolve(this.authData);
 				})
 				.catch((error) => {
 					this._debugTrace('Error encountered during login. This is normal if the application has not yet been authorized.');
