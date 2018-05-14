@@ -451,7 +451,7 @@ class ApiClient {
 	 */
 	_buildAuthUrl(path, query) {
 		if (!query) query = {};
-		return Object.keys(query).reduce((url, key) => !val ? url : `${url}&${key}=${query[key]}`, `${this.authUrl}/${path}?`);
+		return Object.keys(query).reduce((url, key) => !query[key] ? url : `${url}&${key}=${query[key]}`, `${this.authUrl}/${path}?`);
 	}
 
 	/**
@@ -635,7 +635,7 @@ class ApiClient {
 					break;
 				case 'oauth2':
 					if (auth.accessToken) {
-						request.set({'Authorization': `Bearer ${auth.accessToken}`);
+						request.set({'Authorization': `Bearer ${auth.accessToken}`});
 					}
 					break;
 				default:
@@ -729,7 +729,7 @@ class ApiClient {
 			request.accept(accept);
 		}
 
-		return new Promise( =>(resolve, reject) => {
+		return new Promise((resolve, reject) => {
 			request.end((error, response) => {
 				if (error) {
 					console.log(error);
