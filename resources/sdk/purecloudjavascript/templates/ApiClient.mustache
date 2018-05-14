@@ -110,13 +110,13 @@ class ApiClient {
 		 */
 		this.timeout = 16000;
 
+		this.authData = {};
 		this.settingsPrefix = 'purecloud';
 
 		// Expose superagent module for use with superagent-proxy
 		this.superagent = superagent;
 
-		// Check for auth token in hash
-		this._setValuesFromUrlHash();
+		if (window) window.ApiClient = this;
 	}
 
 	/**
@@ -153,8 +153,6 @@ class ApiClient {
 	 */
 	_saveSettings(opts) {
 		try {
-			if (!this.authData) this.authData = {};
-
 			if (opts.accessToken) {
 				this.authData.accessToken = opts.accessToken;
 				this.authentications['PureCloud Auth'].accessToken = opts.accessToken;
@@ -173,7 +171,7 @@ class ApiClient {
 			if (this.persistSettings !== true) return;
 
 			// Ensure we can access local storage
-			if (!exports.hasLocalStorage) {
+			if (!this.hasLocalStorage) {
 				this._debugTrace('Warning: Cannot access local storage. Settings will not be saved.');
 				return;
 			}
@@ -198,18 +196,20 @@ class ApiClient {
 		if (this.persistSettings !== true) return;
 
 		// Ensure we can access local storage
-		if (!exports.hasLocalStorage) {
+		if (!this.hasLocalStorage) {
 			this._debugTrace('Warning: Cannot access local storage. Settings will not be loaded.');
 			return;
 		}
 
 		// Load current auth data
+		const tempState = this.authData.state;
 		this.authData = localStorage.getItem(`${this.settingsPrefix}_auth_data`);
 		if (!this.authData) 
 			this.authData = {};
 		else
 			this.authData = JSON.parse(this.authData);
 		if (this.authData.accessToken) this.setAccessToken(this.authData.accessToken);
+		this.authData.state = tempState;
 	}
 
 	/**
@@ -245,35 +245,34 @@ class ApiClient {
 	 * @param {string} opts.state - (optional) An arbitrary string to be passed back with the login response. Used for client apps to associate login responses with a request.
 	 */
 	loginImplicitGrant(clientId, redirectUri, opts) {
-		var self = this;
-		this.clientId = clientId;
-		this.redirectUri = redirectUri;
-
 		// Check for auth token in hash
 		this._setValuesFromUrlHash();
+
+		this.clientId = clientId;
+		this.redirectUri = redirectUri;
 
 		if (!opts) opts = {};
 
 		return new Promise((resolve, reject) => {
-			self._testTokenAccess()
+			this._testTokenAccess()
 				.then(() => {
-					if (!self.authData.state && opts.state)
-						self.authData.state = opts.state;
-					resolve(self.authData);
+					if (!this.authData.state && opts.state)
+						this.authData.state = opts.state;
+					resolve(this.authData.state);
 				})
 				.catch((error) => {
-					self._debugTrace('Error encountered during login. This is normal if the application has not yet been authorized.');
-					self._debugTrace(error);
+					this._debugTrace('Error encountered during login. This is normal if the application has not yet been authorized.');
+					this._debugTrace(error);
 					var query = {
-						client_id: encodeURIComponent(self.clientId),
-						redirect_uri: encodeURI(self.redirectUri),
+						client_id: encodeURIComponent(this.clientId),
+						redirect_uri: encodeURI(this.redirectUri),
 						response_type: 'token'
 					};
 					if (opts.state)
 						query.state = encodeURIComponent(opts.state);
 
-					var url = self._buildAuthUrl('oauth/authorize', query);
-					self._debugTrace(`Implicit grant: redirecting to ${url} for authorization...`);
+					var url = this._buildAuthUrl('oauth/authorize', query);
+					this._debugTrace(`Implicit grant: redirecting to ${url} for authorization...`);
 					window.location.replace(url);
 				});
 		});
@@ -285,7 +284,6 @@ class ApiClient {
 	 * @param {string} clientSecret - The client secret of an OAuth Implicit Grant client
 	 */
 	loginClientCredentialsGrant(clientId, clientSecret) {
-		var self = this;
 		this.clientId = clientId;
 		var authHeader = new Buffer(`${clientId}:${clientSecret}`).toString('base64');
 
@@ -297,9 +295,9 @@ class ApiClient {
 			}
 
 			// Build token request
-			var request = superagent('POST', `https://login.${self.environment}/oauth/token`);
-			if (self.proxy && request.proxy) {
-				request.proxy(self.proxy);
+			var request = superagent('POST', `https://login.${this.environment}/oauth/token`);
+			if (this.proxy && request.proxy) {
+				request.proxy(this.proxy);
 			}
 			request.set('Authorization', `Basic ${authHeader}`);
 			request.send('grant_type=client_credentials');
@@ -309,8 +307,8 @@ class ApiClient {
 				if (error) {
 					reject(error);
 				} else {
-					self.setAccessToken(response.body['access_token']);
-					self._debugTrace(`Access token expires in ${response.body['expires_in']} seconds`);
+					this.setAccessToken(response.body['access_token']);
+					this._debugTrace(`Access token expires in ${response.body['expires_in']} seconds`);
 					resolve();
 				}
 			});
@@ -321,25 +319,24 @@ class ApiClient {
 	 * @description Loads token from storage, if enabled, and checks to ensure it works.
 	 */
 	_testTokenAccess() {
-		var self = this;
 		return new Promise((resolve, reject) => {
 			// Load from storage
-			self._loadSettings();
+			this._loadSettings();
 
 			// Check if there is a token to test
-			if (!self.authentications['PureCloud Auth'].accessToken) {
+			if (!this.authentications['PureCloud Auth'].accessToken) {
 				reject(new Error('Token is not set'));
 				return;
 			}
 
 			// Test token
-			self.callApi('/api/v2/authorization/permissions', 'GET', 
+			this.callApi('/api/v2/authorization/permissions', 'GET', 
 				null, null, null, null, null, ['PureCloud Auth'], ['application/json'], ['application/json'])
 				.then(() => {
 					resolve();
 				})
 				.catch((error) => {
-					self._saveSettings({ accessToken: undefined });
+					this._saveSettings({ accessToken: undefined });
 					reject(error);
 				});
 		});
@@ -426,7 +423,7 @@ class ApiClient {
 	 * @description Redirects the user to the PureCloud logout page
 	 */
 	logout() {
-		if(exports.hasLocalStorage) {
+		if(this.hasLocalStorage) {
 			this._saveSettings({
 				accessToken: undefined,
 				state: undefined,
@@ -481,11 +478,10 @@ class ApiClient {
 			path = `/${path}`;
 		}
 		var url = this.basePath + path;
-		var _this = this;
 		url = url.replace(/\{([\w-]+)\}/g, (fullMatch, key) => {
 			var value;
 			if (pathParams.hasOwnProperty(key)) {
-				value = _this.paramToString(pathParams[key]);
+				value = this.paramToString(pathParams[key]);
 			} else {
 				value = fullMatch;
 			}
@@ -609,9 +605,8 @@ class ApiClient {
 	 * @param {Array.<String>} authNames An array of authentication method names.
 	 */
 	applyAuthToRequest(request, authNames) {
-		var _this = this;
 		authNames.forEach((authName) => {
-			var auth = _this.authentications[authName];
+			var auth = this.authentications[authName];
 			switch (auth.type) {
 				case 'basic':
 					if (auth.username || auth.password) {
@@ -660,8 +655,6 @@ class ApiClient {
 	 * @returns {Promise} A Promise object.
 	 */
 	callApi(path, httpMethod, pathParams, queryParams, headerParams, formParams, bodyParam, authNames, contentTypes, accepts) {
-
-		var _this = this;
 		var url = this.buildUrl(path, pathParams);
 		var request = superagent(httpMethod, url);
 
@@ -748,7 +741,7 @@ class ApiClient {
 				}
 
 				// Build response object
-				var data = (_this.returnExtended === true || error) ? {
+				var data = (this.returnExtended === true || error) ? {
 					status: response.status,
 					statusText: response.statusText,
 					headers: response.headers,
@@ -758,7 +751,7 @@ class ApiClient {
 				} : response.body ? response.body : response.text;
 
 				// Debug logging
-				if (_this.debugLog) {
+				if (this.debugLog) {
 					var trace = `[RESPONSE] ${response.status}: ${httpMethod} ${url}`;
 					if (response.headers)
 						trace += `\ninin-correlation-id: ${response.headers['inin-correlation-id']}`;
@@ -766,11 +759,11 @@ class ApiClient {
 						trace += `\nBody: ${JSON.stringify(response.body,null,2)}`;
 
 					// Log trace message
-					_this._debugTrace(trace);
+					this._debugTrace(trace);
 
 					// Log stack trace
 					if (error)
-						_this._debugTrace(error);
+						this._debugTrace(error);
 				}
 
 				// Resolve promise
