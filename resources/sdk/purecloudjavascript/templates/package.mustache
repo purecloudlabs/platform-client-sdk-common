@@ -3,7 +3,16 @@
   "version": "{{{projectVersion}}}",
   "description": "{{{projectDescription}}}",{{#projectLicenseName}}
   "license": "{{{projectLicenseName}}}",{{/projectLicenseName}}
-  "main": "{{sourceFolder}}{{#invokerPackage}}/{{invokerPackage}}{{/invokerPackage}}/index.js",
+  "main": "dist/node/{{#invokerPackage}}{{invokerPackage}}{{/invokerPackage}}.js",
+  "jsnext:main": "src/{{#invokerPackage}}{{invokerPackage}}{{/invokerPackage}}/index.js",
+  "browser": "dist/web-cjs/{{#invokerPackage}}{{invokerPackage}}{{/invokerPackage}}.min.js",
+  "files": [
+  	"dist/*",
+  	"src/*",
+  	"package.json",
+  	"README.md",
+  	"LICENSE"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/MyPureCloud/platform-client-sdk-javascript.git"
@@ -30,9 +39,5 @@
     "rollup-plugin-re": "^1.0.7",
     "rollup-plugin-node-builtins": "^2.1.2",
     "rollup-plugin-node-globals": "^1.2.1"
-  },
-  "scripts": {
-	  "test": "node test/index.js",
-	  "rollup": "rollup -c"
-	}
+  }
 }

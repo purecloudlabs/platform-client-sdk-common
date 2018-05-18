@@ -80,7 +80,15 @@
       "gitCommit": false,
       "publishRelease": false,
       "preRunScripts": [],
-      "postRunScripts": []
+      "postRunScripts": [
+      	{
+      		"type": "command",
+      		"cwd": "${SDK_REPO}/build",
+      		"command": "npm",
+      		"args":[ "run", "test" ],
+          "failOnError": true
+      	}
+      ]
     }
   }
 }

@@ -6,7 +6,7 @@ import replace from 'rollup-plugin-re';
 export default {
 	input: 'src/{{#invokerPackage}}{{invokerPackage}}{{/invokerPackage}}/index.js',
 	output: {
-		file: 'lib/node/{{#invokerPackage}}{{invokerPackage}}{{/invokerPackage}}.js',
+		file: 'dist/node/{{#invokerPackage}}{{invokerPackage}}{{/invokerPackage}}.js',
 		format: 'cjs'
 	},
 	plugins: [ 

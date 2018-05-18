@@ -8,7 +8,7 @@ import globals from 'rollup-plugin-node-globals';
 export default {
 	input: 'src/{{#invokerPackage}}{{invokerPackage}}{{/invokerPackage}}/index.js',
 	output: {
-		file: 'lib/web-cjs/{{#invokerPackage}}{{invokerPackage}}{{/invokerPackage}}.js',
+		file: 'dist/web-cjs/bundle.js',
 		format: 'cjs',
 		name: 'platformClient',
 		globals: [
