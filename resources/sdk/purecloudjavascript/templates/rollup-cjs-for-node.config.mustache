@@ -6,26 +6,11 @@ import replace from 'rollup-plugin-re';
 export default {
 	input: 'src/{{#invokerPackage}}{{invokerPackage}}{{/invokerPackage}}/index.js',
 	output: {
-		file: 'bundle.js',
+		file: 'lib/node/{{#invokerPackage}}{{invokerPackage}}{{/invokerPackage}}.js',
 		format: 'cjs'
 	},
 	plugins: [ 
 		resolve(),
-		replace({
-			// https://github.com/rollup/rollup-plugin-commonjs/issues/166#issuecomment-328853157
-			// do replace before commonjs
-			patterns: [
-				{
-					// regexp match with resolved path
-					match: /formidable(\/|\\)lib/, 
-					// string or regexp
-					test: 'if (global.GENTLY) require = GENTLY.hijack(require);', 
-					// string or function to replaced with
-					replace: '',
-				}
-			]
-		}),
-		commonjs(),
 		json()
 	],
 	external: [
@@ -43,6 +28,7 @@ export default {
 		'querystring',
 		'tty',
 		'crypto',
-		'os'
+		'os',
+		'superagent'
 	]
 };
