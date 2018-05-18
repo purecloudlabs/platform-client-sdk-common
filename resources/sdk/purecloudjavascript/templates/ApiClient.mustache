@@ -116,7 +116,7 @@ class ApiClient {
 		// Expose superagent module for use with superagent-proxy
 		this.superagent = superagent;
 
-		if (window) window.ApiClient = this;
+		if (typeof(window) !== 'undefined') window.ApiClient = this;
 	}
 
 	/**
