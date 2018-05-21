@@ -4,7 +4,7 @@ const fs = require('fs');
 
 const swaggerDiff = require('./modules/swaggerDiff');
 const Builder = require('./modules/builder');
-const sdkLanguageRegex = /^(purecloudjava|purecloudjavascript|pureclouddotnet|purecloudruby|purecloudpython|purecloudios)$/i;
+const sdkLanguageRegex = /^(purecloudjava|purecloudjavascript|pureclouddotnet|purecloudruby|purecloudpython|purecloudobjc|purecloudswift4)$/i;
 
 try {
 	// Parse language regex for hoomans
@@ -72,3 +72,4 @@ function jsonOrYaml(filePath) {
 	console.log(`Unable to find config file: ${filePath}`);
 	return;
 }
+
