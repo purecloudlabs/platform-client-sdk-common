@@ -17,7 +17,7 @@ public class ApiDateFormat extends DateFormat {
         // Alternate format without ms
         "yyyy-MM-dd'T'HH:mm:ssXXX",
         // Alternate format without timezone (API-2107)
-        "yyyy-MM-dd'T'HH:mm:ss.SSS"
+        "yyyy-MM-dd'T'HH:mm:ss.SSS",
         // Alternate format - date only (API-3286)
         "yyyy-MM-dd"
     ));
