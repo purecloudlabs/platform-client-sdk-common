@@ -13,9 +13,9 @@ echo "PACKAGE_NAME=$PACKAGE_NAME"
 cd $BUILD_DIR
 
 echo "Installing npm global modules..."
-npm i -g rollup@0.59.1
-npm i -g uglify-es@3.3.9
-npm i -g browserify@16.2.2
+npm i -g rollup@"^0.59.1"
+npm i -g uglify-es@"^3.3.9"
+npm i -g browserify@"^16.2.2"
 
 echo "Installing dependencies..."
 npm i
