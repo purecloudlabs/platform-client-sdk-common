@@ -7,10 +7,15 @@
 import Foundation
 
 open class {{projectName}}API {
+    /// Defaults to {{{basePath}}}. Specify the full base url if not using the default.
     open static var basePath = "{{{basePath}}}"
     open static var credential: URLCredential?
     open static var customHeaders: [String:String] = [:]
     open static var requestBuilderFactory: RequestBuilderFactory = AlamofireRequestBuilderFactory()
+
+    /// The PureCloud access token to use for API requests.
+    open static var accessToken: String?
+    open static let userAgent = "PureCloud SDK/swift"
 }
 
 open class RequestBuilder<T> {
@@ -32,12 +37,20 @@ open class RequestBuilder<T> {
         self.headers = headers
 
         addHeaders({{projectName}}API.customHeaders)
+        addHeadersFromPlatformClient()
     }
 
     open func addHeaders(_ aHeaders:[String:String]) {
         for (header, value) in aHeaders {
             headers[header] = value
         }
+    }
+
+    open func addHeadersFromPlatformClient() {
+        if let token = {{projectName}}API.accessToken {
+            headers["Authorization"] = "bearer " + token
+        }
+        headers["User-Agent"] = {{projectName}}API.userAgent        
     }
 
     open func execute(_ completion: @escaping (_ response: Response<T>?, _ error: Error?) -> Void) { }
