@@ -25,6 +25,11 @@ All URIs are relative to *{{basePath}}*
 
 Wraps {{&httpMethod}} {{&path}}  
 
+Requires {{permissionType}} permissions: 
+
+{{#permissions}}
+* {{.}}{{/permissions}}
+
 ### Example
 
 ~~~java
