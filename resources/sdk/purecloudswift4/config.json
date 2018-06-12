@@ -9,7 +9,6 @@
     },
     "versionFile": "${SDK_REPO}/version.json",
     "logLevel": "debug",
-    "extensionsDestination": "${SDK_TEMP}/extensions",
     "swagger": {
       "oldSwaggerPath": "${SDK_REPO}/swagger.json",
       "newSwaggerPath": "https://api.mypurecloud.com/api/v2/docs/swagger",
@@ -27,6 +26,7 @@
     "debugConfig": false,
     "enableLoggerColor": false,
     "packageName": "PureCloudPlatformClientV2",
+    "extensionsDestination": "${SDK_REPO}/build/PureCloudPlatformClientV2/Classes/Libraries",
     "apiHealthCheckUrl": "https://api.mypurecloud.com/api/v2/health/check"
   },
   "stageSettings": {
