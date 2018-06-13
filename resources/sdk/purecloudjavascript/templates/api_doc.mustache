@@ -31,7 +31,47 @@ Requires {{permissionType}} permissions:
 * {{.}}
 {{/permissions}}
 
-### Example
+{{#bodyParam}}{{#codegenModel}}
+### Request Body Schema
+
+{::options parse_block_html="true" /}
+
+<script type="text/javascript">
+	function copy{{classname}}Example() {
+		var $temp = $("<textarea>");
+		$("body").append($temp);
+		$temp.val($('#{{classname}}Example').text()).select();
+		document.execCommand("copy");
+		$temp.remove();
+	}
+</script>
+
+{{classname}} <a style="cursor: pointer" onclick="copy{{classname}}Example()">Copy</a>
+
+<div id="{{classname}}Example" style="max-height: 250px; overflow-y: scroll;">
+~~~ json
+{ {{#allVars}}
+  "{{baseName}}": {{#isPrimitiveType}}{{datatype}},{{/isPrimitiveType}}{{^isPrimitiveType}}{{^codegenModel}}{{complexType}},{{/codegenModel}}{{#codegenModel}}{ {{#allVars}}
+    "{{baseName}}": {{#isPrimitiveType}}{{datatype}},{{/isPrimitiveType}}{{^isPrimitiveType}}{{^codegenModel}}{{complexType}},{{/codegenModel}}{{#codegenModel}}{ {{#allVars}}
+      "{{baseName}}": {{#isPrimitiveType}}{{datatype}},{{/isPrimitiveType}}{{^isPrimitiveType}}{{^codegenModel}}{{complexType}},{{/codegenModel}}{{#codegenModel}}{ {{#allVars}}
+        "{{baseName}}": {{#isPrimitiveType}}{{datatype}},{{/isPrimitiveType}}{{^isPrimitiveType}}{{^codegenModel}}{{complexType}},{{/codegenModel}}{{#codegenModel}}{ {{#allVars}}
+          "{{baseName}}": {{#isPrimitiveType}}{{datatype}},{{/isPrimitiveType}}{{^isPrimitiveType}}{{^codegenModel}}{{complexType}},{{/codegenModel}}{{#codegenModel}}{ {{#allVars}}
+            "{{baseName}}": {{#isPrimitiveType}}{{datatype}},{{/isPrimitiveType}}{{^isPrimitiveType}}{{^codegenModel}}{{complexType}},{{/codegenModel}}{{#codegenModel}}{ {{#allVars}}
+              "{{baseName}}": {{#isPrimitiveType}}{{datatype}},{{/isPrimitiveType}}{{^isPrimitiveType}}{{^codegenModel}}{{complexType}},{{/codegenModel}}{{#codegenModel}}{ {{#allVars}}
+                "{{baseName}}": {{datatype}}, {{/allVars}}
+              }, {{/codegenModel}}{{/isPrimitiveType}} {{/allVars}}
+            }, {{/codegenModel}}{{/isPrimitiveType}} {{/allVars}}
+          }, {{/codegenModel}}{{/isPrimitiveType}} {{/allVars}}
+        }, {{/codegenModel}}{{/isPrimitiveType}} {{/allVars}}
+      }, {{/codegenModel}}{{/isPrimitiveType}} {{/allVars}}
+    }, {{/codegenModel}}{{/isPrimitiveType}} {{/allVars}}
+  }, {{/codegenModel}}{{/isPrimitiveType}} {{/allVars}}
+}
+~~~
+</div>
+{{/codegenModel}}{{/bodyParam}}
+
+### Example Usage
 
 ~~~ javascript
 // Browser
