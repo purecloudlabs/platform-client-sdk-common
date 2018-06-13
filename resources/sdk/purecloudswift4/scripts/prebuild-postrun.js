@@ -7,7 +7,7 @@ try {
 	var packageName = process.argv[4];
 
 	var config = {
-		projectName: packageName || 'PureCloudPlatformApiSdk',
+		projectName: packageName || 'PureCloudPlatformSDK',
 		projectDescription: 'An iOS library to interface with the PureCloud Platform API',
 		podSummary: 'An iOS library to interface with the PureCloud Platform API',
 		podDescription: 'An iOS library to interface with the PureCloud Platform API',
