@@ -18,10 +18,34 @@ For more information, please visit [{{{infoUrl}}}]({{{infoUrl}}})
 {{/infoUrl}}
 
 ## Installation
-Put the package under your project folder and add the following in import:
+
+There are several ways to install this API SDK in your project.
+
+### Install using [CocoaPods](https://cocoapods.org/)
+Add the following to your Podfile:
 ```
-    "./{{projectName}}"
+pod '{{projectName}}'
 ```
+Then install this dependency in your project:
+```
+$ pod install
+```
+
+### Install from local path using [CocoaPods](https://cocoapods.org/)
+Alternatively, you can install from a folder on your local system. Put the SDK under your project folder (e.g. /path/to/project/Vendor/{{projectName}}) and then add the following to your Podfile:
+```
+pod '{{projectName}}', :path => 'Vendor/{{projectName}}'
+```
+Then install this dependency in your project:
+```
+$ pod install
+```
+
+### Install with [Carthage](https://github.com/Carthage/Carthage)
+TODO
+
+### Install without a dependency manager
+TODO
 
 ## Documentation for API Endpoints
 
