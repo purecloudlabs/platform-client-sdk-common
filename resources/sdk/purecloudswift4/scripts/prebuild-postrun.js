@@ -15,7 +15,7 @@ try {
 		podAuthors: 'Genesys Developer Evangelists',
 		podSocialMediaURL: 'https://twitter.com/PureCloud_Dev',
 		podDocsetURL: 'https://developer.mypurecloud.com/api/rest/client-libraries/ios/',
-		podLicense: 'MIT',
+		podLicense: '\'MIT\'',
 		podHomepage: 'https://developer.mypurecloud.com/',
 		podDocumentationURL: 'https://developer.mypurecloud.com/api/rest/client-libraries/ios/',
 		podVersion: version.displayFull,
