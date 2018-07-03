@@ -38,8 +38,8 @@ echo '<?xml version="1.0" encoding="utf-8"?>'\
 '		<requireLicenseAcceptance>false</requireLicenseAcceptance>'\
 '		<description>A .NET library to interface with the PureCloud Public API</description>'\
 '		<dependencies>'\
-'			<dependency id="Newtonsoft.Json" version="9.0.1" />'\
-'			<dependency id="RestSharp" version="105.2.3" />'\
+'			<dependency id="Newtonsoft.Json" version="11.0.2" />'\
+'			<dependency id="RestSharp" version="106.3.1" />'\
 '		</dependencies>'\
 '	</metadata>'\
 '	<files>'\
