@@ -43,7 +43,7 @@ namespace {{=it.packageName}}.Extensions.Notifications
         /// </summary>
         public NotificationHandler()
         {
-            Websocket.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
+            WebSocket.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
             Channel = _notificationsApi.PostNotificationsChannels();
             ConnectSocket(Channel.ConnectUri);
         }
@@ -53,7 +53,7 @@ namespace {{=it.packageName}}.Extensions.Notifications
         /// </summary>
         public NotificationHandler(Channel channel)
         {
-            Websocket.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
+            WebSocket.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
             Channel = channel;
             ConnectSocket(Channel.ConnectUri);
         }
