@@ -41,25 +41,7 @@
         {{/vars}}
         public {{classname}}({{#vars}}{{^isReadOnly}}{{{datatypeWithEnum}}}{{#isEnum}}?{{/isEnum}} {{name}} = null{{/isReadOnly}}{{#hasMoreNonReadOnly}}, {{/hasMoreNonReadOnly}}{{/vars}})
         {
-            {{#vars}}
-            {{^isReadOnly}}
-            {{#required}}
-            // to ensure "{{name}}" is required (not null)
-            if ({{name}} == null)
-            {
-                throw new InvalidDataException("{{name}} is a required property for {{classname}} and cannot be null");
-            }
-            else
-            {
-                this.{{name}} = {{name}};
-            }
-            {{/required}}
-            {{/isReadOnly}}
-            {{/vars}}
-            {{#vars}}
-            {{^isReadOnly}}
-            {{^required}}
-            {{#defaultValue}}// use default value if no "{{name}}" provided
+            {{#vars}}{{^isReadOnly}}{{^required}}{{#defaultValue}}// use default value if no "{{name}}" provided
             if ({{name}} == null)
             {
                 this.{{name}} = {{{defaultValue}}};
