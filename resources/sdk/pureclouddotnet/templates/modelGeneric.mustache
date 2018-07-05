@@ -33,12 +33,8 @@
     {{/hasRequired}}
         /// <summary>
         /// Initializes a new instance of the <see cref="{{classname}}" /> class.
-        /// </summary>
-        {{#vars}}
-        {{^isReadOnly}}
-        /// <param name="{{name}}">{{#description}}{{description}}{{/description}}{{^description}}{{name}}{{/description}}{{#required}} (required){{/required}}{{#defaultValue}} (default to {{defaultValue}}){{/defaultValue}}.</param>
-        {{/isReadOnly}}
-        {{/vars}}
+        /// </summary>{{#vars}}{{^isReadOnly}}
+        /// <param name="{{name}}">{{#description}}{{description}}{{/description}}{{^description}}{{name}}{{/description}}{{#required}} (required){{/required}}{{#defaultValue}} (default to {{defaultValue}}){{/defaultValue}}.</param>{{/isReadOnly}}{{/vars}}
         public {{classname}}({{#vars}}{{^isReadOnly}}{{{datatypeWithEnum}}}{{#isEnum}}?{{/isEnum}} {{name}} = null{{/isReadOnly}}{{#hasMoreNonReadOnly}}, {{/hasMoreNonReadOnly}}{{/vars}})
         {
             {{#vars}}{{^isReadOnly}}{{^required}}{{#defaultValue}}// use default value if no "{{name}}" provided
@@ -49,14 +45,8 @@
             else
             {
                 this.{{name}} = {{name}};
-            }
-            {{/defaultValue}}
-            {{^defaultValue}}
-this.{{name}} = {{name}};
-            {{/defaultValue}}
-            {{/required}}
-            {{/isReadOnly}}
-            {{/vars}}
+            } {{/defaultValue}}{{^defaultValue}}this.{{name}} = {{name}};
+            {{/defaultValue}}{{/required}}{{/isReadOnly}}{{/vars}}
         }
         
         {{#vars}}
@@ -66,7 +56,7 @@ this.{{name}} = {{name}};
         /// </summary>{{#description}}
         /// <value>{{description}}</value>{{/description}}
         [DataMember(Name="{{baseName}}", EmitDefaultValue={{emitDefaultValue}})]
-        public {{{datatype}}} {{name}} { get; {{#isReadOnly}}private {{/isReadOnly}}set; }
+        public {{{datatypeWithEnum}}} {{name}} { get; {{#isReadOnly}}private {{/isReadOnly}}set; }
         {{/isEnum}}
         {{/vars}}
         /// <summary>
@@ -78,8 +68,7 @@ this.{{name}} = {{name}};
             var sb = new StringBuilder();
             sb.Append("class {{classname}} {\n");
             {{#vars}}
-            sb.Append("  {{name}}: ").Append({{name}}).Append("\n");
-            {{/vars}}
+            sb.Append("  {{name}}: ").Append({{name}}).Append("\n");{{/vars}}
             sb.Append("}\n");
             return sb.ToString();
         }
@@ -115,17 +104,17 @@ this.{{name}} = {{name}};
             if (other == null)
                 return false;
 
-            return {{#vars}}{{#isNotContainer}}
+            return true{{#vars}}{{#isNotContainer}} &&
                 (
                     this.{{name}} == other.{{name}} ||
                     this.{{name}} != null &&
                     this.{{name}}.Equals(other.{{name}})
-                ){{#hasMore}} && {{/hasMore}}{{/isNotContainer}}{{^isNotContainer}}
+                ){{/isNotContainer}}{{^isNotContainer}} &&
                 (
                     this.{{name}} == other.{{name}} ||
                     this.{{name}} != null &&
                     this.{{name}}.SequenceEqual(other.{{name}})
-                ){{#hasMore}} && {{/hasMore}}{{/isNotContainer}}{{/vars}}{{^vars}}false{{/vars}};
+                ){{/isNotContainer}}{{/vars}}{{^vars}} && false{{/vars}};
         }
 
         /// <summary>
