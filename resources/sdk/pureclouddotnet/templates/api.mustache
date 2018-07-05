@@ -266,12 +266,11 @@ namespace {{packageName}}.Api
             else if (localVarStatusCode == 0)
                 throw new ApiException (localVarStatusCode, "Error calling {{operationId}}: " + localVarResponse.ErrorMessage, localVarResponse.ErrorMessage);
 
-            {{#returnType}}return new ApiResponse<{{{returnType}}}>(localVarStatusCode,
+            return new ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Object{{/returnType}}>(localVarStatusCode,
                 localVarHeaders,
-                ({{{returnType}}}) this.Configuration.ApiClient.Deserialize(localVarResponse, typeof({{#returnContainer}}{{{returnContainer}}}{{/returnContainer}}{{^returnContainer}}{{{returnType}}}{{/returnContainer}})));{{/returnType}}
-            {{^returnType}}return new ApiResponse<Object>(localVarStatusCode,
-                localVarHeaders,
-                null);{{/returnType}}
+                {{#returnType}}({{{returnType}}}) this.Configuration.ApiClient.Deserialize(localVarResponse, typeof({{#returnContainer}}{{{returnContainer}}}{{/returnContainer}}{{^returnContainer}}{{{returnType}}}{{/returnContainer}})){{/returnType}}{{^returnType}}null{{/returnType}},
+                localVarResponse.Content,
+                localVarResponse.StatusDescription);
         }
 
         {{#supportsAsync}}
@@ -386,12 +385,11 @@ namespace {{packageName}}.Api
             else if (localVarStatusCode == 0)
                 throw new ApiException (localVarStatusCode, "Error calling {{operationId}}: " + localVarResponse.ErrorMessage, localVarResponse.ErrorMessage);
 
-            {{#returnType}}return new ApiResponse<{{{returnType}}}>(localVarStatusCode,
+            return new ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Object{{/returnType}}>(localVarStatusCode,
                 localVarHeaders,
-                ({{{returnType}}}) this.Configuration.ApiClient.Deserialize(localVarResponse, typeof({{#returnContainer}}{{{returnContainer}}}{{/returnContainer}}{{^returnContainer}}{{{returnType}}}{{/returnContainer}})));{{/returnType}}
-            {{^returnType}}return new ApiResponse<Object>(localVarStatusCode,
-                localVarHeaders,
-                null);{{/returnType}}
+                {{#returnType}}({{{returnType}}}) this.Configuration.ApiClient.Deserialize(localVarResponse, typeof({{#returnContainer}}{{{returnContainer}}}{{/returnContainer}}{{^returnContainer}}{{{returnType}}}{{/returnContainer}})){{/returnType}}{{^returnType}}null{{/returnType}},
+                localVarResponse.Content,
+                localVarResponse.StatusDescription);
         }
 
         {{/supportsAsync}}
