@@ -37,7 +37,7 @@
         /// <param name="{{name}}">{{#description}}{{description}}{{/description}}{{^description}}{{name}}{{/description}}{{#required}} (required){{/required}}{{#defaultValue}} (default to {{defaultValue}}){{/defaultValue}}.</param>{{/isReadOnly}}{{/vars}}
         public {{classname}}({{#vars}}{{^isReadOnly}}{{{datatypeWithEnum}}}{{#isEnum}}?{{/isEnum}} {{name}} = null{{/isReadOnly}}{{#hasMoreNonReadOnly}}, {{/hasMoreNonReadOnly}}{{/vars}})
         {
-            {{#vars}}{{^isReadOnly}}{{^required}}{{#defaultValue}}// use default value if no "{{name}}" provided
+            {{#vars}}{{^isReadOnly}}{{#defaultValue}}// use default value if no "{{name}}" provided
             if ({{name}} == null)
             {
                 this.{{name}} = {{{defaultValue}}};
@@ -46,7 +46,7 @@
             {
                 this.{{name}} = {{name}};
             } {{/defaultValue}}{{^defaultValue}}this.{{name}} = {{name}};
-            {{/defaultValue}}{{/required}}{{/isReadOnly}}{{/vars}}
+            {{/defaultValue}}{{/isReadOnly}}{{/vars}}
         }
         
         {{#vars}}
