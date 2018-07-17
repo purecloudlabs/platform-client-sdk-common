@@ -27,6 +27,7 @@
     "debugConfig": false,
     "enableLoggerColor": false,
     "mavenSettingsFilePath": "/var/build/settings.xml",
+    "mavenTarget": "deploy",
     "apiHealthCheckUrl": "https://api.mypurecloud.com/api/v2/health/check"
   },
   "stageSettings": {
@@ -72,9 +73,18 @@
       "compileScripts": [
         {
           "type": "shell",
+          "path": "copyTests.sh",
+          "args": [
+            "${COMMON_ROOT}/resources/sdk/purecloudjava/tests",
+            "${SDK_REPO}/build/src/test/java/com/mypurecloud/sdk/v2"
+          ],
+	        "failOnError": true
+        },
+        {
+          "type": "shell",
           "path": "compile.sh",
           "args": [
-            "deploy",
+            { "$ref": "#/settings/mavenTarget" },
             "${SDK_REPO}/build",
             { "$ref": "#/settings/mavenSettingsFilePath" },
             "${DPGP_PASSPHRASE}"
