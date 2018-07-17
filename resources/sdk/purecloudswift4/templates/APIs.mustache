@@ -16,6 +16,100 @@ open class {{projectName}}API {
     /// The PureCloud access token to use for API requests.
     open static var accessToken: String?
     open static let userAgent = "PureCloud SDK/swift"
+
+    /// Authorizes the SDK by completing a client credentials OAuth grant.
+    ///
+    /// - parameter clientId: The OAuth client's client ID.
+    /// - parameter clientSecret: The OAuth client's client secret.
+    /// - parameter completion: The completion handler called when the authorization request is completed.
+    ///
+    public class func authorizeClientCredentials(clientId: String, clientSecret: String, completion: @escaping ((_ authResponse: AuthResponse?, _ error: Error?) -> Void)) {
+
+        let errorDomain = "{{projectName}}API.authorizeClientCredentials"
+
+        guard let base64EncodedCredentials = "\(clientId):\(clientSecret)".data(using: .utf8)?.base64EncodedString() else {
+            let error = NSError(domain: errorDomain, code: -1, userInfo: [NSLocalizedFailureReasonErrorKey: "Unable to encode client id and secret credentials for authorization."])
+            completion(nil, error)
+            return
+        }
+
+        let loginBasePath = {{projectName}}API.basePath.replacingOccurrences(of: "//api.", with: "//login.")
+        guard var urlComponents = URLComponents(string: loginBasePath) else {
+            let error = NSError(domain: errorDomain, code: -1, userInfo: [NSLocalizedFailureReasonErrorKey: "Unable to construct url components for authorization."])
+            completion(nil, error)
+            return
+        }
+        urlComponents.path = "/oauth/token"
+
+        guard let url = urlComponents.url else {
+            let error = NSError(domain: errorDomain, code: -1, userInfo: [NSLocalizedFailureReasonErrorKey: "Unable to construct url for authorization."])
+            completion(nil, error)
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        for (key, value) in ["Content-Type": "application/x-www-form-urlencoded",
+                             "Authorization": "Basic \(base64EncodedCredentials)"] {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+        request.httpBody = "grant_type=client_credentials".data(using: .ascii)
+
+        let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
+            if let error = error {
+                DispatchQueue.main.async { completion(nil, error) }
+                return
+            } else if let httpResponse = response as? HTTPURLResponse,
+                httpResponse.statusCode != 200 {
+                let error = NSError(domain: errorDomain, code: -1, userInfo: [NSLocalizedFailureReasonErrorKey: "Request responded with status code \(httpResponse.statusCode)."])
+                DispatchQueue.main.async { completion(nil, error) }
+                return
+            }
+            guard let data = data else {
+                let error = NSError(domain: errorDomain, code: -1, userInfo: [NSLocalizedFailureReasonErrorKey: "Request returned no data."])
+                DispatchQueue.main.async { completion(nil, error) }
+                return
+            }
+
+            do {
+                let authResponse = try JSONDecoder().decode(AuthResponse.self, from: data)
+                if let accessToken = authResponse.accessToken {
+                    {{projectName}}API.accessToken = accessToken
+                }
+                DispatchQueue.main.async { completion(authResponse, nil) }
+            } catch let decodeError as NSError {
+                let error = NSError(domain: errorDomain, code: -1, userInfo: [NSLocalizedFailureReasonErrorKey: "Error decoding returned data: \(decodeError.localizedDescription)"])
+                DispatchQueue.main.async { completion(nil, error) }
+            }
+        }
+        task.resume()
+    }
+}
+
+//  The authorization service returns a JSON response with the token, token type, token expiry time in seconds, and an error string if an error occurred.
+//
+//  {
+//    "access_token": "my-authentication-token",
+//    "token_type": "bearer",
+//    "expires_in": seconds-until-expiration,
+//    "error": "optional-error-message"
+//  }
+public struct AuthResponse: Codable {
+    /// The authentication token
+    public var accessToken: String?
+    /// The authentication token type
+    public var tokenType: String?
+    /// Seconds until the token expires after being granted
+    public var expiresIn: Int?
+    /// An optional error message
+    public var error: String?
+
+    enum CodingKeys: String, CodingKey {
+        case accessToken = "access_token"
+        case tokenType = "token_type"
+        case expiresIn = "expires_in"
+        case error
+    }
 }
 
 open class RequestBuilder<T> {
@@ -50,7 +144,7 @@ open class RequestBuilder<T> {
         if let token = {{projectName}}API.accessToken {
             headers["Authorization"] = "bearer " + token
         }
-        headers["User-Agent"] = {{projectName}}API.userAgent        
+        headers["User-Agent"] = {{projectName}}API.userAgent
     }
 
     open func execute(_ completion: @escaping (_ response: Response<T>?, _ error: Error?) -> Void) { }
