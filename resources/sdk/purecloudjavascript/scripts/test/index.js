@@ -23,7 +23,7 @@ describe('JS SDK for Node', function() {
 	it ('should trace basic information', () => {
 		console.log(`PURECLOUD_ENVIRONMENT=${PURECLOUD_ENVIRONMENT}`);
 		console.log(`PURECLOUD_CLIENT_ID=${PURECLOUD_CLIENT_ID}`);
-		console.log(`USER_EMAIL=${PURECLOUD_ENVIRONMENT}`);
+		console.log(`USER_EMAIL=${USER_EMAIL}`);
 	});
 
 	it('should have client credentials', (done) => {
@@ -54,6 +54,9 @@ describe('JS SDK for Node', function() {
 				USER_ID = data.id;
 				assert.strictEqual(data.name, USER_NAME);
 				assert.strictEqual(data.email, USER_EMAIL);
+
+				console.log(`Created user with ID ${USER_ID}`);
+
 				done();
 			})
 			.catch((err) => handleError(err, done));
@@ -65,7 +68,7 @@ describe('JS SDK for Node', function() {
 			version: 1
 		})
 			.then((data) => {
-				USER_ID = data.id;
+				assert.strictEqual(data.id, USER_ID);
 				assert.strictEqual(data.name, USER_NAME);
 				assert.strictEqual(data.email, USER_EMAIL);
 				assert.strictEqual(data.email, USER_EMAIL);
