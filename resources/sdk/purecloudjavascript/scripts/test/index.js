@@ -13,7 +13,7 @@ const PURECLOUD_ENVIRONMENT = process.env.PURECLOUD_ENVIRONMENT;
 
 let USER_ID;
 const USER_EMAIL = `${guid()}@${PURECLOUD_ENVIRONMENT}`;
-const USER_NAME = 'JSSDK Tester';
+const USER_NAME = 'JS SDK Tester';
 const USER_DEPARTMENT = 'Ministry of Testing';
 const USER_PROFILE_SKILL = 'Testmaster';
 
