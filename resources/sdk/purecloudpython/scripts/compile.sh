@@ -15,3 +15,9 @@ cp $RESOURCE_DIR/scripts/setup.cfg $BUILD_DIR/setup.cfg
 # Compile module
 cd $BUILD_DIR
 python setup.py build
+
+# Run tests
+echo "Running tests"
+cd "$RESOURCE_DIR/scripts/"
+pip install requests
+python -m unittest SdkTests
