@@ -37,7 +37,6 @@ describe('JS SDK for Node', function() {
 	});
 
 	it('should successfully authenticate', (done) => {
-		console.log(`Authenticating with ${PURECLOUD_ENVIRONMENT} using client ID ${PURECLOUD_CLIENT_ID}`);
 		client.setEnvironment(PURECLOUD_ENVIRONMENT);
 		client.loginClientCredentialsGrant(PURECLOUD_CLIENT_ID, PURECLOUD_CLIENT_SECRET)
 			.then(() => done())
@@ -54,8 +53,6 @@ describe('JS SDK for Node', function() {
 				USER_ID = data.id;
 				assert.strictEqual(data.name, USER_NAME);
 				assert.strictEqual(data.email, USER_EMAIL);
-
-				console.log(`Created user with ID ${USER_ID}`);
 
 				done();
 			})
