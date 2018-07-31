@@ -9,18 +9,22 @@ echo "ROOT_NAMESPACE=$ROOT_NAMESPACE"
 # CD to build dir
 cd $BUILD_DIR
 
-frameworkVersion=net45
-netfx=${frameworkVersion#net}
-
+# Import certs
 mozroots --import --sync
+
+# Install packages
 mono $COMMON_DIR/resources/sdk/pureclouddotnet/bin/nuget.exe install $BUILD_DIR/src/$ROOT_NAMESPACE/packages.config -o $BUILD_DIR/packages -NoCache -Verbosity detailed;
+mono $COMMON_DIR/resources/sdk/pureclouddotnet/bin/nuget.exe install $BUILD_DIR/src/$ROOT_NAMESPACE.Tests/packages.config -o $BUILD_DIR/packages -NoCache -Verbosity detailed;
+
 mkdir -p $BUILD_DIR/bin;
 
 cp $BUILD_DIR/packages/Newtonsoft.Json.11.0.2/lib/net45/Newtonsoft.Json.dll $BUILD_DIR/bin/Newtonsoft.Json.dll;
 cp $BUILD_DIR/packages/RestSharp.106.3.1/lib/net452/RestSharp.dll $BUILD_DIR/bin/RestSharp.dll;
 cp $BUILD_DIR/packages/WebSocketSharp.1.0.3-rc11/lib/websocket-sharp.dll $BUILD_DIR/bin/websocket-sharp.dll;
+cp $BUILD_DIR/packages/NUnit.3.10.1/lib/net45/nunit.framework.dll $BUILD_DIR/bin/nunit.framework.dll;
 
-mcs -sdk:${netfx} -r:$BUILD_DIR/bin/Newtonsoft.Json.dll,\
+echo "Compiling SDK..."
+mcs -r:$BUILD_DIR/bin/Newtonsoft.Json.dll,\
 $BUILD_DIR/bin/RestSharp.dll,\
 $BUILD_DIR/bin/websocket-sharp.dll,\
 System.Runtime.Serialization.dll \
@@ -29,3 +33,19 @@ System.Runtime.Serialization.dll \
 -doc:$BUILD_DIR/bin/${ROOT_NAMESPACE}.xml \
 -recurse:'src/'${ROOT_NAMESPACE}'/*.cs' \
 -platform:anycpu
+
+echo "Compiling tests..."
+mcs -r:$BUILD_DIR/bin/Newtonsoft.Json.dll,\
+$BUILD_DIR/bin/RestSharp.dll,\
+$BUILD_DIR/bin/websocket-sharp.dll,\
+System.Runtime.Serialization.dll,\
+$BUILD_DIR/bin/${ROOT_NAMESPACE}.dll,\
+$BUILD_DIR/bin/nunit.framework.dll \
+-target:library \
+-out:$BUILD_DIR/bin/${ROOT_NAMESPACE}.Tests.dll \
+-recurse:'src/'${ROOT_NAMESPACE}.Tests'/*.cs' \
+-platform:anycpu
+
+echo "Running tests..."
+mono $COMMON_DIR/resources/sdk/pureclouddotnet/bin/nunit/nunit3-console.exe $BUILD_DIR/bin/${ROOT_NAMESPACE}.Tests.dll
+

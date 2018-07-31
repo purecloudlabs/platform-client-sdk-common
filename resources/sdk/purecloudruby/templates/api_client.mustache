@@ -317,8 +317,7 @@ module {{moduleName}}
       when :pipes
         param.join('|')
       when :multi
-        # return the array directly as typhoeus will handle it as expected
-        param
+        param.join(',')
       else
         fail "unknown collection format: #{collection_format.inspect}"
       end

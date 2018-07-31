@@ -74,7 +74,27 @@
           ]
         }
       ],
-      "postRunScripts": []
+      "postRunScripts": [
+        {
+          "type": "command",
+          "command": "npm",
+          "cwd": "${COMMON_ROOT}/resources/sdk/purecloudjavascript/scripts/test",
+          "args": [
+          	"i"
+          ],
+          "failOnError": true
+        },
+        {
+          "type": "command",
+          "command": "npm",
+          "cwd": "${COMMON_ROOT}/resources/sdk/purecloudjavascript/scripts/test",
+          "args": [
+          	"run",
+          	"test"
+          ],
+          "failOnError": true
+        }
+      ]
     },
     "postbuild": {
       "gitCommit": false,
