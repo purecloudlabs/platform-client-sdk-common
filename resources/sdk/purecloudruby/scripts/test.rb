@@ -1,4 +1,4 @@
-require '/git/platform-client-sdk-common/output/purecloudruby/build/lib/purecloudplatformclientv2.rb'
+require '../../../output/purecloudruby/build/lib/purecloudplatformclientv2.rb'
 require 'test/unit'
 require 'securerandom'
 
