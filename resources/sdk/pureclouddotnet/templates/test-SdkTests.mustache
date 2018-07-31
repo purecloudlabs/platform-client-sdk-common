@@ -59,10 +59,10 @@ namespace {{packageName}}.Tests
         [Test, Order(1)]
         public void Authenticate()
         {
-            var accessTokenInfo = Configuration.Default.ApiClient.PostToken(clientId, clientSecret);
-            Configuration.Default.AccessToken = accessTokenInfo.AccessToken;
+            var accessTokenInfo = {{packageName}}.Client.Configuration.Default.ApiClient.PostToken(clientId, clientSecret);
+            {{packageName}}.Client.Configuration.Default.AccessToken = accessTokenInfo.AccessToken;
 
-            Assert.IsNotEmpty(Configuration.Default.AccessToken);
+            Assert.IsNotEmpty({{packageName}}.Client.Configuration.Default.AccessToken);
         }
 
         [Test, Order(2)]
