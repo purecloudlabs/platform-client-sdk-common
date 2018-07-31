@@ -79,10 +79,6 @@ describe('JS SDK for Node', function() {
 	});
 
 	it('should set profile skills on the user', (done) => {
-		// usersApi.putUserProfileskills(USER_ID, {
-		// 	body: [ USER_PROFILE_SKILL ]
-		// })
-		// API-3533 will change ^^^ to vvv
 		usersApi.putUserProfileskills(USER_ID, [ USER_PROFILE_SKILL ])
 			.then((data) => {
 				assert.strictEqual(data.length, 1);
