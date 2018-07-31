@@ -1,5 +1,4 @@
-puts Dir.pwd 
-require '../../../output/purecloudruby/build/lib/purecloudplatformclientv2.rb'
+require 'purecloudplatformclientv2'
 require 'test/unit'
 require 'securerandom'
 

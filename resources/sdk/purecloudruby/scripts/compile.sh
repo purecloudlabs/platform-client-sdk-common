@@ -15,4 +15,6 @@ cd $BUILD_DIR
 gem build purecloudplatformclientv2.gemspec
 
 #test
+echo "Running tests..."
+gem install $BUILD_DIR/purecloudplatformclientv2-$VERSION.gem --no-ri --no-rdoc
 ruby $COMMON_ROOT/resources/sdk/purecloudruby/scripts/test.rb
