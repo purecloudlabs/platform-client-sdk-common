@@ -59,6 +59,7 @@ namespace {{packageName}}.Tests
         [Test, Order(1)]
         public void Authenticate()
         {
+            {{packageName}}.Client.Configuration.Default.ApiClient.RestClient.BaseUrl = new Uri("https://api." + environment);
             var accessTokenInfo = {{packageName}}.Client.Configuration.Default.ApiClient.PostToken(clientId, clientSecret);
             {{packageName}}.Client.Configuration.Default.AccessToken = accessTokenInfo.AccessToken;
 
