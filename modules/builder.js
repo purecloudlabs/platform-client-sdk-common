@@ -662,8 +662,10 @@ function executeScript(script) {
 	try {
 		var args = script.args ? script.args.slice() : [];
 		var options = {stdio:'inherit'};
-		if (script.cwd)
+		if (script.cwd) {
+			log.debug('cwd: ' + script.cwd);
 			options['cwd'] = path.resolve(script.cwd);
+		}
 
 		if (script.appendIsNewReleaseArg === true)
 			args.push(self.isNewVersion);

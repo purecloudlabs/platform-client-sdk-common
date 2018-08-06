@@ -26,34 +26,33 @@
     "url": "https://github.com/MyPureCloud/purecloud_api_sdk_common/issues"
   },
   "dependencies": {
-    "archiver": "^1.3.0",
-    "commander": "^2.9.0",
+    "archiver": ">=1.3.0",
+    "commander": ">=2.9.0",
     "dateformat": "*",
     "dot": "^1.1.2",
     "fs-extra": "^5.0.0",
     "github-api-promise": "*",
-    "json-schema-deref-sync": "^0.3.3",
-    "klaw-sync": "^3.0.2",
+    "json-schema-deref-sync": ">=0.3.3",
     "lodash": "4.0.0",
-    "moment-timezone": "^0.5.11",
+    "moment-timezone": ">=0.5.11",
     "mustache": "^2.3.0",
-    "ncp": "^2.0.0",
-    "pluralize": "^3.1.0",
+    "pluralize": ">=3.1.0",
     "purecloud_api_sdk_javascript": "*",
-    "q": "^1.4.1",
+    "q": ">=1.4.1",
     "request": "2.67.0",
     "semver": "*",
-    "sleep": "^5.1.0",
+    "sleep": "^5.1.1",
     "superagent": "1.0",
     "wget": "0.0.1",
-    "winston": "^2.3.1",
-    "yamljs": "^0.2.8"
+    "winston": ">=2.3.1",
+    "yamljs": ">=0.2.8"
   },
   "homepage": "https://github.com/MyPureCloud/purecloud_api_sdk_common",
   "bin": {
     "sdk-builder": "./sdkBuilder.js"
   },
   "devDependencies": {
-    "browserify": "^16.1.1"
+    "browserify": "^16.1.1",
+    "rollup-plugin-json": "^2.3.0"
   }
 }
