@@ -436,7 +436,7 @@ class ApiClient {
 			client_id: encodeURIComponent(this.clientId)
 		};
 
-		if (redirectUri)
+		if (logoutRedirectUri)
 			query['redirect_uri'] = encodeURI(logoutRedirectUri);
 
 		var url = this._buildAuthUrl('logout', query);
