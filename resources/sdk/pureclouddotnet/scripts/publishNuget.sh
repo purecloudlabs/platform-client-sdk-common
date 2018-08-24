@@ -2,12 +2,14 @@ BUILD_DIR=$1
 COMMON_DIR=$2
 NAMESPACE=$3
 NUGET_API_KEY=$4
-IS_NEW_RELEASE=$5
-VERSION=$6
+NUGET_SOURCE=$5
+IS_NEW_RELEASE=$6
+VERSION=$7
 
 echo "BUILD_DIR=$BUILD_DIR"
 echo "COMMON_DIR=$COMMON_DIR"
 echo "NAMESPACE=$NAMESPACE"
+echo "NUGET_SOURCE=$NUGET_SOURCE"
 echo "IS_NEW_RELEASE=$IS_NEW_RELEASE"
 echo "VERSION=$VERSION"
 
@@ -67,6 +69,6 @@ cp package/$NAMESPACE.$VERSION.repack.nupkg $NAMESPACE.$VERSION.repack.nupkg
 mono $COMMON_DIR/resources/sdk/pureclouddotnet/bin/nuget.exe push \
 $NAMESPACE.$VERSION.repack.nupkg \
 $NUGET_API_KEY \
--source "https://www.nuget.org" \
+-source $NUGET_SOURCE \
 -Verbosity detailed \
 -Timeout 900
