@@ -3,17 +3,24 @@ import {{moduleName}} = require('{{projectName}}');
 declare module '{{projectName}}' {
 	export const ApiClient: any;
 }
-
-{{#apiInfo}}{{#apis}}{{#operations}}
+{{#apiInfo}}
+{{#apis}}{{#operations}}
 declare class {{classname}} { {{#operation}} {{!-- class: CodegenOperation --}}
-  	{{operationId}}({{#allParams}}{{#required}}{{{paramName}}}: {{{typeScriptType}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts?: {{classname}}.{{operationId}}Options{{/hasOptionalParams}});{{/operation}}
+  	{{operationId}}({{#allParams}}{{#required}}{{{paramName}}}: {{{typeScriptType}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts?: {{classname}}.{{operationId}}Options{{/hasOptionalParams}}): Promise<{{{typeScriptResponseType}}}>;{{/operation}}
 }
 
 declare namespace {{classname}} { {{#operation}}{{#hasOptionalParams}}
 	export interface {{operationId}}Options { {{#allParams}}{{^required}}
-		{{{paramName}}}?: {{{typeScriptType}}};{{/required}}{{/allParams}}
+		"{{{paramName}}}"?: {{{typeScriptType}}};{{/required}}{{/allParams}}
 	}{{/hasOptionalParams}}{{/operation}}
 }
 {{/operations}}
 {{/apis}}
+
+declare namespace Models { {{#models}}{{#model}}
+	export interface {{classname}} { {{#vars}}
+		"{{baseName}}"{{^required}}?{{/required}}: {{{typeScriptType}}};{{/vars}}
+	}
+	{{/model}}{{/models}}
+}
 {{/apiInfo}}
