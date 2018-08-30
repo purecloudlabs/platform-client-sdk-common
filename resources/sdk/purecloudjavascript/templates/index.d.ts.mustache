@@ -1,7 +1,41 @@
 import {{moduleName}} = require('{{projectName}}');
 
 declare module '{{projectName}}' {
-	export const ApiClient: any;
+	export const ApiClient: ApiClientClass;
+}
+
+declare class ApiClientClass {
+	instance: ApiClientClass;
+	proxy: ProxyConfig;
+	superagent: any;
+
+	callApi(path: string, httpMethod: string, pathParams: { [key: string]: string; }, queryParams: { [key: string]: object; }, headerParams: { [key: string]: object; }, formParams: { [key: string]: object; }, bodyParam: any, authNames: Array<string>, contentTypes: Array<string>, accepts: Array<string>): Promise<any>;
+	loginClientCredentialsGrant(clientId: string, clientSecret: string): Promise<AuthData>;
+	loginImplicitGrant(clientId: string, redirectUri: string, opts?: LoginImplicitGrantOptions): Promise<AuthData>;
+	logout(logoutRedirectUri: string): void;
+	setAccessToken(token: string): void;
+	setDebugLog(debugLog: any, maxLines: number): void;
+	setEnvironment(environment: string): void;
+	setPersistSettings(doPersist: boolean, prefix: string): void;
+	setReturnExtendedResponses(returnExtended: boolean): void;
+	setStorageKey(storageKey: string): void;
+}
+
+declare class LoginImplicitGrantOptions {
+	state?: string;
+}
+
+declare class AuthData {
+	accessToken: string;
+	state?: string;
+	tokenExpiryTime: number;
+	tokenExpiryTimeString: string;
+}
+
+declare class ProxyConfig {
+	host: string;
+	port: number;
+	protocol: string;
 }
 {{#apiInfo}}
 {{#apis}}{{#operations}}
