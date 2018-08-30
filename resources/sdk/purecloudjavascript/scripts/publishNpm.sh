@@ -21,6 +21,7 @@ mkdir $PACKAGE_DIR/src
 
 cp $BUILD_DIR/package.json $PACKAGE_DIR/package.json
 cp $BUILD_DIR/README.md $PACKAGE_DIR/README.md
+cp $BUILD_DIR/index.d.ts $PACKAGE_DIR/index.d.ts
 cp -r $BUILD_DIR/src $PACKAGE_DIR
 cp -r $BUILD_DIR/dist $PACKAGE_DIR
 
