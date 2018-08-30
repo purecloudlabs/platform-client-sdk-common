@@ -307,9 +307,16 @@ class ApiClient {
 				if (error) {
 					reject(error);
 				} else {
+					// Save access token
 					this.setAccessToken(response.body['access_token']);
+
+					// Set expiry time
+					this.authData.tokenExpiryTime = (new Date()).getTime() + (response.body['expires_in'] * 1000);
+					this.authData.tokenExpiryTimeString = (new Date(this.authData.tokenExpiryTime)).toUTCString();
 					this._debugTrace(`Access token expires in ${response.body['expires_in']} seconds`);
-					resolve();
+
+					// Return auth data
+					resolve(this.authData);
 				}
 			});
 		});
