@@ -1,20 +1,99 @@
 ---
-title: PureCloud API SDK - iOS
+title: Platform API Client SDK - iOS (Swift 4)
 ---
+
+{{#appDescription}}
+{{{appDescription}}}
+{{/appDescription}}
 
 Documentation can be found at [https://developer.mypurecloud.com/api/rest/client-libraries/ios/](https://developer.mypurecloud.com/api/rest/client-libraries/ios/)
 
+## Installation
 
+There are several ways to install the Platform API SDK in your project.
+
+### Install using [CocoaPods](https://cocoapods.org/) from the SDK repo
+Add the following to your project's Podfile:
+```
+pod '{{projectName}}', :git => 'https://github.com/MyPureCloud/platform-client-sdk-ios.git'
+```
+Then install this dependency in your project:
+```
+$ pod install
+```
+To specify a particular commit, append `, :commit => '11aa22'`
+
+### Install using [CocoaPods](https://cocoapods.org/) from a local path
+You can install {{projectName}} from a folder on your local system. Put the SDK under your project folder (e.g. `/path/to/project/Vendor/{{projectName}}`) and then add the following to your Podfile:
+```
+pod '{{projectName}}', :path => 'Vendor/{{projectName}}'
+```
+Then install this dependency in your project:
+```
+$ pod install
+```
+
+### Install without a dependency manager
+
+If you wish to install {{projectName}} without a depencency manager, put the SDK under your project folder (e.g. `/path/to/project/Vendor/{{projectName}}`) and add the file(s) under the `Classes` subdirectory to your Xcode project. The SDK has a dependency on [Alamofire](https://github.com/Alamofire/Alamofire). Ensure that you have a version of the Alamofire library installed in your project that meets the dependency requirements specified in the {{projectName}}.podspec file.
+
+## Using the SDK
+
+Please follow the installation procedure above and then run the following code:
+
+### Import the SDK:
+
+~~~ swift
+import {{projectName}}
+~~~
+
+### Configure the SDK Client:
+
+#### Setting an access token
+
+The SDK Client must be authorized with an auth token that is granted outside the scope of the SDK. For more information about authenticating with OAuth, see the Developer Center article [Authorization](https://developer.mypurecloud.com/api/rest/authorization/index.html). Assign the access token for the SDK to use as follows:
+
+~~~ swift
+{{projectName}}API.accessToken = "YOUR_ACCESS_TOKEN"
+~~~
+
+#### Setting the environment
+
+The default environment is `https://api.mypurecloud.com`. If you are interacting with a different environment you may configure it as follows:
+
+~~~ swift
+{{projectName}}API.basePath = "https://api.mypurecloud.ie"
+~~~
+
+#### Other SDK Client configuration options
+
+* `{{projectName}}API.userAgent` - Overrides the default user agent header on requests
+* `{{projectName}}API.customHeaders` - Custom headers to be sent with every request
+
+### Making requests
+
+In order to make a request, call the desired method on one of the SDK's API classes. For example, to get details for the authenticated user:
+
+~~~ swift
+let getUsersMeExpand = [UsersAPI.Expand_getUsersMe.presence].map { $0.rawValue }
+UsersAPI.getUsersMe(expand: getUsersMeExpand) { (userMe, error) in
+    if let error = error {
+        // handle error
+        print("Error: \(error.localizedDescription)\n\(error)")
+    } else if let userMe = userMe {
+        // handle response UserMe object
+        print("Success: \(String(describing: userMe.name))")
+    }
+}
+~~~
 
 ## SDK Source Code Generation
 
 The SDK is automatically regenerated and published from the API's definition after each API release. For more information on the build process, see the [platform-client-sdk-common](https://github.com/MyPureCloud/platform-client-sdk-common) project.
 
-
 ## Versioning
 
 The SDK's version is incremented according to the [Semantic Versioning Specification](https://semver.org/). The decision to increment version numbers is determined by [diffing the Platform API's swagger](https://github.com/purecloudlabs/platform-client-sdk-common/blob/master/modules/swaggerDiff.js) for automated builds, and optionally forcing a version bump when a build is triggered manually (e.g. releasing a bugfix).
-
 
 ## Support
 
