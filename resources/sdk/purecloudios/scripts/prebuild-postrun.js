@@ -18,11 +18,7 @@ try {
 		podLicense: 'MIT',
 		podHomepage: 'https://developer.mypurecloud.com/',
 		podDocumentationURL: 'https://developer.mypurecloud.com/api/rest/client-libraries/ios/',
-		podVersion: version.displayFull,
-		// responseAs: '',
-		// unwrapRequired: '',
-		// swiftUseApiNamespace: '',
-		// PromiseKit: ''
+		podVersion: version.displayFull
 	};
 
 	fs.writeFileSync(swaggerCodegenConfigFilePath, JSON.stringify(config, null, 2));
