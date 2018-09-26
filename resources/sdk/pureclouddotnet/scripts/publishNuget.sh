@@ -45,8 +45,8 @@ echo '<?xml version="1.0" encoding="utf-8"?>'\
 '		</dependencies>'\
 '	</metadata>'\
 '	<files>'\
-"		<file src=\"$NAMESPACE.dll\" target=\"lib/$NAMESPACE.dll\" />"\
-"		<file src=\"$NAMESPACE.xml\" target=\"lib/$NAMESPACE.xml\" />"\
+"		<file src=\"$NAMESPACE.dll\" target=\"lib/netstandard2.0/$NAMESPACE.dll\" />"\
+"		<file src=\"$NAMESPACE.xml\" target=\"lib/netstandard2.0/$NAMESPACE.xml\" />"\
 '	</files>'\
 '</package>' > $BUILD_DIR/bin/$NAMESPACE.nuspec
 
