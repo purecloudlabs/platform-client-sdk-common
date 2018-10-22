@@ -19,7 +19,7 @@ const zip = require('./zip');
 
 /* PRIVATE VARS */
 
-const TIMESTAMP_FORMAT = "h:mm:ss a";
+const TIMESTAMP_FORMAT = 'h:mm:ss a';
 
 var newSwaggerTempFile = '';
 
@@ -72,7 +72,7 @@ function Builder(configPath, localConfigPath) {
 		maybeInit(this, 'localConfig', {});
 		maybeInit(this.config, 'settings', {});
 		maybeInit(this.config.settings, 'swagger', {});
-		maybeInit(this.config.settings, 'sdkRepo', {"repo": undefined,"branch":  undefined});
+		maybeInit(this.config.settings, 'sdkRepo', {'repo': undefined,'branch':  undefined});
 		maybeInit(this.config.settings, 'swaggerCodegen', {});
 		maybeInit(this.config.settings.swaggerCodegen, 'generateApiTests', false);
 		maybeInit(this.config.settings.swaggerCodegen, 'generateModelTests', false);
@@ -263,11 +263,11 @@ function prebuildImpl() {
 			})
 			.then(function() {
 				self.version = {
-					"major": 0,
-					"minor": 0,
-					"point": 0,
-					"prerelease": "UNKNOWN",
-					"apiVersion": 0
+					major: 0,
+					minor: 0,
+					point: 0,
+					prerelease: 'UNKNOWN',
+					apiVersion: 0
 				};
 
 				if (self.config.settings.versionFile) {
@@ -305,14 +305,14 @@ function prebuildImpl() {
 				log.info(`Getting API version from ${self.config.settings.apiHealthCheckUrl}`);
 				https.get(self.config.settings.apiHealthCheckUrl, function(res) {
 					res.on('data', function (chunk) {
-			              resString += chunk;
-			        });
-			        res.on('end', function() {
-			        	deferred.resolve(JSON.parse(resString));
-			        });
-			        res.on('error', function(err) {
-			        	deferred.reject(err);
-			        });
+						resString += chunk;
+					});
+					res.on('end', function() {
+						deferred.resolve(JSON.parse(resString));
+					});
+					res.on('error', function(err) {
+						deferred.reject(err);
+					});
 				});
 
 				return deferred.promise;
@@ -324,7 +324,7 @@ function prebuildImpl() {
 					apiVersionDataClean[key.replace(/\W+/g, '')] = value;
 				});
 				self.apiVersionData = apiVersionDataClean;
-			    log.debug(`API version data: ${JSON.stringify(apiVersionDataClean,null,2)}`);
+				log.debug(`API version data: ${JSON.stringify(apiVersionDataClean,null,2)}`);
 
 				// Get extra release note data
 				var data = { extraNotes: getEnv('RELEASE_NOTES') };
@@ -364,14 +364,14 @@ function buildImpl() {
 
 		var command = '';
 		// Java command and options
-		command += `java `;
+		command += 'java ';
 		command += `-DapiTests=${self.config.settings.swaggerCodegen.generateApiTests} `;
 		command += `-DmodelTests=${self.config.settings.swaggerCodegen.generateModelTests} `;
 		command += `${getEnv('JAVA_OPTS', '')} -XX:MaxPermSize=256M -Xmx1024M -DloggerPath=conf/log4j.properties `;
 		// Swagger-codegen jar file
 		command += `-jar ${self.config.settings.swaggerCodegen.jarPath} `;
 		// Swagger-codegen options
-		command += `generate `;
+		command += 'generate ';
 		command += `-i ${newSwaggerTempFile} `;
 		command += `-l ${self.config.settings.swaggerCodegen.codegenLanguage} `;
 		command += `-o ${outputDir} `;
@@ -464,7 +464,7 @@ function applyOverrides(original, overrides) {
 function createRelease() {
 	var deferred = Q.defer();
 
-	if (!self.config.settings.sdkRepo.repo || self.config.settings.sdkRepo.repo === "") {
+	if (!self.config.settings.sdkRepo.repo || self.config.settings.sdkRepo.repo === '') {
 		log.warn('Skipping github release creation! Repo is undefined.');
 		deferred.resolve();
 		return deferred.promise;
@@ -502,22 +502,22 @@ function createRelease() {
 			githubApi.config.owner = repoOwner;
 			githubApi.config.token = getEnv('GITHUB_TOKEN');
 
-		    var createReleaseOptions = {
-				"tag_name": self.version.displayFull,
-				"target_commitish": self.config.settings.sdkRepo.branch ? self.config.settings.sdkRepo.branch : 'master',
-				"name": self.version.displayFull,
-				"body": `Release notes for version ${self.version.displayFull}\n${self.releaseNoteSummary}`,
-				"draft": false,
-				"prerelease": false
+			var createReleaseOptions = {
+				tag_name: self.version.displayFull,
+				target_commitish: self.config.settings.sdkRepo.branch ? self.config.settings.sdkRepo.branch : 'master',
+				name: self.version.displayFull,
+				body: `Release notes for version ${self.version.displayFull}\n${self.releaseNoteSummary}`,
+				draft: false,
+				prerelease: false
 			};
 
 			// Create release
 			return githubApi.repos.releases.createRelease(createReleaseOptions);
 		})
 		.then((release) => {
-	    	log.info(`Created release #${release.id}, \
-	    		${release.name}, tag: ${release.tag_name}, \
-	    		published on ${release.published_at}`);
+			log.info(`Created release #${release.id}, \
+				${release.name}, tag: ${release.tag_name}, \
+				published on ${release.published_at}`);
 		})
 		.then(() => deferred.resolve())
 		.catch((err) => deferred.reject(err));
@@ -541,50 +541,50 @@ function addNotifications() {
 		checkAndThrow(self.pureCloud, 'clientSecret', 'Environment variable PURECLOUD_CLIENT_SECRET must be set!');
 		checkAndThrow(self.pureCloud, 'environment', 'PureCloud environment was blank!');
 
-        var pureCloudSession = purecloud.PureCloudSession({
-            strategy: 'client-credentials',
-            timeout: 20000,
-            clientId: self.pureCloud.clientId,
-            clientSecret: self.pureCloud.clientSecret,
-            environment: self.pureCloud.environment
-        });
-        var notificationsApi = new purecloud.NotificationsApi(pureCloudSession);
+		var pureCloudSession = purecloud.PureCloudSession({
+			strategy: 'client-credentials',
+			timeout: 20000,
+			clientId: self.pureCloud.clientId,
+			clientSecret: self.pureCloud.clientSecret,
+			environment: self.pureCloud.environment
+		});
+		var notificationsApi = new purecloud.NotificationsApi(pureCloudSession);
 
-        pureCloudSession.login()
-        	.then(() => {
-        		return notificationsApi.getAvailabletopics(['schema']);
-        	})
-        	.then((notifications) => {
-                var notificationMappings = {'notifications':[]};
+		pureCloudSession.login()
+			.then(() => {
+				return notificationsApi.getAvailabletopics(['schema']);
+			})
+			.then((notifications) => {
+				var notificationMappings = {'notifications':[]};
 
-                // Process schemas
-                log.info(`Processing ${notifications.entities.length} notification schemas...`);
-                _.forEach(notifications.entities, (entity) => {
-                    if (!entity.schema) {
-                        log.warn(`Notification ${entity.id} does not have a defined schema!`);
-                        return;
-                    }
+				// Process schemas
+				log.info(`Processing ${notifications.entities.length} notification schemas...`);
+				_.forEach(notifications.entities, (entity) => {
+					if (!entity.schema) {
+						log.warn(`Notification ${entity.id} does not have a defined schema!`);
+						return;
+					}
 
-                    var schemaIdArray = entity.schema.id.split(':');
-                    var schemaName = schemaIdArray[schemaIdArray.length - 1] + 'Notification';
-                    log.silly(`Notification mapping: ${entity.id} (${schemaName})`);
-                    notificationMappings.notifications.push({'topic':entity.id, 'class':schemaName});
-                    extractDefinitons(schemaName, entity.schema);
-                });
+					var schemaIdArray = entity.schema.id.split(':');
+					var schemaName = schemaIdArray[schemaIdArray.length - 1] + 'Notification';
+					log.silly(`Notification mapping: ${entity.id} (${schemaName})`);
+					notificationMappings.notifications.push({'topic':entity.id, 'class':schemaName});
+					extractDefinitons(schemaName, entity.schema);
+				});
 
-                // Fix references (make standard JSON Pointers instead of URI) and add to swagger
-                _.forOwn(self.notificationDefinitions, (definition) => {
-                	fixRefs(definition); 
-                	swaggerDiff.newSwagger.definitions[definition.name] = definition.schema;
-                });
+				// Fix references (make standard JSON Pointers instead of URI) and add to swagger
+				_.forOwn(self.notificationDefinitions, (definition) => {
+					fixRefs(definition); 
+					swaggerDiff.newSwagger.definitions[definition.name] = definition.schema;
+				});
 
-                // Write mappings to file
-                var mappingFilePath = path.resolve(path.join(getEnv('SDK_REPO'), 'notificationMappings.json'));
-                log.info(`Writing Notification mappings to ${mappingFilePath}`);
-                fs.writeFileSync(mappingFilePath, JSON.stringify(notificationMappings, null, 2));
+				// Write mappings to file
+				var mappingFilePath = path.resolve(path.join(getEnv('SDK_REPO'), 'notificationMappings.json'));
+				log.info(`Writing Notification mappings to ${mappingFilePath}`);
+				fs.writeFileSync(mappingFilePath, JSON.stringify(notificationMappings, null, 2));
 
-                deferred.resolve();
-        	})
+				deferred.resolve();
+			})
 			.catch((err) => deferred.reject(err));
 	} catch(err) {
 		deferred.reject(err);
@@ -594,46 +594,46 @@ function addNotifications() {
 }
 
 function extractDefinitons(schemaName, entity) {
-    try {
-    	_.forOwn(entity, (value, key) => {
-            if (key == 'id' && typeof(value) == 'string') {
-                var entityIdArray = entity.id.split(':');
-                var lastPart = entityIdArray[entityIdArray.length - 1];
-                var entityName = schemaName;
-                if (schemaName != (lastPart + 'Notification')) {
-                    entityName += lastPart;
-                }
-                self.notificationDefinitions[entity.id] = {
-                    'name': entityName,
-                    'schema': entity
-                };
-            }
+	try {
+		_.forOwn(entity, (value, key) => {
+			if (key == 'id' && typeof(value) == 'string') {
+				var entityIdArray = entity.id.split(':');
+				var lastPart = entityIdArray[entityIdArray.length - 1];
+				var entityName = schemaName;
+				if (schemaName != (lastPart + 'Notification')) {
+					entityName += lastPart;
+				}
+				self.notificationDefinitions[entity.id] = {
+					'name': entityName,
+					'schema': entity
+				};
+			}
 
-            if (typeof(value) == 'object') {
-                extractDefinitons(schemaName, value);
-            }
-        });
-    } catch (e) {
-        console.log(e);
-        console.log(e.stack);
-    }
+			if (typeof(value) == 'object') {
+				extractDefinitons(schemaName, value);
+			}
+		});
+	} catch (e) {
+		console.log(e);
+		console.log(e.stack);
+	}
 }
 
 function fixRefs(entity) {
-    // replace $ref values with "#/definitions/type" instead of uri
-    try {
-    	_.forOwn(entity, (property, key) => {
-            if (key == '$ref' && !property.startsWith('#')) {
-                entity[key] = '#/definitions/' + self.notificationDefinitions[property].name;
-            } else if (typeof(property) == 'object') {
-                entity[key] = fixRefs(property);
-            }
-        });
-        return entity;
-    } catch (e) {
-        console.log(e);
-        console.log(e.stack);
-    }
+	// replace $ref values with "#/definitions/type" instead of uri
+	try {
+		_.forOwn(entity, (property, key) => {
+			if (key == '$ref' && !property.startsWith('#')) {
+				entity[key] = '#/definitions/' + self.notificationDefinitions[property].name;
+			} else if (typeof(property) == 'object') {
+				entity[key] = fixRefs(property);
+			}
+		});
+		return entity;
+	} catch (e) {
+		console.log(e);
+		console.log(e.stack);
+	}
 }
 
 function loadConfig(configPath) {
@@ -820,7 +820,7 @@ function getFileCount(dir) {
 	log.silly(`There are ${files.length} files in ${dir}`);
 
 	if (files.length == 1 && files[0] === '.DS_Store') {
-		log.silly(`...and it's named .DS_Store   ಠ_ಠ`);
+		log.silly('...and it\'s named .DS_Store   ಠ_ಠ');
 		return 0;
 	}
 
