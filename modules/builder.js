@@ -20,6 +20,7 @@ const zip = require('./zip');
 /* PRIVATE VARS */
 
 const TIMESTAMP_FORMAT = 'h:mm:ss a';
+const NOTIFICATION_ID_REGEX = /^urn:jsonschema:(.+):v2:(.+)$/i;
 
 var newSwaggerTempFile = '';
 
@@ -134,7 +135,6 @@ function Builder(configPath, localConfigPath) {
 				this.config.settings.resourcePaths.templates : 
 				path.join(resourceRoot, 'templates'))
 		};
-		log.debug(`Resource paths: ${JSON.stringify(this.resourcePaths, null, 2)}`);
 		newSwaggerTempFile = path.join(getEnv('SDK_TEMP'), 'newSwagger.json');
 		this.pureCloud = {
 			clientId: getEnv('PURECLOUD_CLIENT_ID'),
@@ -565,17 +565,11 @@ function addNotifications() {
 						return;
 					}
 
-					var schemaIdArray = entity.schema.id.split(':');
-					var schemaName = schemaIdArray[schemaIdArray.length - 1] + 'Notification';
-					log.silly(`Notification mapping: ${entity.id} (${schemaName})`);
-					notificationMappings.notifications.push({'topic':entity.id, 'class':schemaName});
-					extractDefinitons(schemaName, entity.schema);
-				});
-
-				// Fix references (make standard JSON Pointers instead of URI) and add to swagger
-				_.forOwn(self.notificationDefinitions, (definition) => {
-					fixRefs(definition); 
-					swaggerDiff.newSwagger.definitions[definition.name] = definition.schema;
+					const schemaName = getNotificationClassName(entity.schema.id);
+					log.info(`Notification mapping: ${entity.id} (${schemaName})`);
+					notificationMappings.notifications.push({'topic': entity.id, 'class': schemaName});
+					extractDefinitons(entity.schema);
+					swaggerDiff.newSwagger.definitions[schemaName] = JSON.parse(JSON.stringify(entity.schema));
 				});
 
 				// Write mappings to file
@@ -593,43 +587,55 @@ function addNotifications() {
 	return deferred.promise;
 }
 
-function extractDefinitons(schemaName, entity) {
-	try {
-		_.forOwn(entity, (value, key) => {
-			if (key == 'id' && typeof(value) == 'string') {
-				var entityIdArray = entity.id.split(':');
-				var lastPart = entityIdArray[entityIdArray.length - 1];
-				var entityName = schemaName;
-				if (schemaName != (lastPart + 'Notification')) {
-					entityName += lastPart;
-				}
-				self.notificationDefinitions[entity.id] = {
-					'name': entityName,
-					'schema': entity
-				};
-			}
+function getNotificationClassName(id) {
+	// Normalize to include v2. Architect topics just have to be different and don't have v2...
+	let parts = id.split(':');
+	if (parts[parts.length - 2] !== 'v2')
+		parts.splice(parts.length - 2, 0, 'v2');
+	const normalizedId = parts.join(':');
 
-			if (typeof(value) == 'object') {
-				extractDefinitons(schemaName, value);
-			}
-		});
-	} catch (e) {
-		console.log(e);
-		console.log(e.stack);
+	// Regex match the URN parts we want
+	let className = '';
+	let matches = NOTIFICATION_ID_REGEX.exec(normalizedId);
+	if (!matches) {
+		log.warn('No regex matches!');
+		log.warn(`id: ${id}`);
+		log.warn(`normalizedId: ${normalizedId}`);
 	}
+	for (let i = 1; i < matches.length; i++) {
+		matches[i].split(':').forEach((part) => {
+			className += part.charAt(0).toUpperCase() + part.slice(1);
+		});
+	}
+	return className;
 }
 
-function fixRefs(entity) {
-	// replace $ref values with "#/definitions/type" instead of uri
+function extractDefinitons(entity) {
 	try {
 		_.forOwn(entity, (property, key) => {
+			// Rewrite URN refs to JSON refs
 			if (key == '$ref' && !property.startsWith('#')) {
-				entity[key] = '#/definitions/' + self.notificationDefinitions[property].name;
-			} else if (typeof(property) == 'object') {
-				entity[key] = fixRefs(property);
+				entity[key] = '#/definitions/' + getNotificationClassName(property);
+			} 
+
+			// Recurse on objects
+			if (typeof(property) !== 'object') return;
+			extractDefinitons(property);
+
+			// Update object to ref
+			if (property.id && typeof(property.id) === 'string') {
+				let className = getNotificationClassName(property.id);
+
+				// Store definition
+				swaggerDiff.newSwagger.definitions[className] = JSON.parse(JSON.stringify(property));
+
+				// Set reference
+				entity[key] = {
+					'type': 'object',
+					'$ref': `#/definitions/${className}`
+				};
 			}
 		});
-		return entity;
 	} catch (e) {
 		console.log(e);
 		console.log(e.stack);
