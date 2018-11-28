@@ -688,6 +688,7 @@ function executeScript(script) {
 			}
 			case 'shell': {
 				args.unshift(getScriptPath(script));
+				args.unshift('-e');
 				log.verbose(`Executing shell script: ${args.join(' ')}`);
 				code = childProcess.execFileSync('sh', args, options);
 				break;
