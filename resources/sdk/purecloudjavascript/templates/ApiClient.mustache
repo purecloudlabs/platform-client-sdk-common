@@ -609,9 +609,6 @@ class ApiClient {
 	applyAuthToRequest(request, authNames) {
 		authNames.forEach((authName) => {
 			var auth = this.authentications[authName];
-			console.log(authName);
-			console.log(auth);
-			console.log(JSON.stringify(this.authentications,null,2));
 			switch (auth.type) {
 				case 'basic':
 					if (auth.username || auth.password) {
