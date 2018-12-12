@@ -135,7 +135,7 @@ module {{moduleName}}
     end
 
     def base_url
-      url = "#{scheme}://#{[host, base_path].join('/').gsub(/\/+/, '/')}".sub(/\/+\z/, '')
+      url = "https://#{[host, base_path].join('/').gsub(/\/+/, '/')}".sub(/\/+\z/, '')
       URI.encode(url)
     end
 
@@ -164,7 +164,7 @@ module {{moduleName}}
             type: 'api_key',
             in: {{#isKeyInHeader}}'header'{{/isKeyInHeader}}{{#isKeyInQuery}}'query'{{/isKeyInQuery}},
             key: '{{keyParamName}}',
-            value: api_key_with_prefix('{{keyParamName}}')
+            value: "Bearer #{access_token}"
           },
 {{/isApiKey}}
 {{#isBasic}}
