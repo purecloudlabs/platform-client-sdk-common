@@ -44,7 +44,7 @@ class {{classname}} {
 			{ {{#headerParams}}'{{baseName}}': {{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}{{#hasMore}},{{/hasMore}}{{/headerParams}} }, 
 			{ {{#formParams}}'{{baseName}}': {{#collectionFormat}}this.apiClient.buildCollectionParam({{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}, '{{collectionFormat}}'){{/collectionFormat}}{{^collectionFormat}}{{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}{{/collectionFormat}}{{#hasMore}},{{/hasMore}}{{/formParams}} }, 
 			{{#bodyParam}}{{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}{{/bodyParam}}{{^bodyParam}}null{{/bodyParam}}, 
-			['PureCloud Auth'], 
+			['PureCloud OAuth'], 
 			[{{#consumes}}'{{mediaType}}'{{#hasMore}}, {{/hasMore}}{{/consumes}}], 
 			[{{#produces}}'{{mediaType}}'{{#hasMore}}, {{/hasMore}}{{/produces}}]{{^usePromises}}, 
 			callback{{/usePromises}}

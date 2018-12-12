@@ -155,7 +155,7 @@ class ApiClient {
 		try {
 			if (opts.accessToken) {
 				this.authData.accessToken = opts.accessToken;
-				this.authentications['PureCloud Auth'].accessToken = opts.accessToken;
+				this.authentications['PureCloud OAuth'].accessToken = opts.accessToken;
 			}
 
 			if (opts.state) {
@@ -324,14 +324,14 @@ class ApiClient {
 			this._loadSettings();
 
 			// Check if there is a token to test
-			if (!this.authentications['PureCloud Auth'].accessToken) {
+			if (!this.authentications['PureCloud OAuth'].accessToken) {
 				reject(new Error('Token is not set'));
 				return;
 			}
 
 			// Test token
 			this.callApi('/api/v2/authorization/permissions', 'GET', 
-				null, null, null, null, null, ['PureCloud Auth'], ['application/json'], ['application/json'])
+				null, null, null, null, null, ['PureCloud OAuth'], ['application/json'], ['application/json'])
 				.then(() => {
 					resolve();
 				})
@@ -416,7 +416,7 @@ class ApiClient {
 		this.storageKey = storageKey;
 
 		// Trigger storage of current token
-		this.setAccessToken(this.authentications['PureCloud Auth'].accessToken);
+		this.setAccessToken(this.authentications['PureCloud OAuth'].accessToken);
 	}
 
 	/**
@@ -609,6 +609,9 @@ class ApiClient {
 	applyAuthToRequest(request, authNames) {
 		authNames.forEach((authName) => {
 			var auth = this.authentications[authName];
+			console.log(authName);
+			console.log(auth);
+			console.log(JSON.stringify(this.authentications,null,2));
 			switch (auth.type) {
 				case 'basic':
 					if (auth.username || auth.password) {
