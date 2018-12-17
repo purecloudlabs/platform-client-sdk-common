@@ -20,11 +20,39 @@ try {
 	loadPromise
 		.then((swagger) => {
 			const guestPaths = {};
+			const models = {};
 			_.forOwn(swagger.paths, (resource, resourcePath) => {
-				if (resourcePath.startsWith('/api/v2/webchat/guest'))
-					guestPaths[resourcePath] = resource;
+				if (!resourcePath.startsWith('/api/v2/webchat/guest')) return;
+
+				// Add resource
+				guestPaths[resourcePath] = resource;
+
+				// Get models from each resource method body and response
+				_.forOwn(resource, (methodConfig, method) => {
+					console.log(`Adding resource: ${method.toUpperCase()} ${resourcePath}`);
+
+					// Get body param models
+					let bodyParam;
+					methodConfig.parameters.some((param) => {
+						if (param.in === 'body') {
+							bodyParam = param;
+							return true;
+						}
+					});
+					if (bodyParam && bodyParam.schema)
+						extractModels(bodyParam.schema, swagger.definitions, models);
+
+					// Get response models
+					_.forOwn(methodConfig.responses, (responseConfig, responseCode) => {
+						if (responseConfig.schema) {
+							extractModels(responseConfig.schema, swagger.definitions, models);
+						}
+					});
+				});
 			});
+
 			swagger.paths = guestPaths;
+			swagger.definitions = models;
 
 			fs.outputJsonSync(newSwaggerPath, swagger);
 		})
@@ -52,6 +80,25 @@ function readFile(filePath) {
 			resolve(JSON.parse(fs.readFileSync(filePath, 'utf-8')));
 		} catch(err) {
 			reject(err);
+		}
+	});
+}
+
+function extractModels(schema, modelSource, models = {}) {
+	_.forOwn(schema, (value, key) => {
+		if (key === '$ref' && typeof(value) === 'string') {
+			const modelName = value.split('/').pop();
+			if (!models[modelName]) {
+				console.log('Extracting model: ' + modelName);
+				models[modelName] = modelSource[modelName];
+				extractModels(models[modelName], modelSource, models);
+			} else {
+				console.log('Model already known: ' + modelName);
+			}
+		}
+
+		if (typeof(value) === 'object') {
+			extractModels(value, modelSource, models);
 		}
 	});
 }

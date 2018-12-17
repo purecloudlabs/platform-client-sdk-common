@@ -12,8 +12,8 @@
     "logLevel": "debug",
     "extensionsDestination": "${SDK_REPO}/build/src/main/java/com/mypurecloud/sdk/v2",
     "swagger": {
-      "oldSwaggerPath": "${COMMON_ROOT}/local/swagger-chat.json",
-      "newSwaggerSourcePath": "${COMMON_ROOT}/local/swagger-chat.json",
+      "oldSwaggerPath": "${SDK_REPO}/swagger.json",
+      "newSwaggerSourcePath": "https://api.mypurecloud.com/api/v2/docs/swaggerall",
       "newSwaggerPath": "${SDK_TEMP}/swagger-pruned.json",
       "saveNewSwaggerPath": "${SDK_REPO}/swagger.json"
     },
