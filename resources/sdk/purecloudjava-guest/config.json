@@ -5,7 +5,7 @@
   },
   "settings": {
     "sdkRepo": {
-      "repo": "https://github.com/MyPureCloud/purecloud-guest-chat-client.git",
+      "repo": "https://github.com/MyPureCloud/purecloud-guest-chat-client-java.git",
       "branch": "master"
     },
     "versionFile": "${SDK_REPO}/version.json",
