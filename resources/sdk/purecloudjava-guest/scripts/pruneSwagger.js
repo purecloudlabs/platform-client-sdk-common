@@ -89,11 +89,11 @@ function extractModels(schema, modelSource, models = {}) {
 		if (key === '$ref' && typeof(value) === 'string') {
 			const modelName = value.split('/').pop();
 			if (!models[modelName]) {
-				console.log('Extracting model: ' + modelName);
+				// console.log('Extracting model: ' + modelName);
 				models[modelName] = modelSource[modelName];
 				extractModels(models[modelName], modelSource, models);
 			} else {
-				console.log('Model already known: ' + modelName);
+				// console.log('Model already known: ' + modelName);
 			}
 		}
 

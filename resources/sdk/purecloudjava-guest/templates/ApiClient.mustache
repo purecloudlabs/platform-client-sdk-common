@@ -37,7 +37,7 @@ public class ApiClient implements AutoCloseable {
     private static Map<String, Authentication> buildAuthentications() {
         Map<String, Authentication> authentications = new HashMap<>();{{#authMethods}}{{#isBasic}}
         authentications.put("{{name}}", new HttpBasicAuth());{{/isBasic}}{{#isApiKey}}
-        authentications.put("{{name}}", new ApiKeyAuth({{#isKeyInHeader}}"header"{{/isKeyInHeader}}{{^isKeyInHeader}}"query"{{/isKeyInHeader}}, "{{keyParamName}}"));{{/isApiKey}}{{#isOAuth}}
+        authentications.put("{{name}}", new ApiKeyAuth({{#isKeyInHeader}}"header"{{/isKeyInHeader}}{{^isKeyInHeader}}"query"{{/isKeyInHeader}}, "{{keyParamName}}")  { { setApiKeyPrefix("Bearer"); } });{{/isApiKey}}{{#isOAuth}}
         authentications.put("{{name}}", new OAuth());{{/isOAuth}}{{/authMethods}}
 
         return Collections.unmodifiableMap(authentications);
@@ -142,6 +142,19 @@ public class ApiClient implements AutoCloseable {
         for (Authentication auth : authentications.values()) {
             if (auth instanceof OAuth) {
                 ((OAuth) auth).setAccessToken(accessToken);
+                return;
+            }
+        }
+        throw new RuntimeException("No OAuth2 authentication configured!");
+    }
+
+    /**
+     * Helper method to set access token for the first OAuth2 authentication.
+     */
+    public void setJwt(String jwt) {
+        for (Authentication auth : authentications.values()) {
+            if (auth instanceof ApiKeyAuth) {
+                ((ApiKeyAuth) auth).setApiKey(jwt);
                 return;
             }
         }
