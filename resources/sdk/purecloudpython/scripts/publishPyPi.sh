@@ -11,11 +11,15 @@ then
 fi
 
 # Upgrade to latest version of setuptools
-echo "PIP setuptools version info:"
+echo "PIP setuptools version info (1):"
 pip show setuptools
+echo "Installing pip, setuptools..."
 pip install --user -U pip setuptools
-pip show setuptools
+echo "PIP setuptools version info (2):"
+python -m pip show setuptools
 
 # Publish egg on PyPi
+echo "Registering egg..."
 python setup.py register -r pypi-sdk
+echo "Uploading egg..."
 python setup.py sdist upload -r pypi-sdk
