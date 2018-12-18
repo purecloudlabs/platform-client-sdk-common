@@ -1,0 +1,139 @@
+---
+title: {{classname}}
+---
+# {{moduleName}}.{{classname}}{{#description}}
+{{description}}{{/description}}
+
+All URIs are relative to *{{basePath}}*
+
+| Method | HTTP request | Description |
+| ------------- | ------------- | ------------- |
+{{#operations}}{{#operation}}[**{{operationId}}**]({{classname}}.html#{{operationId}}) | **{{httpMethod}}** {{path}} | {{#summary}}{{summary}}{{/summary}}
+{{/operation}}{{/operations}}{: class="table table-striped"}
+
+{{#operations}}
+{{#operation}}
+<a name="{{operationId}}"></a>
+
+# {{#returnType}}{{#returnTypeIsPrimitive}}**{{returnType}}**{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}{{returnType}}{{/returnTypeIsPrimitive}}{{/returnType}}{{^returnType}}void{{/returnType}} {{operationId}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/hasOptionalParams}})
+
+{{#deprecated}}<span style="background-color: #f0ad4e;display: inline-block;padding: 7px;font-weight: bold;line-height: 1;color: #ffffff;text-align: center;white-space: nowrap;vertical-align: baseline;border-radius: .25em;margin: 10px 0;">DEPRECATED</span>{{/deprecated}}
+
+{{httpMethod}} {{path}}
+
+{{summary}}{{#notes}}
+
+{{notes}}{{/notes}}
+
+Requires {{permissionType}} permissions: 
+
+{{#permissions}}
+* {{.}}
+{{/permissions}}
+
+{{#bodyParam}}{{#codegenModel}}
+### Request Body Schema
+
+{::options parse_block_html="true" /}
+
+<script type="text/javascript">
+	function copy{{classname}}Example() {
+		var $temp = $("<textarea>");
+		$("body").append($temp);
+		$temp.val($('#{{classname}}Example').text()).select();
+		document.execCommand("copy");
+		$temp.remove();
+	}
+</script>
+
+{{classname}} <a style="cursor: pointer" onclick="copy{{classname}}Example()">Copy</a>
+
+<div id="{{classname}}Example" style="max-height: 250px; overflow-y: scroll;">
+~~~ json
+{ {{#allVars}}
+  "{{baseName}}": {{#isPrimitiveType}}{{datatype}},{{/isPrimitiveType}}{{^isPrimitiveType}}{{^codegenModel}}{{complexType}},{{/codegenModel}}{{#codegenModel}}{ {{#allVars}}
+    "{{baseName}}": {{#isPrimitiveType}}{{datatype}},{{/isPrimitiveType}}{{^isPrimitiveType}}{{^codegenModel}}{{complexType}},{{/codegenModel}}{{#codegenModel}}{ {{#allVars}}
+      "{{baseName}}": {{#isPrimitiveType}}{{datatype}},{{/isPrimitiveType}}{{^isPrimitiveType}}{{^codegenModel}}{{complexType}},{{/codegenModel}}{{#codegenModel}}{ {{#allVars}}
+        "{{baseName}}": {{#isPrimitiveType}}{{datatype}},{{/isPrimitiveType}}{{^isPrimitiveType}}{{^codegenModel}}{{complexType}},{{/codegenModel}}{{#codegenModel}}{ {{#allVars}}
+          "{{baseName}}": {{#isPrimitiveType}}{{datatype}},{{/isPrimitiveType}}{{^isPrimitiveType}}{{^codegenModel}}{{complexType}},{{/codegenModel}}{{#codegenModel}}{ {{#allVars}}
+            "{{baseName}}": {{#isPrimitiveType}}{{datatype}},{{/isPrimitiveType}}{{^isPrimitiveType}}{{^codegenModel}}{{complexType}},{{/codegenModel}}{{#codegenModel}}{ {{#allVars}}
+              "{{baseName}}": {{#isPrimitiveType}}{{datatype}},{{/isPrimitiveType}}{{^isPrimitiveType}}{{^codegenModel}}{{complexType}},{{/codegenModel}}{{#codegenModel}}{ {{#allVars}}
+                "{{baseName}}": {{datatype}}, {{/allVars}}
+              }, {{/codegenModel}}{{/isPrimitiveType}} {{/allVars}}
+            }, {{/codegenModel}}{{/isPrimitiveType}} {{/allVars}}
+          }, {{/codegenModel}}{{/isPrimitiveType}} {{/allVars}}
+        }, {{/codegenModel}}{{/isPrimitiveType}} {{/allVars}}
+      }, {{/codegenModel}}{{/isPrimitiveType}} {{/allVars}}
+    }, {{/codegenModel}}{{/isPrimitiveType}} {{/allVars}}
+  }, {{/codegenModel}}{{/isPrimitiveType}} {{/allVars}}
+}
+~~~
+</div>
+{{/codegenModel}}{{/bodyParam}}
+
+### Example Usage
+
+~~~ javascript
+// Browser
+const {{{moduleName}}} = require('{{{moduleName}}}');
+// Node
+const {{{moduleName}}} = require('{{{projectName}}}');
+{{#hasAuthMethods}}
+{{#authMethods}}{{#isBasic}}
+// Configure HTTP basic authorization: {{{name}}}
+var {{{name}}} = {{{moduleName}}}.ApiClient.instance.authentications['{{{name}}}'];
+{{{name}}}.username = 'YOUR USERNAME';
+{{{name}}}.password = 'YOUR PASSWORD';{{/isBasic}}{{#isApiKey}}
+// Configure API key authorization: {{{name}}}
+var {{{name}}} = {{{moduleName}}}.ApiClient.instance.authentications['{{{name}}}'];
+{{{name}}}.apiKey = 'YOUR API KEY';
+// Uncomment the following line to set a prefix for the API key, e.g. "Token" (defaults to void)
+//{{{name}}}.apiKeyPrefix = 'Token';{{/isApiKey}}{{#isOAuth}}
+// Configure OAuth2 access token for authorization: {{{name}}}
+{{{moduleName}}}.ApiClient.instance.authentications['{{{name}}}'].accessToken = 'YOUR ACCESS TOKEN';{{/isOAuth}}
+{{/authMethods}}
+{{/hasAuthMethods}}
+
+var apiInstance = new {{{moduleName}}}.{{{classname}}}();{{#hasParams}}
+{{#vendorExtensions.x-codegen-hasRequiredParams}}{{#allParams}}{{#required}}
+var {{{paramName}}} = {{{example}}}; // {{{dataType}}} | {{{description}}}
+{{/required}}{{/allParams}}{{/vendorExtensions.x-codegen-hasRequiredParams}}{{#hasOptionalParams}}
+var opts = { {{#allParams}}{{^required}}
+  '{{{paramName}}}': {{{example}}}{{#vendorExtensions.x-codegen-hasMoreOptional}},{{/vendorExtensions.x-codegen-hasMoreOptional}} // {{{dataType}}} | {{{description}}}{{/required}}{{/allParams}}
+};{{/hasOptionalParams}}{{/hasParams}}
+{{#usePromises}}
+apiInstance.{{{operationId}}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/hasOptionalParams}})
+  .then(function({{#returnType}}data{{/returnType}}) {
+    {{#returnType}}console.log(`{{{operationId}}} success! data: ${JSON.stringify(data, null, 2)}`);{{/returnType}}{{^returnType}}console.log('{{{operationId}}} returned successfully.');{{/returnType}}
+  })
+  .catch(function(err) {
+  	console.log('There was a failure calling {{{operationId}}}');
+    console.error(err);
+  });
+
+{{/usePromises}}{{^usePromises}}
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    {{#returnType}}console.log('API called successfully. Returned data: ' + data);{{/returnType}}{{^returnType}}console.log('API called successfully.');{{/returnType}}
+  }
+};
+apiInstance.{{{operationId}}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/hasOptionalParams}}{{#hasParams}}, {{/hasParams}}callback);
+{{/usePromises}}
+~~~
+
+### Parameters
+
+{{^allParams}}This endpoint does not need any parameter.{{/allParams}}{{#allParams}}{{#-last}}
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |{{/-last}}{{/allParams}}
+{{#allParams}} **{{paramName}}** | **{{dataType}}** | {{description}} | {{^required}}[optional] {{/required}}{{#defaultValue}}[default to {{defaultValue}}]{{/defaultValue}}{{#allowableValues}}<br />**Values**: {{#values}}{{.}}{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}} |
+{{/allParams}}{: class="table table-striped"}
+
+### Return type
+
+{{#returnType}}**{{returnType}}**{{/returnType}}{{^returnType}}void (no response body){{/returnType}}
+
+{{/operation}}
+{{/operations}}

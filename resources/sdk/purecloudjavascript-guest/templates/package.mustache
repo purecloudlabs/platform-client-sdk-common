@@ -1,0 +1,44 @@
+{
+  "name": "{{{projectName}}}",
+  "version": "{{{projectVersion}}}",
+  "description": "{{{projectDescription}}}",{{#projectLicenseName}}
+  "license": "{{{projectLicenseName}}}",{{/projectLicenseName}}
+  "main": "dist/node/{{#invokerPackage}}{{invokerPackage}}{{/invokerPackage}}.js",
+  "types": "index.d.ts",
+  "jsnext:main": "src/{{#invokerPackage}}{{invokerPackage}}{{/invokerPackage}}/index.js",
+  "browser": "dist/web-cjs/{{#invokerPackage}}{{invokerPackage}}{{/invokerPackage}}.min.js",
+  "files": [
+  	"dist/*",
+  	"src/*",
+  	"package.json",
+  	"README.md",
+  	"LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MyPureCloud/platform-client-sdk-javascript.git"
+  },
+  "homepage": "https://github.com/MyPureCloud/platform-client-sdk-javascript",
+  "bugs": {
+    "url": "https://github.com/MyPureCloud/platform-client-sdk-javascript/issues"
+  },
+  "author": {
+    "name": "Genesys Developer Evangelists",
+    "email": "DeveloperEvangelists@genesys.com",
+    "url": "https://developer.mypurecloud.com"
+  },
+  "dependencies": {
+    "superagent": "^3.8.3"
+  },
+  "devDependencies": {
+    "mocha": "~2.3.4",
+    "sinon": "1.17.3",
+    "expect.js": "~0.3.1",
+    "rollup-plugin-commonjs": "^9.1.3",
+    "rollup-plugin-node-resolve": "^3.3.0",
+    "rollup-plugin-json": "^2.3.0",
+    "rollup-plugin-re": "^1.0.7",
+    "rollup-plugin-node-builtins": "^2.1.2",
+    "rollup-plugin-node-globals": "^1.2.1"
+  }
+}

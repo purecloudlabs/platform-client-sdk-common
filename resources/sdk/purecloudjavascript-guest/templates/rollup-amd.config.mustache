@@ -1,0 +1,10 @@
+export default {
+	input: 'src/{{#invokerPackage}}{{invokerPackage}}{{/invokerPackage}}/index.js',
+	output: {
+		file: 'dist/web-amd/{{#invokerPackage}}{{invokerPackage}}{{/invokerPackage}}.js',
+		format: 'amd'
+	},
+	external: [
+		'superagent'
+	]
+};
