@@ -19,5 +19,7 @@ python setup.py build
 # Run tests
 echo "Running tests"
 cd "$RESOURCE_DIR/scripts/"
-pip install requests
+echo "Install requests..."
+python -m pip install requests
+echo "Run unit tests"
 python -m unittest SdkTests

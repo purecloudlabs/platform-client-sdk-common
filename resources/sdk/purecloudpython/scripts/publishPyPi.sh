@@ -12,9 +12,9 @@ fi
 
 # Upgrade to latest version of setuptools
 echo "PIP setuptools version info (1):"
-pip show setuptools
+python -m pip show setuptools
 echo "Installing pip, setuptools..."
-pip install --user -U pip setuptools
+python -m pip install --user -U pip setuptools
 echo "PIP setuptools version info (2):"
 python -m pip show setuptools
 
