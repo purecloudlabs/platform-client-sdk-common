@@ -18,21 +18,21 @@ cd $BUILD_DIR
 # CJS
 aws s3 cp \
 	$BUILD_DIR/dist/web-cjs \
-	s3://inin-index-files-prod/developercenter-cdn/javascript/$VERSION \
+	s3://inin-index-files-prod/developercenter-cdn/javascript-guest/$VERSION \
 	--recursive --acl "public-read"
 aws s3 cp \
 	$BUILD_DIR/dist/web-cjs \
-	s3://inin-index-files-prod/developercenter-cdn/javascript/latest \
+	s3://inin-index-files-prod/developercenter-cdn/javascript-guest/latest \
 	--recursive --acl "public-read"
 
 # AMD
 aws s3 cp \
 	$BUILD_DIR/dist/web-amd \
-	s3://inin-index-files-prod/developercenter-cdn/javascript/amd/$VERSION \
+	s3://inin-index-files-prod/developercenter-cdn/javascript-guest/amd/$VERSION \
 	--recursive --acl "public-read"
 aws s3 cp \
 	$BUILD_DIR/dist/web-amd \
-	s3://inin-index-files-prod/developercenter-cdn/javascript/amd/latest \
+	s3://inin-index-files-prod/developercenter-cdn/javascript-guest/amd/latest \
 	--recursive --acl "public-read"
 
 
