@@ -1,5 +1,5 @@
 {
-  "name": "Java SDK",
+  "name": "Java Guest SDK",
   "envVars": {
   	"EXCLUDE_NOTIFICATIONS": true
   },
