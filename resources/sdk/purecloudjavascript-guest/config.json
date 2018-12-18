@@ -1,6 +1,7 @@
 {
-  "name": "JavaScript SDK",
+  "name": "JavaScript Guest SDK",
   "envVars": {
+  	"EXCLUDE_NOTIFICATIONS": true
   },
   "settings": {
     "sdkRepo": {
