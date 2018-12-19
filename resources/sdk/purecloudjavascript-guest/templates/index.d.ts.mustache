@@ -10,10 +10,7 @@ declare class ApiClientClass {
 	superagent: any;
 
 	callApi(path: string, httpMethod: string, pathParams: { [key: string]: string; }, queryParams: { [key: string]: object; }, headerParams: { [key: string]: object; }, formParams: { [key: string]: object; }, bodyParam: any, authNames: Array<string>, contentTypes: Array<string>, accepts: Array<string>): Promise<any>;
-	loginClientCredentialsGrant(clientId: string, clientSecret: string): Promise<AuthData>;
-	loginImplicitGrant(clientId: string, redirectUri: string, opts?: LoginImplicitGrantOptions): Promise<AuthData>;
-	logout(logoutRedirectUri: string): void;
-	setAccessToken(token: string): void;
+	setJwt(jwt: string): void;
 	setDebugLog(debugLog: any, maxLines: number): void;
 	setEnvironment(environment: string): void;
 	setPersistSettings(doPersist: boolean, prefix: string): void;
