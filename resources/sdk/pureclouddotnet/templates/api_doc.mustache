@@ -51,7 +51,7 @@ namespace Example
             // Uncomment below to setup prefix (e.g. BEARER) for API key, if needed
             // Configuration.Default.ApiKeyPrefix.Add('{{{keyParamName}}}', 'BEARER');{{/isApiKey}}{{#isOAuth}}
             // Configure OAuth2 access token for authorization: {{{name}}}
-            Configuration.Default.AccessToken = 'YOUR_ACCESS_TOKEN';{{/isOAuth}}{{/authMethods}}{{/hasAuthMethods}}
+            Configuration.Default.AccessToken = "YOUR_ACCESS_TOKEN";{{/isOAuth}}{{/authMethods}}{{/hasAuthMethods}}
 
             var apiInstance = new {{classname}}();{{#allParams}}{{#isPrimitiveType}}
             var {{paramName}} = {{example}};  // {{{dataType}}} | {{{description}}}{{^required}} (optional) {{/required}}{{#defaultValue}} (default to {{{.}}}){{/defaultValue}}{{/isPrimitiveType}}{{^isPrimitiveType}}
@@ -59,8 +59,8 @@ namespace Example
 
             try
             { {{#summary}}
-                // {{{.}}}{{/summary}}{{#returnType}}
-                {{returnType}} result = {{/returnType}}apiInstance.{{{operationId}}}({{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}});{{#returnType}}
+                // {{{.}}}{{/summary}}
+                {{#returnType}}{{returnType}} result = {{/returnType}}apiInstance.{{{operationId}}}({{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}});{{#returnType}}
                 Debug.WriteLine(result);{{/returnType}}
             }
             catch (Exception e)
