@@ -30,7 +30,7 @@ Requires {{permissionType}} permissions:
 {{/permissions}}
 
 ### Example
-~~~csharp
+```{"language":"csharp"}
 using System;
 using System.Diagnostics;
 using {{packageName}}.Api;
@@ -42,8 +42,7 @@ namespace Example
     public class {{operationId}}Example
     {
         public void main()
-        {
-            {{#hasAuthMethods}}{{#authMethods}}{{#isBasic}}
+        { {{#hasAuthMethods}}{{#authMethods}}{{#isBasic}}
             // Configure HTTP basic authorization: {{{name}}}
             Configuration.Default.Username = 'YOUR_USERNAME';
             Configuration.Default.Password = 'YOUR_PASSWORD';{{/isBasic}}{{#isApiKey}}
@@ -52,25 +51,16 @@ namespace Example
             // Uncomment below to setup prefix (e.g. BEARER) for API key, if needed
             // Configuration.Default.ApiKeyPrefix.Add('{{{keyParamName}}}', 'BEARER');{{/isApiKey}}{{#isOAuth}}
             // Configure OAuth2 access token for authorization: {{{name}}}
-            Configuration.Default.AccessToken = 'YOUR_ACCESS_TOKEN';{{/isOAuth}}{{/authMethods}}
-            {{/hasAuthMethods}}
+            Configuration.Default.AccessToken = 'YOUR_ACCESS_TOKEN';{{/isOAuth}}{{/authMethods}}{{/hasAuthMethods}}
 
-            var apiInstance = new {{classname}}();
-            {{#allParams}}
-            {{#isPrimitiveType}}
-            var {{paramName}} = {{example}};  // {{{dataType}}} | {{{description}}}{{^required}} (optional) {{/required}}{{#defaultValue}} (default to {{{.}}}){{/defaultValue}}
-            {{/isPrimitiveType}}
-            {{^isPrimitiveType}}
-            var {{paramName}} = new {{{dataType}}}(); // {{{dataType}}} | {{{description}}}{{^required}} (optional) {{/required}}{{#defaultValue}} (default to {{{.}}}){{/defaultValue}}
-            {{/isPrimitiveType}}
-            {{/allParams}}
+            var apiInstance = new {{classname}}();{{#allParams}}{{#isPrimitiveType}}
+            var {{paramName}} = {{example}};  // {{{dataType}}} | {{{description}}}{{^required}} (optional) {{/required}}{{#defaultValue}} (default to {{{.}}}){{/defaultValue}}{{/isPrimitiveType}}{{^isPrimitiveType}}
+            var {{paramName}} = new {{{dataType}}}(); // {{{dataType}}} | {{{description}}}{{^required}} (optional) {{/required}}{{#defaultValue}} (default to {{{.}}}){{/defaultValue}}{{/isPrimitiveType}}{{/allParams}}
 
             try
-            {
-                {{#summary}}
-                // {{{.}}}
-                {{/summary}}
-                {{#returnType}}{{returnType}} result = {{/returnType}}apiInstance.{{{operationId}}}({{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}});{{#returnType}}
+            { {{#summary}}
+                // {{{.}}}{{/summary}}{{#returnType}}
+                {{returnType}} result = {{/returnType}}apiInstance.{{{operationId}}}({{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}});{{#returnType}}
                 Debug.WriteLine(result);{{/returnType}}
             }
             catch (Exception e)
@@ -80,7 +70,7 @@ namespace Example
         }
     }
 }
-~~~
+```
 
 ### Parameters
 {{^allParams}}This endpoint does require any parameters.{{/allParams}}{{#allParams}}{{#-last}}
