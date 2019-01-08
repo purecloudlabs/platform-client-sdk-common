@@ -25,20 +25,20 @@ The SDK may be used in Android. This requires Java 8 support in Android Studio (
 
 Import the necessary packages:
 
-~~~ java
+```{"language":"java"}
 import com.mypurecloud.sdk.v2.ApiException;
 import com.mypurecloud.sdk.v2.guest.ApiClient;
 import com.mypurecloud.sdk.v2.guest.ApiResponse;
 import com.mypurecloud.sdk.v2.guest.Configuration;
 import com.mypurecloud.sdk.v2.guest.api.WebChatApi;
 import com.mypurecloud.sdk.v2.guest.model.*;
-~~~
+```
 
 ### Creating a chat
 
 The guest chat APIs do not require standard PureCloud authentication, but do require a JWT token for all API calls other than creating a new chat.  
 
-~~~ java
+```{"language":"java"}
 String organizationId = "12b1a3fe-7a80-4b50-45fs-df88c0f9efad";
 String deploymentId = "a3e316a7-ec8b-4fe9-5a49-dded9dcc097e";
 String queueName = "Chat Queue";
@@ -104,13 +104,13 @@ ws.addListener(new WebSocketAdapter() {
 ws.connect();
 
 // At this point, the chat has been created and will be routed per the target's configuration
-~~~
+```
 
 ### Building an ApiClient Instance
 
 `ApiClient` implements a builder pattern to construct new instances:
 
-~~~ java
+```{"language":"java"}
 // Create ApiClient instance
 ApiClient apiClient = ApiClient.Builder.standard()
     .withBasePath("https://api.mypurecloud.ie")
@@ -122,15 +122,15 @@ Configuration.setDefaultApiClient(apiClient);
 // Create API instances and make authenticated API requests
 WebChatApi webChatApi = new WebChatApi();
 CreateWebChatConversationResponse chat = webChatApi.postWebchatGuestConversations(body);
-~~~
+```
 
 #### Setting the environment
 
 Provide the full base url if not using `https://api.mypurecloud.com`:
 
-~~~ java
+```{"language":"java"}
 .withBasePath("https://api.mypurecloud.ie")
-~~~
+```
 
 #### Setting the HTTP connector
 
@@ -142,9 +142,9 @@ The SDK supports the following HTTP connectors:
 
 Specify the connector in the builder:
 
-~~~ java
+```{"language":"java"}
 .withProperty(ApiClientConnectorProperty.CONNECTOR_PROVIDER, new OkHttpClientConnectorProvider())
-~~~
+```
 
 #### Other ApiClient.Builder methods
 
@@ -170,15 +170,15 @@ Example of getting the authenticated user's information:
 
 The JWT from the newly created chat must be applied to the SDK before any requests can be made targeting the chat. Do this by setting the JWT on the ApiClient instance.
 
-~~~ java
+```{"language":"java"}
 apiClient.setJwt(chatInfo.getJwt());
-~~~
+```
 
 #### Using a request builder
 
 Request builders allow requests to be constructed by only providing values for the properties you want to set. This is useful for methods with long signatures when you only need to set some properties and will help future-proof your code if the method signature changes (i.e. new parameters added).
 
-~~~ java
+```{"language":"java"}
 WebChatApi webChatApi = new WebChatApi();
 
 // This example assumes a chat has been created and the JWT has been set
@@ -193,13 +193,13 @@ PostWebchatGuestConversationMemberMessagesRequest request =
     .withBody(body)
     .build();
 WebChatMessage response = webChatApi.postWebchatGuestConversationMemberMessages(request);
-~~~
+```
 
 #### Using method parameters
 
 This request is identical to the request above, but uses the method with explicit parameters instead of a builder. These methods construct the request builder behind the scenes.
 
-~~~ java
+```{"language":"java"}
 WebChatApi webChatApi = new WebChatApi();
 
 // This example assumes a chat has been created and the JWT has been set
@@ -212,7 +212,7 @@ WebChatMessage response = webChatApi.postWebchatGuestConversationMemberMessages(
   chatInfo.getMember().getId(),
   body
 );
-~~~
+```
 
 
 #### Getting extended info
@@ -223,16 +223,16 @@ The extended responses will be of type [ApiResponse<T>](https://github.com/MyPur
 
 Examples:
 
-~~~ java
+```{"language":"java"}
 // Using the WithHttpInfo method
 ApiResponse<WebChatMessage> response = webChatApi.postWebchatGuestConversationMemberMessagesWithHttpInfo(
   chatInfo.getId(),
   chatInfo.getMember().getId(),
   body
 );
-~~~
+```
 
-~~~ java
+```{"language":"java"}
 // Using the request builder
 PostWebchatGuestConversationMemberMessagesRequest request = 
   PostWebchatGuestConversationMemberMessagesRequest.builder()
@@ -242,7 +242,7 @@ PostWebchatGuestConversationMemberMessagesRequest request =
     .build()
     .withHttpInfo();
 WebChatMessage response = webChatApi.postWebchatGuestConversationMemberMessages(request);
-~~~
+```
 
 
 ## SDK Source Code Generation
