@@ -9,21 +9,21 @@ Documentation can be found at [https://developer.mypurecloud.com/api/rest/client
 
 ### from rubygems.org
 
-~~~ ruby
+```{"language":"ruby"}
 gem install '{{{gemName}}}', '~> {{{gemVersion}}}'
-~~~
+```
 
 ### Install from Git
 
-~~~ ruby
+```{"language":"ruby"}
 gem install '{{{gemName}}}', :git => 'https://github.com/MyPureCloud/platform-client-sdk-ruby.git'
-~~~
+```
 
 ## Getting Started
 
 Please follow the [installation](#installation) procedure and then run the following code:
 
-~~~ ruby
+```{"language":"ruby"}
 # Load the gem
 require '{{{gemName}}}'
 {{#apiInfo}}{{#apis}}{{#-first}}{{#operations}}{{#operation}}{{#-first}}{{#hasAuthMethods}}
@@ -57,7 +57,7 @@ rescue {{{moduleName}}}::ApiError => e
   puts "Exception when calling {{classname}}->{{{operationId}}}: #{e}"
 end
 {{/-first}}{{/operation}}{{/operations}}{{/-first}}{{/apis}}{{/apiInfo}}
-~~~
+```
 
 ## SDK Source Code Generation
 

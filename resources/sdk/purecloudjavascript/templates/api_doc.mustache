@@ -34,22 +34,22 @@ Requires {{permissionType}} permissions:
 {{#bodyParam}}{{#codegenModel}}
 ### Request Body Schema
 
-{::options parse_block_html="true" /}
-
 <script type="text/javascript">
 	function copy{{classname}}Example() {
-		var $temp = $("<textarea>");
-		$("body").append($temp);
-		$temp.val($('#{{classname}}Example').text()).select();
+		let temp = $("<textarea>");
+		$("body").append(temp);
+		temp.val($('#{{classname}}Example').text()).select();
 		document.execCommand("copy");
-		$temp.remove();
+		temp.remove();
+		return false;
 	}
 </script>
 
-{{classname}} <a style="cursor: pointer" onclick="copy{{classname}}Example()">Copy</a>
+{{classname}} <a href="#" onclick="return copy{{classname}}Example()">Copy</a>
 
-<div id="{{classname}}Example" style="max-height: 250px; overflow-y: scroll;">
-~~~ json
+<div id="{{classname}}Example">
+
+```{"language":"json", "maxHeight": "250px"}
 { {{#allVars}}
   "{{baseName}}": {{#isPrimitiveType}}{{datatype}},{{/isPrimitiveType}}{{^isPrimitiveType}}{{^codegenModel}}{{complexType}},{{/codegenModel}}{{#codegenModel}}{ {{#allVars}}
     "{{baseName}}": {{#isPrimitiveType}}{{datatype}},{{/isPrimitiveType}}{{^isPrimitiveType}}{{^codegenModel}}{{complexType}},{{/codegenModel}}{{#codegenModel}}{ {{#allVars}}
@@ -67,13 +67,14 @@ Requires {{permissionType}} permissions:
     }, {{/codegenModel}}{{/isPrimitiveType}} {{/allVars}}
   }, {{/codegenModel}}{{/isPrimitiveType}} {{/allVars}}
 }
-~~~
+```
+
 </div>
 {{/codegenModel}}{{/bodyParam}}
 
 ### Example Usage
 
-~~~ javascript
+```{"language":"javascript"}
 // Browser
 const {{{moduleName}}} = require('{{{moduleName}}}');
 // Node
@@ -81,47 +82,44 @@ const {{{moduleName}}} = require('{{{projectName}}}');
 {{#hasAuthMethods}}
 {{#authMethods}}{{#isBasic}}
 // Configure HTTP basic authorization: {{{name}}}
-var {{{name}}} = {{{moduleName}}}.ApiClient.instance.authentications['{{{name}}}'];
+let {{{name}}} = {{{moduleName}}}.ApiClient.instance.authentications['{{{name}}}'];
 {{{name}}}.username = 'YOUR USERNAME';
 {{{name}}}.password = 'YOUR PASSWORD';{{/isBasic}}{{#isApiKey}}
 // Configure API key authorization: {{{name}}}
-var {{{name}}} = {{{moduleName}}}.ApiClient.instance.authentications['{{{name}}}'];
+let {{{name}}} = {{{moduleName}}}.ApiClient.instance.authentications['{{{name}}}'];
 {{{name}}}.apiKey = 'YOUR API KEY';
 // Uncomment the following line to set a prefix for the API key, e.g. "Token" (defaults to void)
 //{{{name}}}.apiKeyPrefix = 'Token';{{/isApiKey}}{{#isOAuth}}
-// Configure OAuth2 access token for authorization: {{{name}}}
-{{{moduleName}}}.ApiClient.instance.authentications['{{{name}}}'].accessToken = 'YOUR ACCESS TOKEN';{{/isOAuth}}
+// Manually set auth token or use loginImplicitGrant(...) or loginClientCredentialsGrant(...)
+{{{moduleName}}}.ApiClient.instance.setAccessToken(yourAccessToken);{{/isOAuth}}
 {{/authMethods}}
 {{/hasAuthMethods}}
 
-var apiInstance = new {{{moduleName}}}.{{{classname}}}();{{#hasParams}}
+let apiInstance = new {{{moduleName}}}.{{{classname}}}();{{#hasParams}}
 {{#vendorExtensions.x-codegen-hasRequiredParams}}{{#allParams}}{{#required}}
-var {{{paramName}}} = {{{example}}}; // {{{dataType}}} | {{{description}}}
-{{/required}}{{/allParams}}{{/vendorExtensions.x-codegen-hasRequiredParams}}{{#hasOptionalParams}}
-var opts = { {{#allParams}}{{^required}}
+let {{{paramName}}} = {{{example}}}; // {{{dataType}}} | {{{description}}}{{/required}}{{/allParams}}{{/vendorExtensions.x-codegen-hasRequiredParams}}{{#hasOptionalParams}}
+let opts = { {{#allParams}}{{^required}}
   '{{{paramName}}}': {{{example}}}{{#vendorExtensions.x-codegen-hasMoreOptional}},{{/vendorExtensions.x-codegen-hasMoreOptional}} // {{{dataType}}} | {{{description}}}{{/required}}{{/allParams}}
 };{{/hasOptionalParams}}{{/hasParams}}
+
 {{#usePromises}}
 apiInstance.{{{operationId}}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/hasOptionalParams}})
-  .then(function({{#returnType}}data{{/returnType}}) {
+  .then(({{#returnType}}data{{/returnType}}) => {
     {{#returnType}}console.log(`{{{operationId}}} success! data: ${JSON.stringify(data, null, 2)}`);{{/returnType}}{{^returnType}}console.log('{{{operationId}}} returned successfully.');{{/returnType}}
   })
-  .catch(function(err) {
-  	console.log('There was a failure calling {{{operationId}}}');
+  .catch((err) => {
+    console.log('There was a failure calling {{{operationId}}}');
     console.error(err);
-  });
-
-{{/usePromises}}{{^usePromises}}
-var callback = function(error, data, response) {
+  });{{/usePromises}}{{^usePromises}}
+let callback = (error, data, response) => {
   if (error) {
     console.error(error);
   } else {
     {{#returnType}}console.log('API called successfully. Returned data: ' + data);{{/returnType}}{{^returnType}}console.log('API called successfully.');{{/returnType}}
   }
 };
-apiInstance.{{{operationId}}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/hasOptionalParams}}{{#hasParams}}, {{/hasParams}}callback);
-{{/usePromises}}
-~~~
+apiInstance.{{{operationId}}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/hasOptionalParams}}{{#hasParams}}, {{/hasParams}}callback);{{/usePromises}}
+```
 
 ### Parameters
 
