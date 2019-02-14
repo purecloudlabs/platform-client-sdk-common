@@ -45,7 +45,6 @@ class SdkTests(unittest.TestCase):
 
 	def test_2_authenticate(self):
 		PureCloudPlatformClientV2.configuration.host = 'https://api.%s' % (os.environ.get('PURECLOUD_ENVIRONMENT'))
-		SdkTests.users_api = PureCloudPlatformClientV2.UsersApi()
 
 		# Base64 encode the client ID and client secret
 		authorization = base64.b64encode('%s:%s' % (os.environ.get('PURECLOUD_CLIENT_ID'), os.environ.get('PURECLOUD_CLIENT_SECRET')))
@@ -69,6 +68,7 @@ class SdkTests(unittest.TestCase):
 		responseJson = response.json()
 		self.assertIsNotNone(responseJson['access_token'])
 		PureCloudPlatformClientV2.configuration.access_token = responseJson['access_token']
+		SdkTests.users_api = PureCloudPlatformClientV2.UsersApi()
 
 	def test_3_create_user(self):
 		body = PureCloudPlatformClientV2.CreateUser()
@@ -109,7 +109,47 @@ class SdkTests(unittest.TestCase):
 		self.assertEqual(user.department, SdkTests.userDepartment)
 		self.assertEqual(user.profile_skills[0], SdkTests.userProfileSkill)
 
-	def test_7_delete_user(self):
+	def test_7_reauthenticate(self):
+		PureCloudPlatformClientV2.configuration.host = 'https://api.%s' % (os.environ.get('PURECLOUD_ENVIRONMENT'))
+
+		# Base64 encode the client ID and client secret
+		authorization = base64.b64encode('%s:%s' % (os.environ.get('PURECLOUD_CLIENT_ID'), os.environ.get('PURECLOUD_CLIENT_SECRET')))
+
+		# Prepare for POST /oauth/token request
+		requestHeaders = {
+			'Authorization': 'Basic ' + authorization,
+			'Content-Type': 'application/x-www-form-urlencoded'
+		}
+		requestBody = {
+			'grant_type': 'client_credentials'
+		}
+
+		# Get token
+		response = requests.post('https://login.%s/oauth/token' % (os.environ.get('PURECLOUD_ENVIRONMENT')), data=requestBody, headers=requestHeaders)
+
+		# Check response
+		self.assertEqual(response.status_code, 200)
+
+		# Set token on SDK
+		responseJson = response.json()
+		self.assertIsNotNone(responseJson['access_token'])
+		# Clear out old access token to make sure it isn't getting used
+		PureCloudPlatformClientV2.configuration.access_token = ""
+		client = PureCloudPlatformClientV2.ApiClient()
+		# Set the access token on the ApiClient instead of the configuration
+		client.access_token = responseJson['access_token']
+		SdkTests.users_api = PureCloudPlatformClientV2.UsersApi(client)
+
+	def test_8_get_user_again(self):
+		user = SdkTests.users_api.get_user(SdkTests.userId, expand = [ 'profileSkills' ])
+
+		self.assertEqual(user.id, SdkTests.userId)
+		self.assertEqual(user.name, SdkTests.userName)
+		self.assertEqual(user.email, SdkTests.userEmail)
+		self.assertEqual(user.department, SdkTests.userDepartment)
+		self.assertEqual(user.profile_skills[0], SdkTests.userProfileSkill)
+
+	def test_9_delete_user(self):
 		SdkTests.users_api.delete_user(SdkTests.userId)
 
 
