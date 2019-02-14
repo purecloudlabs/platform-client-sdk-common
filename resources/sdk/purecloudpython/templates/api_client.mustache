@@ -82,6 +82,10 @@ class ApiClient(object):
         self.cookie = cookie
         # Set default User-Agent.
         self.user_agent = '{{#httpUserAgent}}{{.}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen{{/httpUserAgent}}/python'
+{{#authMethods}}{{#isOAuth}}
+        # access token for OAuth
+        self.access_token = ""
+{{/isOAuth}}{{/authMethods}}
 
     @property
     def user_agent(self):
@@ -456,7 +460,7 @@ class ApiClient(object):
             return
 
         for auth in auth_settings:
-            auth_setting = config.auth_settings().get(auth)
+            auth_setting = config.auth_settings(self.access_token).get(auth)
             if auth_setting:
                 if not auth_setting['value']:
                     continue
