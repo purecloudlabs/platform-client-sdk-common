@@ -21,5 +21,7 @@ echo "Running tests"
 cd "$RESOURCE_DIR/scripts/"
 echo "Install requests..."
 python -m pip install requests
+echo "Install six..."
+python -m pip install six
 echo "Run unit tests"
 python -m unittest SdkTests
