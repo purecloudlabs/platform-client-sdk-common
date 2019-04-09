@@ -101,6 +101,7 @@ namespace {{=it.packageName}}.Extensions
             var regex = new Regex(@"://(api)\.");
             var authUrl = regex.Replace(apiClient.RestClient.BaseUrl.ToString(), "://login.");
             var restClient = new RestClient(authUrl);
+            restClient.Proxy = apiClient.RestClient.Proxy;
 
             var request = PrepareTokenRequest(
                 path, method, queryParams, postBody, headerParams, formParams, fileParams,
