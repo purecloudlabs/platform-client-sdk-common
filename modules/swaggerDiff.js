@@ -1,6 +1,5 @@
 const fs = require('fs');
 const childProcess = require('child_process');
-const sleep = require('sleep');
 
 const log = require('./logger');
 const swaggerDiffImpl = require('./swaggerDiffImpl');
@@ -143,10 +142,10 @@ function downloadFile(url) {
 		i++;
 		log.info(`Downloading file: ${url}`);
 		// Source: https://www.npmjs.com/package/download-file-sync
-		var file = childProcess.execFileSync('curl', ['--silent', '-L', url], {encoding: 'utf8'});
+		var file = childProcess.execFileSync('curl', ['--silent', '-L', url], {encoding: 'utf8', maxBuffer: 1024*1024*8});
 		if (!file || file === '') {
 			log.info(`File was empty! sleeping for 5 seconds. Retries left: ${10-i}`);
-			sleep.sleep(5);
+			childProcess.execFileSync('curl', ['--silent', 'https://httpbin.org/delay/10'], {encoding: 'utf8'});
 		} else {
 			return file;
 		}
