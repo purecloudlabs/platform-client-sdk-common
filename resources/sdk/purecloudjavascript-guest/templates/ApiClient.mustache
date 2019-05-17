@@ -448,8 +448,6 @@ class ApiClient {
 	 * @param {Array.<String>} authNames An array of authentication method names.
 	 */
 	applyAuthToRequest(request, authNames) {
-		console.log('authNames: ', authNames);
-		console.log('authentications: ', this.authentications);
 		authNames.forEach((authName) => {
 			var auth = this.authentications[authName];
 			switch (auth.type) {
@@ -570,9 +568,7 @@ class ApiClient {
 		return new Promise((resolve, reject) => {
 			request.end((error, response) => {
 				if (error) {
-					console.log(error);
 					if (!response) {
-						console.log('Response object was not defined!');
 						reject({
 							status: 0,
 							statusText: 'error',
