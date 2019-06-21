@@ -9,7 +9,7 @@
     },
     "versionFile": "${SDK_REPO}/version.json",
     "logLevel": "debug",
-    "extensionsDestination": "${SDK_TEMP}/extensions",
+    "extensionsDestination": "${SDK_REPO}/build/src/purecloud-platform-client-v2",
     "swagger": {
       "oldSwaggerPath": "${SDK_REPO}/swagger.json",
       "newSwaggerPath": "https://api.mypurecloud.com/api/v2/docs/swagger",
