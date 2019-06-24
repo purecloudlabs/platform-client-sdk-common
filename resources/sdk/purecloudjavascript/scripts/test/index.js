@@ -21,7 +21,7 @@ describe('JS SDK for Node', function() {
 	this.timeout(16000); // Ensure we don't timeout before the API returns a timeout (15s)
 
 	it ('should trace basic information', () => {
-        PURECLOUD_ENVIRONMENT = setEnvironment();
+     	PURECLOUD_ENVIRONMENT = setEnvironment();
 		console.log(`PURECLOUD_ENVIRONMENT=${PURECLOUD_ENVIRONMENT}`);
 		console.log(`PURECLOUD_CLIENT_ID=${PURECLOUD_CLIENT_ID}`);
 		console.log(`USER_EMAIL=${USER_EMAIL}`);
