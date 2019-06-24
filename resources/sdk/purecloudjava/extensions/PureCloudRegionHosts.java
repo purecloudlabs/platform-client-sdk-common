@@ -1,11 +1,11 @@
 package com.mypurecloud.sdk.v2;
 
 public enum PureCloudRegionHosts {
-    us_east_1( "api.mypurecloud.com"),
-    eu_west_1("api.mypurecloud.ie"),
-    ap_southeast_2( "api.mypurecloud.com.au"),
-    ap_northeast_1("api.mypurecloud.jp"),
-    eu_central_1("api.mypurecloud.de");
+    us_east_1( "https://api.mypurecloud.com"),
+    eu_west_1("https://api.mypurecloud.ie"),
+    ap_southeast_2( "https://api.mypurecloud.com.au"),
+    ap_northeast_1("https://api.mypurecloud.jp"),
+    eu_central_1("https://api.mypurecloud.de");
 
 
     private String apiHost;
