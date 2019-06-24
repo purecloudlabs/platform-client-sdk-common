@@ -9,7 +9,7 @@ const usersApi = new platformClient.UsersApi();
 
 const PURECLOUD_CLIENT_ID = process.env.PURECLOUD_CLIENT_ID;
 const PURECLOUD_CLIENT_SECRET = process.env.PURECLOUD_CLIENT_SECRET;
-const PURECLOUD_ENVIRONMENT = process.env.PURECLOUD_ENVIRONMENT;
+let PURECLOUD_ENVIRONMENT = process.env.PURECLOUD_ENVIRONMENT;
 
 let USER_ID;
 const USER_EMAIL = `${guid()}@${PURECLOUD_ENVIRONMENT}`;
@@ -21,6 +21,7 @@ describe('JS SDK for Node', function() {
 	this.timeout(16000); // Ensure we don't timeout before the API returns a timeout (15s)
 
 	it ('should trace basic information', () => {
+		PURECLOUD_ENVIRONMENT = setEnvironment();
 		console.log(`PURECLOUD_ENVIRONMENT=${PURECLOUD_ENVIRONMENT}`);
 		console.log(`PURECLOUD_CLIENT_ID=${PURECLOUD_CLIENT_ID}`);
 		console.log(`USER_EMAIL=${USER_EMAIL}`);
@@ -128,3 +129,24 @@ function guid() {
 	}
 	return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
 }
+function setEnvironment() {
+    switch (PURECLOUD_ENVIRONMENT) {
+      case "mypurecloud.com":
+        return platformClient.PureCloudRegionHosts.us_east_1;
+      case "mypurecloud.ie":
+        return platformClient.PureCloudRegionHosts.eu_west_1;
+      case "mypurecloud.com.au":
+        return platformClient.PureCloudRegionHosts.ap_southeast_2;
+      case "mypurecloud.jp":
+        return platformClient.PureCloudRegionHosts.ap_northeast_1;
+      case "mypurecloud.de":
+        return platformClient.PureCloudRegionHosts.eu_central_1;
+  
+      default:
+        console.log(
+          "Value does not exist in PureCloudRegionHosts defaulting to PURECLOUD ENVIRONMENT value"
+        );
+        return PURECLOUD_ENVIRONMENT;
+    }
+  }
+  
