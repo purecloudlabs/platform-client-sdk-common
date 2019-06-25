@@ -31,6 +31,7 @@ import com.mypurecloud.sdk.v2.guest.ApiClient;
 import com.mypurecloud.sdk.v2.guest.ApiResponse;
 import com.mypurecloud.sdk.v2.guest.Configuration;
 import com.mypurecloud.sdk.v2.guest.api.WebChatApi;
+import com.mypurecloud.sdk.v2.guest.PureCloudRegionHosts;
 import com.mypurecloud.sdk.v2.guest.model.*;
 ```
 
@@ -46,8 +47,9 @@ String guestName = "Chat Guest";
 String guestImage = "http://yoursite.com/path/to/guest/image.png";
 
 // Create ApiClient instance
+PureCloudRegionHosts region = PureCloudRegionHosts.us_east_1;
 ApiClient apiClient = ApiClient.Builder.standard()
-  .withBasePath("https://api.mypurecloud.com")
+  .withBasePath(region)
   .build();
 
 // Use the ApiClient instance
@@ -112,8 +114,9 @@ ws.connect();
 
 ```{"language":"java"}
 // Create ApiClient instance
+PureCloudRegionHosts region = PureCloudRegionHosts.us_east_1;
 ApiClient apiClient = ApiClient.Builder.standard()
-    .withBasePath("https://api.mypurecloud.ie")
+    .withBasePath(region)
     .build();
 
 // Use the ApiClient instance
@@ -129,7 +132,8 @@ CreateWebChatConversationResponse chat = webChatApi.postWebchatGuestConversation
 Provide the full base url if not using `https://api.mypurecloud.com`:
 
 ```{"language":"java"}
-.withBasePath("https://api.mypurecloud.ie")
+PureCloudRegionHosts region = PureCloudRegionHosts.ap_southeast_2;
+.withBasePath(region)
 ```
 
 #### Setting the HTTP connector

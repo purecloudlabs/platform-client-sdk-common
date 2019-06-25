@@ -27,6 +27,7 @@ import {{invokerPackage}}.auth.Authentication;
 import {{invokerPackage}}.auth.OAuth;
 import {{invokerPackage}}.connector.*;
 import {{invokerPackage}}.extensions.AuthResponse;
+import {{invokerPackage}}.PureCloudRegionHosts;
 
 {{>generatedAnnotation}}
 public class ApiClient implements AutoCloseable {
@@ -700,6 +701,11 @@ public class ApiClient implements AutoCloseable {
 
         public Builder withBasePath(String basePath) {
             this.basePath = basePath;
+            return this;
+        }
+
+         public Builder withBasePath(PureCloudRegionHosts region){      
+            this.basePath = region.getApiHost();        
             return this;
         }
 
