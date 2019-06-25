@@ -31,6 +31,7 @@ import com.mypurecloud.sdk.v2.guest.ApiClient;
 import com.mypurecloud.sdk.v2.guest.ApiResponse;
 import com.mypurecloud.sdk.v2.guest.Configuration;
 import com.mypurecloud.sdk.v2.guest.api.WebChatApi;
+import com.mypurecloud.sdk.v2.guest.PureCloudRegionHosts;
 import com.mypurecloud.sdk.v2.guest.model.*;
 ```
 
@@ -46,8 +47,9 @@ String guestName = "Chat Guest";
 String guestImage = "http://yoursite.com/path/to/guest/image.png";
 
 // Create ApiClient instance
+PureCloudRegionHosts region = PureCloudRegionHosts.us_east_1;
 ApiClient apiClient = ApiClient.Builder.standard()
-  .withBasePath("https://api.mypurecloud.com")
+  .withBasePath(region)
   .build();
 
 // Use the ApiClient instance
