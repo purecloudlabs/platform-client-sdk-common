@@ -114,8 +114,9 @@ ws.connect();
 
 ```{"language":"java"}
 // Create ApiClient instance
+PureCloudRegionHosts region = PureCloudRegionHosts.us_east_1;
 ApiClient apiClient = ApiClient.Builder.standard()
-    .withBasePath("https://api.mypurecloud.ie")
+    .withBasePath(region)
     .build();
 
 // Use the ApiClient instance
@@ -131,7 +132,8 @@ CreateWebChatConversationResponse chat = webChatApi.postWebchatGuestConversation
 Provide the full base url if not using `https://api.mypurecloud.com`:
 
 ```{"language":"java"}
-.withBasePath("https://api.mypurecloud.ie")
+PureCloudRegionHosts region = PureCloudRegionHosts.ap_southeast_2;
+.withBasePath(region)
 ```
 
 #### Setting the HTTP connector
