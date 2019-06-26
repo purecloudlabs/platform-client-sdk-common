@@ -10,7 +10,7 @@
     },
     "versionFile": "${SDK_REPO}/version.json",
     "logLevel": "debug",
-    "extensionsDestination": "${SDK_TEMP}/extensions",
+    "extensionsDestination": "${SDK_REPO}/build/src/purecloud-guest-chat-client",
     "swagger": {
       "oldSwaggerPath": "${SDK_REPO}/swagger.json",
       "newSwaggerSourcePath": "https://api.mypurecloud.com/api/v2/docs/swaggerall",
