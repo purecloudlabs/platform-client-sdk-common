@@ -107,7 +107,8 @@ Console.WriteLine("Access token=" + accessTokenInfo.AccessToken);
 If connecting to a PureCloud environment other than mypurecloud.com (e.g. mypurecloud.ie), set the new base path before constructing any API classes. The new base path should be the base path to the Platform API for your environment.
 
 ```{"language":"csharp"}
-Configuration.Default.ApiClient.RestClient.BaseUrl = new Uri("https://api.mypurecloud.ie");
+PureCloudRegionHosts region = PureCloudRegionHosts.us_east_1;
+Configuration.Default.ApiClient.withBasePath(region);
 ```
 
 #### Setting the Access Token

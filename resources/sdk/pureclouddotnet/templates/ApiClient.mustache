@@ -275,6 +275,29 @@ namespace {{packageName}}.Client
                 return Convert.ToString (obj);
         }
 
+         /// <summary>
+        /// Creates a restclient with a base path string input
+        /// <returns>Returns a rest client</returns>
+        public RestClient withBasePath(String basePath){
+            if (String.IsNullOrEmpty(basePath))
+                throw new ArgumentException("basePath cannot be empty");
+
+                 RestClient = new RestClient(basePath);
+                 return RestClient;
+
+        }
+        /// <summary>
+        /// Creates a restclient with a PureCloudRegionHost string input
+        /// <returns>Returns a rest client</returns>
+        public RestClient withBasePath(PureCloudRegionHosts region){
+          String basePath = region.GetDescription();
+          if (String.IsNullOrEmpty(basePath))
+                throw new ArgumentException("basePath cannot be empty");
+
+                 RestClient = new RestClient(basePath);
+                 return RestClient;
+        }
+
         /// <summary>
         /// Deserialize the JSON string into a proper object.
         /// </summary>

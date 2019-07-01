@@ -59,7 +59,17 @@ namespace {{packageName}}.Tests
         [Test, Order(1)]
         public void Authenticate()
         {
-            {{packageName}}.Client.Configuration.Default.ApiClient.RestClient.BaseUrl = new Uri("https://api." + environment);
+          
+        PureCloudRegionHosts? region = getRegion(environment);
+          Console.WriteLine(region);
+            if(region == null){ //Returned in the case of default value
+            {{packageName}}.Client.Configuration.Default.ApiClient.withBasePath("https://api." + environment);
+        }
+        else {
+            PureCloudRegionHosts regionval = region.GetValueOrDefault();
+            {{packageName}}.Client.Configuration.Default.ApiClient.withBasePath(regionval);
+        }
+           
             var accessTokenInfo = {{packageName}}.Client.Configuration.Default.ApiClient.PostToken(clientId, clientSecret);
             {{packageName}}.Client.Configuration.Default.AccessToken = accessTokenInfo.AccessToken;
 
@@ -202,6 +212,23 @@ namespace {{packageName}}.Tests
             if (TestContext.CurrentContext.Result.Outcome.Status == TestStatus.Failed)
             {
                 stop = true;
+            }
+        }
+        public Nullable<PureCloudRegionHosts> getRegion(String str = "http://api.mypurecloud.com"){
+            switch(str){
+                case "mypurecloud.com":
+                 return PureCloudRegionHosts.us_east_1;
+                case "mypurecloud.ie":
+                  return PureCloudRegionHosts.eu_west_1;
+                case "mypurecloud.de":
+                 return PureCloudRegionHosts.eu_central_1;
+                case "mypurecloud.jp":
+                 return PureCloudRegionHosts.ap_northeast_1;
+                case "mypurecloud.com.au":
+                 return PureCloudRegionHosts.ap_southeast_1;
+                default:
+                 Console.WriteLine("Value does not exist in enum using default val");
+                 return null;
             }
         }
     }
