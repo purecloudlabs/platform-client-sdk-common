@@ -61,7 +61,6 @@ namespace {{packageName}}.Tests
         {
           
         PureCloudRegionHosts? region = getRegion(environment);
-          Console.WriteLine(region);
             if(region == null){ //Returned in the case of default value
             {{packageName}}.Client.Configuration.Default.ApiClient.setBasePath("https://api." + environment);
         }
