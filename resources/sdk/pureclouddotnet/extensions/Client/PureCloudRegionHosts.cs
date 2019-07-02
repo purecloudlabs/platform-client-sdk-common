@@ -4,7 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using PureCloudPlatform.Client.V2.Model;
+using {{=it.packageName}}.Model;
 
 namespace {{=it.packageName}}.Client
 
