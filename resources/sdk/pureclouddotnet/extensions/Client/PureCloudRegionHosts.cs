@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using PureCloudPlatform.Client.V2.Model;
 
-namespace PureCloudPlatform.Client.V2.Client
+namespace {{=it.packageName}}.Client
 
 {
    
