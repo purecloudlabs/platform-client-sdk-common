@@ -108,7 +108,7 @@ If connecting to a PureCloud environment other than mypurecloud.com (e.g. mypure
 
 ```{"language":"csharp"}
 PureCloudRegionHosts region = PureCloudRegionHosts.us_east_1;
-Configuration.Default.ApiClient.withBasePath(region);
+Configuration.Default.ApiClient.setBasePath(region);
 ```
 
 #### Setting the Access Token
