@@ -37,7 +37,8 @@ PureCloudPlatformClientV2.configuration.access_token = 'cuQbSAf1LU4CuIaSj1D6Gm39
 If connecting to a PureCloud environment other than mypurecloud.com (e.g. mypurecloud.ie), set the new base path before constructing any API classes. The new base path should be the base path to the Platform API for your environment.
 
 ```{"language":"python"}
-PureCloudPlatformClientV2.configuration.host = 'https://api.mypurecloud.ie'
+region = PureCloudRegionHosts.us_east_1
+PureCloudPlatformClientV2.configuration.host = region.getapihost
 ```
 
 ### Making Requests
