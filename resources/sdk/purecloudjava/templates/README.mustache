@@ -238,20 +238,20 @@ notificationHandler.sendPing();
 To handle incoming events, implement the `NotificationListener<T>` interface to handle registered topics and the `WebSocketListener` interface for information about the websocket itself. This is a basic example of how to handle user presence events:
 
 ```{"language":"java"}
-public class UserPresenceListener implements NotificationListener<UserPresenceNotification> {
+public class UserPresenceListener implements NotificationListener<PresenceEventUserPresence> {
     private String topic;
 
     public String getTopic() {
         return topic;
     }
 
-    public Class<UserPresenceNotification> getEventBodyClass() {
-        return UserPresenceNotification.class;
+    public Class<PresenceEventUserPresence> getEventBodyClass() {
+        return PresenceEventUserPresence.class;
     }
 
     @Override
     public void onEvent(NotificationEvent<?> event) {
-        System.out.println("system presence -> " + ((UserPresenceNotification)event.getEventBody()).getPresenceDefinition().getSystemPresence());
+        System.out.println("system presence -> " + ((PresenceEventUserPresence)event.getEventBody()).getPresenceDefinition().getSystemPresence());
     }
 
     public UserPresenceListener(String userId) {

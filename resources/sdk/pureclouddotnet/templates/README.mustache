@@ -157,11 +157,11 @@ Add a subscription:
 
 ```{"language":"csharp"}
 // Single
-handler.AddSubscription($"v2.users.{_me.Id}.presence", typeof(UserPresenceNotification));
+handler.AddSubscription($"v2.users.{_me.Id}.presence", typeof(PresenceEventUserPresence));
 
 // Multiple
 var subscriptions = new List<Tuple<string, Type>>();
-subscriptions.Add(new Tuple($"v2.users.{_me.Id}.presence", typeof(UserPresenceNotification)));
+subscriptions.Add(new Tuple($"v2.users.{_me.Id}.presence", typeof(PresenceEventUserPresence)));
 subscriptions.Add(new Tuple($"v2.users.{_me.Id}.routingStatus", typeof(UserRoutingStatusNotification)));
 handler.AddSubscriptions(subscriptions);
 ```
@@ -179,9 +179,9 @@ handler.NotificationReceived += (data) =>
 {
     Console.WriteLine(JsonConvert.SerializeObject(data, Formatting.Indented));
 
-    if (data.GetType() == typeof (NotificationData<UserPresenceNotification>))
+    if (data.GetType() == typeof (NotificationData<PresenceEventUserPresence>))
     {
-        var presence = (NotificationData<UserPresenceNotification>) data;
+        var presence = (NotificationData<PresenceEventUserPresence>) data;
         Console.WriteLine($"New presence: {presence.EventBody.PresenceDefinition.SystemPresence}");
     }
 };
@@ -191,15 +191,15 @@ Full example:
 
 ```{"language":"csharp"}
 var handler = new NotificationHandler();
-handler.AddSubscription($"v2.users.{_me.Id}.presence", typeof(UserPresenceNotification));
+handler.AddSubscription($"v2.users.{_me.Id}.presence", typeof(PresenceEventUserPresence));
 handler.AddSubscription($"v2.users.{_me.Id}.conversations", typeof(ConversationNotification));
 handler.NotificationReceived += (data) =>
 {
     Console.WriteLine(JsonConvert.SerializeObject(data, Formatting.Indented));
 
-    if (data.GetType() == typeof (NotificationData<UserPresenceNotification>))
+    if (data.GetType() == typeof (NotificationData<PresenceEventUserPresence>))
     {
-        var presence = (NotificationData<UserPresenceNotification>) data;
+        var presence = (NotificationData<PresenceEventUserPresence>) data;
         Console.WriteLine($"New presence: {presence.EventBody.PresenceDefinition.SystemPresence}");
     }
     else if (data.GetType() == typeof (NotificationData<ConversationNotification>))
