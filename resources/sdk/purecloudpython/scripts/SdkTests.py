@@ -44,7 +44,15 @@ class SdkTests(unittest.TestCase):
 		print PureCloudPlatformClientV2
 
 	def test_2_authenticate(self):
-		PureCloudPlatformClientV2.configuration.host = 'https://api.%s' % (os.environ.get('PURECLOUD_ENVIRONMENT'))
+		environment = os.environ.get('PURECLOUD_ENVIRONMENT');
+		region = self.purecloudregiontest(environment)
+		if isinstance(region,PureCloudPlatformClientV2.PureCloudRegionHosts):
+			PureCloudPlatformClientV2.configuration.host = region.get_api_host()
+		elif isinstance(region,str):
+			PureCloudPlatformClientV2.configuration.host = 'https://api.%s' % (environment)
+			print("Environment not found in PureCloudRegionHosts defaulting to string value")
+		
+		
 
 		# Base64 encode the client ID and client secret
 		authorization = base64.b64encode('%s:%s' % (os.environ.get('PURECLOUD_CLIENT_ID'), os.environ.get('PURECLOUD_CLIENT_SECRET')))
@@ -151,6 +159,16 @@ class SdkTests(unittest.TestCase):
 
 	def test_9_delete_user(self):
 		SdkTests.users_api.delete_user(SdkTests.userId)
+
+	def purecloudregiontest(self,x):
+		return{
+			'mypurecloud.com': PureCloudPlatformClientV2.PureCloudRegionHosts.us_east_1,
+			'mypurecloud.ie': PureCloudPlatformClientV2.PureCloudRegionHosts.eu_west_1,
+			'mypurecloud.com.au': PureCloudPlatformClientV2.PureCloudRegionHosts.ap_southeast_2,
+			'mypurecloud.jp': PureCloudPlatformClientV2.PureCloudRegionHosts.ap_northeast_1,
+			'eu_central_1': PureCloudPlatformClientV2.PureCloudRegionHosts.eu_central_1
+			}.get(x,x)
+
 
 
 if __name__ == '__main__':
