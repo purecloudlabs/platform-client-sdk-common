@@ -47,7 +47,7 @@ class SdkTests(unittest.TestCase):
 		environment = os.environ.get('PURECLOUD_ENVIRONMENT');
 		region = self.purecloudregiontest(environment)
 		if isinstance(region,PureCloudPlatformClientV2.PureCloudRegionHosts):
-			PureCloudPlatformClientV2.configuration.host = region.getapihost()
+			PureCloudPlatformClientV2.configuration.host = region.get_api_host()
 		elif isinstance(region,str):
 			PureCloudPlatformClientV2.configuration.host = 'https://api.%s' % (environment)
 			print("Environment not found in PureCloudRegionHosts defaulting to string value")
