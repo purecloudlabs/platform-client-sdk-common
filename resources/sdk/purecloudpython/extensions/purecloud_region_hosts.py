@@ -11,7 +11,7 @@ class PureCloudRegionHosts(Enum):
     def __init__(self, apihost):
         self.apihost = apihost
 
-    def getapihost(self):
+    def get_api_host(self):
         return self.apihost
 
 
