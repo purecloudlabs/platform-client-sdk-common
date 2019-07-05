@@ -14,9 +14,9 @@ try {
 	console.log(`extensionsDest=${extensionsDest}`);
 	console.log(`packageName=${packageName}`);
 
-	let paths = klawSync(extensionsSource, { 
-		nodir: true, 
-		filter: (data) => data.path.toLowerCase().endsWith('.cs') 
+	let paths = klawSync(extensionsSource, {
+		nodir: true,
+		filter: (data) => data.path.toLowerCase().endsWith('.cs')
 	});
 
 	paths.forEach((filePath) => {
@@ -30,7 +30,7 @@ try {
 		fs.writeFileSync(filePath.path.replace(extensionsSource, extensionsDest), result);
 		console.log(`Extension templated to ${fileDest}`);
 	});
-} catch(err) {
+} catch (err) {
 	process.exitCode = 1;
 	console.log(err);
 }

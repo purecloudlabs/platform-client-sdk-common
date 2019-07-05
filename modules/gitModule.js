@@ -5,15 +5,9 @@ const Q = require('q');
 
 const log = require('./logger');
 
-
-
-function Git() {
-
-}
-
+function Git() {}
 
 Git.prototype.authToken = undefined;
-
 
 Git.prototype.clone = function(repo, branch, target) {
 	var deferred = Q.defer();
@@ -45,8 +39,7 @@ Git.prototype.clone = function(repo, branch, target) {
 		args.push(target);
 
 		spawnProcess(args, undefined, deferred);
-
-	} catch(err) {
+	} catch (err) {
 		deferred.reject(err);
 	}
 
@@ -65,37 +58,29 @@ Git.prototype.saveChanges = function(repo, localDir, message) {
 		}
 
 		repo = injectAuthToken(repo, this.authToken);
-		spawnProcess([ 'add', '-A' ], localDir)
-			.then(() => { 
-				var commitArgs = [ 'commit', '-m', message ? message : 'automated commit' ];
-				return spawnProcess(commitArgs, localDir); 
+		spawnProcess(['add', '-A'], localDir)
+			.then(() => {
+				var commitArgs = ['commit', '-m', message ? message : 'automated commit'];
+				return spawnProcess(commitArgs, localDir);
 			})
 			.then(() => {
-				return spawnProcess([ 'push', `--repo=${repo}` ], localDir);
+				return spawnProcess(['push', `--repo=${repo}`], localDir);
 			})
 			.then(() => deferred.resolve())
 			.catch((err) => deferred.reject(err));
-	} catch(err) {
+	} catch (err) {
 		deferred.reject(err);
 	}
 
 	return deferred.promise;
 };
 
-
-
-
-
 function injectAuthToken(repo, authToken) {
 	if (authToken) {
-		if (repo.startsWith('git://'))
-			repo = `git://${authToken}@${repo.substring(6)}`;
-		else if (repo.startsWith('http://'))
-			repo = `http://${authToken}@${repo.substring(7)}`;
-		else if (repo.startsWith('https://'))
-			repo = `https://${authToken}@${repo.substring(8)}`;
-		else
-			throw new Error("Can't figure out where to put the auth token! URL is not GIT, HTTP, or HTTPS!");
+		if (repo.startsWith('git://')) repo = `git://${authToken}@${repo.substring(6)}`;
+		else if (repo.startsWith('http://')) repo = `http://${authToken}@${repo.substring(7)}`;
+		else if (repo.startsWith('https://')) repo = `https://${authToken}@${repo.substring(8)}`;
+		else throw new Error("Can't figure out where to put the auth token! URL is not GIT, HTTP, or HTTPS!");
 	}
 	log.debug(`repo: ${repo}`);
 	return repo;
@@ -103,8 +88,7 @@ function injectAuthToken(repo, authToken) {
 
 function spawnProcess(args, localDir, deferred) {
 	// If the caller gives us the deferred, we'll resolve it for them
-	if (!deferred)
-		deferred = Q.defer();
+	if (!deferred) deferred = Q.defer();
 
 	try {
 		log.debug(`Spawn: git ${args.join(' ')}`);
@@ -116,7 +100,7 @@ function spawnProcess(args, localDir, deferred) {
 		}
 
 		var cmd = spawn('git', args, options);
-		
+
 		cmd.on('error', (err) => {
 			log.error(`Git operation failed: ${err.message}`);
 			deferred.reject(err);
@@ -124,16 +108,14 @@ function spawnProcess(args, localDir, deferred) {
 
 		cmd.on('close', (code) => {
 			log.info(`Git operation exited with code ${code}`);
-			if (code === 0)
-				deferred.resolve();
-			else
-				deferred.reject(new Error(`Git operation exited with code ${code}`));
+			if (code === 0) deferred.resolve();
+			else deferred.reject(new Error(`Git operation exited with code ${code}`));
 		});
-	} catch(err) {
+	} catch (err) {
 		deferred.reject(err);
 	}
 
 	return deferred.promise;
 }
 
-self = module.exports = new Git();
+module.exports = new Git();

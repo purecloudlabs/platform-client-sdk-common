@@ -1,22 +1,18 @@
 const _ = require('lodash');
 const Winston = require('winston');
 
-
-
-function Logger() { }
+function Logger() {}
 
 Logger.prototype.log = new Winston.Logger({
-    transports: [
-        new Winston.transports.Console({
-            level: 'silly',
-            handleExceptions: true,
-            json: false,
-            colorize: false
-        })
-    ]
+	transports: [
+		new Winston.transports.Console({
+			level: 'silly',
+			handleExceptions: true,
+			json: false,
+			colorize: false
+		})
+	]
 });
-
-
 
 Logger.prototype.setLogLevel = function(level) {
 	level = checkLevel(level);
@@ -30,15 +26,28 @@ Logger.prototype.setUseColor = function(useColor) {
 };
 
 // Passthrough functions
-Logger.prototype.silly = function(msg) { this.log.silly(msg); };
-Logger.prototype.debug = function(msg) { this.log.debug(msg); };
-Logger.prototype.verbose = function(msg) { this.log.verbose(msg); };
-Logger.prototype.info = function(msg) { this.log.info(msg); };
-Logger.prototype.warn = function(msg) { this.log.warn(msg); };
-Logger.prototype.error = function(msg) { this.log.error(msg); };
+Logger.prototype.silly = function(msg) {
+	this.log.silly(msg);
+};
+Logger.prototype.debug = function(msg) {
+	this.log.debug(msg);
+};
+Logger.prototype.verbose = function(msg) {
+	this.log.verbose(msg);
+};
+Logger.prototype.info = function(msg) {
+	this.log.info(msg);
+};
+Logger.prototype.warn = function(msg) {
+	this.log.warn(msg);
+};
+Logger.prototype.error = function(msg) {
+	this.log.error(msg);
+};
 
-Logger.prototype.profile = function(msg) { this.log.profile(msg); };
-
+Logger.prototype.profile = function(msg) {
+	this.log.profile(msg);
+};
 
 Logger.prototype.writeBoxedLine = function(string, width, padchar, level) {
 	level = checkLevel(level);
@@ -85,17 +94,18 @@ Logger.prototype.writeBoxBottom = function(width, level) {
 Logger.prototype.writeBox = function(string, width, level) {
 	// default boxes to info
 	level = level ? level : 'info';
-	if (!width)
-		width = string.length > this.defaultWidth ? this.defaultWidth : string.length + 5;
+	if (!width) width = string.length > this.defaultWidth ? this.defaultWidth : string.length + 5;
 	this.writeBoxTop(width, level);
 	this.writeBoxedLine(string, width, null, level);
 	this.writeBoxBottom(width, level);
 };
 
 function pad(value, length, padchar) {
-    return (value.toString().length < length) ? pad(value+padchar, length, padchar):value;
+	return value.toString().length < length ? pad(value + padchar, length, padchar) : value;
 }
 
-function checkLevel(level) { return level ? level : 'debug'; }
+function checkLevel(level) {
+	return level ? level : 'debug';
+}
 
-self = module.exports = new Logger();
+module.exports = new Logger();

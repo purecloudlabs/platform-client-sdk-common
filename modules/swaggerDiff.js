@@ -4,14 +4,9 @@ const childProcess = require('child_process');
 const log = require('./logger');
 const swaggerDiffImpl = require('./swaggerDiffImpl');
 
-
-
 /* CONSTRUCTOR */
 
-function SwaggerDiff() {
-}
-
-
+function SwaggerDiff() {}
 
 /* PUBLIC PROPERTIES */
 
@@ -22,8 +17,6 @@ SwaggerDiff.prototype.swaggerInfo = {};
 SwaggerDiff.prototype.useSdkVersioning = false;
 SwaggerDiff.prototype.oldSwagger = {};
 SwaggerDiff.prototype.newSwagger = {};
-
-
 
 /* PUBLIC FUNCTIONS */
 
@@ -65,12 +58,12 @@ SwaggerDiff.prototype.getAndDiff = function(oldSwaggerPath, newSwaggerPath, save
 		log.info(`Writing new swagger to ${saveNewSwaggerPath}`);
 		fs.writeFileSync(saveNewSwaggerPath, JSON.stringify(newSwagger));
 	}
-	
+
 	// Diff swaggers
 	this.diff(oldSwagger, newSwagger);
 };
 
-SwaggerDiff.prototype.diff = function(oldSwagger, newSwagger) {	
+SwaggerDiff.prototype.diff = function(oldSwagger, newSwagger) {
 	copyPropertiesToImpl();
 
 	// Diff
@@ -116,13 +109,9 @@ SwaggerDiff.prototype.stringifyVersion = function(version, includePrerelease) {
 	return swaggerDiffImpl.stringifyVersion(version, includePrerelease);
 };
 
-
-
 /* EXPORT MODULE */
 
-var self = module.exports = new SwaggerDiff();
-
-
+var self = (module.exports = new SwaggerDiff());
 
 /* PRIVATE FUNCTIONS */
 
@@ -142,10 +131,10 @@ function downloadFile(url) {
 		i++;
 		log.info(`Downloading file: ${url}`);
 		// Source: https://www.npmjs.com/package/download-file-sync
-		var file = childProcess.execFileSync('curl', ['--silent', '-L', url], {encoding: 'utf8', maxBuffer: 1024*1024*8});
+		var file = childProcess.execFileSync('curl', ['--silent', '-L', url], { encoding: 'utf8', maxBuffer: 1024 * 1024 * 8 });
 		if (!file || file === '') {
-			log.info(`File was empty! sleeping for 5 seconds. Retries left: ${10-i}`);
-			childProcess.execFileSync('curl', ['--silent', 'https://httpbin.org/delay/10'], {encoding: 'utf8'});
+			log.info(`File was empty! sleeping for 5 seconds. Retries left: ${10 - i}`);
+			childProcess.execFileSync('curl', ['--silent', 'https://httpbin.org/delay/10'], { encoding: 'utf8' });
 		} else {
 			return file;
 		}
@@ -160,18 +149,13 @@ function getEnv(varname, defaultValue, isDefaultValue) {
 	log.silly(`ENV: ${varname}->${envVar}`);
 	if (!envVar && defaultValue) {
 		envVar = defaultValue;
-		if (isDefaultValue === true)
-			log.info(`Using default value for ${varname}: ${envVar}`);
-		else
-			log.warn(`Using override for ${varname}: ${envVar}`);
+		if (isDefaultValue === true) log.info(`Using default value for ${varname}: ${envVar}`);
+		else log.warn(`Using override for ${varname}: ${envVar}`);
 	}
 	if (envVar) {
-		if (envVar.toLowerCase() === 'true')
-			return true;
-		else if (envVar.toLowerCase() === 'true')
-			return false;
-		else 
-			return envVar;
+		if (envVar.toLowerCase() === 'true') return true;
+		else if (envVar.toLowerCase() === 'true') return false;
+		else return envVar;
 	}
 
 	return defaultValue;

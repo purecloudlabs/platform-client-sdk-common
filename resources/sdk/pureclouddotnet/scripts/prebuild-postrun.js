@@ -32,15 +32,15 @@ try {
 	console.log(`notificationsOutPath=${notificationsOutPath}`);
 
 	var config = {
-		'packageName': packageName || 'PureCloudPlatform.Client',
-		'packageVersion': version.displayFull,
-		'packageTitle':'PureCloud Platform Client SDK',
-		'packageProductName':'PureCloudPlatformClient',
-		'packageDescription':'A .NET library to interface with the PureCloud Public API',
-		'packageCompany':'Genesys',
-		'packageCopyright':'Copyright © Genesys 2017',
-		'httpUserAgent':'PureCloud SDK',
-		'targetFramework':'net452'
+		packageName: packageName || 'PureCloudPlatform.Client',
+		packageVersion: version.displayFull,
+		packageTitle: 'PureCloud Platform Client SDK',
+		packageProductName: 'PureCloudPlatformClient',
+		packageDescription: 'A .NET library to interface with the PureCloud Public API',
+		packageCompany: 'Genesys',
+		packageCopyright: 'Copyright © Genesys 2017',
+		httpUserAgent: 'PureCloud SDK',
+		targetFramework: 'net452'
 	};
 
 	fs.writeFileSync(swaggerCodegenConfigFilePath, JSON.stringify(config, null, 2));
@@ -49,9 +49,11 @@ try {
 	generateNotificationTopicsFile(notificationsTemplatePath, notificationsDataPath, notificationsOutPath, packageName);
 
 	console.log('downloading nuget...');
-	let data = cp.execFileSync('curl', ['--silent', '-L', 'https://dist.nuget.org/win-x86-commandline/latest/nuget.exe'], {encoding: 'binary'});
+	let data = cp.execFileSync('curl', ['--silent', '-L', 'https://dist.nuget.org/win-x86-commandline/latest/nuget.exe'], {
+		encoding: 'binary'
+	});
 	fs.writeFileSync(nugetPath, data, 'binary');
-} catch(err) {
+} catch (err) {
 	process.exitCode = 1;
 	console.log(err);
 }

@@ -2,8 +2,6 @@ const _ = require('lodash');
 const dot = require('dot');
 const pluralize = require('pluralize');
 
-
-
 /* PRIVATE VARS */
 
 const IMPACT_MAJOR = 'major';
@@ -17,8 +15,6 @@ const LOCATION_MODEL = 'model';
 const LOCATION_PROPERTY = 'property';
 const LOCATION_PATH = 'path';
 
-
-
 /* TYPE EXTENSIONS */
 
 String.prototype.capitalizeFirstLetter = function() {
@@ -29,15 +25,11 @@ Array.prototype.pushApply = function(arr) {
 	this.push.apply(this, arr);
 };
 
-
-
 /* CONSTRUCTOR */
 
 function SwaggerDiffImpl() {
 	dot.templateSettings.strip = false;
 }
-
-
 
 /* PUBLIC PROPERTIES */
 
@@ -48,8 +40,6 @@ SwaggerDiffImpl.prototype.swaggerInfo = {};
 SwaggerDiffImpl.prototype.useSdkVersioning = false;
 SwaggerDiffImpl.prototype.oldSwagger = {};
 SwaggerDiffImpl.prototype.newSwagger = {};
-
-
 
 /* PUBLIC FUNCTIONS */
 
@@ -72,30 +62,27 @@ SwaggerDiffImpl.prototype.diff = function(oldSwagger, newSwagger) {
 
 SwaggerDiffImpl.prototype.generateReleaseNotes = function(template, data) {
 	var changesObject = {
-		'major': {},
-		'minor': {},
-		'point': {}
+		major: {},
+		minor: {},
+		point: {}
 	};
 
 	// Organize data for templating
-	_.forEach(this.changes, function (changeItem, entity) {
+	_.forEach(this.changes, function(changeItem, entity) {
 		if (changeItem.major) {
-			if (!changesObject.major[entity]) 
-				changesObject.major[entity] = { key: entity, changes: [] };
+			if (!changesObject.major[entity]) changesObject.major[entity] = { key: entity, changes: [] };
 
 			changesObject.major[entity].changes.pushApply(changeItem.major);
 		}
 
 		if (changeItem.minor) {
-			if (!changesObject.minor[entity]) 
-				changesObject.minor[entity] = { key: entity, changes: [] };
+			if (!changesObject.minor[entity]) changesObject.minor[entity] = { key: entity, changes: [] };
 
 			changesObject.minor[entity].changes.pushApply(changeItem.minor);
 		}
 
 		if (changeItem.point) {
-			if (!changesObject.point[entity]) 
-				changesObject.point[entity] = { key: entity, changes: [] };
+			if (!changesObject.point[entity]) changesObject.point[entity] = { key: entity, changes: [] };
 
 			changesObject.point[entity].changes.pushApply(changeItem.point);
 		}
@@ -103,9 +90,9 @@ SwaggerDiffImpl.prototype.generateReleaseNotes = function(template, data) {
 
 	// Calculate metadata
 	var changesData = {
-		'majorCount': 0,
-		'minorCount': 0,
-		'pointCount': 0,
+		majorCount: 0,
+		minorCount: 0,
+		pointCount: 0
 	};
 	_.forOwn(changesObject, function(impactGroup, key) {
 		_.forOwn(impactGroup, function(changeGroup) {
@@ -138,26 +125,35 @@ SwaggerDiffImpl.prototype.generateReleaseNotes = function(template, data) {
 
 SwaggerDiffImpl.prototype.incrementVersion = function(version, forceMajor, forceMinor, forcePoint) {
 	// Major
-	if (forceMajor === true || _.find(this.changes, function(changeGroup) {
-		return changeGroup[IMPACT_MAJOR] ? changeGroup[IMPACT_MAJOR].length > 0 : false;
-	})) {
+	if (
+		forceMajor === true ||
+		_.find(this.changes, function(changeGroup) {
+			return changeGroup[IMPACT_MAJOR] ? changeGroup[IMPACT_MAJOR].length > 0 : false;
+		})
+	) {
 		console.log('Increment version: major');
 		version.major++;
 		version.minor = 0;
 		version.point = 0;
 	}
 	// Minor
-	else if (forceMinor === true || _.find(this.changes, function(changeGroup) {
-		return changeGroup[IMPACT_MINOR] ? changeGroup[IMPACT_MINOR].length > 0 : false;
-	})) {
+	else if (
+		forceMinor === true ||
+		_.find(this.changes, function(changeGroup) {
+			return changeGroup[IMPACT_MINOR] ? changeGroup[IMPACT_MINOR].length > 0 : false;
+		})
+	) {
 		console.log('Increment version: minor');
 		version.minor++;
 		version.point = 0;
 	}
 	// Point
-	else if (forcePoint === true || _.find(this.changes, function(changeGroup) {
-		return changeGroup[IMPACT_POINT] ? changeGroup[IMPACT_POINT].length > 0 : false;
-	})) {
+	else if (
+		forcePoint === true ||
+		_.find(this.changes, function(changeGroup) {
+			return changeGroup[IMPACT_POINT] ? changeGroup[IMPACT_POINT].length > 0 : false;
+		})
+	) {
 		console.log('Increment version: point');
 		version.point++;
 	}
@@ -169,65 +165,56 @@ SwaggerDiffImpl.prototype.incrementVersion = function(version, forceMajor, force
 };
 
 SwaggerDiffImpl.prototype.stringifyVersion = function(version, includePrerelease) {
-	return `${version.major}.${version.minor}.${version.point}` + 
-			(includePrerelease === true && version.prerelease && version.prerelease.length > 0 ? 
-				`-${version.prerelease}` : 
-				'');
+	return (
+		`${version.major}.${version.minor}.${version.point}` +
+		(includePrerelease === true && version.prerelease && version.prerelease.length > 0 ? `-${version.prerelease}` : '')
+	);
 };
-
-
 
 /* EXPORT MODULE */
 
-var self = module.exports = new SwaggerDiffImpl();
-if (typeof(window) !== 'undefined') {
-	window.swaggerDiffImpl = self;
+const _this = (module.exports = new SwaggerDiffImpl());
+if (typeof window !== 'undefined') {
+	window.swaggerDiffImpl = _this;
 }
-
-
 
 /* PRIVATE FUNCTIONS */
 
 function addChange(id, key, location, impact, oldValue, newValue, description) {
 	// Generate default description
 	if (!description) {
-		if (!oldValue && newValue)
-			description = `${location.capitalizeFirstLetter()} ${key} was added`;
-		else if (oldValue && !newValue)
-			description = `${location.capitalizeFirstLetter()} ${key} was removed`;
-		else
-			description = `${location.capitalizeFirstLetter()} ${key} was changed from ${oldValue} to ${newValue}`;
+		if (!oldValue && newValue) description = `${location.capitalizeFirstLetter()} ${key} was added`;
+		else if (oldValue && !newValue) description = `${location.capitalizeFirstLetter()} ${key} was removed`;
+		else description = `${location.capitalizeFirstLetter()} ${key} was changed from ${oldValue} to ${newValue}`;
 	}
 
 	// Initialize
-	if (!self.changes[id])
-		self.changes[id] = {};
-	if (!self.changes[id][impact])
-		self.changes[id][impact] = [];
+	if (!_this.changes[id]) _this.changes[id] = {};
+	if (!_this.changes[id][impact]) _this.changes[id][impact] = [];
 
 	// Add
-	self.changes[id][impact].push({
-		'parent': id,
-		'impact': impact,
-		'key': key,
-		'location': location,
-		'oldValue': oldValue,
-		'newValue': newValue,
-		'description': description
+	_this.changes[id][impact].push({
+		parent: id,
+		impact: impact,
+		key: key,
+		location: location,
+		oldValue: oldValue,
+		newValue: newValue,
+		description: description
 	});
 
 	// Increment change count
-	self.changeCount++;
+	_this.changeCount++;
 }
 
 function checkForChange(id, key, location, impact, property, oldObject, newObject, description) {
 	// Initialize property values
 	// Use property=undefined for direct object comparison
-	var oldPropertyValue = property ? oldObject ? oldObject[property] : undefined : oldObject;
-	var newPropertyValue = property ? newObject ? newObject[property] : undefined : newObject;
+	var oldPropertyValue = property ? (oldObject ? oldObject[property] : undefined) : oldObject;
+	var newPropertyValue = property ? (newObject ? newObject[property] : undefined) : newObject;
 
 	// Have one but not the other, or properties aren't equal
-	if ((!oldObject && newObject) || (oldObject && !newObject) || (oldPropertyValue !== newPropertyValue))
+	if ((!oldObject && newObject) || (oldObject && !newObject) || oldPropertyValue !== newPropertyValue)
 		addChange(id, key ? key : property, location, impact, oldPropertyValue, newPropertyValue, description);
 }
 
@@ -265,30 +252,82 @@ function checkOperations(oldSwagger, newSwagger) {
 				var oldOperation = oldPath[methodKey];
 				if (!oldOperation) {
 					// Operation was added
-					addChange(pathKey, methodKey.toUpperCase(), LOCATION_OPERATION, IMPACT_MINOR, undefined, methodKey, newOperation.summary ? `Operation ${methodKey} was added. Summary: ${newOperation.summary}` : undefined);
+					addChange(
+						pathKey,
+						methodKey.toUpperCase(),
+						LOCATION_OPERATION,
+						IMPACT_MINOR,
+						undefined,
+						methodKey,
+						newOperation.summary ? `Operation ${methodKey} was added. Summary: ${newOperation.summary}` : undefined
+					);
 				} else {
 					var operationMethodAndPath = `${methodKey.toUpperCase()} ${pathKey}`;
 
 					// Check operation properties
 					checkForChange(operationMethodAndPath, undefined, LOCATION_OPERATION, IMPACT_MAJOR, 'operationId', oldOperation, newOperation);
-					checkForChange(operationMethodAndPath, undefined, LOCATION_OPERATION, IMPACT_MAJOR, 'x-purecloud-method-name', oldOperation, newOperation);
-					checkForChange(operationMethodAndPath, undefined, LOCATION_OPERATION, IMPACT_POINT, 'description', oldOperation, newOperation, 'Description was changed');
-					checkForChange(operationMethodAndPath, undefined, LOCATION_OPERATION, IMPACT_POINT, 'summary', oldOperation, newOperation, 'Summary was changed');
+					checkForChange(
+						operationMethodAndPath,
+						undefined,
+						LOCATION_OPERATION,
+						IMPACT_MAJOR,
+						'x-purecloud-method-name',
+						oldOperation,
+						newOperation
+					);
+					checkForChange(
+						operationMethodAndPath,
+						undefined,
+						LOCATION_OPERATION,
+						IMPACT_POINT,
+						'description',
+						oldOperation,
+						newOperation,
+						'Description was changed'
+					);
+					checkForChange(
+						operationMethodAndPath,
+						undefined,
+						LOCATION_OPERATION,
+						IMPACT_POINT,
+						'summary',
+						oldOperation,
+						newOperation,
+						'Summary was changed'
+					);
 					// Check for deprecated
 					if (newOperation.deprecated === true && oldOperation.deprecated !== true) {
-						addChange(operationMethodAndPath, 'deprecated', LOCATION_OPERATION, IMPACT_MAJOR, oldOperation.deprecated, newOperation.deprecated, 'Has been deprecated');
+						addChange(
+							operationMethodAndPath,
+							'deprecated',
+							LOCATION_OPERATION,
+							IMPACT_MAJOR,
+							oldOperation.deprecated,
+							newOperation.deprecated,
+							'Has been deprecated'
+						);
 					} else if (newOperation.deprecated !== true && oldOperation.deprecated === true) {
 						// This condition should never happen, but let's be thorough
-						addChange(operationMethodAndPath, 'deprecated', LOCATION_OPERATION, IMPACT_MAJOR, oldOperation.deprecated, newOperation.deprecated, 'Has been undeprecated');
+						addChange(
+							operationMethodAndPath,
+							'deprecated',
+							LOCATION_OPERATION,
+							IMPACT_MAJOR,
+							oldOperation.deprecated,
+							newOperation.deprecated,
+							'Has been undeprecated'
+						);
 					}
-
-
 
 					// Make parameters KVPs
 					var oldParams = {};
 					var newParams = {};
-					_.forEach(oldOperation.parameters, function(p) { oldParams[p.name] = p; });
-					_.forEach(newOperation.parameters, function(p) { newParams[p.name] = p; }); 
+					_.forEach(oldOperation.parameters, function(p) {
+						oldParams[p.name] = p;
+					});
+					_.forEach(newOperation.parameters, function(p) {
+						newParams[p.name] = p;
+					});
 
 					// Check for removed parameters
 					_.forEach(oldParams, function(oldParam) {
@@ -302,25 +341,55 @@ function checkOperations(oldSwagger, newSwagger) {
 						var oldParam = oldParams[newParam.name];
 						if (!oldParam) {
 							// Parameter was added, major change if in path or required
-							var i = self.useSdkVersioning || newParam.in.toLowerCase() === 'path' || newParam.required === true;
-							addChange(operationMethodAndPath, newParam.name, LOCATION_PARAMETER, i ? IMPACT_MAJOR : IMPACT_MINOR, undefined, newParam.name);
+							var i = _this.useSdkVersioning || newParam.in.toLowerCase() === 'path' || newParam.required === true;
+							addChange(
+								operationMethodAndPath,
+								newParam.name,
+								LOCATION_PARAMETER,
+								i ? IMPACT_MAJOR : IMPACT_MINOR,
+								undefined,
+								newParam.name
+							);
 						} else {
 							checkForChange(operationMethodAndPath, newParam.name, LOCATION_PARAMETER, IMPACT_MAJOR, 'in', oldParam, newParam);
 							checkForChange(operationMethodAndPath, newParam.name, LOCATION_PARAMETER, IMPACT_MAJOR, 'type', oldParam, newParam);
-							checkForChange(operationMethodAndPath, newParam.name, LOCATION_PARAMETER, IMPACT_POINT, 'description', oldParam, newParam, `Description was changed for parameter ${newParam.name}`);
+							checkForChange(
+								operationMethodAndPath,
+								newParam.name,
+								LOCATION_PARAMETER,
+								IMPACT_POINT,
+								'description',
+								oldParam,
+								newParam,
+								`Description was changed for parameter ${newParam.name}`
+							);
 
 							// Major if made required
 							if (oldParam.required !== newParam.required) {
 								if (newParam.required === true) {
-									addChange(operationMethodAndPath, newParam.name, LOCATION_PARAMETER, IMPACT_MAJOR, oldParam.required, newParam.required, `Parameter ${newParam.name} was made required`);
+									addChange(
+										operationMethodAndPath,
+										newParam.name,
+										LOCATION_PARAMETER,
+										IMPACT_MAJOR,
+										oldParam.required,
+										newParam.required,
+										`Parameter ${newParam.name} was made required`
+									);
 								} else {
-									addChange(operationMethodAndPath, newParam.name, LOCATION_PARAMETER, IMPACT_MINOR, oldParam.required, newParam.required, `Parameter ${newParam.name} was made optional`);
+									addChange(
+										operationMethodAndPath,
+										newParam.name,
+										LOCATION_PARAMETER,
+										IMPACT_MINOR,
+										oldParam.required,
+										newParam.required,
+										`Parameter ${newParam.name} was made optional`
+									);
 								}
 							}
 						}
 					});
-
-
 
 					// Check for removed responses
 					_.forEach(oldOperation.responses, function(oldResponse, oldResponseCode) {
@@ -336,13 +405,29 @@ function checkOperations(oldSwagger, newSwagger) {
 							// Response was added
 							addChange(operationMethodAndPath, newResponseCode, LOCATION_RESPONSE, IMPACT_MINOR, undefined, newResponseCode);
 						} else {
-							checkForChange(operationMethodAndPath, newResponseCode, LOCATION_RESPONSE, IMPACT_POINT, 'description', oldResponse, newResponse);
-							checkForChange(operationMethodAndPath, newResponseCode, LOCATION_RESPONSE, IMPACT_MAJOR, '$ref', oldResponse.schema, newResponse.schema, 
-								`Response ${newResponseCode} type was changed from ${getSchemaType(oldResponse.schema)} to ${getSchemaType(newResponse.schema)}`);
+							checkForChange(
+								operationMethodAndPath,
+								newResponseCode,
+								LOCATION_RESPONSE,
+								IMPACT_POINT,
+								'description',
+								oldResponse,
+								newResponse
+							);
+							checkForChange(
+								operationMethodAndPath,
+								newResponseCode,
+								LOCATION_RESPONSE,
+								IMPACT_MAJOR,
+								'$ref',
+								oldResponse.schema,
+								newResponse.schema,
+								`Response ${newResponseCode} type was changed from ${getSchemaType(oldResponse.schema)} to ${getSchemaType(
+									newResponse.schema
+								)}`
+							);
 						}
 					});
-
-
 
 					// Check for removed tags
 					_.forEach(_.difference(oldOperation.tags, newOperation.tags), function(tag) {
@@ -360,15 +445,12 @@ function checkOperations(oldSwagger, newSwagger) {
 }
 
 function getSchemaType(schema) {
-	if (schema && schema['$ref'])
-		return schema['$ref'].replace('#/definitions/', '');
+	if (schema && schema['$ref']) return schema['$ref'].replace('#/definitions/', '');
 
 	if (schema && schema.type) {
 		if (schema.type.toLowerCase() == 'array' && schema.items) {
-			if (schema.items['$ref'])
-				return `${schema.items['$ref'].replace('#/definitions/', '')}[]`;
-			if (schema.items.type)
-				return `${schema.items.type}[]`;
+			if (schema.items['$ref']) return `${schema.items['$ref'].replace('#/definitions/', '')}[]`;
+			if (schema.items.type) return `${schema.items.type}[]`;
 		}
 		if (schema.type.toLowerCase() == 'object' && schema.additionalProperties) {
 			return `Map<${schema.type}, ${getSchemaType(schema.additionalProperties)}>`;
@@ -410,26 +492,65 @@ function checkModels(oldSwagger, newSwagger) {
 				if (!oldProperty) {
 					// Property was added
 					var type = newProperty.type;
-					if (!type)
-						type = newProperty['$ref'] ? newProperty['$ref'].replace('#/definitions/', '') : undefined;
+					if (!type) type = newProperty['$ref'] ? newProperty['$ref'].replace('#/definitions/', '') : undefined;
 
 					// New required properties are major changes
 					if (newModel.required && newModel.required.includes(propertyKey)) {
-						addChange(modelKey, propertyKey, LOCATION_PROPERTY, IMPACT_MAJOR, undefined, type, `Required property ${propertyKey} was added`);
+						addChange(
+							modelKey,
+							propertyKey,
+							LOCATION_PROPERTY,
+							IMPACT_MAJOR,
+							undefined,
+							type,
+							`Required property ${propertyKey} was added`
+						);
 					} else {
-						addChange(modelKey, propertyKey, LOCATION_PROPERTY, IMPACT_MINOR, undefined, type, `Optional property ${propertyKey} was added`);
+						addChange(
+							modelKey,
+							propertyKey,
+							LOCATION_PROPERTY,
+							IMPACT_MINOR,
+							undefined,
+							type,
+							`Optional property ${propertyKey} was added`
+						);
 					}
 				} else {
-					checkForChange(modelKey, propertyKey, LOCATION_PROPERTY, IMPACT_MAJOR, undefined, getSchemaType(oldProperty), getSchemaType(newProperty));
+					checkForChange(
+						modelKey,
+						propertyKey,
+						LOCATION_PROPERTY,
+						IMPACT_MAJOR,
+						undefined,
+						getSchemaType(oldProperty),
+						getSchemaType(newProperty)
+					);
 
 					// Newly made readonly
 					if (newProperty.readOnly === true && oldProperty.readOnly !== true) {
-						addChange(modelKey, propertyKey, LOCATION_PROPERTY, IMPACT_MAJOR, oldProperty.readOnly, newProperty.readOnly, `${propertyKey} has been made readonly`);
+						addChange(
+							modelKey,
+							propertyKey,
+							LOCATION_PROPERTY,
+							IMPACT_MAJOR,
+							oldProperty.readOnly,
+							newProperty.readOnly,
+							`${propertyKey} has been made readonly`
+						);
 					}
 
 					// No longer readonly
 					if (oldProperty.readOnly === true && newProperty.readOnly !== true) {
-						addChange(modelKey, propertyKey, LOCATION_PROPERTY, IMPACT_MINOR, oldProperty.readOnly, newProperty.readOnly, `${propertyKey} is no longer readonly`);
+						addChange(
+							modelKey,
+							propertyKey,
+							LOCATION_PROPERTY,
+							IMPACT_MINOR,
+							oldProperty.readOnly,
+							newProperty.readOnly,
+							`${propertyKey} is no longer readonly`
+						);
 					}
 
 					// Check enums
@@ -438,26 +559,56 @@ function checkModels(oldSwagger, newSwagger) {
 
 					if (!oldEnums && newEnums) {
 						// Is an enum now
-						addChange(modelKey, propertyKey, LOCATION_PROPERTY, IMPACT_MAJOR, oldEnums, newEnums, 'Values are now constrained by enum members');
+						addChange(
+							modelKey,
+							propertyKey,
+							LOCATION_PROPERTY,
+							IMPACT_MAJOR,
+							oldEnums,
+							newEnums,
+							'Values are now constrained by enum members'
+						);
 					}
 					if (oldEnums && !newEnums) {
 						// Not an enum anymore
-						addChange(modelKey, propertyKey, LOCATION_PROPERTY, self.useSdkVersioning ? IMPACT_MINOR : IMPACT_MINOR, oldEnums, newEnums, 'Values are no longer constrained by enum members');
+						addChange(
+							modelKey,
+							propertyKey,
+							LOCATION_PROPERTY,
+							_this.useSdkVersioning ? IMPACT_MINOR : IMPACT_MINOR,
+							oldEnums,
+							newEnums,
+							'Values are no longer constrained by enum members'
+						);
 					}
 					if (oldEnums && newEnums) {
 						// Removed enum values
 						_.forEach(oldEnums, function(oldEnumValue) {
 							if (newEnums.indexOf(oldEnumValue) == -1) {
-								addChange(modelKey, propertyKey, LOCATION_PROPERTY, IMPACT_MAJOR, oldEnumValue, undefined, 
-									`Enum value ${oldEnumValue} was removed from property ${propertyKey}`);
+								addChange(
+									modelKey,
+									propertyKey,
+									LOCATION_PROPERTY,
+									IMPACT_MAJOR,
+									oldEnumValue,
+									undefined,
+									`Enum value ${oldEnumValue} was removed from property ${propertyKey}`
+								);
 							}
 						});
 
 						// Added enum values
 						_.forEach(newEnums, function(newEnumValue) {
 							if (oldEnums.indexOf(newEnumValue) == -1) {
-								addChange(modelKey, propertyKey, LOCATION_PROPERTY, IMPACT_MINOR, undefined, newEnumValue, 
-									`Enum value ${newEnumValue} was added to property ${propertyKey}`);
+								addChange(
+									modelKey,
+									propertyKey,
+									LOCATION_PROPERTY,
+									IMPACT_MINOR,
+									undefined,
+									newEnumValue,
+									`Enum value ${newEnumValue} was added to property ${propertyKey}`
+								);
 							}
 						});
 					}
@@ -468,11 +619,9 @@ function checkModels(oldSwagger, newSwagger) {
 }
 
 function getEnumValues(property) {
-	if (property.enum)
-		return property.enum;
+	if (property.enum) return property.enum;
 
-	if (property.items && property.items.enum)
-		return property.items.enum;
+	if (property.items && property.items.enum) return property.items.enum;
 
 	return undefined;
 }

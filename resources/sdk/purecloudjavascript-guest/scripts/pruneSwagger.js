@@ -3,7 +3,6 @@ const fs = require('fs-extra');
 const request = require('request-promise');
 const path = require('path');
 
-
 try {
 	// Get swagger from here and process
 	var newSwaggerSourcePath = process.argv[2];
@@ -13,9 +12,7 @@ try {
 	console.log(`newSwaggerSourcePath=${newSwaggerSourcePath}`);
 	console.log(`newSwaggerPath=${newSwaggerPath}`);
 
-	const loadPromise = newSwaggerSourcePath.startsWith('http') 
-		? downloadFile(newSwaggerSourcePath)
-		: readFile(newSwaggerSourcePath);
+	const loadPromise = newSwaggerSourcePath.startsWith('http') ? downloadFile(newSwaggerSourcePath) : readFile(newSwaggerSourcePath);
 
 	loadPromise
 		.then((swagger) => {
@@ -39,8 +36,7 @@ try {
 							return true;
 						}
 					});
-					if (bodyParam && bodyParam.schema)
-						extractModels(bodyParam.schema, swagger.definitions, models);
+					if (bodyParam && bodyParam.schema) extractModels(bodyParam.schema, swagger.definitions, models);
 
 					// Get response models
 					_.forOwn(methodConfig.responses, (responseConfig, responseCode) => {
@@ -60,8 +56,7 @@ try {
 			process.exitCode = 1;
 			console.log(err);
 		});
-
-} catch(err) {
+} catch (err) {
 	process.exitCode = 1;
 	console.log(err);
 }
@@ -78,7 +73,7 @@ function readFile(filePath) {
 	return new Promise((resolve, reject) => {
 		try {
 			resolve(JSON.parse(fs.readFileSync(filePath, 'utf-8')));
-		} catch(err) {
+		} catch (err) {
 			reject(err);
 		}
 	});
@@ -86,7 +81,7 @@ function readFile(filePath) {
 
 function extractModels(schema, modelSource, models = {}) {
 	_.forOwn(schema, (value, key) => {
-		if (key === '$ref' && typeof(value) === 'string') {
+		if (key === '$ref' && typeof value === 'string') {
 			const modelName = value.split('/').pop();
 			if (!models[modelName]) {
 				// console.log('Extracting model: ' + modelName);
@@ -97,7 +92,7 @@ function extractModels(schema, modelSource, models = {}) {
 			}
 		}
 
-		if (typeof(value) === 'object') {
+		if (typeof value === 'object') {
 			extractModels(value, modelSource, models);
 		}
 	});

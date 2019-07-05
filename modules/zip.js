@@ -2,13 +2,7 @@ const archiver = require('archiver');
 const fs = require('fs-extra');
 const Q = require('q');
 
-
-
-function Zip() {
-
-}
-
-
+function Zip() {}
 
 Zip.prototype.zipDir = function(inputDir, outputPath) {
 	var deferred = Q.defer();
@@ -16,14 +10,14 @@ Zip.prototype.zipDir = function(inputDir, outputPath) {
 	var output = fs.createWriteStream(outputPath);
 	var archive = archiver('zip');
 
-	output.on('close', function () {
-	    console.log(archive.pointer() + ' total bytes');
-	    console.log('archiver has been finalized and the output file descriptor has closed.');
-	    deferred.resolve();
+	output.on('close', function() {
+		console.log(archive.pointer() + ' total bytes');
+		console.log('archiver has been finalized and the output file descriptor has closed.');
+		deferred.resolve();
 	});
 
-	archive.on('error', function(err){
-	    deferred.reject(err);
+	archive.on('error', function(err) {
+		deferred.reject(err);
 	});
 
 	archive.pipe(output);
@@ -33,5 +27,4 @@ Zip.prototype.zipDir = function(inputDir, outputPath) {
 	return deferred.promise;
 };
 
-
-self = module.exports = new Zip();
+module.exports = new Zip();

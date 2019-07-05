@@ -19,6 +19,7 @@ const zip = require('./zip');
 
 /* PRIVATE VARS */
 
+let _this;
 const TIMESTAMP_FORMAT = 'h:mm:ss a';
 const NOTIFICATION_ID_REGEX = /^urn:jsonschema:(.+):v2:(.+)$/i;
 
@@ -61,7 +62,7 @@ function Builder(configPath, localConfigPath) {
 		this.localConfig = deref(this.localConfig);
 
 		// Initialize self reference
-		self = this;
+		_this = this;
 
 		// https://github.com/winstonjs/winston#logging-levels
 		// silly > debug > verbose > info > warn > error
@@ -230,16 +231,13 @@ function prebuildImpl() {
 	var deferred = Q.defer();
 
 	try {
-
-		//log.debug(self);
-
 		// Pre-run scripts
-		executeScripts(self.config.stageSettings.prebuild.preRunScripts, 'custom prebuild pre-run');
+		executeScripts(_this.config.stageSettings.prebuild.preRunScripts, 'custom prebuild pre-run');
 
 		// Clone repo
 		var startTime = moment();
-		log.info(`Cloning ${self.config.settings.sdkRepo.repo} (${self.config.settings.sdkRepo.branch}) to ${getEnv('SDK_REPO')}`);
-		git.clone(self.config.settings.sdkRepo.repo, self.config.settings.sdkRepo.branch, getEnv('SDK_REPO'))
+		log.info(`Cloning ${_this.config.settings.sdkRepo.repo} (${_this.config.settings.sdkRepo.branch}) to ${getEnv('SDK_REPO')}`);
+		git.clone(_this.config.settings.sdkRepo.repo, _this.config.settings.sdkRepo.branch, getEnv('SDK_REPO'))
 			.then(function(repository) {
 				log.debug(`Clone operation completed in ${measureDurationFrom(startTime)}`);
 			})
@@ -248,10 +246,10 @@ function prebuildImpl() {
 				log.info('Diffing swagger files...');
 				swaggerDiff.useSdkVersioning = true;
 				swaggerDiff.getAndDiff(
-					self.config.settings.swagger.oldSwaggerPath, 
-					self.config.settings.swagger.newSwaggerPath, 
-					self.config.settings.swagger.saveOldSwaggerPath,
-					self.config.settings.swagger.saveNewSwaggerPath);
+					_this.config.settings.swagger.oldSwaggerPath, 
+					_this.config.settings.swagger.newSwaggerPath, 
+					_this.config.settings.swagger.saveOldSwaggerPath,
+					_this.config.settings.swagger.saveNewSwaggerPath);
 			})
 			.then(() => {
 				return addNotifications();
@@ -262,7 +260,7 @@ function prebuildImpl() {
 				fs.writeFileSync(newSwaggerTempFile, JSON.stringify(swaggerDiff.newSwagger));
 			})
 			.then(function() {
-				self.version = {
+				_this.version = {
 					major: 0,
 					minor: 0,
 					point: 0,
@@ -270,40 +268,40 @@ function prebuildImpl() {
 					apiVersion: 0
 				};
 
-				if (self.config.settings.versionFile) {
-					if (fs.existsSync(self.config.settings.versionFile)) {
-						self.version = JSON.parse(fs.readFileSync(self.config.settings.versionFile, 'utf8'));
+				if (_this.config.settings.versionFile) {
+					if (fs.existsSync(_this.config.settings.versionFile)) {
+						_this.version = JSON.parse(fs.readFileSync(_this.config.settings.versionFile, 'utf8'));
 					} else {
-						log.warn(`Version file not found: ${self.config.settings.versionFile}`);
+						log.warn(`Version file not found: ${_this.config.settings.versionFile}`);
 					}
 				} else {
 					log.warn('Version file not specified! Defaulting to 0.0.0-UNKNOWN');
 				}
 
 				// Increment version in config
-				var oldVersion = swaggerDiff.stringifyVersion(self.version, true);
+				var oldVersion = swaggerDiff.stringifyVersion(_this.version, true);
 				log.debug(`Previous version: ${oldVersion}`);
-				swaggerDiff.incrementVersion(self.version);
-				var newVersion = swaggerDiff.stringifyVersion(self.version, true);
+				swaggerDiff.incrementVersion(_this.version);
+				var newVersion = swaggerDiff.stringifyVersion(_this.version, true);
 				
 				// Determine if new version
-				self.isNewVersion = oldVersion !== newVersion;
-				setEnv('SDK_NEW_VERSION', self.isNewVersion);
-				if (self.isNewVersion === true)
-					log.info(`New version: ${self.version.displayFull}`);
+				_this.isNewVersion = oldVersion !== newVersion;
+				setEnv('SDK_NEW_VERSION', _this.isNewVersion);
+				if (_this.isNewVersion === true)
+					log.info(`New version: ${_this.version.displayFull}`);
 				else
 					log.warn('Version was not incremented');
 
 				// Write new version to file
-				if (self.isNewVersion === true && self.config.settings.versionFile) {
-					fs.writeFileSync(self.config.settings.versionFile, JSON.stringify(self.version, null, 2));
+				if (_this.isNewVersion === true && _this.config.settings.versionFile) {
+					fs.writeFileSync(_this.config.settings.versionFile, JSON.stringify(_this.version, null, 2));
 				}
 
 				// Get API version from health check endpoint
 				var deferred = Q.defer();
 				var resString = '';
-				log.info(`Getting API version from ${self.config.settings.apiHealthCheckUrl}`);
-				https.get(self.config.settings.apiHealthCheckUrl, function(res) {
+				log.info(`Getting API version from ${_this.config.settings.apiHealthCheckUrl}`);
+				https.get(_this.config.settings.apiHealthCheckUrl, function(res) {
 					res.on('data', function (chunk) {
 						resString += chunk;
 					});
@@ -323,24 +321,24 @@ function prebuildImpl() {
 				_.forIn(apiVersionData, function(value, key) {
 					apiVersionDataClean[key.replace(/\W+/g, '')] = value;
 				});
-				self.apiVersionData = apiVersionDataClean;
+				_this.apiVersionData = apiVersionDataClean;
 				log.debug(`API version data: ${JSON.stringify(apiVersionDataClean,null,2)}`);
 
 				// Get extra release note data
 				var data = { extraNotes: getEnv('RELEASE_NOTES') };
 				data.hasExtraNotes = data.extraNotes !== undefined;
-				data.apiVersionData = self.apiVersionData;
+				data.apiVersionData = _this.apiVersionData;
 
 				// Get release notes
 				log.info('Generating release notes...');
-				self.releaseNotes = swaggerDiff.generateReleaseNotes(self.releaseNoteTemplatePath, data);
-				self.releaseNoteSummary = swaggerDiff.generateReleaseNotes(self.releaseNoteSummaryTemplatePath, data);
+				_this.releaseNotes = swaggerDiff.generateReleaseNotes(_this.releaseNoteTemplatePath, data);
+				_this.releaseNoteSummary = swaggerDiff.generateReleaseNotes(_this.releaseNoteSummaryTemplatePath, data);
 
 				var releaseNotePath = path.join(getEnv('SDK_REPO'), 'releaseNotes.md');
 				log.info(`Writing release notes to ${releaseNotePath}`);
-				fs.writeFileSync(releaseNotePath, self.releaseNotes);
+				fs.writeFileSync(releaseNotePath, _this.releaseNotes);
 			})
-			.then(() => executeScripts(self.config.stageSettings.prebuild.postRunScripts, 'custom prebuild post-run'))
+			.then(() => executeScripts(_this.config.stageSettings.prebuild.postRunScripts, 'custom prebuild post-run'))
 			.then(() => deferred.resolve())
 			.catch((err) => deferred.reject(err));
 	} catch(err) {
@@ -355,7 +353,7 @@ function buildImpl() {
 
 	try {
 		// Pre-run scripts
-		executeScripts(self.config.stageSettings.build.preRunScripts, 'custom build pre-run');
+		executeScripts(_this.config.stageSettings.build.preRunScripts, 'custom build pre-run');
 
 		var outputDir = path.join(getEnv('SDK_REPO'), 'build');
 		log.debug(`SDK build dir -> ${outputDir}`);
@@ -365,40 +363,40 @@ function buildImpl() {
 		var command = '';
 		// Java command and options
 		command += 'java ';
-		command += `-DapiTests=${self.config.settings.swaggerCodegen.generateApiTests} `;
-		command += `-DmodelTests=${self.config.settings.swaggerCodegen.generateModelTests} `;
+		command += `-DapiTests=${_this.config.settings.swaggerCodegen.generateApiTests} `;
+		command += `-DmodelTests=${_this.config.settings.swaggerCodegen.generateModelTests} `;
 		command += `${getEnv('JAVA_OPTS', '')} -XX:MaxPermSize=256M -Xmx1024M -DloggerPath=conf/log4j.properties `;
 		// Swagger-codegen jar file
-		command += `-jar ${self.config.settings.swaggerCodegen.jarPath} `;
+		command += `-jar ${_this.config.settings.swaggerCodegen.jarPath} `;
 		// Swagger-codegen options
 		command += 'generate ';
 		command += `-i ${newSwaggerTempFile} `;
-		command += `-l ${self.config.settings.swaggerCodegen.codegenLanguage} `;
+		command += `-l ${_this.config.settings.swaggerCodegen.codegenLanguage} `;
 		command += `-o ${outputDir} `;
-		command += `-c ${self.config.settings.swaggerCodegen.configFile} `;
+		command += `-c ${_this.config.settings.swaggerCodegen.configFile} `;
 		// Don't append empty templates directory
-		if (getFileCount(self.resourcePaths.templates) > 0)
-			command += `-t ${self.resourcePaths.templates} `;
+		if (getFileCount(_this.resourcePaths.templates) > 0)
+			command += `-t ${_this.resourcePaths.templates} `;
 
-		_.forEach(self.config.settings.swaggerCodegen.extraGeneratorOptions, (option) => command += ' ' + option);
+		_.forEach(_this.config.settings.swaggerCodegen.extraGeneratorOptions, (option) => command += ' ' + option);
 
 		log.info('Running swagger-codegen...');
 		log.debug(`command: ${command}`);
 		var code = childProcess.execSync(command, {stdio:'inherit'});
 
-		if (fs.existsSync(self.resourcePaths.extensions)) {
+		if (fs.existsSync(_this.resourcePaths.extensions)) {
 			log.info('Copying extensions...');
-			fs.copySync(self.resourcePaths.extensions, self.config.settings.extensionsDestination);
+			fs.copySync(_this.resourcePaths.extensions, _this.config.settings.extensionsDestination);
 		} else {
-			log.warn(`Extensions path does not exist! Path: ${self.resourcePaths.extensions}`);
+			log.warn(`Extensions path does not exist! Path: ${_this.resourcePaths.extensions}`);
 		}
 		// Ensure compile scripts fail on error
-		_.forEach(self.config.stageSettings.build.compileScripts, function(script) {
+		_.forEach(_this.config.stageSettings.build.compileScripts, function(script) {
 			script.failOnError = true;
 		});
 
 		// Run compile scripts
-		executeScripts(self.config.stageSettings.build.compileScripts, 'compile');
+		executeScripts(_this.config.stageSettings.build.compileScripts, 'compile');
 
 		// Copy readme from build to docs and repo root
 		log.info('Copying readme...');
@@ -409,7 +407,7 @@ function buildImpl() {
 
 		log.info('Zipping docs...');
 		zip.zipDir(path.join(outputDir, 'docs'), path.join(getEnv('SDK_TEMP'), 'docs.zip'))
-			.then(() => executeScripts(self.config.stageSettings.build.postRunScripts, 'custom build post-run'))
+			.then(() => executeScripts(_this.config.stageSettings.build.postRunScripts, 'custom build post-run'))
 			.then(() => deferred.resolve())
 			.catch((err) => deferred.reject(err));
 	} catch(err) {
@@ -424,10 +422,10 @@ function postbuildImpl() {
 
 	try {
 		// Pre-run scripts
-		executeScripts(self.config.stageSettings.postbuild.preRunScripts, 'custom postbuild pre-run');
+		executeScripts(_this.config.stageSettings.postbuild.preRunScripts, 'custom postbuild pre-run');
 
 		createRelease()
-			.then(() => executeScripts(self.config.stageSettings.postbuild.postRunScripts, 'custom postbuild post-run'))
+			.then(() => executeScripts(_this.config.stageSettings.postbuild.postRunScripts, 'custom postbuild post-run'))
 			.then(() => deferred.resolve())
 			.catch((err) => deferred.reject(err));
 	} catch(err) {
@@ -464,33 +462,33 @@ function applyOverrides(original, overrides) {
 function createRelease() {
 	var deferred = Q.defer();
 
-	if (!self.config.settings.sdkRepo.repo || self.config.settings.sdkRepo.repo === '') {
+	if (!_this.config.settings.sdkRepo.repo || _this.config.settings.sdkRepo.repo === '') {
 		log.warn('Skipping github release creation! Repo is undefined.');
 		deferred.resolve();
 		return deferred.promise;
 	}
-	if (self.config.stageSettings.postbuild.gitCommit !== true) {
+	if (_this.config.stageSettings.postbuild.gitCommit !== true) {
 		log.warn('Skipping git commit and github release creation! Set postbuild.gitCommit=true to commit changes.');
 		deferred.resolve();
 		return deferred.promise;
 	}
 
-	if (self.isNewVersion !== true) {
+	if (_this.isNewVersion !== true) {
 		log.warn('Skipping github release creation! Build did not produce a new version.');
 		deferred.resolve();
 		return deferred.promise;
 	}
 
-	git.saveChanges(self.config.settings.sdkRepo.repo, getEnv('SDK_REPO'), self.version.displayFull)
+	git.saveChanges(_this.config.settings.sdkRepo.repo, getEnv('SDK_REPO'), _this.version.displayFull)
 		.then(() => {
-			if (self.config.stageSettings.postbuild.publishRelease !== true) {
+			if (_this.config.stageSettings.postbuild.publishRelease !== true) {
 				log.warn('Skipping github release creation! Set postbuild.publishRelease=true to release.');
 				deferred.resolve();
 				return deferred.promise;
 			}
 
 			// Expected format: https://github.com/grouporuser/reponame
-			var repoParts = self.config.settings.sdkRepo.repo.split('/');
+			var repoParts = _this.config.settings.sdkRepo.repo.split('/');
 			var repoName = repoParts[repoParts.length - 1];
 			var repoOwner = repoParts[repoParts.length - 2];
 			if (repoName.endsWith('.git'))
@@ -503,10 +501,10 @@ function createRelease() {
 			githubApi.config.token = getEnv('GITHUB_TOKEN');
 
 			var createReleaseOptions = {
-				tag_name: self.version.displayFull,
-				target_commitish: self.config.settings.sdkRepo.branch ? self.config.settings.sdkRepo.branch : 'master',
-				name: self.version.displayFull,
-				body: `Release notes for version ${self.version.displayFull}\n${self.releaseNoteSummary}`,
+				tag_name: _this.version.displayFull,
+				target_commitish: _this.config.settings.sdkRepo.branch ? _this.config.settings.sdkRepo.branch : 'master',
+				name: _this.version.displayFull,
+				body: `Release notes for version ${_this.version.displayFull}\n${_this.releaseNoteSummary}`,
 				draft: false,
 				prerelease: false
 			};
@@ -537,16 +535,16 @@ function addNotifications() {
 		}
 		
 		// Check PureCloud settings
-		checkAndThrow(self.pureCloud, 'clientId', 'Environment variable PURECLOUD_CLIENT_ID must be set!');
-		checkAndThrow(self.pureCloud, 'clientSecret', 'Environment variable PURECLOUD_CLIENT_SECRET must be set!');
-		checkAndThrow(self.pureCloud, 'environment', 'PureCloud environment was blank!');
+		checkAndThrow(_this.pureCloud, 'clientId', 'Environment variable PURECLOUD_CLIENT_ID must be set!');
+		checkAndThrow(_this.pureCloud, 'clientSecret', 'Environment variable PURECLOUD_CLIENT_SECRET must be set!');
+		checkAndThrow(_this.pureCloud, 'environment', 'PureCloud environment was blank!');
 
 		var pureCloudSession = purecloud.PureCloudSession({
 			strategy: 'client-credentials',
 			timeout: 20000,
-			clientId: self.pureCloud.clientId,
-			clientSecret: self.pureCloud.clientSecret,
-			environment: self.pureCloud.environment
+			clientId: _this.pureCloud.clientId,
+			clientSecret: _this.pureCloud.clientSecret,
+			environment: _this.pureCloud.environment
 		});
 		var notificationsApi = new purecloud.NotificationsApi(pureCloudSession);
 
@@ -674,10 +672,10 @@ function executeScript(script) {
 		}
 
 		if (script.appendIsNewReleaseArg === true)
-			args.push(self.isNewVersion);
+			args.push(_this.isNewVersion);
 
 		if (script.appendVersionArg === true)
-			args.push(self.version.displayFull);
+			args.push(_this.version.displayFull);
 
 		switch (script.type.toLowerCase()) {
 			case 'node': {
@@ -732,7 +730,7 @@ function executeScript(script) {
 function getScriptPath(script) {
 	var scriptPath = script.path;
 	if (!path.parse(scriptPath).dir)
-		scriptPath = path.join('./resources/sdk', self.config.settings.swaggerCodegen.resourceLanguage, 'scripts', script.path);
+		scriptPath = path.join('./resources/sdk', _this.config.settings.swaggerCodegen.resourceLanguage, 'scripts', script.path);
 	scriptPath = path.resolve(scriptPath);
 
 	if (!fs.existsSync(scriptPath)) {
