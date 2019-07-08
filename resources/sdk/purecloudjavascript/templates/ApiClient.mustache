@@ -337,7 +337,7 @@ class ApiClient {
 			}
 
 			// Test token
-			this.callApi('/api/v2/authorization/permissions', 'GET', 
+			this.callApi('/api/v2/tokens/me', 'GET', 
 				null, null, null, null, null, ['PureCloud OAuth'], ['application/json'], ['application/json'])
 				.then(() => {
 					resolve();
