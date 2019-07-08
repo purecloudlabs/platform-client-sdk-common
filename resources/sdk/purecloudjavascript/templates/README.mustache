@@ -115,6 +115,10 @@ client.setAccessToken(yourAccessToken);
 // Do authenticated things; no authentication function needed
 ```
 
+### Authorization Failure
+
+When authenticating in a browser using `loginClientCredentialsGrant(...)`, if the user completes the authentication process but their session is unable to be authorized, they will still be redirected back to the redirect URI. When `loginClientCredentialsGrant(...)` is invoked after the failure redirect, the promise returned will be rejected with an error message built from the `error` and `error_description`. The error information, as well as the state, can be accessed via `platformClient.ApiClient.instance.authData`. The application is expected to identify these login failures and interact with the user in a manner appropriate for the application.
+
 
 ## Environments
 
