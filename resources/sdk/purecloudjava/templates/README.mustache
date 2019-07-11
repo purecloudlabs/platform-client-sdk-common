@@ -72,8 +72,8 @@ String encodedSamlAssertion= ""; // Base64 encoded SAML assertion
 PureCloudRegionHosts region = PureCloudRegionHosts.us_east_1;
 
 ApiClient apiClient = ApiClient.Builder.standard().withBasePath(region).build();
-AuthResponse authResponse = apiClient.authorizeSaml2Bearer(clientId,clientSecret,orgName,encodedSamlAssertion);
-System.out.println("Authentication sucesful. Access token expires in " + authResponse.getExpires_in() + " seconds");
+ApiResponse<AuthResponse> authResponse = apiClient.authorizeSaml2Bearer(clientId,clientSecret,orgName,encodedSamlAssertion);
+System.out.println("Authentication sucesful. Access token expires in " + authResponse.getBody().getExpires_in(); + " seconds");
 
 ```
 

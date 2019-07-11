@@ -199,53 +199,22 @@ public class ApiClient implements AutoCloseable {
 
         return response;
     }
-     public AuthResponse authorizeSaml2Bearer( String clientId, String clientSecret, String orgName, String assertion) throws IOException {
-        String basePath = this.basePath;
-        String[] parts = basePath.split("\\.", 2);
-        final StringBuilder url = new StringBuilder();
-        url.append("https://login.").append(parts[1]);
-        basePath = url.toString();
-        CloseableHttpClient client = HttpClients.createDefault();
-        try {
-            HttpPost httpPost = new HttpPost(basePath + "/oauth/token");
+ public ApiResponse<AuthResponse>  authorizeSaml2Bearer( String clientId, String clientSecret, String orgName, String assertion) throws IOException, ApiException {
+        String encodedAuth = DatatypeConverter.printBase64Binary((clientId + ":" + clientSecret).getBytes("UTF-8"));
+        ApiRequest<Void> request = ApiRequestBuilder.create("POST", "/oauth/token")
+                .withCustomHeader("Authorization", "Basic " + encodedAuth)
+                .withCustomHeader("Content-Type", "application/x-www-form-urlencoded")
+                .withFormParameter("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer")
+                .withFormParameter("orgName", orgName)
+                .withFormParameter("assertion", assertion)
+                .build();
+        
+        ApiResponse<AuthResponse> response = this.getAPIResponse(request, new TypeReference<AuthResponse>() {}, true);
+        
+        setAccessToken(response.getBody().getAccess_token());
 
-            List<NameValuePair> params = new ArrayList<>();
-            params.add(new BasicNameValuePair("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer"));
-            params.add(new BasicNameValuePair("orgName", orgName));
-            params.add(new BasicNameValuePair("assertion", assertion));
-            httpPost.setEntity(new UrlEncodedFormEntity(params));
-
-            UsernamePasswordCredentials creds = new UsernamePasswordCredentials(clientId, clientSecret);
-
-            String basicAuth = new BasicScheme().authenticate(creds, new org.apache.commons.httpclient.methods.PostMethod());
-            httpPost.addHeader("Authorization", basicAuth);
-
-            ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
-
-                @Override
-                public String handleResponse(
-                        final HttpResponse response) throws ClientProtocolException, IOException {
-                    int status = response.getStatusLine().getStatusCode();
-                    if (status >= 200 && status < 300) {
-                        HttpEntity entity = response.getEntity();
-                        return entity != null ? EntityUtils.toString(entity) : null;
-                    } else {
-                        throw new ClientProtocolException("Unexpected response status: " + status + " correlation Id: " + response.getFirstHeader("ININ-Correlation-Id"));
-                    }
-                }
-
-            };
-            String responseBody = client.execute(httpPost, responseHandler);
-            System.out.println(responseBody);
-
-            ObjectMapper mapper = new ObjectMapper();
-            AuthResponse authResponse = mapper.readValue(responseBody, AuthResponse.class);
-            return authResponse;
-
-        } finally {
-            client.close();
-        }
-    }
+        return response;
+}
 
     /**
      * Connect timeout (in milliseconds).
