@@ -322,14 +322,14 @@ class ApiClient {
 		});
 	}
 
-		/**
+	 /**
 	 * @description Initiates the Saml2Bearerflow. Only available in node apps.
 	 * @param {string} clientId - The client ID of an OAuth Implicit Grant client
 	 * @param {string} clientSecret - The client secret of an OAuth Implicit Grant client
 	 * @param {string} orgName - The orgName of an OAuth Implicit Grant client
 	 * @param {string} assertion - The saml2bearer assertion
 	 */
-    loginSaml2Bearer(clientId, clientSecret, orgName, assertion) {
+    loginSaml2BearerGrant(clientId, clientSecret, orgName, assertion) {
 		this.clientId = clientId;
 		return new Promise((resolve, reject) => {
 			if (typeof window !== 'undefined') {
