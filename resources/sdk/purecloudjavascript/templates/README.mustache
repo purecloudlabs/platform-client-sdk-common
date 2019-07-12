@@ -93,7 +93,7 @@ The Saml2bearer grant only works when used in node.js. This is restricted intent
 
 ```{"language":"javascript"}
 const client = {{moduleName}}.ApiClient.instance;
-clientloginSaml2BearerGrant.(clientId,clientSecret,orgName,encodedAssertionString)
+client.loginSaml2BearerGrant(clientId,clientSecret,orgName,encodedAssertionString)
   .then(() => {
     // Do authenticated things
   })
