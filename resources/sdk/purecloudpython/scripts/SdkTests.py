@@ -52,31 +52,9 @@ class SdkTests(unittest.TestCase):
 			PureCloudPlatformClientV2.configuration.host = 'https://api.%s' % (environment)
 			print("Environment not found in PureCloudRegionHosts defaulting to string value")
 		
-		
-
-		# Base64 encode the client ID and client secret
-		authorization = base64.b64encode('%s:%s' % (os.environ.get('PURECLOUD_CLIENT_ID'), os.environ.get('PURECLOUD_CLIENT_SECRET')))
-
-		# Prepare for POST /oauth/token request
-		requestHeaders = {
-			'Authorization': 'Basic ' + authorization,
-			'Content-Type': 'application/x-www-form-urlencoded'
-		}
-		requestBody = {
-			'grant_type': 'client_credentials'
-		}
-
-		# Get token
-		response = requests.post('https://login.%s/oauth/token' % (os.environ.get('PURECLOUD_ENVIRONMENT')), data=requestBody, headers=requestHeaders)
-
-		# Check response
-		self.assertEqual(response.status_code, 200)
-
-		# Set token on SDK
-		responseJson = response.json()
-		self.assertIsNotNone(responseJson['access_token'])
-		PureCloudPlatformClientV2.configuration.access_token = responseJson['access_token']
-		SdkTests.users_api = PureCloudPlatformClientV2.UsersApi()
+	    # Authenticate with client credentials and pass the apiclient instance into the usersapi
+		apiclient = PureCloudPlatformClientV2.api_client.ApiClient().get_client_credentials_token(os.environ.get('PURECLOUD_CLIENT_ID'), os.environ.get('PURECLOUD_CLIENT_SECRET'))
+		SdkTests.users_api = PureCloudPlatformClientV2.UsersApi(apiclient)
 
 	def test_3_create_user(self):
 		body = PureCloudPlatformClientV2.CreateUser()
