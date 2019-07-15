@@ -345,6 +345,9 @@ class ApiClient(object):
             if klass in ['int', 'float', 'str', 'bool',
                          "date", 'datetime', "object"]:
                 klass = eval(klass)
+            # for LocalDateTime special case, use datetime in Python
+            elif klass == 'LocalDateTime':
+                klass = eval('datetime')
             # for model types
             else:
                 klass = eval('models.' + klass)
