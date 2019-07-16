@@ -74,6 +74,7 @@ var accessTokenInfo = Configuration.Default.ApiClient.PostToken("18a4c365-7ea3-4
   "http://redirecturi.com/",
   "6Zxcb0oASMBI55wQJ6bVmOmO57k8CxXBKgzDKtYXbtk");
 Console.WriteLine("Access token=" + accessTokenInfo.AccessToken);
+Configuration.Default.AccessToken = accessTokenInfo.AccessToken;
 ```
 
 #### OAuth2 SAML2 Bearer Grant
@@ -96,6 +97,7 @@ Then call the _PostTokenSaml2Bearer_ extension method of _ApiClient_ with your o
 var accessTokenInfo = Configuration.Default.ApiClient.PostToken("18a4c365-7ea3-4f0g-9fb7-884fb4d2e9c6",
   "M7FfdYQyL5TA6BdbEZ8M9-Wx4uZai1rNQ7jcuFdcJJo",orgName, encodedSamlAssertion);
 Console.WriteLine("Access token=" + accessTokenInfo.AccessToken);
+Configuration.Default.AccessToken = accessTokenInfo.AccessToken;
 ```
 
 #### Client Credentials Grant
@@ -120,6 +122,7 @@ Then call the _PostToken_ extension method of _ApiClient_, leaving the redirect 
 var accessTokenInfo = Configuration.Default.ApiClient.PostToken("18a4c365-7ea3-4f0g-9fb7-884fb4d2e9c6",
   "M7FfdYQyL5TA6BdbEZ8M9-Wx4uZai1rNQ7jcuFdcJJo");
 Console.WriteLine("Access token=" + accessTokenInfo.AccessToken);
+Configuration.Default.AccessToken = accessTokenInfo.AccessToken;
 ```
 
 ### Making Requests
