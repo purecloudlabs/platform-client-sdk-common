@@ -88,23 +88,12 @@ usersApi = PureCloudPlatformClientV2.UsersApi()
 print usersApi.get_users_me()
 ```
 
-### Dump API response class to JSON
+### Transform response object to JSON
 
-When you want to dump an API response class to JSON, you may need a custom encoder to transform certain values that Python does not know how to serialize, such as a property with a `datetime` value, to a type that Python can work with, usually a string. Here is a simple script for dumping a response with a `datetime` field:
+You can use `to_json()` method on the model to get a raw JSON string of the model.
 
 ```{"language":"python"}
-import datetime
-import json
-
-# encoder
-def datetime_handler(obj):
-  if isinstance(obj, datetime.datetime):
-    # you can further customize how to serialize your date here
-    return obj.isoformat()
-  return obj.__dict__
-
-# dump response
-print(json.dumps(response, default=datetime_handler))
+print usersApi.get_users_me().to_json()
 ```
 
 ## SDK Source Code Generation

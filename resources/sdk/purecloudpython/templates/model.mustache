@@ -24,6 +24,7 @@ from pprint import pformat
 from six import iteritems
 import re
 
+from ..utils import sanitize_for_serialization
 
 class {{classname}}(object):
     """
@@ -137,6 +138,12 @@ class {{classname}}(object):
                 result[attr] = value
 
         return result
+
+    def to_json(self):
+        """
+        Returns the model as raw JSON
+        """
+        return json.dumps(sanitize_for_serialization(self.to_dict()))
 
     def to_str(self):
         """
