@@ -1,6 +1,5 @@
 ---
 title: PureCloud Guest Chat Client - Java
-ispreview: true
 ---
 
 ## Resources
