@@ -131,7 +131,7 @@ function downloadFile(url) {
 		i++;
 		log.info(`Downloading file: ${url}`);
 		// Source: https://www.npmjs.com/package/download-file-sync
-		var file = childProcess.execFileSync('curl', ['--silent', '-L', url], { encoding: 'utf8', maxBuffer: 1024 * 1024 * 8 });
+		var file = childProcess.execFileSync('curl', ['--silent', '-L', url], { encoding: 'utf8', maxBuffer: 1024 * 1024 * 12 });
 		if (!file || file === '') {
 			log.info(`File was empty! sleeping for 5 seconds. Retries left: ${10 - i}`);
 			childProcess.execFileSync('curl', ['--silent', 'https://httpbin.org/delay/10'], { encoding: 'utf8' });
