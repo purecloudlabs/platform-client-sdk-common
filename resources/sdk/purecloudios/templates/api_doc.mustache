@@ -1,0 +1,73 @@
+---
+title: {{classname}}
+---
+## {{classname}}{{#description}}
+{{description}}{{/description}}
+
+All URIs are relative to *{{basePath}}*
+
+| Method | Description |
+| ------------- | ------------- |
+{{#operations}}{{#operation}}| [**{{operationId}}**]({{classname}}.html#{{operationId}}) | {{#summary}}{{summary}}{{/summary}} |
+{{/operation}}{{/operations}}{: class="table-striped"}
+
+{{#operations}}
+{{#operation}}
+<a name="{{operationId}}"></a>
+
+# **{{operationId}}**
+
+{{#deprecated}}<span style="background-color: #f0ad4e;display: inline-block;padding: 7px;font-weight: bold;line-height: 1;color: #ffffff;text-align: center;white-space: nowrap;vertical-align: baseline;border-radius: .25em;margin: 10px 0;">DEPRECATED</span>{{/deprecated}}
+
+> {{#returnType}}{{#returnTypeIsPrimitive}}{{returnType}}{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}[{{returnType}}]({{returnBaseType}}.html){{/returnTypeIsPrimitive}}{{/returnType}}{{^returnType}}Void{{/returnType}} {{operationId}}({{#allParams}}{{{paramName}}}{{#hasMore}}, {{/hasMore}}{{/allParams}})
+
+{{summary}}{{#notes}}
+
+{{notes}}{{/notes}}
+
+Wraps {{&httpMethod}} {{&path}}  
+
+Requires {{permissionType}} permissions: 
+
+{{#permissions}}
+* {{.}}
+{{/permissions}}
+
+### Example
+
+```{"language":"swift"}
+import {{{projectName}}}{{#hasAuthMethods}}
+
+{{{projectName}}}API.basePath = "{{basePath}}"
+{{{projectName}}}API.accessToken = "cwRto9ScT..."{{/hasAuthMethods}}
+
+{{#allParams}}
+var {{{paramName}}}: {{{dataType}}} = {{{example}}}  // {{#description}}{{{description}}}{{/description}}{{#isEnum}}{{#description}}, {{/description}}Enum: {{{classname}}}.{{{enumName}}}_{{{operationId}}}{{/isEnum}}
+{{/allParams}}
+
+// Code example
+{{{classname}}}.{{{operationId}}}({{#allParams}}{{{paramName}}}: {{{paramName}}}{{#hasMore}}, {{/hasMore}}{{/allParams}}) { ({{#returnType}}response, {{/returnType}}error) in
+    if let error = error {
+        dump(error)
+    }{{#returnType}} else if let response = response {
+        dump(response){{/returnType}}{{^returnType}} else {
+        print("{{{classname}}}.{{{operationId}}} was successful"){{/returnType}}
+    }
+}
+```
+
+### Parameters
+
+{{^allParams}}This endpoint does not require any parameters.{{/allParams}}{{#allParams}}{{#-last}}
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |{{/-last}}{{/allParams}}
+{{#allParams}}| **{{paramName}}** | {{#isPrimitiveType}}**{{dataType}}**{{/isPrimitiveType}}{{^isPrimitiveType}}{{#isFile}}**{{dataType}}**{{/isFile}}{{^isFile}}[**{{dataType}}**]({{baseType}}.html){{/isFile}}{{/isPrimitiveType}}| {{description}} |{{^required}} [optional]{{/required}}{{#defaultValue}} [default to {{defaultValue}}]{{/defaultValue}}{{#allowableValues}}<br />**Values**: {{#enumVars}}{{{name}}} ("{{{value}}}"){{^-last}}, {{/-last}}{{/enumVars}}{{/allowableValues}} |
+{{#-last}}{: class="table-striped"}{{/-last}}{{/allParams}}
+
+
+### Return type
+
+{{#returnType}}{{#returnTypeIsPrimitive}}**{{returnType}}**{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}[**{{returnType}}**]({{returnBaseType}}.html){{/returnTypeIsPrimitive}}{{/returnType}}{{^returnType}}`nil` (empty response body){{/returnType}}
+
+{{/operation}}
+{{/operations}}
