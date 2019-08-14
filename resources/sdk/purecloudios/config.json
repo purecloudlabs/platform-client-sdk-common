@@ -26,7 +26,7 @@
     "debugConfig": false,
     "enableLoggerColor": false,
     "packageName": "PureCloudPlatformClientV2",
-    "extensionsDestination": "${SDK_REPO}/build/PureCloudPlatformClientV2/Classes/Libraries",
+    "extensionsDestination": "${SDK_REPO}/build/src/Libraries",
     "apiHealthCheckUrl": "https://api.mypurecloud.com/api/v2/health/check"
   },
   "stageSettings": {
