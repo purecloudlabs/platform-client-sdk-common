@@ -8,14 +8,14 @@ import Foundation
 
 open class {{projectName}}API {
     /// Defaults to {{{basePath}}}. Specify the full base url if not using the default.
-    open static var basePath = "{{{basePath}}}"
-    open static var credential: URLCredential?
-    open static var customHeaders: [String:String] = [:]
-    open static var requestBuilderFactory: RequestBuilderFactory = AlamofireRequestBuilderFactory()
+    public static var basePath = "{{{basePath}}}"
+    public static var credential: URLCredential?
+    public static var customHeaders: [String:String] = [:]
+    public static var requestBuilderFactory: RequestBuilderFactory = AlamofireRequestBuilderFactory()
 
     /// The PureCloud access token to use for API requests.
-    open static var accessToken: String?
-    open static let userAgent = "PureCloud SDK/swift"
+    public static var accessToken: String?
+    public static let userAgent = "PureCloud SDK/swift"
 }
 
 open class RequestBuilder<T> {
