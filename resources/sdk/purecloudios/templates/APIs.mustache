@@ -11,7 +11,7 @@ open class {{projectName}}API {
     public static var basePath = "{{{basePath}}}"
     public static var credential: URLCredential?
     public static var customHeaders: [String:String] = [:]
-    public static var requestBuilderFactory: RequestBuilderFactory = AlamofireRequestBuilderFactory()
+    public static var requestBuilderFactory: RequestBuilderFactory = UrlSessionRequestBuilderFactory()
 
     /// The PureCloud access token to use for API requests.
     public static var accessToken: String?
@@ -21,19 +21,17 @@ open class {{projectName}}API {
 open class RequestBuilder<T> {
     var credential: URLCredential?
     var headers: [String:String]
-    public let parameters: [String:Any]?
-    public let isBody: Bool
+    public let body: Data?
     public let method: String
-    public let URLString: String
+    public let url: URLComponents
 
     /// Optional block to obtain a reference to the request's progress instance when available.
     public var onProgressReady: ((Progress) -> ())?
 
-    required public init(method: String, URLString: String, parameters: [String:Any]?, isBody: Bool, headers: [String:String] = [:]) {
+    required public init(method: String, url: URLComponents, body: Data?, headers: [String:String] = [:]) {
         self.method = method
-        self.URLString = URLString
-        self.parameters = parameters
-        self.isBody = isBody
+        self.url = url
+        self.body = body
         self.headers = headers
 
         addHeaders({{projectName}}API.customHeaders)
@@ -53,7 +51,9 @@ open class RequestBuilder<T> {
         headers["User-Agent"] = {{projectName}}API.userAgent        
     }
 
-    open func execute(_ completion: @escaping (_ response: Response<T>?, _ error: Error?) -> Void) { }
+    open func executeVoid(_ completion: @escaping (_ response: Response<T>?, _ error: Error?) -> Void) { }
+
+    open func execute<T: Decodable>(_ completion: @escaping (_ response: Response<T>?, _ error: Error?) -> Void) { }
 
     public func addHeader(name: String, value: String) -> Self {
         if !value.isEmpty {
@@ -69,6 +69,5 @@ open class RequestBuilder<T> {
 }
 
 public protocol RequestBuilderFactory {
-    func getNonDecodableBuilder<T>() -> RequestBuilder<T>.Type
-    func getBuilder<T:Decodable>() -> RequestBuilder<T>.Type
+    func getBuilder<T>() -> RequestBuilder<T>.Type
 }
