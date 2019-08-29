@@ -47,78 +47,7 @@ open class UrlSessionRequestBuilder<T>: RequestBuilder<T> {
         super.init(method: method, url: url, body: body, headers: headers)
     }
 
-    open override func executeVoid(_ completion: @escaping (_ response: Response<T>?, _ error: Error?) -> Void) {
-        let session = URLSession(configuration: .default)
-
-        switch method {
-        case "GET":
-            var request = URLRequest(url: url.url!)
-
-            // Set headers
-            for (key, value) in headers {
-                request.setValue(value, forHTTPHeaderField: key)
-            }
-
-            // Create completion handler
-            let completionHandler = { (data: Data?, response: URLResponse?, error: Error?) in
-                // Handle Error
-                if let error = error {
-                    completion(
-                        nil,
-                        ApiError.generalError(error)
-                    )
-                    return
-                }
-
-                // Handle Empty Response
-                guard let response = response as? HTTPURLResponse else {
-                    completion(
-                        nil,
-                        ApiError.emptyResponse
-                    )
-                    return
-                }
-
-                // Handle Empty Data
-                guard let data = data else {
-                    completion(
-                        Response(
-                            response: response,
-                            body: nil
-                        ),
-                        nil
-                    )
-                    return
-                }
-
-                // success
-                do {
-                    completion(
-                        Response(
-                            response: response,
-                            body: nil
-                        ),
-                        nil
-                    )
-                } catch {
-                    completion(
-                        nil,
-                        ApiError.decoderError(error)
-                    )
-                }
-            }
-
-            // Execute API request
-            session.dataTask(with: request, completionHandler: completionHandler).resume()
-        default:
-            completion(
-                nil,
-                ApiError.unknownHttpVerb(verb: method)
-            )
-        }
-    }
-
-    open override func execute<T: Decodable>(_ completion: @escaping (_ response: Response<T>?, _ error: Error?) -> Void) {
+    open override func execute(_ completion: @escaping (_ response: Response<T>?, _ error: Error?) -> Void) {
         let session = URLSession(configuration: .default)
 
         var request = URLRequest(url: url.url!)
@@ -153,7 +82,8 @@ open class UrlSessionRequestBuilder<T>: RequestBuilder<T> {
                 completion(
                     Response(
                         response: response,
-                        body: nil
+                        body: nil,
+                        data: nil
                     ),
                     nil
                 )
@@ -161,25 +91,17 @@ open class UrlSessionRequestBuilder<T>: RequestBuilder<T> {
             }
 
             // Success
-            do {
-                let outputStr = String(data: data, encoding: String.Encoding.utf8)
-                NSLog("Response string: " + outputStr!)
+            let outputStr = String(data: data, encoding: String.Encoding.utf8)
+            NSLog("Response string: " + outputStr!)
 
-                let body: T = try self.jsonDecoder.decode(T.self, from: data)
-
-                completion(
-                    Response(
-                        response: response,
-                        body: body
-                    ),
-                    nil
-                )
-            } catch {
-                completion(
-                    nil,
-                    ApiError.decoderError(error)
-                )
-            }
+            completion(
+                Response(
+                    response: response,
+                    body: nil,
+                    data: data
+                ),
+                nil
+            )
         }
 
         switch method {
@@ -201,6 +123,18 @@ open class UrlSessionRequestBuilder<T>: RequestBuilder<T> {
 
         // Execute API request
         session.dataTask(with: request, completionHandler: completionHandler).resume()
+    }
+
+    open override func decode<T: Decodable>(_ response: Response<T>) throws -> Void {
+        do {
+            if let data = response.data {
+                response.body = try jsonDecoder.decode(T.self, from: data)
+            } else {
+                throw ApiError.decoderDataError
+            }
+        } catch {
+            throw ApiError.decoderError(error)
+        }
     }
 
     fileprivate func getFileName(fromContentDisposition contentDisposition: String?) -> String? {
@@ -260,6 +194,7 @@ private enum DownloadException: Error {
 public enum ApiError: Error {
     case emptyResponse
     case decoderError(Error)
+    case decoderDataError
     case unknownHttpVerb(verb: String)
     case generalError(Error)
     case invalidDate

@@ -51,9 +51,9 @@ open class RequestBuilder<T> {
         headers["User-Agent"] = {{projectName}}API.userAgent        
     }
 
-    open func executeVoid(_ completion: @escaping (_ response: Response<T>?, _ error: Error?) -> Void) { }
+    open func execute(_ completion: @escaping (_ response: Response<T>?, _ error: Error?) -> Void) { }
 
-    open func execute<T: Decodable>(_ completion: @escaping (_ response: Response<T>?, _ error: Error?) -> Void) { }
+    open func decode<T: Decodable>(_ response: Response<T>) throws -> Void { }
 
     public func addHeader(name: String, value: String) -> Self {
         if !value.isEmpty {

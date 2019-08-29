@@ -31,17 +31,19 @@ open class {{classname}} {
      - parameter completion: completion handler to receive the data and the error objects
      */
     open class func {{operationId}}({{#allParams}}{{paramName}}: {{#isEnum}}{{#isContainer}}{{{dataType}}}{{/isContainer}}{{^isContainer}}{{{datatypeWithEnum}}}_{{operationId}}{{/isContainer}}{{/isEnum}}{{^isEnum}}{{{dataType}}}{{/isEnum}}{{^required}}? = nil{{/required}}{{#hasMore}}, {{/hasMore}}{{/allParams}}{{#hasParams}}, {{/hasParams}}completion: @escaping ((_ data: {{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}?,_ error: Error?) -> Void)) {
-        {{operationId}}WithRequestBuilder({{#allParams}}{{paramName}}: {{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}}).{{#returnType}}execute{{/returnType}}{{^returnType}}executeVoid{{/returnType}} { (response, error) -> Void in
-        {{#returnType}}
-            completion(response?.body, error)
-        {{/returnType}}
-        {{^returnType}}
+        let requestBuilder = {{operationId}}WithRequestBuilder({{#allParams}}{{paramName}}: {{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}})
+        requestBuilder.execute { (response: Response<{{#returnType}}{{returnType}}{{/returnType}}{{^returnType}}Void{{/returnType}}>?, error) -> Void in{{#returnType}}
+            do {
+                try requestBuilder.decode(response!)
+                completion(response?.body, error)
+            } catch {
+                completion(nil, error)
+            }{{/returnType}}{{^returnType}}
             if error == nil {
                 completion((), error)
             } else {
                 completion(nil, error)
-            }
-        {{/returnType}}
+            }{{/returnType}}
         }
     }
 
