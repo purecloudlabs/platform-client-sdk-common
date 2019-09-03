@@ -90,9 +90,21 @@ open class UrlSessionRequestBuilder<T>: RequestBuilder<T> {
                 return
             }
 
-            // Success
-            let outputStr = String(data: data, encoding: String.Encoding.utf8)
-            NSLog("Response string: " + outputStr!)
+            // At least it didn't blow up... decode response as string
+            let responseString = String(data: data, encoding: String.Encoding.utf8)
+            NSLog("Response string: " + responseString!)
+            
+            // Check for successful status code
+            if response.statusCode >= 200 && response.statusCode < 300 {
+                NSLog("Response is success: "  + String(response.statusCode))
+            } else {
+                NSLog("Response is error: "  + String(response.statusCode))
+                completion(
+                    nil,
+                    ApiError.apiError(statusCode: response.statusCode, errorBody: responseString!, correlationId: response.allHeaderFields["ININ-Correlation-Id"] as? String)
+                )
+                return
+            }
 
             completion(
                 Response(
@@ -109,6 +121,27 @@ open class UrlSessionRequestBuilder<T>: RequestBuilder<T> {
             request.httpMethod = "GET"
         case "POST":
             request.httpMethod = "POST"
+            if let b = self.body {
+                request.setValue("application/json", forHTTPHeaderField: "content-type")
+                request.setValue("application/json", forHTTPHeaderField: "accept")
+                request.httpBody = b
+            }
+        case "PATCH":
+            request.httpMethod = "PATCH"
+            if let b = self.body {
+                request.setValue("application/json", forHTTPHeaderField: "content-type")
+                request.setValue("application/json", forHTTPHeaderField: "accept")
+                request.httpBody = b
+            }
+        case "PUT":
+            request.httpMethod = "PUT"
+            if let b = self.body {
+                request.setValue("application/json", forHTTPHeaderField: "content-type")
+                request.setValue("application/json", forHTTPHeaderField: "accept")
+                request.httpBody = b
+            }
+        case "DELETE":
+            request.httpMethod = "DELETE"
             if let b = self.body {
                 request.setValue("application/json", forHTTPHeaderField: "content-type")
                 request.setValue("application/json", forHTTPHeaderField: "accept")
@@ -198,4 +231,5 @@ public enum ApiError: Error {
     case unknownHttpVerb(verb: String)
     case generalError(Error)
     case invalidDate
+    case apiError(statusCode: Int?, errorBody: String?, correlationId: String?)
 }

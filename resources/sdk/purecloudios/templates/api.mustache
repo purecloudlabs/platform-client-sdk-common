@@ -34,8 +34,14 @@ open class {{classname}} {
         let requestBuilder = {{operationId}}WithRequestBuilder({{#allParams}}{{paramName}}: {{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}})
         requestBuilder.execute { (response: Response<{{#returnType}}{{returnType}}{{/returnType}}{{^returnType}}Void{{/returnType}}>?, error) -> Void in{{#returnType}}
             do {
-                try requestBuilder.decode(response!)
-                completion(response?.body, error)
+                if let e = error {
+                    completion(nil, e)
+                } else if let r = response {
+                    try requestBuilder.decode(r)
+                    completion(response?.body, error)
+                } else {
+                    completion(nil, error)
+                }
             } catch {
                 completion(nil, error)
             }{{/returnType}}{{^returnType}}
