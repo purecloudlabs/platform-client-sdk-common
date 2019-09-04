@@ -42,7 +42,7 @@ import {{{projectName}}}
 {{{projectName}}}API.accessToken = "cwRto9ScT..."
 
 {{#allParams}}
-var {{{paramName}}}: {{{dataType}}} = {{{example}}}  // {{#description}}{{{description}}}{{/description}}{{#isEnum}}{{#description}}, {{/description}}Enum: {{{classname}}}.{{{enumName}}}_{{{operationId}}}{{/isEnum}}
+let {{{paramName}}}: {{#isEnum}}{{#isContainer}}{{{dataType}}}{{/isContainer}}{{^isContainer}}{{{classname}}}.{{{datatypeWithEnum}}}_{{operationId}}{{/isContainer}}{{/isEnum}}{{^isEnum}}{{{dataType}}}{{/isEnum}} = {{#isEnum}}{{#isContainer}}[{{/isContainer}}{{{classname}}}.{{{enumName}}}_{{{operationId}}}.enummember{{#isContainer}}.rawValue]{{/isContainer}}{{/isEnum}}{{^isEnum}}{{{example}}}{{/isEnum}} // {{#description}}{{{description}}}{{/description}}
 {{/allParams}}
 
 // Code example
