@@ -36,10 +36,10 @@ Requires {{permissionType}} permissions:
 ### Example
 
 ```{"language":"swift"}
-import {{{projectName}}}{{#hasAuthMethods}}
+import {{{projectName}}}
 
 {{{projectName}}}API.basePath = "{{basePath}}"
-{{{projectName}}}API.accessToken = "cwRto9ScT..."{{/hasAuthMethods}}
+{{{projectName}}}API.accessToken = "cwRto9ScT..."
 
 {{#allParams}}
 var {{{paramName}}}: {{{dataType}}} = {{{example}}}  // {{#description}}{{{description}}}{{/description}}{{#isEnum}}{{#description}}, {{/description}}Enum: {{{classname}}}.{{{enumName}}}_{{{operationId}}}{{/isEnum}}
@@ -50,6 +50,7 @@ var {{{paramName}}}: {{{dataType}}} = {{{example}}}  // {{#description}}{{{descr
     if let error = error {
         dump(error)
     }{{#returnType}} else if let response = response {
+        print("{{{classname}}}.{{{operationId}}} was successful")
         dump(response){{/returnType}}{{^returnType}} else {
         print("{{{classname}}}.{{{operationId}}} was successful"){{/returnType}}
     }
