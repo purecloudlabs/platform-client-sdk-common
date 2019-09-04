@@ -92,13 +92,9 @@ open class UrlSessionRequestBuilder<T>: RequestBuilder<T> {
 
             // At least it didn't blow up... decode response as string
             let responseString = String(data: data, encoding: String.Encoding.utf8)
-            NSLog("Response string: " + responseString!)
             
             // Check for successful status code
-            if response.statusCode >= 200 && response.statusCode < 300 {
-                NSLog("Response is success: "  + String(response.statusCode))
-            } else {
-                NSLog("Response is error: "  + String(response.statusCode))
+            if response.statusCode < 200 || response.statusCode >= 300 {
                 completion(
                     nil,
                     ApiError.apiError(statusCode: response.statusCode, errorBody: responseString!, correlationId: response.allHeaderFields["ININ-Correlation-Id"] as? String)
