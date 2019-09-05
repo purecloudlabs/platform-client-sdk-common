@@ -59,7 +59,7 @@ If connecting to a PureCloud environment other than mypurecloud.com (e.g. mypure
 In order to make a request, call the desired method on one of the SDK's API classes. For example, to get details for the authenticated user:
 
 ~~~ swift
-let expand: [String] = [UsersAPI.Expand_getUsersMe.enummember.rawValue]
+let expand: [String] = [UsersAPI.Expand_getUsersMe.presence.rawValue]
 UsersAPI.getUsersMe(expand: expand) { (response, error) in
     if let error = error {
         dump(error)
