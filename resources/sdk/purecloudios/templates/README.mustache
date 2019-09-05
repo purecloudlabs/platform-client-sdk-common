@@ -6,20 +6,19 @@ Documentation can be found at [https://developer.mypurecloud.com/api/rest/client
 
 ## Install using CocoaPods
 
-This package can be found at https://cocoapods.org/pods/{{projectName}}
+This package can be found at https://cocoapods.org/pods/{{projectName}} and the source is on github at https://github.com/MyPureCloud/platform-client-sdk-ios.
 
-Add the following to your project's Podfile:
+Reference the SDK's pod in your project's Podfile:
 
 ```
 pod '{{projectName}}'
 ```
 
-Then install this dependency in your project:
+Then install your project's dependencies:
 
 ```
-$ pod install
+pod install
 ```
-
 
 ## Using the SDK
 
@@ -33,11 +32,17 @@ import {{projectName}}
 
 #### Setting an access token
 
-The iOS SDK does not currently contain helper methods to complete an OAuth flow. The consuming applicaiton must complete an OAuth flow to get an access token outside the scope of the SDK. For more information about authenticating with OAuth, see the Developer Center article [Authorization](https://developer.mypurecloud.com/api/rest/authorization/index.html). Once an access token is obtained, it should be set on the SDK as follows:
+The iOS SDK does not contain helper methods to complete an OAuth flow. The consuming applicaiton must complete an OAuth flow to get an access token outside the scope of the SDK. For more information about authenticating with OAuth, see the Developer Center article [Authorization](https://developer.mypurecloud.com/api/rest/authorization/index.html). Once an access token is obtained, it should be set on the SDK as follows:
 
 ~~~ swift
 {{projectName}}API.accessToken = "YOUR_ACCESS_TOKEN"
 ~~~
+
+:::primary
+**Implicit Grant Tutorial**
+
+See the [iOS Web View Implicit Grant tutorial](/api/tutorials/) for a walkthrough of how to implement the OAuth Implicit Grant flow and authorize the SDK using Swift's native [WKWebView](https://developer.apple.com/documentation/webkit/wkwebview).
+:::
 
 
 #### Setting the environment
@@ -54,14 +59,13 @@ If connecting to a PureCloud environment other than mypurecloud.com (e.g. mypure
 In order to make a request, call the desired method on one of the SDK's API classes. For example, to get details for the authenticated user:
 
 ~~~ swift
-let getUsersMeExpand = [UsersAPI.Expand_getUsersMe.presence].map { $0.rawValue }
-UsersAPI.getUsersMe(expand: getUsersMeExpand) { (userMe, error) in
+let expand: [String] = [UsersAPI.Expand_getUsersMe.enummember.rawValue]
+UsersAPI.getUsersMe(expand: expand) { (response, error) in
     if let error = error {
-        // handle error
-        print("Error: \(error.localizedDescription)\n\(error)")
-    } else if let userMe = userMe {
-        // handle response UserMe object
-        print("Success: \(String(describing: userMe.name))")
+        dump(error)
+    } else if let response = response {
+        print("UsersAPI.getUsersMe was successful")
+        dump(response)
     }
 }
 ~~~
