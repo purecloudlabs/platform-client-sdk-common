@@ -4,7 +4,7 @@ Pod::Spec.new do |s|
   s.ios.deployment_target = '10.0'
   s.osx.deployment_target = '10.11'
   s.version = '{{podVersion}}'
-  s.source = { :git => 'git@github.com:MyPureCloud/platform-client-sdk-ios.git', :tag => '{{podVersion}}' }{{#podAuthors}}
+  s.source = { :git => 'https://github.com/MyPureCloud/platform-client-sdk-ios.git', :tag => '{{podVersion}}' }{{#podAuthors}}
   s.authors = '{{podAuthors}}'{{/podAuthors}}{{#podSocialMediaURL}}
   s.social_media_url = '{{podSocialMediaURL}}'{{/podSocialMediaURL}}{{#podDocsetURL}}
   s.docset_url = '{{podDocsetURL}}'{{/podDocsetURL}}
@@ -14,5 +14,5 @@ Pod::Spec.new do |s|
   s.description = '{{podDescription}}'{{/podDescription}}{{#podScreenshots}}
   s.screenshots = {{& podScreenshots}}{{/podScreenshots}}{{#podDocumentationURL}}
   s.documentation_url = '{{podDocumentationURL}}'{{/podDocumentationURL}}
-  s.source_files = 'src/**/*.swift'
+  s.source_files = 'build/src/**/*.swift'
 end
