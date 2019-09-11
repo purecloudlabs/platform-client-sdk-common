@@ -60,7 +60,10 @@
           "args": [
             "${SDK_REPO}",
             "${SDK_REPO}/build",
-            "${COMMON_ROOT}/sdk/purecloudios"
+            "${COMMON_ROOT}/sdk/purecloudios",
+            {
+              "$ref": "#/settings/packageName"
+            }
           ]
         }
       ],
