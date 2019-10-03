@@ -11,6 +11,12 @@ echo "INSTALL_RAKE=$INSTALL_RAKE"
 echo "IS_NEW_RELEASE=$IS_NEW_RELEASE"
 echo "VERSION=$VERSION"
 
+if [ ! "$IS_NEW_RELEASE" = "true" ]
+then
+	echo "Skipping gem publish"
+	exit 0
+fi
+
 GEM_CREDENTIALS_FILE=~/.gem/credentials
 GEM_KEY_NAME="developer_evangelists"
 
