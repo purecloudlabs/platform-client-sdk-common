@@ -10,7 +10,14 @@ echo "ROOT_NAMESPACE=$ROOT_NAMESPACE"
 cd $BUILD_DIR
 
 # Import certs
-mozroots --import --sync
+if test -f "/etc/pki/tls/certs/ca-bundle.crt"; then
+	echo "Using cert-sync"
+	cert-sync /etc/pki/tls/certs/ca-bundle.crt
+else
+	echo "Using mozroots"
+	mozroots --import --sync
+fi
+
 
 # Install packages
 mono $COMMON_DIR/resources/sdk/pureclouddotnet/bin/nuget.exe install $BUILD_DIR/src/$ROOT_NAMESPACE/packages.config -o $BUILD_DIR/packages -NoCache -Verbosity detailed;
