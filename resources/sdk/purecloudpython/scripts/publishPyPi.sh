@@ -1,6 +1,8 @@
-IS_NEW_RELEASE=$1
-VERSION=$2
+INDEX_SERVER=$1
+IS_NEW_RELEASE=$2
+VERSION=$3
 
+echo "INDEX_SERVER=$INDEX_SERVER"
 echo "IS_NEW_RELEASE=$IS_NEW_RELEASE"
 echo "VERSION=$VERSION"
 
@@ -20,6 +22,6 @@ python -m pip show setuptools
 
 # Publish egg on PyPi
 echo "Registering egg..."
-python setup.py register -r pypi-sdk
+python setup.py register -r $INDEX_SERVER
 echo "Uploading egg..."
-python setup.py sdist upload -r pypi-sdk
+python setup.py sdist upload -r $INDEX_SERVER
