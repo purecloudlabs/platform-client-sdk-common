@@ -40,7 +40,7 @@ if [ "$INSTALL_RAKE" == "true" ]
 then
 	export PATH=$PATH:/home/jenkins/bin
 
-	gem install io-console
+	gem install io-console -v 0.5.4
 	gem install rake
 	gem env
 fi
