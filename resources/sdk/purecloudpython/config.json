@@ -60,7 +60,7 @@
           "args": [
             "${SDK_REPO}",
             "${SDK_REPO}/build",
-            "${COMMON_ROOT}/resources/sdk/purecloudpython"
+            "${COMMON_ROOT}/resources/sdk/purecloudpython/scripts"
           ]
         }
       ],

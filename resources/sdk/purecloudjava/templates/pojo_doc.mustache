@@ -2,7 +2,7 @@
 
 | Name | Type | Description | Notes |
 | ------------ | ------------- | ------------- | ------------- |
-{{#vars}}| **{{name}}** | {{#isEnum}}[**{{datatypeWithEnum}}**](#{{datatypeWithEnum}}){{/isEnum}}{{^isEnum}}{{#isPrimitiveType}}**{{datatype}}**{{/isPrimitiveType}}{{^isPrimitiveType}}[**{{datatype}}**]({{complexType}}.html){{/isPrimitiveType}}{{/isEnum}} | {{description}} | {{^required}} [optional]{{/required}}{{#readOnly}} [readonly]{{/readOnly}} |
+{{#vars}}| **{{name}}** | {{#isEnum}}[**{{{datatypeWithEnum}}}**](#{{datatypeWithEnum}}){{/isEnum}}{{^isEnum}}<!---->{{#items.isEnum}}[**{{datatypeWithEnum}}**](#{{{items.datatypeWithEnum}}}){{/items.isEnum}}{{^items.isEnum}}<!---->{{#isPrimitiveType}}**{{datatype}}**{{/isPrimitiveType}}{{^isPrimitiveType}}[**{{datatype}}**]({{complexType}}.html){{/isPrimitiveType}}{{/items.isEnum}}{{/isEnum}}<!----> | {{description}} | {{^required}} [optional]{{/required}}{{#readOnly}} [readonly]{{/readOnly}} |
 {{/vars}}{: class="table table-striped"}
 {{#vars}}{{#isEnum}}
 
@@ -14,4 +14,14 @@
 | ---- | ----- |{{#allowableValues}}{{#enumVars}}
 | {{name}} | {{value}} |{{/enumVars}}{{/allowableValues}}
 {: class="table table-striped"}
-{{/isEnum}}{{/vars}}
+{{/isEnum}}{{#items.isEnum}}
+
+<a name="{{{items.datatypeWithEnum}}}"></a>
+
+## Enum: {{items.datatypeWithEnum}}
+
+| Name | Value |
+| ---- | ----- |{{#items.allowableValues}}{{#enumVars}}
+| {{name}} | {{value}} |{{/enumVars}}{{/items.allowableValues}}
+{: class="table table-striped"}
+{{/items.isEnum}}{{/vars}}
