@@ -1,0 +1,5 @@
+PACKAGE_NAME = platformclientv2
+ROOT_DIR = $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
+
+build:
+	cd ${ROOT_DIR}; go build -o ./bin/${PACKAGE_NAME} ./pkg/${PACKAGE_NAME}

@@ -4,22 +4,12 @@ const path = require('path');
 try {
 	var swaggerCodegenConfigFilePath = process.argv[2];
 	var version = require(path.resolve(process.argv[3]));
-	var artifactId = process.argv[4];
+	var packageName = process.argv[4];
 
-	// TODO: use correct properties here. These have been copied from the Java package and don't necessarially apply here
 	var config = {
-		artifactId: artifactId || 'platform-client',
-		artifactVersion: version.displayFull,
-		apiPackage: 'com.mypurecloud.sdk.v2.api',
-		modelPackage: 'com.mypurecloud.sdk.v2.model',
-		invokerPackage: 'com.mypurecloud.sdk.v2',
-		groupId: 'com.mypurecloud',
-		localVariablePrefix: 'pc',
-		serializableModel: 'true',
-		hideGenerationTimestamp: 'false',
-		httpUserAgent: 'PureCloud SDK',
-		packageDescription: 'A Java package to interface with the PureCloud Platform API',
-		packageUrl: 'https://developer.mypurecloud.com/api/rest/client-libraries/java/latest/'
+		packageName: packageName || 'platform-client',
+		packageVersion: version.displayFull,
+		httpUserAgent: 'PureCloud SDK'
 	};
 
 	fs.writeFileSync(swaggerCodegenConfigFilePath, JSON.stringify(config, null, 2));

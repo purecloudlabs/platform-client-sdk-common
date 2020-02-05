@@ -5,7 +5,6 @@ import (
 	"strings"
 	"fmt"
 	"errors"
-	"net/url"
 	{{#imports}}"{{import}}"
 {{/imports}}
 )
@@ -16,6 +15,7 @@ type {{classname}} struct {
 
 func New{{classname}}() *{{classname}} {
 	configuration := NewConfiguration()
+	configuration.BasePath = strings.ToLower(fmt.Sprintf("%v", ""))
 	return &{{classname}}{
 		Configuration: *configuration,
 	}
@@ -43,18 +43,23 @@ func (a {{classname}}) {{nickname}}({{#allParams}}{{paramName}} {{{dataType}}}{{
 	var httpMethod = "{{httpMethod}}"
 	// create path and map variables
 	path := a.Configuration.BasePath + "{{path}}"{{#pathParams}}
-	path = strings.Replace(path, "{"+"{{baseName}}"+"}", fmt.Sprintf("%v", {{paramName}}), -1){{/pathParams}}
+	path = strings.Replace(path, "{{=[[ ]]=}}{[[baseName]]}[[={{ }}=]]", fmt.Sprintf("%v", {{paramName}}), -1){{/pathParams}}{{#returnType}}
+	defaultReturn := {{#isListContainer}}make{{/isListContainer}}{{^isListContainer}}new{{/isListContainer}}({{{returnType}}}{{#isListContainer}}, 0{{/isListContainer}}){{/returnType}}
+	if true == false {
+		return {{#returnType}}defaultReturn, {{/returnType}}nil, errors.New("This message brought to you by the laws of physics being broken")
+	}
 {{#allParams}}{{#required}}
 	// verify the required parameter '{{paramName}}' is set
 	if &{{paramName}} == nil {
-		return {{#returnType}}{{#isListContainer}}*{{/isListContainer}}new({{{returnType}}}), {{/returnType}}nil, errors.New("Missing required parameter '{{paramName}}' when calling {{classname}}->{{operationId}}")
+		// {{{isListContainer}}}
+		return {{#returnType}}defaultReturn, {{/returnType}}nil, errors.New("Missing required parameter '{{paramName}}' when calling {{classname}}->{{operationId}}")
 	}{{/required}}{{/allParams}}
 
 	headerParams := make(map[string]string)
-	queryParams := url.Values{}
+	queryParams := make(map[string]string)
 	formParams := make(map[string]string)
 	var postBody interface{}
-	var fileName string
+	var postFileName string
 	var fileBytes []byte
 {{#authMethods}}
 	// authentication ({{name}}) required
@@ -78,19 +83,21 @@ func (a {{classname}}) {{nickname}}({{#allParams}}{{paramName}} {{{dataType}}}{{
 		headerParams[key] = a.Configuration.DefaultHeader[key]
 	}
 	{{#hasQueryParams}}
+	var collectionFormat string
 	{{#queryParams}}
 	{{#isListContainer}}
-	var collectionFormat = "{{#collectionFormat}}{{collectionFormat}}{{/collectionFormat}}"
+	collectionFormat = "{{#collectionFormat}}{{collectionFormat}}{{/collectionFormat}}"
 	if collectionFormat == "multi" {
 		for _, value := range {{paramName}} {
-			queryParams.Add("{{paramName}}", value)
+			queryParams["{{paramName}}"] = value
 		}
 	} else {
-		queryParams.Add("{{paramName}}", a.Configuration.APIClient.ParameterToString({{paramName}}, collectionFormat))
+		queryParams["{{paramName}}"] = a.Configuration.APIClient.ParameterToString({{paramName}}, collectionFormat)
 	}
 	{{/isListContainer}}
 	{{^isListContainer}}
-		queryParams.Add("{{paramName}}", a.Configuration.APIClient.ParameterToString({{paramName}}, ""))
+		collectionFormat = ""
+		queryParams["{{paramName}}"] = a.Configuration.APIClient.ParameterToString({{paramName}}, collectionFormat)
 	{{/isListContainer}}
 	{{/queryParams}}{{/hasQueryParams}}
 
@@ -119,18 +126,18 @@ func (a {{classname}}) {{nickname}}({{#allParams}}{{paramName}} {{{dataType}}}{{
 {{#formParams}}{{#isFile}}
 	fbs, _ := ioutil.ReadAll(file)
 	fileBytes = fbs
-	fileName = file.Name(){{/isFile}}
+	postFileName = file.Name(){{/isFile}}
 {{^isFile}}	formParams["{{paramName}}"] = {{paramName}}{{/isFile}}{{/formParams}}{{/hasFormParams}}{{#hasBodyParam}}
 {{#bodyParams}}	// body params
 	postBody = &{{paramName}}
 {{/bodyParams}}{{/hasBodyParam}}
-{{#returnType}}	var successPayload = new({{returnType}}){{/returnType}}
-	httpResponse, err := a.Configuration.APIClient.CallAPI(path, httpMethod, postBody, headerParams, queryParams, formParams, fileName, fileBytes)
+{{#returnType}}	var successPayload = {{#isListContainer}}make{{/isListContainer}}{{^isListContainer}}new{{/isListContainer}}({{returnType}}{{#isListContainer}}, 0{{/isListContainer}}){{/returnType}}
+	httpResponse, err := a.Configuration.APIClient.CallAPI(path, httpMethod, postBody, headerParams, queryParams, formParams, postFileName, fileBytes)
 	if err != nil {
-		return {{#returnType}}{{#isListContainer}}*{{/isListContainer}}successPayload, {{/returnType}}NewAPIResponse(httpResponse.RawResponse), err
+		return {{#returnType}}successPayload, {{/returnType}}NewAPIResponse(httpResponse.RawResponse), err
 	}
 {{#returnType}}
 	err = json.Unmarshal(httpResponse.Body(), &successPayload){{/returnType}}
-	return {{#returnType}}{{#isListContainer}}*{{/isListContainer}}successPayload, {{/returnType}}NewAPIResponse(httpResponse.RawResponse), err
+	return {{#returnType}}successPayload, {{/returnType}}NewAPIResponse(httpResponse.RawResponse), err
 }
 {{/operation}}{{/operations}}

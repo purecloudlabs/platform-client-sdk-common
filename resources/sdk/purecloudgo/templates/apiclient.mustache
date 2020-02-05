@@ -6,9 +6,11 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
-	"net/url"
+
 	"github.com/go-resty/resty"
 )
+
+var client = resty.New()
 
 type APIClient struct {
 }
@@ -47,14 +49,14 @@ func contains(source []string, containvalue string) bool {
 func (c *APIClient) CallAPI(path string, method string,
 	postBody interface{},
 	headerParams map[string]string,
-	queryParams url.Values,
+	queryParams map[string]string,
 	formParams map[string]string,
 	fileName string,
 	fileBytes []byte) (*resty.Response, error) {
 
 	//set debug flag
 	configuration := NewConfiguration()
-	resty.SetDebug(configuration.GetDebug())
+	client.SetDebug(configuration.GetDebug())
 
 	request := prepareRequest(postBody, headerParams, queryParams, formParams, fileName, fileBytes)
 
@@ -79,16 +81,16 @@ func (c *APIClient) CallAPI(path string, method string,
 	return nil, fmt.Errorf("invalid method %v", method)
 }
 
-func (c *APIClient) ParameterToString(obj interface{},collectionFormat string) string {
+func (c *APIClient) ParameterToString(obj interface{}, collectionFormat string) string {
 	if reflect.TypeOf(obj).String() == "[]string" {
-		switch	collectionFormat {
+		switch collectionFormat {
 		case "pipes":
 			return strings.Join(obj.([]string), "|")
 		case "ssv":
 			return strings.Join(obj.([]string), " ")
 		case "tsv":
-			return strings.Join(obj.([]string), "\t")	
-		case "csv" :
+			return strings.Join(obj.([]string), "\t")
+		case "csv":
 			return strings.Join(obj.([]string), ",")
 		}
 	}
@@ -98,12 +100,12 @@ func (c *APIClient) ParameterToString(obj interface{},collectionFormat string) s
 
 func prepareRequest(postBody interface{},
 	headerParams map[string]string,
-	queryParams url.Values,
+	queryParams map[string]string,
 	formParams map[string]string,
 	fileName string,
 	fileBytes []byte) *resty.Request {
 
-	request := resty.R()
+	request := client.R()
 	request.SetBody(postBody)
 
 	// add header parameter, if any
@@ -113,7 +115,7 @@ func prepareRequest(postBody interface{},
 
 	// add query parameter, if any
 	if len(queryParams) > 0 {
-		request.SetMultiValueQueryParams(queryParams)
+		request.SetQueryParams(queryParams)
 	}
 
 	// add form parameter, if any

@@ -9,7 +9,7 @@
     },
     "versionFile": "${SDK_REPO}/version.json",
     "logLevel": "debug",
-    "extensionsDestination": "${SDK_REPO}/build",
+    "extensionsDestination": "${SDK_REPO}/",
     "swagger": {
       "oldSwaggerPath": "${SDK_REPO}/swagger.json",
       "newSwaggerPath": "https://api.mypurecloud.com/api/v2/docs/swagger",
@@ -44,7 +44,7 @@
             {
               "$ref": "#/settings/versionFile"
             },
-            "platform-client-v2"
+            "platformclientv2"
           ],
           "failOnError": true
         }
@@ -52,24 +52,30 @@
     },
     "build": {
       "preRunScripts": [],
-      "compileScripts": [
-        {
-          "type": "shell",
-          "path": "compile.sh",
-          "args": [
-            "${SDK_REPO}/build"
-          ],
-	        "appendIsNewReleaseArg": true,
-	        "failOnError": true
-        }
-      ],
+      "compileScripts": [],
       "postRunScripts": []
     },
     "postbuild": {
       "gitCommit": false,
       "publishRelease": false,
       "preRunScripts": [],
-      "postRunScripts": []
+      "postRunScripts": [
+        {
+          "type": "node",
+          "path": "postbuild-postrun.js",
+          "args": [
+            "${SDK_REPO}"
+          ],
+          "failOnError": true
+        },
+        {
+          "type": "command",
+          "command": "make",
+      		"cwd": "${SDK_REPO}",
+      		"args":[ "build" ],
+          "failOnError": true
+        }
+      ]
     }
   }
 }
