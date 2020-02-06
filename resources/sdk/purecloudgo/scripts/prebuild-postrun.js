@@ -7,6 +7,7 @@ try {
 	var packageName = process.argv[4];
 
 	var config = {
+		basePath: 'https://api.mypurecloud.com',
 		packageName: packageName || 'platform-client',
 		packageVersion: version.displayFull,
 		httpUserAgent: 'PureCloud SDK'

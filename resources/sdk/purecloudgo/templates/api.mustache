@@ -14,19 +14,17 @@ type {{classname}} struct {
 }
 
 func New{{classname}}() *{{classname}} {
-	configuration := NewConfiguration()
-	configuration.BasePath = strings.ToLower(fmt.Sprintf("%v", ""))
+	config := GetDefaultConfiguration()
+	fmt.Printf("Creating {{classname}} with base path: %s\n", strings.ToLower(config.BasePath))
 	return &{{classname}}{
-		Configuration: *configuration,
+		Configuration: *config,
 	}
 }
 
-func New{{classname}}WithBasePath(basePath string) *{{classname}} {
-	configuration := NewConfiguration()
-	configuration.BasePath = basePath
-
+func New{{classname}}WithConfig(config *Configuration) *{{classname}} {
+	fmt.Printf("Creating {{classname}} with base path: %s\n", strings.ToLower(config.BasePath))
 	return &{{classname}}{
-		Configuration: *configuration,
+		Configuration: *config,
 	}
 }
 {{#operation}}
@@ -131,13 +129,13 @@ func (a {{classname}}) {{nickname}}({{#allParams}}{{paramName}} {{{dataType}}}{{
 {{#bodyParams}}	// body params
 	postBody = &{{paramName}}
 {{/bodyParams}}{{/hasBodyParam}}
-{{#returnType}}	var successPayload = {{#isListContainer}}make{{/isListContainer}}{{^isListContainer}}new{{/isListContainer}}({{returnType}}{{#isListContainer}}, 0{{/isListContainer}}){{/returnType}}
-	httpResponse, err := a.Configuration.APIClient.CallAPI(path, httpMethod, postBody, headerParams, queryParams, formParams, postFileName, fileBytes)
-	if err != nil {
-		return {{#returnType}}successPayload, {{/returnType}}NewAPIResponse(httpResponse.RawResponse), err
-	}
-{{#returnType}}
-	err = json.Unmarshal(httpResponse.Body(), &successPayload){{/returnType}}
-	return {{#returnType}}successPayload, {{/returnType}}NewAPIResponse(httpResponse.RawResponse), err
+{{#returnType}}	var successPayload {{^isListContainer}}*{{/isListContainer}}{{{returnType}}}{{/returnType}}
+	response, err := a.Configuration.APIClient.CallAPI(path, httpMethod, postBody, headerParams, queryParams, formParams, postFileName, fileBytes)
+	if err == nil && response.Error != nil {
+		err = errors.New(response.ErrorMessage)
+	}{{#returnType}} else {
+		err = json.Unmarshal([]byte(response.RawBody), &successPayload)
+	}{{/returnType}}
+	return {{#returnType}}successPayload, {{/returnType}}response, err
 }
 {{/operation}}{{/operations}}

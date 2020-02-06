@@ -16,7 +16,6 @@ type APIClient struct {
 }
 
 func (c *APIClient) SelectHeaderContentType(contentTypes []string) string {
-
 	if len(contentTypes) == 0 {
 		return ""
 	}
@@ -27,7 +26,6 @@ func (c *APIClient) SelectHeaderContentType(contentTypes []string) string {
 }
 
 func (c *APIClient) SelectHeaderAccept(accepts []string) string {
-
 	if len(accepts) == 0 {
 		return ""
 	}
@@ -52,33 +50,36 @@ func (c *APIClient) CallAPI(path string, method string,
 	queryParams map[string]string,
 	formParams map[string]string,
 	fileName string,
-	fileBytes []byte) (*resty.Response, error) {
+	fileBytes []byte) (*APIResponse, error) {
 
 	//set debug flag
 	configuration := NewConfiguration()
 	client.SetDebug(configuration.GetDebug())
 
 	request := prepareRequest(postBody, headerParams, queryParams, formParams, fileName, fileBytes)
+	var response *resty.Response
+	var err error
 
+	fmt.Printf(">>> %s %s\n", strings.ToUpper(method), path)
 	switch strings.ToUpper(method) {
 	case "GET":
-		response, err := request.Get(path)
-		return response, err
+		response, err = request.Get(path)
 	case "POST":
-		response, err := request.Post(path)
-		return response, err
+		response, err = request.Post(path)
 	case "PUT":
-		response, err := request.Put(path)
-		return response, err
+		response, err = request.Put(path)
 	case "PATCH":
-		response, err := request.Patch(path)
-		return response, err
+		response, err = request.Patch(path)
 	case "DELETE":
-		response, err := request.Delete(path)
-		return response, err
+		response, err = request.Delete(path)
+	default:
+		return nil, fmt.Errorf("invalid method %v", method)
 	}
 
-	return nil, fmt.Errorf("invalid method %v", method)
+	if err != nil {
+		return nil, err
+	}
+	return NewAPIResponse(response)
 }
 
 func (c *APIClient) ParameterToString(obj interface{}, collectionFormat string) string {
