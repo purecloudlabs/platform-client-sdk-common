@@ -2,6 +2,7 @@ package {{packageName}}
 
 import (
 	"encoding/base64"
+	"sync"
 )
 
 type Configuration struct {
@@ -20,6 +21,16 @@ type Configuration struct {
 	DefaultHeader map[string]string `json:"defaultHeader,omitempty"`
 	UserAgent     string            `json:"userAgent,omitempty"`
 	APIClient     APIClient         `json:"APIClient,omitempty"`
+}
+
+var once sync.Once
+var instance *Configuration
+
+func GetDefaultConfiguration() *Configuration {
+	once.Do(func() {
+		instance = NewConfiguration()
+	})
+	return instance
 }
 
 func NewConfiguration() *Configuration {
