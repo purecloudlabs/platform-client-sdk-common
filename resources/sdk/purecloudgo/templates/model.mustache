@@ -1,14 +1,20 @@
 package {{packageName}}
-{{#models}}{{#imports}}
-import ({{/imports}}{{#imports}}
-	"{{import}}"{{/imports}}{{#imports}}
+{{#models}}
+import ({{#imports}}
+	"{{import}}"{{/imports}}
+	"encoding/json"
 )
-{{/imports}}{{#model}}{{#description}}
+{{#model}}{{#description}}
 // {{{description}}}{{/description}}
 type {{classname}} struct {
 {{#vars}}{{#description}}
 	// {{{description}}}{{/description}}
 	{{name}} {{{datatype}}} `json:"{{baseName}},omitempty"`
 {{/vars}}
+}
+
+func (o *{{classname}}) String() string {
+	j, _ := json.Marshal(o)
+	return string(j)
 }
 {{/model}}{{/models}}

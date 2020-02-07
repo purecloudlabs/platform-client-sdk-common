@@ -2,6 +2,9 @@ package {{packageName}}
 
 import (
 	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"regexp"
 	"sync"
 )
 
@@ -23,9 +26,22 @@ type Configuration struct {
 	APIClient     APIClient         `json:"APIClient,omitempty"`
 }
 
+type AuthResponse struct {
+	AccessToken string `json:"access_token,omitempty"`
+	TokenType   string `json:"token_type,omitempty"`
+	ExpiresIn   int    `json:"expires_in,omitempty"`
+}
+
+type AuthErrorResponse struct {
+	Error            string `json:"error,omitempty"`
+	Description      string `json:"description,omitempty"`
+	ErrorDescription string `json:"error_description,omitempty"`
+}
+
 var once sync.Once
 var instance *Configuration
 
+// GetDefaultConfiguration returns the shared default configuration instance
 func GetDefaultConfiguration() *Configuration {
 	once.Do(func() {
 		instance = NewConfiguration()
@@ -33,6 +49,7 @@ func GetDefaultConfiguration() *Configuration {
 	return instance
 }
 
+// NewConfiguration returns a new Configuration instance
 func NewConfiguration() *Configuration {
 	return &Configuration{
 		BasePath:      "{{basePath}}",
@@ -43,6 +60,45 @@ func NewConfiguration() *Configuration {
 		APIKeyPrefix:  make(map[string]string),
 		UserAgent:     "{{#httpUserAgent}}{{{.}}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen/{{{packageVersion}}}/go{{/httpUserAgent}}",
 	}
+}
+
+// AuthorizeClientCredentials authorizes this Configuration instance using client credentials
+func (c *Configuration) AuthorizeClientCredentials(clientID string, clientSecret string) error {
+	authHostRegex := regexp.MustCompile(`(?i)\/\/api\.`)
+	authHost := authHostRegex.ReplaceAllString(c.BasePath, "//login.")
+	fmt.Printf("authUrl=%s\n", authHost)
+	headerParams := make(map[string]string)
+	headerParams["Authorization"] = "Basic " + base64.StdEncoding.EncodeToString([]byte(clientID+":"+clientSecret))
+	formParams := make(map[string]string)
+	formParams["grant_type"] = "client_credentials"
+	response, err := c.APIClient.CallAPI(authHost+"/oauth/token", "POST", nil, headerParams, nil, formParams, "", nil)
+	fmt.Println("==== AUTH RESPONSE ===")
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	fmt.Println(response)
+
+	if response.StatusCode != 200 {
+		var authErrorResponse *AuthErrorResponse
+		err = json.Unmarshal([]byte(response.RawBody), &authErrorResponse)
+		if err != nil {
+			return err
+		}
+		return fmt.Errorf("Auth Error: %v (%v - %v)", authErrorResponse.Description, authErrorResponse.Error, authErrorResponse.ErrorDescription)
+	}
+
+	var authResponse *AuthResponse
+	err = json.Unmarshal([]byte(response.RawBody), &authResponse)
+	if err != nil {
+		return err
+	}
+	c.AccessToken = authResponse.AccessToken
+	if c.AccessToken == "" {
+		return fmt.Errorf("Auth Error: No access token found")
+	}
+	fmt.Printf("Token exipres in %v seconds\n", authResponse.ExpiresIn)
+	return nil
 }
 
 func (c *Configuration) GetBasicAuthEncodedString() string {
