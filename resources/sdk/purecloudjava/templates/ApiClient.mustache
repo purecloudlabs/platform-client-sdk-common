@@ -561,9 +561,7 @@ public class ApiClient implements AutoCloseable {
         ApiClientConnectorResponse connectorResponse = null;
         try {
             connectorResponse = connector.invoke(connectorRequest);
-            if (connectorResponse.getStatusCode() >= 300) {
-              connectorResponse = retryInvoke(connectorRequest, connectorResponse);
-            }
+            connectorResponse = retryOnFailure(connectorRequest, connectorResponse);
             return interpretConnectorResponse(connectorResponse, returnType);
         }
         finally {
@@ -588,9 +586,7 @@ public class ApiClient implements AutoCloseable {
                     try {
                         ApiResponse<T> response;
                         try {
-                            if (connectorResponse.getStatusCode() >= 300) {
-                            connectorResponse = retryInvoke(connectorRequest, connectorResponse);
-                            }
+                            connectorResponse = retryOnFailure(connectorRequest, connectorResponse);
                             response = interpretConnectorResponse(connectorResponse, returnType);
                         }
                         finally {
@@ -613,6 +609,13 @@ public class ApiClient implements AutoCloseable {
             notifyFailure(future, callback, exception);
         }
         return future;
+    }
+
+    private ApiClientConnectorResponse retryOnFailure(ApiClientConnectorRequest connectorRequest, ApiClientConnectorResponse connectorResponse) {
+        if (connectorResponse.getStatusCode() >= 300) {
+            connectorResponse = retryInvoke(connectorRequest, connectorResponse);
+        }
+        return connectorResponse;
     }
 
     private <T> void notifySuccess(SettableFuture<T> future, AsyncApiCallback<T> callback, T result) {
@@ -982,7 +985,7 @@ public class ApiClient implements AutoCloseable {
         public void close() throws Exception { }
     }
 
-    public ApiClientConnectorResponse retryInvoke(ApiClientConnectorRequest connectorRequest, ApiClientConnectorResponse connectorResponse) {
+    private ApiClientConnectorResponse retryInvoke(ApiClientConnectorRequest connectorRequest, ApiClientConnectorResponse connectorResponse) {
         int retries = 0;
         long waitTime = 1000L;
         boolean retry = false;
