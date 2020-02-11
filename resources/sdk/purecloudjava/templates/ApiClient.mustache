@@ -1021,7 +1021,7 @@ public class ApiClient implements AutoCloseable {
         return connectorResponse;
     }
 
-    public long getWaitTimeExp(int retryCount) {
+    private long getWaitTimeExp(int retryCount) {
         long waitTime = ((long) Math.pow(2, retryCount) * 1000L);
         return waitTime;
     }
