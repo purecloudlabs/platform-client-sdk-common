@@ -561,6 +561,9 @@ public class ApiClient implements AutoCloseable {
         ApiClientConnectorResponse connectorResponse = null;
         try {
             connectorResponse = connector.invoke(connectorRequest);
+            if (connectorResponse.getStatusCode() >= 300) {
+              connectorResponse = retryInvoke(connectorRequest, connectorResponse);
+            }
             return interpretConnectorResponse(connectorResponse, returnType);
         }
         finally {
@@ -974,5 +977,49 @@ public class ApiClient implements AutoCloseable {
 
         @Override
         public void close() throws Exception { }
+    }
+
+    public ApiClientConnectorResponse retryInvoke(ApiClientConnectorRequest connectorRequest, ApiClientConnectorResponse connectorResponse) {
+        int retries = 0;
+        long waitTime = 1000L;
+        boolean retry = false;
+        int statusCode;
+        int MAX_RETRIES = 0;
+        long MAX_WAIT_INTERVAL = 32000;
+
+        try {
+            final int retry_count = properties.getProperty(ApiClientConnectorProperty.MAX_RETRIES, Integer.class, 0);
+            if (retry_count > 0) {
+                MAX_RETRIES = retry_count;
+            }
+
+            do {
+                connectorResponse = connector.invoke(connectorRequest);
+                statusCode = connectorResponse.getStatusCode();
+
+                if (statusCode >= 300) {
+                    if (connectorResponse.getHeaders().containsKey("Retry-After")) {
+                        waitTime = Integer.parseInt(connectorResponse.getHeaders().get("Retry-After"));
+                    }
+
+                    if (statusCode == 429) {
+                        retry = true;
+                        Thread.sleep(waitTime * 100L);
+
+                    } else {
+                        Thread.sleep(Math.min(getWaitTimeExp(retries), MAX_WAIT_INTERVAL));
+                        retry = true;
+                    }
+                }
+            } while (retry && (retries++ < MAX_RETRIES));
+        } catch (Exception exception) {
+            return connectorResponse;
+        }
+        return connectorResponse;
+    }
+
+    public static long getWaitTimeExp(int retryCount) {
+        long waitTime = ((long) Math.pow(2, retryCount) * 1000L);
+        return waitTime;
     }
 }
