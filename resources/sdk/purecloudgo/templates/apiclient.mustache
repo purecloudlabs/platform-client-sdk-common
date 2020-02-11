@@ -13,6 +13,7 @@ import (
 var client = resty.New()
 
 type APIClient struct {
+	configuration *Configuration
 }
 
 func (c *APIClient) SelectHeaderContentType(contentTypes []string) string {
@@ -52,24 +53,23 @@ func (c *APIClient) CallAPI(path string, method string,
 	fileName string,
 	fileBytes []byte) (*APIResponse, error) {
 
-	//set debug flag
-	configuration := NewConfiguration()
-	client.SetDebug(configuration.GetDebug())
+	// Set debug flag
+	client.SetDebug(c.configuration.GetDebug())
 
 	request := client.R()
 	request.SetBody(postBody)
 
-	// add header parameter, if any
+	// Add header parameter, if any
 	if len(headerParams) > 0 {
 		request.SetHeaders(headerParams)
 	}
 
-	// add query parameter, if any
+	// Add query parameter, if any
 	if len(queryParams) > 0 {
 		request.SetQueryParams(queryParams)
 	}
 
-	// add form parameter, if any
+	// Add form parameter, if any
 	if len(formParams) > 0 {
 		request.SetFormData(formParams)
 	}
@@ -82,7 +82,7 @@ func (c *APIClient) CallAPI(path string, method string,
 	var response *resty.Response
 	var err error
 
-	fmt.Printf(">>> %s %s\n", strings.ToUpper(method), path)
+	c.configuration.Debugf(">>> %s %s\n", strings.ToUpper(method), path)
 	switch strings.ToUpper(method) {
 	case "GET":
 		response, err = request.Get(path)
@@ -101,6 +101,8 @@ func (c *APIClient) CallAPI(path string, method string,
 	if err != nil {
 		return nil, err
 	}
+	c.configuration.Debugf("<<< %v\n", response.Status())
+
 	return NewAPIResponse(response)
 }
 

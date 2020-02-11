@@ -51,7 +51,7 @@ func GetDefaultConfiguration() *Configuration {
 
 // NewConfiguration returns a new Configuration instance
 func NewConfiguration() *Configuration {
-	return &Configuration{
+	c := &Configuration{
 		BasePath:      "{{basePath}}",
 		UserName:      "",
 		debug:         false,
@@ -60,24 +60,23 @@ func NewConfiguration() *Configuration {
 		APIKeyPrefix:  make(map[string]string),
 		UserAgent:     "{{#httpUserAgent}}{{{.}}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen/{{{packageVersion}}}/go{{/httpUserAgent}}",
 	}
+	c.APIClient = APIClient{configuration: c}
+	return c
 }
 
 // AuthorizeClientCredentials authorizes this Configuration instance using client credentials
 func (c *Configuration) AuthorizeClientCredentials(clientID string, clientSecret string) error {
 	authHostRegex := regexp.MustCompile(`(?i)\/\/api\.`)
 	authHost := authHostRegex.ReplaceAllString(c.BasePath, "//login.")
-	fmt.Printf("authUrl=%s\n", authHost)
 	headerParams := make(map[string]string)
 	headerParams["Authorization"] = "Basic " + base64.StdEncoding.EncodeToString([]byte(clientID+":"+clientSecret))
 	formParams := make(map[string]string)
 	formParams["grant_type"] = "client_credentials"
 	response, err := c.APIClient.CallAPI(authHost+"/oauth/token", "POST", nil, headerParams, nil, formParams, "", nil)
-	fmt.Println("==== AUTH RESPONSE ===")
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
-	fmt.Println(response)
 
 	if response.StatusCode != 200 {
 		var authErrorResponse *AuthErrorResponse
@@ -97,7 +96,7 @@ func (c *Configuration) AuthorizeClientCredentials(clientID string, clientSecret
 	if c.AccessToken == "" {
 		return fmt.Errorf("Auth Error: No access token found")
 	}
-	fmt.Printf("Token exipres in %v seconds\n", authResponse.ExpiresIn)
+	c.Debugf("Token exipres in %v seconds\n", authResponse.ExpiresIn)
 	return nil
 }
 
@@ -123,4 +122,18 @@ func (c *Configuration) SetDebug(enable bool) {
 
 func (c *Configuration) GetDebug() bool {
 	return c.debug
+}
+
+func (c *Configuration) Debug(msg interface{}) {
+	if !c.debug {
+		return
+	}
+	fmt.Println(msg)
+}
+
+func (c *Configuration) Debugf(msg string, params ...interface{}) {
+	if !c.debug {
+		return
+	}
+	fmt.Printf(msg, params...)
 }

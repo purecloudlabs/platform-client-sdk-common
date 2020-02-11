@@ -15,14 +15,14 @@ type {{classname}} struct {
 
 func New{{classname}}() *{{classname}} {
 	config := GetDefaultConfiguration()
-	fmt.Printf("Creating {{classname}} with base path: %s\n", strings.ToLower(config.BasePath))
+	config.Debug(fmt.Sprintf("Creating {{classname}} with base path: %s", strings.ToLower(config.BasePath)))
 	return &{{classname}}{
 		Configuration: *config,
 	}
 }
 
 func New{{classname}}WithConfig(config *Configuration) *{{classname}} {
-	fmt.Printf("Creating {{classname}} with base path: %s\n", strings.ToLower(config.BasePath))
+	config.Debugf("Creating {{classname}} with base path: %s\n", strings.ToLower(config.BasePath))
 	return &{{classname}}{
 		Configuration: *config,
 	}
