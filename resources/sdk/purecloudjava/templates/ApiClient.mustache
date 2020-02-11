@@ -588,6 +588,9 @@ public class ApiClient implements AutoCloseable {
                     try {
                         ApiResponse<T> response;
                         try {
+                            if (connectorResponse.getStatusCode() >= 300) {
+                            connectorResponse = retryInvoke(connectorRequest, connectorResponse);
+                            }
                             response = interpretConnectorResponse(connectorResponse, returnType);
                         }
                         finally {
@@ -1011,14 +1014,14 @@ public class ApiClient implements AutoCloseable {
                         retry = true;
                     }
                 }
-            } while (retry && (retries++ < MAX_RETRIES));
+            } while (retry && statusCode >= 300 && (retries++ < MAX_RETRIES));
         } catch (Exception exception) {
             return connectorResponse;
         }
         return connectorResponse;
     }
 
-    public static long getWaitTimeExp(int retryCount) {
+    public long getWaitTimeExp(int retryCount) {
         long waitTime = ((long) Math.pow(2, retryCount) * 1000L);
         return waitTime;
     }
