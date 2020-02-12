@@ -987,37 +987,35 @@ public class ApiClient implements AutoCloseable {
 
     private ApiClientConnectorResponse retryInvoke(ApiClientConnectorRequest connectorRequest, ApiClientConnectorResponse connectorResponse) {
         int retries = 0;
-        long waitTime = 1000L;
-        boolean retry = false;
+        long waitTimeInSec = 1L;
+        boolean retry;
         int statusCode;
         int MAX_RETRIES = 0;
-        long MAX_WAIT_INTERVAL = 32000;
+        long MAX_WAIT_INTERVAL_IN_SEC = 32L;
 
         try {
             final int retry_count = properties.getProperty(ApiClientConnectorProperty.MAX_RETRIES, Integer.class, 0);
             if (retry_count > 0) {
                 MAX_RETRIES = retry_count;
+            } else {
+                return connectorResponse;
             }
 
             do {
                 connectorResponse = connector.invoke(connectorRequest);
                 statusCode = connectorResponse.getStatusCode();
-
-                if (statusCode >= 300) {
-                    if (connectorResponse.getHeaders().containsKey("Retry-After")) {
-                        waitTime = Integer.parseInt(connectorResponse.getHeaders().get("Retry-After"));
-                    }
-
+                retry = statusCode >= 300;
+                if (retry) {
                     if (statusCode == 429) {
-                        retry = true;
-                        Thread.sleep(waitTime * 100L);
-
+                        if (connectorResponse.getHeaders().containsKey("Retry-After")) {
+                            waitTimeInSec = Integer.parseInt(connectorResponse.getHeaders().get("Retry-After"));
+                        }
                     } else {
-                        Thread.sleep(Math.min(getWaitTimeExp(retries), MAX_WAIT_INTERVAL));
-                        retry = true;
+                        waitTimeInSec = Math.min(getWaitTimeExp(retries), MAX_WAIT_INTERVAL_IN_SEC);
                     }
+                    Thread.sleep(waitTimeInSec * 1000L);
                 }
-            } while (retry && statusCode >= 300 && (retries++ < MAX_RETRIES));
+            } while (retry && (retries++ < MAX_RETRIES));
         } catch (Exception exception) {
             return connectorResponse;
         }
@@ -1025,7 +1023,6 @@ public class ApiClient implements AutoCloseable {
     }
 
     private long getWaitTimeExp(int retryCount) {
-        long waitTime = ((long) Math.pow(2, retryCount) * 1000L);
-        return waitTime;
+        return (long) Math.pow(2, retryCount);
     }
 }
