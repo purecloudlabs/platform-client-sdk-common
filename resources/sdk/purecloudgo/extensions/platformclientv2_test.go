@@ -3,22 +3,28 @@ package platformclientv2
 import (
 	"encoding/json"
 	"fmt"
-	"local/platformclientv2"
 	"os"
 	"testing"
 
 	"github.com/google/uuid"
 )
 
-type sdkConfig struct {
-	environment  string
-	clientID     string
-	clientSecret string
-	userEmail    string
-	usersAPI     *platformclientv2.UsersApi
+type testConfig struct {
+	environment         string
+	clientID            string
+	clientSecret        string
+	debug               bool
+	userEmail           string
+	usersAPI            *UsersApi
+	userID              string
+	userName            string
+	userDepartment      string
+	userProfileSkill    string
+	busyPresenceID      string
+	availablePresenceID string
 }
 
-type testStruct struct {
+type testSerializationStruct struct {
 	IntProp          int32     `json:"int,omitempty"`
 	IntPropArr       []int32   `json:"intArr,omitempty"`
 	IntPropPtr       *int32    `json:"intPtr,omitempty"`
@@ -33,18 +39,20 @@ type testStruct struct {
 	BoolPropArrPtr   *[]bool   `json:"boolArrPtr,omitempty"`
 }
 
-var debug = false
-var config sdkConfig
-var userID string
-var userName = "GO SDK Tester"
-var userDepartment = "Ministry of Testing"
-var userProfileSkill = "Testmaster"
-var busyPresenceID = "31fe3bac-dea6-44b7-bed7-47f91660a1a0"
-var availablePresenceID = "6a3af858-942f-489d-9700-5f9bcdcdae9b"
+var config testConfig
 
 func TestEnvVars(t *testing.T) {
 	// Get
-	config = sdkConfig{environment: "https://api." + os.Getenv("PURECLOUD_ENVIRONMENT"), clientID: os.Getenv("PURECLOUD_CLIENT_ID"), clientSecret: os.Getenv("PURECLOUD_CLIENT_SECRET")}
+	config = testConfig{
+		environment:         "https://api." + os.Getenv("PURECLOUD_ENVIRONMENT"),
+		clientID:            os.Getenv("PURECLOUD_CLIENT_ID"),
+		clientSecret:        os.Getenv("PURECLOUD_CLIENT_SECRET"),
+		userName:            "GO SDK Tester",
+		userDepartment:      "Ministry of Testing",
+		userProfileSkill:    "Testmaster",
+		busyPresenceID:      "31fe3bac-dea6-44b7-bed7-47f91660a1a0",
+		availablePresenceID: "6a3af858-942f-489d-9700-5f9bcdcdae9b",
+	}
 	config.userEmail = fmt.Sprintf("%v@%v", uuid.New().String(), config.environment[12:])
 
 	// Check
@@ -62,9 +70,9 @@ func TestEnvVars(t *testing.T) {
 	}
 
 	// Setup
-	platformclientv2.GetDefaultConfiguration().BasePath = config.environment
-	platformclientv2.GetDefaultConfiguration().SetDebug(debug)
-	config.usersAPI = platformclientv2.NewUsersApi()
+	GetDefaultConfiguration().BasePath = config.environment
+	GetDefaultConfiguration().SetDebug(config.debug)
+	config.usersAPI = NewUsersApi()
 
 	// Log
 	t.Logf("Enviornment: %v", config.environment)
@@ -77,24 +85,24 @@ func TestDefaultValueSerialization(t *testing.T) {
 	intPropArrPtr := make([]int32, 0)
 	stringPropArrPtr := make([]string, 0)
 	boolPropArrPtr := make([]bool, 0)
-	v := testStruct{
+	v := testSerializationStruct{
 		IntProp:          0,
 		IntPropArr:       make([]int32, 0),
-		IntPropPtr:       platformclientv2.Int32(0),
+		IntPropPtr:       Int32(0),
 		IntPropArrPtr:    &intPropArrPtr,
 		StringProp:       "",
 		StringPropArr:    make([]string, 0),
-		StringPropPtr:    platformclientv2.String(""),
+		StringPropPtr:    String(""),
 		StringPropArrPtr: &stringPropArrPtr,
 		BoolProp:         false,
 		BoolPropArr:      make([]bool, 0),
-		BoolPropPtr:      platformclientv2.Bool(false),
+		BoolPropPtr:      Bool(false),
 		BoolPropArrPtr:   &boolPropArrPtr,
 	}
 	j, _ := json.Marshal(v)
 	s := string(j)
 	if s != expected {
-		t.Log("testStruct did not serialize correctly")
+		t.Log("testSerializationStruct did not serialize correctly")
 		t.Logf("Expected: %v", expected)
 		t.Logf("Actual:   %v", s)
 		t.FailNow()
@@ -106,24 +114,24 @@ func TestValueSerialization(t *testing.T) {
 	intPropArrPtr := make([]int32, 2)
 	stringPropArrPtr := make([]string, 2)
 	boolPropArrPtr := make([]bool, 2)
-	v := testStruct{
+	v := testSerializationStruct{
 		IntProp:          10,
 		IntPropArr:       make([]int32, 2),
-		IntPropPtr:       platformclientv2.Int32(10),
+		IntPropPtr:       Int32(10),
 		IntPropArrPtr:    &intPropArrPtr,
 		StringProp:       "asdf",
 		StringPropArr:    make([]string, 2),
-		StringPropPtr:    platformclientv2.String("asdf"),
+		StringPropPtr:    String("asdf"),
 		StringPropArrPtr: &stringPropArrPtr,
 		BoolProp:         true,
 		BoolPropArr:      make([]bool, 2),
-		BoolPropPtr:      platformclientv2.Bool(true),
+		BoolPropPtr:      Bool(true),
 		BoolPropArrPtr:   &boolPropArrPtr,
 	}
 	j, _ := json.Marshal(v)
 	s := string(j)
 	if s != expected {
-		t.Log("testStruct did not serialize correctly")
+		t.Log("testSerializationStruct did not serialize correctly")
 		t.Logf("Expected: %v", expected)
 		t.Logf("Actual:   %v", s)
 		t.FailNow()
@@ -131,7 +139,7 @@ func TestValueSerialization(t *testing.T) {
 }
 
 func TestAuthentication(t *testing.T) {
-	err := platformclientv2.GetDefaultConfiguration().AuthorizeClientCredentials(config.clientID, config.clientSecret)
+	err := GetDefaultConfiguration().AuthorizeClientCredentials(config.clientID, config.clientSecret)
 	if err != nil {
 		t.Error(err)
 	}
@@ -140,7 +148,7 @@ func TestAuthentication(t *testing.T) {
 func TestCreateUser(t *testing.T) {
 	// Create user
 	password := uuid.New().String() + "!@#$1234asdfASDF"
-	newUser := platformclientv2.Createuser{Name: &userName, Email: &config.userEmail, Password: &password}
+	newUser := Createuser{Name: &config.userName, Email: &config.userEmail, Password: &password}
 
 	user, response, err := config.usersAPI.PostUsers(newUser)
 	if err != nil {
@@ -149,7 +157,7 @@ func TestCreateUser(t *testing.T) {
 		t.Error(response.Error)
 	} else {
 		// Validate response
-		if *user.Name != userName {
+		if *user.Name != config.userName {
 			t.Error("Data mismatch: user.Name")
 		}
 		if *user.Email != config.userEmail {
@@ -157,29 +165,29 @@ func TestCreateUser(t *testing.T) {
 		}
 
 		// Store user ID
-		userID = *user.Id
+		config.userID = *user.Id
 		t.Logf("New user's ID: %v", *user.Id)
 	}
 }
 
 func TestUpdateUser(t *testing.T) {
 	// Update user
-	updateUser := platformclientv2.Updateuser{Department: &userDepartment, Version: platformclientv2.Int32(1)}
+	updateUser := Updateuser{Department: &config.userDepartment, Version: Int32(1)}
 
-	user, response, err := config.usersAPI.PatchUser(userID, updateUser)
+	user, response, err := config.usersAPI.PatchUser(config.userID, updateUser)
 	if err != nil {
 		t.Error(err)
 	} else if response != nil && response.Error != nil {
 		t.Error(response.Error)
 	} else {
 		// Validate response
-		if *user.Name != userName {
+		if *user.Name != config.userName {
 			t.Error("Data mismatch: user.Name")
 		}
 		if *user.Email != config.userEmail {
 			t.Error("Data mismatch: user.Email")
 		}
-		if *user.Department != userDepartment {
+		if *user.Department != config.userDepartment {
 			t.Error("Data mismatch: user.Department")
 		}
 	}
@@ -187,7 +195,7 @@ func TestUpdateUser(t *testing.T) {
 
 func TestSetProfileSkills(t *testing.T) {
 	// Update user
-	skills, response, err := config.usersAPI.PutUserProfileskills(userID, []string{userProfileSkill})
+	skills, response, err := config.usersAPI.PutUserProfileskills(config.userID, []string{config.userProfileSkill})
 	if err != nil {
 		t.Error(err)
 	} else if response != nil && response.Error != nil {
@@ -196,31 +204,31 @@ func TestSetProfileSkills(t *testing.T) {
 		// Validate response
 		if len(skills) != 1 {
 			t.Errorf("Skills array contained the wrong number of elements. Expected 1: %v", skills)
-		} else if skills[0] != userProfileSkill {
-			t.Errorf("Skill did not match. Expected %v, actual: %v", userProfileSkill, skills[0])
+		} else if skills[0] != config.userProfileSkill {
+			t.Errorf("Skill did not match. Expected %v, actual: %v", config.userProfileSkill, skills[0])
 		}
 	}
 }
 
 func TestGetUser(t *testing.T) {
 	// Get user
-	user, response, err := config.usersAPI.GetUser(userID, []string{"profileSkills"}, "")
+	user, response, err := config.usersAPI.GetUser(config.userID, []string{"profileSkills"}, "")
 	if err != nil {
 		t.Error(err)
 	} else if response != nil && response.Error != nil {
 		t.Error(response.Error)
 	} else {
 		// Validate response
-		if *user.Name != userName {
+		if *user.Name != config.userName {
 			t.Error("Data mismatch: user.Name")
 		}
 		if *user.Email != config.userEmail {
 			t.Error("Data mismatch: user.Email")
 		}
-		if *user.Department != userDepartment {
+		if *user.Department != config.userDepartment {
 			t.Error("Data mismatch: user.Department")
 		}
-		if user.ProfileSkills == nil || len(*user.ProfileSkills) != 1 || (*user.ProfileSkills)[0] != userProfileSkill {
+		if user.ProfileSkills == nil || len(*user.ProfileSkills) != 1 || (*user.ProfileSkills)[0] != config.userProfileSkill {
 			t.Error("Data mismatch: user.ProfileSkills")
 		}
 	}
@@ -228,7 +236,7 @@ func TestGetUser(t *testing.T) {
 
 func TestDeleteUser(t *testing.T) {
 	// Delete user
-	_, response, err := config.usersAPI.DeleteUser(userID)
+	_, response, err := config.usersAPI.DeleteUser(config.userID)
 	if err != nil {
 		t.Error(err)
 	} else if response != nil && response.Error != nil {
