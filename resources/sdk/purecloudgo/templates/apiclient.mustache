@@ -122,3 +122,16 @@ func (c *APIClient) ParameterToString(obj interface{}, collectionFormat string) 
 
 	return obj.(string)
 }
+
+func Int32(v int) (*int32) {
+	p := int32(v)
+	return &p
+}
+
+func String(v string) (*string) {
+	return &v
+}
+
+func Bool(v bool) (*bool) {
+	return &v
+}

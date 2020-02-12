@@ -10,21 +10,21 @@ import (
 )
 
 type {{classname}} struct {
-	Configuration Configuration
+	Configuration *Configuration
 }
 
 func New{{classname}}() *{{classname}} {
 	config := GetDefaultConfiguration()
 	config.Debug(fmt.Sprintf("Creating {{classname}} with base path: %s", strings.ToLower(config.BasePath)))
 	return &{{classname}}{
-		Configuration: *config,
+		Configuration: config,
 	}
 }
 
 func New{{classname}}WithConfig(config *Configuration) *{{classname}} {
 	config.Debugf("Creating {{classname}} with base path: %s\n", strings.ToLower(config.BasePath))
 	return &{{classname}}{
-		Configuration: *config,
+		Configuration: config,
 	}
 }
 {{#operation}}
