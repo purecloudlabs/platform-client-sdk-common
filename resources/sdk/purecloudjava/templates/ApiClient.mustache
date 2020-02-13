@@ -16,6 +16,7 @@ import java.net.URLEncoder;
 import java.net.Proxy;
 import java.text.DateFormat;
 import java.time.LocalDate;
+import java.time.Duration;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Future;
@@ -612,7 +613,7 @@ public class ApiClient implements AutoCloseable {
     }
 
     private ApiClientConnectorResponse retryOnFailure(ApiClientConnectorRequest connectorRequest, ApiClientConnectorResponse connectorResponse) {
-        if (connectorResponse.getStatusCode() >= 300) {
+        if (isRetryable(connectorResponse.getStatusCode())) {
             connectorResponse = retryInvoke(connectorRequest, connectorResponse);
         }
         return connectorResponse;
@@ -985,44 +986,60 @@ public class ApiClient implements AutoCloseable {
         public void close() throws Exception { }
     }
 
-    private ApiClientConnectorResponse retryInvoke(ApiClientConnectorRequest connectorRequest, ApiClientConnectorResponse connectorResponse) {
-        int retries = 0;
-        long waitTimeInSec = 1L;
-        boolean retry;
-        int statusCode;
-        int MAX_RETRIES = 0;
-        long MAX_WAIT_INTERVAL_IN_SEC = 32L;
+     private ApiClientConnectorResponse retryInvoke(ApiClientConnectorRequest connectorRequest, ApiClientConnectorResponse connectorResponse) {
+         int retriesBeforeBackOff = 0;
+         long waitTimeInMillis;
+         int backOffRetries = 1;
+         long totalWaitTimeInMillis = 0L;
+         int MAX_RETRIES_BEFORE_BACKOFF = 5;
+         long FIVE_MINUTES_IN_MILLIS = 300000L;
+         long MAX_BACKOFF_IN_MILLIS = 27000L;
+         int MAX_BACKOFF_RETRIES = 3;
 
-        try {
-            final int retry_count = properties.getProperty(ApiClientConnectorProperty.MAX_RETRIES, Integer.class, 0);
-            if (retry_count > 0) {
-                MAX_RETRIES = retry_count;
-            } else {
-                return connectorResponse;
-            }
+         try {
+             do {
+                 if (connectorResponse.getHeaders().containsKey("Retry-After") && retriesBeforeBackOff++ < MAX_RETRIES_BEFORE_BACKOFF) {
+                     waitTimeInMillis = Integer.parseInt(connectorResponse.getHeaders().get("Retry-After")) * 1000L;
 
-            do {
-                connectorResponse = connector.invoke(connectorRequest);
-                statusCode = connectorResponse.getStatusCode();
-                retry = statusCode >= 300;
-                if (retry) {
-                    if (statusCode == 429) {
-                        if (connectorResponse.getHeaders().containsKey("Retry-After")) {
-                            waitTimeInSec = Integer.parseInt(connectorResponse.getHeaders().get("Retry-After"));
-                        }
-                    } else {
-                        waitTimeInSec = Math.min(getWaitTimeExp(retries), MAX_WAIT_INTERVAL_IN_SEC);
-                    }
-                    Thread.sleep(waitTimeInSec * 1000L);
-                }
-            } while (retry && (retries++ < MAX_RETRIES));
-        } catch (Exception exception) {
-            return connectorResponse;
-        }
-        return connectorResponse;
+                 } else if (backOffRetries > MAX_BACKOFF_RETRIES) {
+                     waitTimeInMillis = MAX_BACKOFF_IN_MILLIS;
+
+                 } else {
+                     waitTimeInMillis = getWaitTimeExp(backOffRetries);
+
+                     do {
+                         totalWaitTimeInMillis += waitTimeInMillis;
+                         Thread.sleep(waitTimeInMillis);
+                         connectorResponse = connector.invoke(connectorRequest);
+
+                         if (isFiveMinutesOver(totalWaitTimeInMillis, FIVE_MINUTES_IN_MILLIS)) {
+                             waitTimeInMillis = getWaitTimeExp(++backOffRetries);
+                             totalWaitTimeInMillis = 0L;
+                         }
+                     }
+                     while (isRetryable(connectorResponse.getStatusCode()) && backOffRetries <= MAX_BACKOFF_RETRIES);
+                 }
+
+                 if (isRetryable(connectorResponse.getStatusCode())) {
+                     Thread.sleep(waitTimeInMillis);
+                     connectorResponse = connector.invoke(connectorRequest);
+                 }
+             } while (isRetryable(connectorResponse.getStatusCode()));
+
+         } catch (Exception exception) {
+         }
+         return connectorResponse;
     }
 
     private long getWaitTimeExp(int retryCount) {
-        return (long) Math.pow(2, retryCount);
+        return (long) Math.pow(3, retryCount) * 1000L;
+    }
+
+     private boolean isRetryable(int statusCode) {
+        return Arrays.asList(429, 502, 503, 504).contains(statusCode);
+    }
+
+    private boolean isFiveMinutesOver(long totalWaitTimeInMillis, long fiveMinutesInMillis) {
+        return Duration.ofMillis(fiveMinutesInMillis).compareTo(Duration.ofMillis(totalWaitTimeInMillis)) <= 0;
     }
 }
