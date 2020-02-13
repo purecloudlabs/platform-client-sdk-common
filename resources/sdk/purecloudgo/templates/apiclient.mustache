@@ -12,10 +12,12 @@ import (
 
 var client = resty.New()
 
+// APIClient provides functions for making API requests
 type APIClient struct {
 	configuration *Configuration
 }
 
+// SelectHeaderContentType selects the header content type
 func (c *APIClient) SelectHeaderContentType(contentTypes []string) string {
 	if len(contentTypes) == 0 {
 		return ""
@@ -26,6 +28,7 @@ func (c *APIClient) SelectHeaderContentType(contentTypes []string) string {
 	return contentTypes[0] // use the first content type specified in 'consumes'
 }
 
+// SelectHeaderAccept selects the header accept
 func (c *APIClient) SelectHeaderAccept(accepts []string) string {
 	if len(accepts) == 0 {
 		return ""
@@ -45,6 +48,7 @@ func contains(source []string, containvalue string) bool {
 	return false
 }
 
+// CallAPI invokes an API endpoint
 func (c *APIClient) CallAPI(path string, method string,
 	postBody interface{},
 	headerParams map[string]string,
@@ -106,6 +110,7 @@ func (c *APIClient) CallAPI(path string, method string,
 	return NewAPIResponse(response)
 }
 
+// ParameterToString joins a parameter in the desired format
 func (c *APIClient) ParameterToString(obj interface{}, collectionFormat string) string {
 	if reflect.TypeOf(obj).String() == "[]string" {
 		switch collectionFormat {
@@ -123,15 +128,18 @@ func (c *APIClient) ParameterToString(obj interface{}, collectionFormat string) 
 	return obj.(string)
 }
 
+// Int32 is an easy way to get a pointer
 func Int32(v int) (*int32) {
 	p := int32(v)
 	return &p
 }
 
+// String is an easy way to get a pointer
 func String(v string) (*string) {
 	return &v
 }
 
+// Bool is an easy way to get a pointer
 func Bool(v bool) (*bool) {
 	return &v
 }

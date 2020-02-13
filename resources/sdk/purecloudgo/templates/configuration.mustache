@@ -8,6 +8,7 @@ import (
 	"sync"
 )
 
+// Configuration has settings to configure the SDK
 type Configuration struct {
 	UserName      string            `json:"userName,omitempty"`
 	Password      string            `json:"password,omitempty"`
@@ -26,12 +27,14 @@ type Configuration struct {
 	APIClient     APIClient         `json:"APIClient,omitempty"`
 }
 
+// AuthResponse contains the access token to use in future requests
 type AuthResponse struct {
 	AccessToken string `json:"access_token,omitempty"`
 	TokenType   string `json:"token_type,omitempty"`
 	ExpiresIn   int    `json:"expires_in,omitempty"`
 }
 
+// AuthErrorResponse gives you some intel when authorization goes boom
 type AuthErrorResponse struct {
 	Error            string `json:"error,omitempty"`
 	Description      string `json:"description,omitempty"`
@@ -64,7 +67,8 @@ func NewConfiguration() *Configuration {
 	return c
 }
 
-// AuthorizeClientCredentials authorizes this Configuration instance using client credentials
+// AuthorizeClientCredentials authorizes this Configuration instance using client credentials.
+// The access token will be set automatically and API instances using this configuration object can now make authorized requests.
 func (c *Configuration) AuthorizeClientCredentials(clientID string, clientSecret string) error {
 	authHostRegex := regexp.MustCompile(`(?i)\/\/api\.`)
 	authHost := authHostRegex.ReplaceAllString(c.BasePath, "//login.")
@@ -104,10 +108,12 @@ func (c *Configuration) GetBasicAuthEncodedString() string {
 	return base64.StdEncoding.EncodeToString([]byte(c.UserName + ":" + c.Password))
 }
 
+// AddDefaultHeader sets a header that will be set on every request
 func (c *Configuration) AddDefaultHeader(key string, value string) {
 	c.DefaultHeader[key] = value
 }
 
+// GetAPIKeyWithPrefix appends a prefix to the API key
 func (c *Configuration) GetAPIKeyWithPrefix(APIKeyIdentifier string) string {
 	if c.APIKeyPrefix[APIKeyIdentifier] != "" {
 		return c.APIKeyPrefix[APIKeyIdentifier] + " " + c.APIKey[APIKeyIdentifier]
@@ -116,14 +122,17 @@ func (c *Configuration) GetAPIKeyWithPrefix(APIKeyIdentifier string) string {
 	return c.APIKey[APIKeyIdentifier]
 }
 
+// SetDebug enables debug tracing for HTTP requests, and probably some other stuff
 func (c *Configuration) SetDebug(enable bool) {
 	c.debug = enable
 }
 
+// GetDebug tells you the value of the debug setting in case you forgot
 func (c *Configuration) GetDebug() bool {
 	return c.debug
 }
 
+// Debug prints the provided message using Println if debug tracing is enabled
 func (c *Configuration) Debug(msg interface{}) {
 	if !c.debug {
 		return
@@ -131,6 +140,7 @@ func (c *Configuration) Debug(msg interface{}) {
 	fmt.Println(msg)
 }
 
+// Debugf prints the provided formatted message using Printf if debug tracing is enabled
 func (c *Configuration) Debugf(msg string, params ...interface{}) {
 	if !c.debug {
 		return

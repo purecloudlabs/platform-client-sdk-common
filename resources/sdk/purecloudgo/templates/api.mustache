@@ -9,10 +9,12 @@ import (
 {{/imports}}
 )
 
+// {{classname}} provides functions for API endpoints
 type {{classname}} struct {
 	Configuration *Configuration
 }
 
+// New{{classname}} creates an API instance using the default configuration
 func New{{classname}}() *{{classname}} {
 	config := GetDefaultConfiguration()
 	config.Debug(fmt.Sprintf("Creating {{classname}} with base path: %s", strings.ToLower(config.BasePath)))
@@ -21,6 +23,7 @@ func New{{classname}}() *{{classname}} {
 	}
 }
 
+// New{{classname}}WithConfig creates an API instance using the provided configuration
 func New{{classname}}WithConfig(config *Configuration) *{{classname}} {
 	config.Debugf("Creating {{classname}} with base path: %s\n", strings.ToLower(config.BasePath))
 	return &{{classname}}{
@@ -29,15 +32,12 @@ func New{{classname}}WithConfig(config *Configuration) *{{classname}} {
 }
 {{#operation}}
 
-/**
- * {{summary}}{{#notes}}
- * {{notes}}{{/notes}}
- *
-{{#allParams}} * @param {{paramName}} {{description}}
-{{/allParams}} * @return {{#returnType}}{{^isListContainer}}*{{/isListContainer}}{{{returnType}}}{{/returnType}}{{^returnType}}void{{/returnType}}
- */
+// {{nickname}} invokes {{httpMethod}} {{path}}{{#summary}}
+//
+// {{summary}}{{/summary}}{{#notes}}
+//
+// {{notes}}{{/notes}}
 func (a {{classname}}) {{nickname}}({{#allParams}}{{paramName}} {{{dataType}}}{{#hasMore}}, {{/hasMore}}{{/allParams}}) ({{#returnType}}{{^isListContainer}}*{{/isListContainer}}{{{returnType}}}, {{/returnType}}*APIResponse, error) {
-
 	var httpMethod = "{{httpMethod}}"
 	// create path and map variables
 	path := a.Configuration.BasePath + "{{path}}"{{#pathParams}}
