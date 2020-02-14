@@ -54,6 +54,7 @@ func TestEnvVars(t *testing.T) {
 		userProfileSkill:    "Testmaster",
 		busyPresenceID:      "31fe3bac-dea6-44b7-bed7-47f91660a1a0",
 		availablePresenceID: "6a3af858-942f-489d-9700-5f9bcdcdae9b",
+		debug:               false,
 	}
 	config.userEmail = fmt.Sprintf("%v@%v", uuid.New().String(), config.environment[12:])
 

@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"regexp"
 	"sync"
 )
@@ -63,7 +64,7 @@ func NewConfiguration() *Configuration {
 		APIKeyPrefix:  make(map[string]string),
 		UserAgent:     "{{#httpUserAgent}}{{{.}}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen/{{{packageVersion}}}/go{{/httpUserAgent}}",
 	}
-	c.APIClient = APIClient{configuration: c}
+	c.APIClient = NewAPIClient(c)
 	return c
 }
 
@@ -74,8 +75,8 @@ func (c *Configuration) AuthorizeClientCredentials(clientID string, clientSecret
 	authHost := authHostRegex.ReplaceAllString(c.BasePath, "//login.")
 	headerParams := make(map[string]string)
 	headerParams["Authorization"] = "Basic " + base64.StdEncoding.EncodeToString([]byte(clientID+":"+clientSecret))
-	formParams := make(map[string]string)
-	formParams["grant_type"] = "client_credentials"
+	formParams := url.Values{}
+	formParams["grant_type"] = []string{"client_credentials"}
 	response, err := c.APIClient.CallAPI(authHost+"/oauth/token", "POST", nil, headerParams, nil, formParams, "", nil)
 	if err != nil {
 		fmt.Println(err)
@@ -102,10 +103,6 @@ func (c *Configuration) AuthorizeClientCredentials(clientID string, clientSecret
 	}
 	c.Debugf("Token exipres in %v seconds\n", authResponse.ExpiresIn)
 	return nil
-}
-
-func (c *Configuration) GetBasicAuthEncodedString() string {
-	return base64.StdEncoding.EncodeToString([]byte(c.UserName + ":" + c.Password))
 }
 
 // AddDefaultHeader sets a header that will be set on every request
