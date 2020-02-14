@@ -1,12 +1,14 @@
-package platformclientv2
+package platformclientv2_test
 
 import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"reflect"
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/mypurecloud/platformclientv2"
 )
 
 type testConfig struct {
@@ -15,7 +17,7 @@ type testConfig struct {
 	clientSecret        string
 	debug               bool
 	userEmail           string
-	usersAPI            *UsersApi
+	usersAPI            *platformclientv2.UsersApi
 	userID              string
 	userName            string
 	userDepartment      string
@@ -70,9 +72,9 @@ func TestEnvVars(t *testing.T) {
 	}
 
 	// Setup
-	GetDefaultConfiguration().BasePath = config.environment
-	GetDefaultConfiguration().SetDebug(config.debug)
-	config.usersAPI = NewUsersApi()
+	platformclientv2.GetDefaultConfiguration().BasePath = config.environment
+	platformclientv2.GetDefaultConfiguration().SetDebug(config.debug)
+	config.usersAPI = platformclientv2.NewUsersApi()
 
 	// Log
 	t.Logf("Enviornment: %v", config.environment)
@@ -88,15 +90,15 @@ func TestDefaultValueSerialization(t *testing.T) {
 	v := testSerializationStruct{
 		IntProp:          0,
 		IntPropArr:       make([]int32, 0),
-		IntPropPtr:       Int32(0),
+		IntPropPtr:       platformclientv2.Int32(0),
 		IntPropArrPtr:    &intPropArrPtr,
 		StringProp:       "",
 		StringPropArr:    make([]string, 0),
-		StringPropPtr:    String(""),
+		StringPropPtr:    platformclientv2.String(""),
 		StringPropArrPtr: &stringPropArrPtr,
 		BoolProp:         false,
 		BoolPropArr:      make([]bool, 0),
-		BoolPropPtr:      Bool(false),
+		BoolPropPtr:      platformclientv2.Bool(false),
 		BoolPropArrPtr:   &boolPropArrPtr,
 	}
 	j, _ := json.Marshal(v)
@@ -117,15 +119,15 @@ func TestValueSerialization(t *testing.T) {
 	v := testSerializationStruct{
 		IntProp:          10,
 		IntPropArr:       make([]int32, 2),
-		IntPropPtr:       Int32(10),
+		IntPropPtr:       platformclientv2.Int32(10),
 		IntPropArrPtr:    &intPropArrPtr,
 		StringProp:       "asdf",
 		StringPropArr:    make([]string, 2),
-		StringPropPtr:    String("asdf"),
+		StringPropPtr:    platformclientv2.String("asdf"),
 		StringPropArrPtr: &stringPropArrPtr,
 		BoolProp:         true,
 		BoolPropArr:      make([]bool, 2),
-		BoolPropPtr:      Bool(true),
+		BoolPropPtr:      platformclientv2.Bool(true),
 		BoolPropArrPtr:   &boolPropArrPtr,
 	}
 	j, _ := json.Marshal(v)
@@ -139,7 +141,7 @@ func TestValueSerialization(t *testing.T) {
 }
 
 func TestAuthentication(t *testing.T) {
-	err := GetDefaultConfiguration().AuthorizeClientCredentials(config.clientID, config.clientSecret)
+	err := platformclientv2.GetDefaultConfiguration().AuthorizeClientCredentials(config.clientID, config.clientSecret)
 	if err != nil {
 		t.Error(err)
 	}
@@ -148,7 +150,7 @@ func TestAuthentication(t *testing.T) {
 func TestCreateUser(t *testing.T) {
 	// Create user
 	password := uuid.New().String() + "!@#$1234asdfASDF"
-	newUser := Createuser{Name: &config.userName, Email: &config.userEmail, Password: &password}
+	newUser := platformclientv2.Createuser{Name: &config.userName, Email: &config.userEmail, Password: &password}
 
 	user, response, err := config.usersAPI.PostUsers(newUser)
 	if err != nil {
@@ -172,7 +174,7 @@ func TestCreateUser(t *testing.T) {
 
 func TestUpdateUser(t *testing.T) {
 	// Update user
-	updateUser := Updateuser{Department: &config.userDepartment, Version: Int32(1)}
+	updateUser := platformclientv2.Updateuser{Department: &config.userDepartment, Version: platformclientv2.Int32(1)}
 
 	user, response, err := config.usersAPI.PatchUser(config.userID, updateUser)
 	if err != nil {
@@ -242,4 +244,46 @@ func TestDeleteUser(t *testing.T) {
 	} else if response != nil && response.Error != nil {
 		t.Error(response.Error)
 	}
+}
+
+func Example_authorizeDefaultConfiguration() {
+	// Use the default config instance and retrieve settings from env vars
+	config := platformclientv2.GetDefaultConfiguration()
+	config.BasePath = "https://api." + os.Getenv("PURECLOUD_ENVIRONMENT") // e.g. PURECLOUD_ENVIRONMENT=mypurecloud.com
+	clientID := os.Getenv("PURECLOUD_CLIENT_ID")
+	clientSecret := os.Getenv("PURECLOUD_CLIENT_SECRET")
+
+	// Authorize the configuration
+	err := config.AuthorizeClientCredentials(clientID, clientSecret)
+	if err != nil {
+		panic(err)
+	}
+
+	// Create an API instance using the default config
+	usersAPI := platformclientv2.NewUsersApi()
+	fmt.Printf("Users API type: %v", reflect.TypeOf(usersAPI).String())
+	// Output: Users API type: UsersAPI
+
+	// Make requests using usersAPI
+}
+
+func Example_authorizeNewConfiguration() {
+	// Create a new config instance and retrieve settings from env vars
+	config := platformclientv2.NewConfiguration()
+	config.BasePath = "https://api." + os.Getenv("PURECLOUD_ENVIRONMENT") // e.g. PURECLOUD_ENVIRONMENT=mypurecloud.com
+	clientID := os.Getenv("PURECLOUD_CLIENT_ID")
+	clientSecret := os.Getenv("PURECLOUD_CLIENT_SECRET")
+
+	// Authorize the configuration
+	err := config.AuthorizeClientCredentials(clientID, clientSecret)
+	if err != nil {
+		panic(err)
+	}
+
+	// Create an API instance using the config instance
+	usersAPI := platformclientv2.NewUsersApiWithConfig(config)
+	fmt.Printf("Users API type: %v", reflect.TypeOf(usersAPI).String())
+	// Output: Users API type: UsersAPI
+
+	// Make requests using usersAPI
 }
