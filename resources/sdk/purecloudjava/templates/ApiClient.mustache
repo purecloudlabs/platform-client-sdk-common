@@ -84,6 +84,10 @@ public class ApiClient implements AutoCloseable {
     private final Map<String, Authentication> authentications;
     private final ApiClientConnector connector;
 
+    private final long FIVE_MINUTES_IN_MILLIS = 300000L;
+    private final int BASE_BACKOFF_TIME_IN_SEC = 3;
+    private final int MAX_BACKOFF_TIME_IN_SEC = 27;
+
     public ApiClient() {
         this(Builder.standard());
     }
@@ -562,7 +566,9 @@ public class ApiClient implements AutoCloseable {
         ApiClientConnectorResponse connectorResponse = null;
         try {
             connectorResponse = connector.invoke(connectorRequest);
-            connectorResponse = retryOnFailure(connectorRequest, connectorResponse);
+             if (shouldRetry(connectorResponse.getStatusCode())) {
+                 connectorResponse = retryInvoke(connectorRequest, connectorResponse);
+             }
             return interpretConnectorResponse(connectorResponse, returnType);
         }
         finally {
@@ -587,7 +593,7 @@ public class ApiClient implements AutoCloseable {
                     try {
                         ApiResponse<T> response;
                         try {
-                            connectorResponse = retryOnFailure(connectorRequest, connectorResponse);
+                           //connectorResponse = retryOnFailure(connectorRequest, connectorResponse);
                             response = interpretConnectorResponse(connectorResponse, returnType);
                         }
                         finally {
@@ -610,13 +616,6 @@ public class ApiClient implements AutoCloseable {
             notifyFailure(future, callback, exception);
         }
         return future;
-    }
-
-    private ApiClientConnectorResponse retryOnFailure(ApiClientConnectorRequest connectorRequest, ApiClientConnectorResponse connectorResponse) {
-        if (isRetryable(connectorResponse.getStatusCode())) {
-            connectorResponse = retryInvoke(connectorRequest, connectorResponse);
-        }
-        return connectorResponse;
     }
 
     private <T> void notifySuccess(SettableFuture<T> future, AsyncApiCallback<T> callback, T result) {
@@ -987,59 +986,56 @@ public class ApiClient implements AutoCloseable {
     }
 
      private ApiClientConnectorResponse retryInvoke(ApiClientConnectorRequest connectorRequest, ApiClientConnectorResponse connectorResponse) {
-         int retriesBeforeBackOff = 0;
-         long waitTimeInMillis;
-         int backOffRetries = 1;
-         long totalWaitTimeInMillis = 0L;
-         int MAX_RETRIES_BEFORE_BACKOFF = 5;
-         long FIVE_MINUTES_IN_MILLIS = 300000L;
-         long MAX_BACKOFF_IN_MILLIS = 27000L;
-         int MAX_BACKOFF_RETRIES = 3;
+        int retriesBeforeBackOff = 0;
+        int backOffRetries = 1;
+        long totalWaitTimeInMillis = 0L;
+        int MAX_RETRIES_BEFORE_BACKOFF = 5;
+        int MAX_BACKOFF_RETRIES = 3;
+        long waitTimeInMillis = BASE_BACKOFF_TIME_IN_SEC * 1000L;
 
-         try {
-             do {
-                 if (connectorResponse.getHeaders().containsKey("Retry-After") && retriesBeforeBackOff++ < MAX_RETRIES_BEFORE_BACKOFF) {
-                     waitTimeInMillis = Integer.parseInt(connectorResponse.getHeaders().get("Retry-After")) * 1000L;
+        do {
+            if (connectorResponse.getHeaders().containsKey("Retry-After")) {
+                waitTimeInMillis = Integer.parseInt(connectorResponse.getHeaders().getOrDefault("Retry-After", String.valueOf(BASE_BACKOFF_TIME_IN_SEC))) * 1000L;
+            }
+            try {
+                if (connectorResponse.getStatusCode() == 429 || retriesBeforeBackOff++ < MAX_RETRIES_BEFORE_BACKOFF) {
+                    connectorResponse = waitAndRetry(waitTimeInMillis, connectorRequest);
 
-                 } else if (backOffRetries > MAX_BACKOFF_RETRIES) {
-                     waitTimeInMillis = MAX_BACKOFF_IN_MILLIS;
+                } else if (backOffRetries > MAX_BACKOFF_RETRIES) {
+                    connectorResponse = waitAndRetry(getWaitTimeExp(backOffRetries), connectorRequest);
 
-                 } else {
-                     waitTimeInMillis = getWaitTimeExp(backOffRetries);
+                } else {
+                    waitTimeInMillis = getWaitTimeExp(backOffRetries);
+                    do {
+                        totalWaitTimeInMillis += waitTimeInMillis;
+                        connectorResponse = waitAndRetry(waitTimeInMillis, connectorRequest);
 
-                     do {
-                         totalWaitTimeInMillis += waitTimeInMillis;
-                         Thread.sleep(waitTimeInMillis);
-                         connectorResponse = connector.invoke(connectorRequest);
+                        if (isFiveMinutesOver(totalWaitTimeInMillis)) {
+                            waitTimeInMillis = getWaitTimeExp(++backOffRetries);
+                            totalWaitTimeInMillis = 0L;
+                        }
+                    } while (shouldRetry(connectorResponse.getStatusCode()) && backOffRetries <= MAX_BACKOFF_RETRIES);
+                }
+            } catch (Exception exception) {
+            }
+        } while (shouldRetry(connectorResponse.getStatusCode()));
+        return connectorResponse;
+    }
 
-                         if (isFiveMinutesOver(totalWaitTimeInMillis, FIVE_MINUTES_IN_MILLIS)) {
-                             waitTimeInMillis = getWaitTimeExp(++backOffRetries);
-                             totalWaitTimeInMillis = 0L;
-                         }
-                     }
-                     while (isRetryable(connectorResponse.getStatusCode()) && backOffRetries <= MAX_BACKOFF_RETRIES);
-                 }
-
-                 if (isRetryable(connectorResponse.getStatusCode())) {
-                     Thread.sleep(waitTimeInMillis);
-                     connectorResponse = connector.invoke(connectorRequest);
-                 }
-             } while (isRetryable(connectorResponse.getStatusCode()));
-
-         } catch (Exception exception) {
-         }
-         return connectorResponse;
+     private ApiClientConnectorResponse waitAndRetry(long waitTimeInMillis, ApiClientConnectorRequest connectorRequest) throws InterruptedException, IOException {
+        Thread.sleep(waitTimeInMillis);
+        return connector.invoke(connectorRequest);
     }
 
     private long getWaitTimeExp(int retryCount) {
-        return (long) Math.pow(3, retryCount) * 1000L;
+        return (long) Math.min(Math.pow(BASE_BACKOFF_TIME_IN_SEC, retryCount), MAX_BACKOFF_TIME_IN_SEC) * 1000L;
     }
 
-     private boolean isRetryable(int statusCode) {
+     private boolean shouldRetry(int statusCode) {
         return Arrays.asList(429, 502, 503, 504).contains(statusCode);
     }
 
-    private boolean isFiveMinutesOver(long totalWaitTimeInMillis, long fiveMinutesInMillis) {
-        return Duration.ofMillis(fiveMinutesInMillis).compareTo(Duration.ofMillis(totalWaitTimeInMillis)) <= 0;
+     private boolean isFiveMinutesOver(long totalWaitTimeInMillis) {
+       return Duration.ofMillis(FIVE_MINUTES_IN_MILLIS).compareTo(Duration.ofMillis(totalWaitTimeInMillis)) <= 0;
     }
 }
