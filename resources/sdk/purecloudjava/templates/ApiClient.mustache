@@ -986,11 +986,11 @@ public class ApiClient implements AutoCloseable {
     }
 
      private ApiClientConnectorResponse retryInvoke(ApiClientConnectorRequest connectorRequest, ApiClientConnectorResponse connectorResponse) {
-        int retriesBeforeBackOff = 0;
-        int backOffRetries = 1;
-        long totalWaitTimeInMillis = 0L;
-        int MAX_RETRIES_BEFORE_BACKOFF = 5;
-        int MAX_BACKOFF_RETRIES = 3;
+        int retryCountBeforeBackOff = 0;
+        int bucketCount = 1;
+        long waitTimeForEachBucketInMillis = 0L;
+        int maxRetriesBeforeBackOff = 5;
+        int maxBuckets = 3;
         long waitTimeInMillis = BASE_BACKOFF_TIME_IN_SEC * 1000L;
 
         do {
@@ -998,23 +998,27 @@ public class ApiClient implements AutoCloseable {
                 waitTimeInMillis = Integer.parseInt(connectorResponse.getHeaders().getOrDefault("Retry-After", String.valueOf(BASE_BACKOFF_TIME_IN_SEC))) * 1000L;
             }
             try {
-                if (connectorResponse.getStatusCode() == 429 || retriesBeforeBackOff++ < MAX_RETRIES_BEFORE_BACKOFF) {
+                //If status code is 429 then wait until retry-after time and retry. OR if status code is 50x then for the first 5 times: wait until retry-after time and retry.
+                if (connectorResponse.getStatusCode() == 429 || retryCountBeforeBackOff++ < maxRetriesBeforeBackOff) {
                     connectorResponse = waitAndRetry(waitTimeInMillis, connectorRequest);
 
-                } else if (backOffRetries > MAX_BACKOFF_RETRIES) {
-                    connectorResponse = waitAndRetry(getWaitTimeExp(backOffRetries), connectorRequest);
+                //If status code is 50x and if 3 Sec, 9 Sec and 27 Sec buckets were already retried then wait for every 27 Sec and retry.
+                } else if (bucketCount > maxBuckets) {
+                    connectorResponse = waitAndRetry(getWaitTimeExp(bucketCount), connectorRequest);
 
+                //If status code is 50x then wait for every 3 Sec and retry until 5 minutes then after wait for every 9 Sec and retry until next 5 minutes then after wait for every 27 Sec and retry until next 5 minutes.
                 } else {
-                    waitTimeInMillis = getWaitTimeExp(backOffRetries);
+                    waitTimeInMillis = getWaitTimeExp(bucketCount);
                     do {
-                        totalWaitTimeInMillis += waitTimeInMillis;
+                        waitTimeForEachBucketInMillis += waitTimeInMillis;
                         connectorResponse = waitAndRetry(waitTimeInMillis, connectorRequest);
 
-                        if (isFiveMinutesOver(totalWaitTimeInMillis)) {
-                            waitTimeInMillis = getWaitTimeExp(++backOffRetries);
-                            totalWaitTimeInMillis = 0L;
+                         //for every 5 minutes switch the bucket from 3 Sec through 27 Sec and reset the wait time for each bucket.
+                        if (isFiveMinutesOver(waitTimeForEachBucketInMillis)) {
+                            waitTimeInMillis = getWaitTimeExp(++bucketCount);
+                            waitTimeForEachBucketInMillis = 0L;
                         }
-                    } while (shouldRetry(connectorResponse.getStatusCode()) && backOffRetries <= MAX_BACKOFF_RETRIES);
+                    } while (shouldRetry(connectorResponse.getStatusCode()) && bucketCount <= maxBuckets);
                 }
             } catch (Exception exception) {
             }
@@ -1027,15 +1031,15 @@ public class ApiClient implements AutoCloseable {
         return connector.invoke(connectorRequest);
     }
 
-    private long getWaitTimeExp(int retryCount) {
-        return (long) Math.min(Math.pow(BASE_BACKOFF_TIME_IN_SEC, retryCount), MAX_BACKOFF_TIME_IN_SEC) * 1000L;
+    private long getWaitTimeExp(int bucketCount) {
+        return (long) Math.min(Math.pow(BASE_BACKOFF_TIME_IN_SEC, bucketCount), MAX_BACKOFF_TIME_IN_SEC) * 1000L;
     }
 
      private boolean shouldRetry(int statusCode) {
         return Arrays.asList(429, 502, 503, 504).contains(statusCode);
     }
 
-     private boolean isFiveMinutesOver(long totalWaitTimeInMillis) {
-       return Duration.ofMillis(FIVE_MINUTES_IN_MILLIS).compareTo(Duration.ofMillis(totalWaitTimeInMillis)) <= 0;
+     private boolean isFiveMinutesOver(long waitTimeForEachBucketInMillis) {
+       return Duration.ofMillis(FIVE_MINUTES_IN_MILLIS).compareTo(Duration.ofMillis(waitTimeForEachBucketInMillis)) <= 0;
     }
 }
