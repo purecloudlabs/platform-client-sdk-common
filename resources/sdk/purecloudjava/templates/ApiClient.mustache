@@ -87,12 +87,12 @@ public class ApiClient implements AutoCloseable {
     private int maxRetryTimeInSec = 0;
     private final long FIVE_MINUTES_IN_MILLIS = 300000L;
     private final int BASE_BACKOFF_TIME_IN_SEC = 3;
+    private final int MAX_RETRIES_BEFORE_BACKOFF = 5;
+    private final int MAX_BUCKETS = 3;
     private long totalRetryTimeInMillis = 0L;
     private int bucketCount = 1;
-    private int maxBuckets = 3;
     private int retryCountBeforeBackOff = 0;
     private long waitTimeForEachBucketInMillis = 0L;
-    private int maxRetriesBeforeBackOff = 5;
     private long waitTimeInMillis = BASE_BACKOFF_TIME_IN_SEC * 1000L;
 
     public ApiClient() {
@@ -1012,13 +1012,13 @@ public class ApiClient implements AutoCloseable {
                 waitTimeInMillis = Integer.parseInt(connectorResponse.getHeaders().getOrDefault("Retry-After", String.valueOf(BASE_BACKOFF_TIME_IN_SEC))) * 1000L;
             }
             //If status code is 429 then wait until retry-after time and retry. OR If status code is retryable then for the first 5 times: wait until retry-after time and retry.
-            if (connectorResponse.getStatusCode() == 429 || retryCountBeforeBackOff++ < maxRetriesBeforeBackOff) {
+            if (connectorResponse.getStatusCode() == 429 || retryCountBeforeBackOff++ < MAX_RETRIES_BEFORE_BACKOFF) {
                 totalRetryTimeInMillis += waitTimeInMillis;
                 waitBeforeRetry(waitTimeInMillis);
                 return true;
 
                 //If status code is 50x and if 3 Sec and 9 Sec buckets were already retried then wait for every 27 Sec and retry.
-            } else if (bucketCount >= maxBuckets) {
+            } else if (bucketCount >= MAX_BUCKETS) {
                 waitTimeInMillis = getWaitTimeExp(bucketCount);
                 totalRetryTimeInMillis += waitTimeInMillis;
                 waitBeforeRetry(waitTimeInMillis);
