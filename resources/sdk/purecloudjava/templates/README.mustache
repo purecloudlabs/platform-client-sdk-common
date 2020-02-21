@@ -128,6 +128,19 @@ Specify the connector in the builder:
 .withProperty(ApiClientConnectorProperty.CONNECTOR_PROVIDER, new OkHttpClientConnectorProvider())
 ```
 
+### Setting the max retry time
+
+In default, Java SDK makes a call to API without a Retry option but this feature is configurable.
+The SDK configuration is default to Retry off and it can be configured to enable or disable while creating an `ApiClient` Instance.
+
+Specify the amount of time in seconds that client wants to wait while retrying if client opts to enable Retry feature:
+```{"language":"java"}
+.withMaxRetryTimeInSec(30)
+```
+When Retry feature is enabled and if the `status code` form the API response is `429 or 502 or 503 or 504`,
+it will retry calling the API intermediately until the specified wait time given the `status code` from the API response is still `429 or 502 or 503 or 504`.
+But, when the `status code` from the API response while retrying is not `429 or 502 or 503 or 504` then it will immediately return the response even if the wait time is not over yet.
+
 #### Other ApiClient.Builder methods
 
 * `withDefaultHeader(String header, String value)` Specifies additional headers to be sent with every request
@@ -169,19 +182,6 @@ UsersApi usersApi = new UsersApi();
 UserMe me = usersApi.getUsersMe(Collections.singletonList("presence"));
 System.out.println("Hello " + me.getName());
 ```
-
-## How to Configure Retry with Java SDK
-
-In default, Java SDK makes a call to API without a Retry option but this feature is configurable.
-The SDK configuration is default to Retry off and it can be configured to enable or disable while creating an `ApiClient` Instance.
-
-Specify the amount of time in seconds that client wants to wait while retrying if client opts to enable Retry feature:
-```{"language":"java"}
-.withMaxRetryTimeInSec(30)
-```
-When Retry feature is enabled and if the `status code` form the API response is `429 or 502 or 503 or 504`,
-it will retry calling the API intermediately until the specified wait time given the `status code` from the API response is still `429 or 502 or 503 or 504`.
-But, when the `status code` from the API response while retrying is not `429 or 502 or 503 or 504` then it will immediately return the response even if the wait time is not over yet.
 
 
 #### Getting extended info
