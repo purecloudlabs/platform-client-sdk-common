@@ -137,9 +137,8 @@ Specify the amount of time in seconds that client wants to wait while retrying i
 ```{"language":"java"}
 .withMaxRetryTimeInSec(30)
 ```
-When Retry feature is enabled and if the `status code` form the API response is `429 or 502 or 503 or 504`,
-it will retry calling the API intermediately until the specified wait time given the `status code` from the API response is still `429 or 502 or 503 or 504`.
-But, when the `status code` from the API response while retrying is not `429 or 502 or 503 or 504` then it will immediately return the response even if the wait time is not over yet.
+When the retry feature is enabled, the SDK adheres to the recommended best practices for automatically retrying retryable responses.
+The best practices are documented in the [Rate Limiting](https://developer.mypurecloud.com/api/rest/rate_limits.html) Developer Center article.
 
 #### Other ApiClient.Builder methods
 
