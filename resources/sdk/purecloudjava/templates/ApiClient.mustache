@@ -599,8 +599,16 @@ public class ApiClient implements AutoCloseable {
                 @Override
                 public void onCompleted(ApiClientConnectorResponse connectorResponse) {
                     try {
+                        ApiClient.Retry retry = new ApiClient.Retry();
+                        long timeElapsedPerRequestInMills = 0L;
                         ApiResponse<T> response;
                         try {
+                            do {
+                                Stopwatch timeElapsedPerRequest = Stopwatch.createStarted();
+                                invokeAPIAsync(returnType, callback, future, connectorRequest);
+                                timeElapsedPerRequestInMills = timeElapsedPerRequest.elapsed(TimeUnit.MILLISECONDS);
+                                timeElapsedPerRequest.stop();
+                            } while (retry.shouldRetry(connectorResponse, timeElapsedPerRequestInMills));
                             response = interpretConnectorResponse(connectorResponse, returnType);
                         }
                         finally {
@@ -623,6 +631,31 @@ public class ApiClient implements AutoCloseable {
             notifyFailure(future, callback, exception);
         }
         return future;
+    }
+
+    private <T> void invokeAPIAsync(TypeReference<T> returnType, AsyncApiCallback<ApiResponse<T>> callback, SettableFuture<ApiResponse<T>> future, ApiClientConnectorRequest connectorRequest) {
+        connector.invokeAsync(connectorRequest, new AsyncApiCallback<ApiClientConnectorResponse>() {
+
+            @Override
+            public void onCompleted(ApiClientConnectorResponse connectorResponse) {
+                try {
+                    ApiResponse<T> response;
+                    try {
+                        response = interpretConnectorResponse(connectorResponse, returnType);
+                    } finally {
+                        connectorResponse.close();
+                    }
+                    notifySuccess(future, callback, response);
+                } catch (Throwable exception) {
+                    notifyFailure(future, callback, exception);
+                }
+            }
+
+            @Override
+            public void onFailed(Throwable exception) {
+                notifyFailure(future, callback, exception);
+            }
+        });
     }
 
     private <T> void notifySuccess(SettableFuture<T> future, AsyncApiCallback<T> callback, T result) {
