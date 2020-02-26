@@ -133,11 +133,19 @@ Specify the connector in the builder:
 In default, Java SDK makes a call to API without a Retry option but this feature is configurable.
 The SDK configuration is default to Retry off and it can be configured to enable or disable while creating an `ApiClient` Instance.
 
-Specify the amount of time in seconds that client wants to wait while retrying if client opts to enable Retry feature:
+Building a `RetryConfiguration` instance:
+
 ```{"language":"java"}
-.withMaxRetryTimeInSec(30)
+ ApiClient.RetryConfiguration retryConfiguration = new ApiClient.RetryConfigBuilder()
+                .withMaxRetryTime(60)
+                .build();
+ ```
+Setting `RetryConfiguration` instance to `ApiClient`:
+ ```{"language":"java"}
+        .withRetryConfiguration(retryConfiguration)
 ```
-When the retry feature is enabled, the SDK adheres to the recommended best practices for automatically retrying retryable responses.
+Set the `maxRetryTime` to the number of seconds to process retries before returning an error.
+When the retry time is a a positive integer, the SDK will follow the recommended backoff logic using the provided configuration.
 The best practices are documented in the [Rate Limiting](https://developer.mypurecloud.com/api/rest/rate_limits.html) Developer Center article.
 
 #### Other ApiClient.Builder methods
