@@ -838,40 +838,6 @@ public class ApiClient implements AutoCloseable {
         }
     }
 
-    public static class RetryConfigBuilder {
-        private long backoffInterval = 300000L;
-        private int defaultDelay = 3;
-        private int maxRetryTime = 0;
-
-        public RetryConfigBuilder withBackoffInterval(long backoffInterval) {
-            if (backoffInterval < 0) {
-                throw new IllegalArgumentException("backoffInterval should be a positive integer");
-            }
-            this.backoffInterval = backoffInterval;
-            return this;
-        }
-
-        public RetryConfigBuilder withDefaultDelay(int defaultDelay) {
-            if (defaultDelay < 0) {
-                throw new IllegalArgumentException("defaultDelay should be a positive integer");
-            }
-            this.defaultDelay = defaultDelay;
-            return this;
-        }
-
-        public RetryConfigBuilder withMaxRetryTime(int maxRetryTime) {
-            if (maxRetryTime < 0) {
-                throw new IllegalArgumentException("maxRetryTime should be a positive integer");
-            }
-            this.maxRetryTime = maxRetryTime;
-            return this;
-        }
-
-        public RetryConfiguration build() {
-            return new ApiClient.RetryConfiguration(this);
-        }
-    }
-
     private static class ConnectorProperties implements ApiClientConnectorProperties {
         private final Map<String, Object> properties;
 
@@ -1057,14 +1023,29 @@ public class ApiClient implements AutoCloseable {
     }
 
     public static class RetryConfiguration {
-        private long backoffInterval;
-        private int defaultDelay;
-        private int maxRetryTime;
+        public long backoffInterval = 300000L;
+        public int defaultDelay = 3;
+        public int maxRetryTime = 0;
 
-        public RetryConfiguration(RetryConfigBuilder builder) {
-            this.backoffInterval = builder.backoffInterval;
-            this.defaultDelay = builder.defaultDelay;
-            this.maxRetryTime = builder.maxRetryTime;
+        public void setBackoffInterval(long backoffInterval) {
+            if (backoffInterval < 0) {
+                throw new IllegalArgumentException("backoffInterval should be a positive integer");
+            }
+            this.backoffInterval = backoffInterval;
+        }
+
+        public void setDefaultDelay(int defaultDelay) {
+            if (defaultDelay < 0) {
+                throw new IllegalArgumentException("defaultDelay should be a positive integer");
+            }
+            this.defaultDelay = defaultDelay;
+        }
+
+        public void setMaxRetryTime(int maxRetryTime) {
+            if (maxRetryTime < 0) {
+                throw new IllegalArgumentException("maxRetryTime should be a positive integer");
+            }
+            this.maxRetryTime = maxRetryTime;
         }
     }
 
@@ -1101,32 +1082,26 @@ public class ApiClient implements AutoCloseable {
                 if (connectorResponse.getStatusCode() == 429 || retryCountBeforeBackOff++ < MAX_RETRIES_BEFORE_BACKOFF) {
                     return waitBeforeRetry(waitTimeInMillis);
                 }
-                //If status code is 50x and if 3 Sec and 9 Sec buckets were already retried then wait for every 27 Sec and retry.
-                if (stopwatch.elapsed(TimeUnit.MILLISECONDS) > (backoffInterval * 2)) {
-                    return waitBeforeRetry(getWaitTimeExp(3));
-                }
-                //If status code is 50x then wait for every 3 Sec and retry until 5 minutes then after wait for every 9 Sec and retry until next 5 minutes.
-                if (stopwatch.elapsed(TimeUnit.MILLISECONDS) < backoffInterval) {
-                    return waitBeforeRetry(getWaitTimeExp(1));
 
-                } else if (stopwatch.elapsed(TimeUnit.MILLISECONDS) < (backoffInterval * 2)) {
-                    return waitBeforeRetry(getWaitTimeExp(2));
-                }
+                //If status code is 50x then wait for every 3 Sec and retry until 5 minutes then after wait for every 9 Sec and retry until next 5 minutes afterwards wait for every 27 Sec and retry.
+                return waitBeforeRetry(getWaitTimeExp(Math.min(3, Math.floor(stopwatch.elapsed(TimeUnit.MILLISECONDS) / backoffInterval) + 1)));
+
             }
+            stopwatch.stop();
             return false;
         }
 
-        private boolean waitBeforeRetry ( long waitTimeInMillis){
+        private boolean waitBeforeRetry(long waitTimeInMillis){
             try {
+                LOGGER.info("SDK will be sleeping for: " + waitTimeInMillis + " milliseconds before retrying.");
                 Thread.sleep(waitTimeInMillis);
             } catch (InterruptedException e) {
-                LOGGER.info("Error occurred while retrying", e.getMessage());
                 Thread.currentThread().interrupt();
             }
             return true;
         }
 
-        private long getWaitTimeExp(int bucketCount) {
+        private long getWaitTimeExp(double bucketCount) {
             return (long) Math.pow(defaultDelay, bucketCount) * 1000L;
         }
     }

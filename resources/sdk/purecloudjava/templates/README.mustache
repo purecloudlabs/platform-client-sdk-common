@@ -134,12 +134,11 @@ In default, Java SDK makes a call to API without a Retry option but this feature
 The SDK configuration is default to Retry off and it can be configured to enable or disable while creating an `ApiClient` Instance.
 
 Building a `RetryConfiguration` instance:
-
 ```{"language":"java"}
- ApiClient.RetryConfiguration retryConfiguration = new ApiClient.RetryConfigBuilder()
-                .withMaxRetryTime(60)
-                .build();
- ```
+ApiClient.RetryConfiguration retryConfiguration = new ApiClient.RetryConfiguration();
+retryConfiguration.setMaxRetryTime(30);
+```
+
 Setting `RetryConfiguration` instance to `ApiClient`:
  ```{"language":"java"}
         .withRetryConfiguration(retryConfiguration)
