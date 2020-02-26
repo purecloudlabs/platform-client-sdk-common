@@ -567,7 +567,7 @@ public class ApiClient implements AutoCloseable {
         ApiClientConnectorRequest connectorRequest = prepareConnectorRequest(request, isAuthRequest);
         ApiClientConnectorResponse connectorResponse = null;
         try {
-             Retry retry = new Retry(retryConfiguration);
+            Retry retry = new Retry(retryConfiguration == null ? new RetryConfiguration() : retryConfiguration);
             do {
                 connectorResponse = connector.invoke(connectorRequest);
             } while (retry.shouldRetry(connectorResponse));
