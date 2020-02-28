@@ -1024,7 +1024,7 @@ public class ApiClient implements AutoCloseable {
 
     public static class RetryConfiguration {
         public long backoffInterval = 300000L;
-        public int defaultDelay = 3;
+        public long defaultDelay = 3000L;
         public int maxRetryTime = 0;
         public int maxRetriesBeforeBackoff = 5;
 
@@ -1035,7 +1035,7 @@ public class ApiClient implements AutoCloseable {
             this.backoffInterval = backoffInterval;
         }
 
-        public void setDefaultDelay(int defaultDelay) {
+        public void setDefaultDelay(long defaultDelay) {
             if (defaultDelay < 0) {
                 throw new IllegalArgumentException("defaultDelay should be a positive integer");
             }
@@ -1059,7 +1059,7 @@ public class ApiClient implements AutoCloseable {
 
     public static class Retry {
         private long backoffInterval;
-        private int defaultDelay;
+        private long defaultDelay;
         private int maxRetryTime;
         private int maxRetriesBeforeBackoff;
         private int retryCountBeforeBackOff = 0;
@@ -1078,16 +1078,12 @@ public class ApiClient implements AutoCloseable {
         }
 
         public boolean shouldRetry(ApiClientConnectorResponse connectorResponse) {
-            return stopwatch.elapsed(TimeUnit.MILLISECONDS) < maxRetryTime * 1000L && shouldWait(connectorResponse);
-        }
-
-        private boolean shouldWait(ApiClientConnectorResponse connectorResponse) {
-            if (statusCodes.contains(connectorResponse.getStatusCode())) {
+            if (stopwatch.elapsed(TimeUnit.MILLISECONDS) < maxRetryTime * 1000L && statusCodes.contains(connectorResponse.getStatusCode())) {
 
                 if (connectorResponse.getHeaders().containsKey("Retry-After")) {
-                    waitTimeInMillis = Integer.parseInt(connectorResponse.getHeaders().getOrDefault("Retry-After", String.valueOf(defaultDelay))) * 1000L;
+                    waitTimeInMillis = Integer.parseInt(connectorResponse.getHeaders().getOrDefault("Retry-After", "3")) * 1000L;
                 } else {
-                    waitTimeInMillis = defaultDelay * 1000L;
+                    waitTimeInMillis = defaultDelay;
                 }
                 //If status code is 429 then wait until retry-after time and retry. OR If status code is retryable then for the first 5 times: wait until retry-after time and retry.
                 if (connectorResponse.getStatusCode() == 429 || retryCountBeforeBackOff++ < maxRetriesBeforeBackoff) {
@@ -1113,7 +1109,7 @@ public class ApiClient implements AutoCloseable {
         }
 
         private long getWaitTimeExp(double bucketCount) {
-            return (long) Math.pow(defaultDelay, bucketCount) * 1000L;
+            return (long) Math.pow(3, bucketCount) * 1000L;
         }
     }
 }
