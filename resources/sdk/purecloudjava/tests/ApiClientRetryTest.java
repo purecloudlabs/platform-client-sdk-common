@@ -62,7 +62,7 @@ public class ApiClientRetryTest {
             ApiResponse<ApiClientConnectorResponse> response = apiClient.invoke(getConnectorRequest(), getReturnType());
         } catch (ApiException ex) {
             Assert.assertEquals(429, ex.getStatusCode());
-            Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) > 6000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 6100, "It will wait every 100 Mills and retry until 6 Seconds");
+            Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) > 6000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 6100, "It will wait for every 100 Mills and retry until 6 Seconds");
             stopwatch.stop();
         }
     }
@@ -104,7 +104,7 @@ public class ApiClientRetryTest {
             ApiResponse<ApiClientConnectorResponse> response = apiClient.invoke(getConnectorRequest(), getReturnType());
         } catch (ApiException ex) {
             Assert.assertEquals(502, ex.getStatusCode());
-            Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) > 13000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 13100L, "It will wait every 2 Sec and retry for 5 times then it will backoff for 3 sec and retry then it exits.");
+            Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) > 13000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 13100L, "It will wait for every 2 Sec and retry for 5 times then it will backoff for 3 sec and retry then it exits.");
             stopwatch.stop();
         }
     }
@@ -126,7 +126,7 @@ public class ApiClientRetryTest {
             ApiResponse<ApiClientConnectorResponse> response = apiClient.invoke(getConnectorRequest(), getReturnType());
         } catch (ApiException ex) {
             Assert.assertEquals(503, ex.getStatusCode());
-            Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) > 40000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 40100, "It will wait every 200 Mills and retry for 5 times then it will backoff for 3 Sec once, 9 Sec once and 27 Sec before retrying");
+            Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) > 40000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 40100, "It will wait for every 200 Mills and retry for 5 times then it will backoff for 3 Sec once, 9 Sec once and 27 Sec before retrying");
             stopwatch.stop();
         }
     }
@@ -147,7 +147,25 @@ public class ApiClientRetryTest {
             ApiResponse<ApiClientConnectorResponse> response = apiClient.invoke(getConnectorRequest(), getReturnType());
         } catch (ApiException ex) {
             Assert.assertEquals(504, ex.getStatusCode());
-            Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) > 3000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 3100, "It will wait every 200 Mills and retry for 5 times then it will backoff for 3 Sec once, 9 Sec once and 27 Sec before retrying");
+            Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) > 3000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 3100, "It will wait for every 200 Mills and retry for 5 times then it will backoff for 3 Sec once, 9 Sec once and 27 Sec before retrying");
+            stopwatch.stop();
+        }
+    }
+
+    @Test
+    public void invokeTestWith_504_No_MaxRetryTime() throws IOException {
+        ApiClient.RetryConfiguration retryConfiguration = new ApiClient.RetryConfiguration();
+
+        apiClient = getApiClient(retryConfiguration);
+
+        try {
+            when(connector.invoke(any(ApiClientConnectorRequest.class))).thenReturn(getConnectorResponse(504, Collections.emptyMap()));
+
+            stopwatch = Stopwatch.createStarted();
+            ApiResponse<ApiClientConnectorResponse> response = apiClient.invoke(getConnectorRequest(), getReturnType());
+        } catch (ApiException ex) {
+            Assert.assertEquals(504, ex.getStatusCode());
+            Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) >= 0 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 100, "Since maxRetryTime is not provided it will not retry even if the status code is 504");
             stopwatch.stop();
         }
     }
@@ -182,7 +200,7 @@ public class ApiClientRetryTest {
         Stopwatch stopwatch = Stopwatch.createStarted();
         boolean result = retry.shouldRetry(response);
         Assert.assertTrue(result, "Status Code is 429, so it will sleep for 1 Sec as provided in Retry-After header and returns true");
-        Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) > 1000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 1100);
+        Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) >= 1000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 1100);
         stopwatch.stop();
 
     }
@@ -202,7 +220,7 @@ public class ApiClientRetryTest {
         Stopwatch stopwatch = Stopwatch.createStarted();
         boolean result = retry.shouldRetry(response);
         Assert.assertTrue(result, "Status Code is 502, so it will sleep for 1 Sec as provided in Retry-After header and returns true");
-        Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) > 1000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 1100);
+        Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) >= 1000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 1100);
         stopwatch.stop();
     }
 
@@ -235,7 +253,7 @@ public class ApiClientRetryTest {
         Stopwatch stopwatch = Stopwatch.createStarted();
         boolean result = retry.shouldRetry(response);
         Assert.assertTrue(result, "Since Status Code is 503 and maxRetriesBeforeBackoff is Zero, backoff block will be executed and returns true");
-        Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) > 3000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 3100);
+        Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) >= 3000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 3100);
         stopwatch.stop();
     }
 
@@ -250,7 +268,7 @@ public class ApiClientRetryTest {
         Stopwatch stopwatch = Stopwatch.createStarted();
         boolean result = retry.shouldRetry(response);
         Assert.assertTrue(result, "Even though Retry-After header is missing, it will sleep for 3 Sec by default and returns true");
-        Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) > 3000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 3100);
+        Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) >= 3000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 3100);
         stopwatch.stop();
     }
 
