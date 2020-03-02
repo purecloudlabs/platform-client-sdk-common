@@ -669,9 +669,7 @@ public class ApiClient implements AutoCloseable {
     }
 
     public <T> Future<ApiResponse<T>> invokeAsync(ApiRequest<?> request, TypeReference<T> returnType, AsyncApiCallback<ApiResponse<T>> callback) {
-        SettableFuture<ApiResponse<T>> future = SettableFuture.create();
-        getAPIResponseAsync(request, returnType, callback);
-        return future;
+        return getAPIResponseAsync(request, returnType, callback);
     }
 
     /**
