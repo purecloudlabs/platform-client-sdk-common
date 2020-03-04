@@ -3,6 +3,8 @@ package com.mypurecloud.sdk.v2;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Stopwatch;
@@ -14,9 +16,19 @@ import org.mockito.MockitoAnnotations;
 import org.testng.annotations.Test;
 import org.testng.annotations.BeforeMethod;
 import org.testng.Assert;
+import org.apache.http.*;
+import org.apache.http.params.HttpParams;
+import org.apache.http.message.BasicStatusLine;
+import org.apache.http.ProtocolVersion;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpUriRequest;
+import com.mypurecloud.sdk.v2.connector.apache.ApacheHttpClientConnector;
 
 import java.util.concurrent.TimeUnit;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.HashMap;
 import java.io.InputStream;
@@ -35,12 +47,18 @@ public class ApiClientRetryTest {
     private boolean useenum = true;
     Stopwatch stopwatch;
 
-    @Mock
-    ApiClientConnector connector;
+    CloseableHttpClient client;
+
+    CloseableHttpClient spyClient;
+
+    ApacheHttpClientConnector connector;
 
     @BeforeMethod
     public void setup() {
+        client = HttpClientBuilder.create().build();
+        spyClient = spy(client);
         MockitoAnnotations.initMocks(this);
+        connector = new ApacheHttpClientConnector(spyClient, null);
     }
 
     @Test
@@ -56,13 +74,13 @@ public class ApiClientRetryTest {
         headers.put("Retry-After", "3");
 
         try {
-            when(connector.invoke(any(ApiClientConnectorRequest.class))).thenReturn(getConnectorResponse(429, headers));
+            doReturn(getCloseableHttpResponse(429, headers)).when(spyClient).execute(any(HttpUriRequest.class));
 
             stopwatch = Stopwatch.createStarted();
             ApiResponse<ApiClientConnectorResponse> response = apiClient.invoke(getConnectorRequest(), getReturnType());
         } catch (ApiException ex) {
             Assert.assertEquals(429, ex.getStatusCode());
-            Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) > 6000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 6100, "It will wait for every 100 Mills and retry until 6 Seconds");
+            Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) >= 6000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 6100, "It will wait for every 100 Mills and retry until 6 Seconds");
             stopwatch.stop();
         }
     }
@@ -76,7 +94,7 @@ public class ApiClientRetryTest {
         headers.put("Retry-After", "3");
 
         try {
-            when(connector.invoke(any(ApiClientConnectorRequest.class))).thenReturn(getConnectorResponse(429, headers));
+            doReturn(getCloseableHttpResponse(429, headers)).when(spyClient).execute(any(HttpUriRequest.class));
 
             stopwatch = Stopwatch.createStarted();
             ApiResponse<ApiClientConnectorResponse> response = apiClient.invoke(getConnectorRequest(), getReturnType());
@@ -98,13 +116,13 @@ public class ApiClientRetryTest {
         apiClient = getApiClient(retryConfiguration);
 
         try {
-            when(connector.invoke(any(ApiClientConnectorRequest.class))).thenReturn(getConnectorResponse(502, Collections.emptyMap()));
+            doReturn(getCloseableHttpResponse(502, Collections.emptyMap())).when(spyClient).execute(any(HttpUriRequest.class));
 
             stopwatch = Stopwatch.createStarted();
             ApiResponse<ApiClientConnectorResponse> response = apiClient.invoke(getConnectorRequest(), getReturnType());
         } catch (ApiException ex) {
             Assert.assertEquals(502, ex.getStatusCode());
-            Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) > 13000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 13100L, "It will wait for every 2 Sec and retry for 5 times then it will backoff for 3 sec and retry then it exits.");
+            Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) >= 13000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 13100L, "It will wait for every 2 Sec and retry for 5 times then it will backoff for 3 sec and retry then it exits.");
             stopwatch.stop();
         }
     }
@@ -120,13 +138,13 @@ public class ApiClientRetryTest {
         apiClient = getApiClient(retryConfiguration);
 
         try {
-            when(connector.invoke(any(ApiClientConnectorRequest.class))).thenReturn(getConnectorResponse(503, Collections.emptyMap()));
+            doReturn(getCloseableHttpResponse(503, Collections.emptyMap())).when(spyClient).execute(any(HttpUriRequest.class));
 
             stopwatch = Stopwatch.createStarted();
             ApiResponse<ApiClientConnectorResponse> response = apiClient.invoke(getConnectorRequest(), getReturnType());
         } catch (ApiException ex) {
             Assert.assertEquals(503, ex.getStatusCode());
-            Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) > 40000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 40100, "It will wait for every 200 Mills and retry for 5 times then it will backoff for 3 Sec once, 9 Sec once and 27 Sec before retrying");
+            Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) >= 40000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 40100, "It will wait for every 200 Mills and retry for 5 times then it will backoff for 3 Sec once, 9 Sec once and 27 Sec before retrying");
             stopwatch.stop();
         }
     }
@@ -136,18 +154,19 @@ public class ApiClientRetryTest {
     public void invokeTestWith_504() throws IOException {
         ApiClient.RetryConfiguration retryConfiguration = new ApiClient.RetryConfiguration();
 
-        retryConfiguration.setMaxRetryTime(3);
+        retryConfiguration.setMaxRetryTime(2);
+        retryConfiguration.setDefaultDelay(1000);
 
         apiClient = getApiClient(retryConfiguration);
 
         try {
-            when(connector.invoke(any(ApiClientConnectorRequest.class))).thenReturn(getConnectorResponse(504, Collections.emptyMap()));
+            doReturn(getCloseableHttpResponse(504, Collections.emptyMap())).when(spyClient).execute(any(HttpUriRequest.class));
 
             stopwatch = Stopwatch.createStarted();
             ApiResponse<ApiClientConnectorResponse> response = apiClient.invoke(getConnectorRequest(), getReturnType());
         } catch (ApiException ex) {
             Assert.assertEquals(504, ex.getStatusCode());
-            Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) > 3000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 3100, "It will wait for every 200 Mills and retry for 5 times then it will backoff for 3 Sec once, 9 Sec once and 27 Sec before retrying");
+            Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) >= 2000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 2100, "It will wait for every 1 sec and retry for 2 times");
             stopwatch.stop();
         }
     }
@@ -159,7 +178,7 @@ public class ApiClientRetryTest {
         apiClient = getApiClient(retryConfiguration);
 
         try {
-            when(connector.invoke(any(ApiClientConnectorRequest.class))).thenReturn(getConnectorResponse(504, Collections.emptyMap()));
+            doReturn(getCloseableHttpResponse(504, Collections.emptyMap())).when(spyClient).execute(any(HttpUriRequest.class));
 
             stopwatch = Stopwatch.createStarted();
             ApiResponse<ApiClientConnectorResponse> response = apiClient.invoke(getConnectorRequest(), getReturnType());
@@ -300,6 +319,175 @@ public class ApiClientRetryTest {
         }
         return apiClient;
 
+    }
+
+    private CloseableHttpResponse getCloseableHttpResponse(int statusCode, Map<String, String> headerMap) {
+        return new CloseableHttpResponse() {
+            @Override
+            public void close() throws IOException {
+
+            }
+
+            @Override
+            public StatusLine getStatusLine() {
+                return new BasicStatusLine(new ProtocolVersion("HTTP/1.1", 1, 1), statusCode, "Bad GateWay");
+            }
+
+            @Override
+            public void setStatusLine(StatusLine statusline) {
+            }
+
+            @Override
+            public void setStatusLine(ProtocolVersion ver, int code) {
+            }
+
+            @Override
+            public void setStatusLine(ProtocolVersion ver, int code, String reason) {
+
+            }
+
+            @Override
+            public void setStatusCode(int code) throws IllegalStateException {
+            }
+
+            @Override
+            public void setReasonPhrase(String reason) throws IllegalStateException {
+
+            }
+
+            @Override
+            public HttpEntity getEntity() {
+                return null;
+            }
+
+            @Override
+            public void setEntity(HttpEntity entity) {
+
+            }
+
+            @Override
+            public Locale getLocale() {
+                return null;
+            }
+
+            @Override
+            public void setLocale(Locale loc) {
+
+            }
+
+            @Override
+            public ProtocolVersion getProtocolVersion() {
+                return null;
+            }
+
+            @Override
+            public boolean containsHeader(String name) {
+                return false;
+            }
+
+            @Override
+            public Header[] getHeaders(String name) {
+                return new Header[0];
+            }
+
+            @Override
+            public Header getFirstHeader(String name) {
+                return null;
+            }
+
+            @Override
+            public Header getLastHeader(String name) {
+                return null;
+            }
+
+            @Override
+            public Header[] getAllHeaders() {
+                Header header = new Header() {
+                    @Override
+                    public String getName() {
+                        String name = null;
+                        if (!headerMap.isEmpty()) {
+                            for (String key : headerMap.keySet()) {
+                                name = key;
+                            }
+                        }
+                        return name;
+                    }
+
+                    @Override
+                    public String getValue() {
+                        String value = null;
+                        if (!headerMap.isEmpty()) {
+                            value = headerMap.get("Retry-After");
+                        }
+                        return value;
+                    }
+
+                    @Override
+                    public HeaderElement[] getElements() throws ParseException {
+                        return new HeaderElement[0];
+                    }
+                };
+                Header[] allHeader = new Header[1];
+                allHeader[0] = header;
+                return allHeader;
+            }
+
+            @Override
+            public void addHeader(Header header) {
+
+            }
+
+            @Override
+            public void addHeader(String name, String value) {
+
+            }
+
+            @Override
+            public void setHeader(Header header) {
+
+            }
+
+            @Override
+            public void setHeader(String name, String value) {
+
+            }
+
+            @Override
+            public void setHeaders(Header[] headers) {
+
+            }
+
+            @Override
+            public void removeHeader(Header header) {
+
+            }
+
+            @Override
+            public void removeHeaders(String name) {
+
+            }
+
+            @Override
+            public HeaderIterator headerIterator() {
+                return null;
+            }
+
+            @Override
+            public HeaderIterator headerIterator(String name) {
+                return null;
+            }
+
+            @Override
+            public HttpParams getParams() {
+                return null;
+            }
+
+            @Override
+            public void setParams(HttpParams params) {
+
+            }
+        };
     }
 
     private ApiClientConnectorResponse getConnectorResponse(int statusCode, Map<String, String> headers) {

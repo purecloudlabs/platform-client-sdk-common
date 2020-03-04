@@ -3,6 +3,8 @@ package com.mypurecloud.sdk.v2;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Stopwatch;
@@ -20,6 +22,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.message.BasicStatusLine;
 import org.apache.http.params.HttpParams;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.*;
 
 import java.lang.IllegalStateException;
@@ -45,15 +48,18 @@ public class ApiClientRetryAsyncTest {
     private boolean useenum = true;
     Stopwatch stopwatch;
 
-    @Mock
     CloseableHttpClient client;
+
+    CloseableHttpClient spyClient;
 
     ApacheHttpClientConnector connector;
 
     @BeforeMethod
     public void setup() {
+        client = HttpClientBuilder.create().build();
+        spyClient = spy(client);
         MockitoAnnotations.initMocks(this);
-        connector = new ApacheHttpClientConnector(client, null);
+        connector = new ApacheHttpClientConnector(spyClient, null);
     }
 
     @Test
@@ -65,7 +71,7 @@ public class ApiClientRetryAsyncTest {
 
         Map<String, String> headers = new HashMap<>();
         headers.put("Retry-After", "1");
-        when(client.execute(any(HttpUriRequest.class))).thenReturn(getCloseableHttpResponse(429, headers));
+        doReturn(getCloseableHttpResponse(429, headers)).when(spyClient).execute(any(HttpUriRequest.class));
 
         try {
             stopwatch = Stopwatch.createStarted();
@@ -73,7 +79,7 @@ public class ApiClientRetryAsyncTest {
             final ApiResponse<ApiClientConnectorResponse> apiClientConnectorResponseApiResponse = response.get();
         } catch (Exception e) {
             Assert.assertEquals(429, ((ApiException) e.getCause()).getStatusCode());
-            Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) > 5000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 5100, "It will wait for every 1 Sec provided by Retry-After header Sec and retry for 5 Sec");
+            Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) >= 5000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 5100, "It will wait for every 1 Sec provided by Retry-After header Sec and retry for 5 Sec");
             stopwatch.stop();
         }
 
@@ -86,7 +92,7 @@ public class ApiClientRetryAsyncTest {
         Map<String, String> headers = new HashMap<>();
         headers.put("Retry-After", "1");
 
-        when(client.execute(any(HttpUriRequest.class))).thenReturn(getCloseableHttpResponse(429, headers));
+        doReturn(getCloseableHttpResponse(429, headers)).when(spyClient).execute(any(HttpUriRequest.class));
 
         try {
             stopwatch = Stopwatch.createStarted();
@@ -109,7 +115,7 @@ public class ApiClientRetryAsyncTest {
         retryConfiguration.setBackoffInterval(11000);
         apiClient = getApiClient(retryConfiguration);
 
-        when(client.execute(any(HttpUriRequest.class))).thenReturn(getCloseableHttpResponse(502, Collections.emptyMap()));
+        doReturn(getCloseableHttpResponse(502, Collections.emptyMap())).when(spyClient).execute(any(HttpUriRequest.class));
 
         try {
             stopwatch = Stopwatch.createStarted();
@@ -117,7 +123,7 @@ public class ApiClientRetryAsyncTest {
             final ApiResponse<ApiClientConnectorResponse> apiClientConnectorResponseApiResponse = response.get();
         } catch (Exception e) {
             Assert.assertEquals(502, ((ApiException) e.getCause()).getStatusCode());
-            Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) > 13000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 13100L, "It will wait for every 2 Sec and retry for 5 times then it will backoff for 3 sec and retry then it exits.");
+            Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) >= 13000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 13100L, "It will wait for every 2 Sec and retry for 5 times then it will backoff for 3 sec and retry then it exits.");
             stopwatch.stop();
         }
 
@@ -132,7 +138,7 @@ public class ApiClientRetryAsyncTest {
         retryConfiguration.setBackoffInterval(3000);
         apiClient = getApiClient(retryConfiguration);
 
-        when(client.execute(any(HttpUriRequest.class))).thenReturn(getCloseableHttpResponse(503, Collections.emptyMap()));
+        doReturn(getCloseableHttpResponse(503, Collections.emptyMap())).when(spyClient).execute(any(HttpUriRequest.class));
 
         try {
             stopwatch = Stopwatch.createStarted();
@@ -140,7 +146,7 @@ public class ApiClientRetryAsyncTest {
             final ApiResponse<ApiClientConnectorResponse> apiClientConnectorResponseApiResponse = response.get();
         } catch (Exception e) {
             Assert.assertEquals(503, ((ApiException) e.getCause()).getStatusCode());
-            Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) > 40000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 40100, "It will wait for every 200 Mills and retry for 5 times then it will backoff for 3 Sec once, 9 Sec once and 27 Sec before retrying");
+            Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) >= 40000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 40100, "It will wait for every 200 Mills and retry for 5 times then it will backoff for 3 Sec once, 9 Sec once and 27 Sec before retrying");
             stopwatch.stop();
         }
 
@@ -149,10 +155,13 @@ public class ApiClientRetryAsyncTest {
     @Test
     public void invokeAsyncTestWith_504() throws IOException {
         ApiClient.RetryConfiguration retryConfiguration = new ApiClient.RetryConfiguration();
-        retryConfiguration.setMaxRetryTime(3);
+
+        retryConfiguration.setMaxRetryTime(2);
+        retryConfiguration.setDefaultDelay(1000);
+
         apiClient = getApiClient(retryConfiguration);
 
-        when(client.execute(any(HttpUriRequest.class))).thenReturn(getCloseableHttpResponse(504, Collections.emptyMap()));
+        doReturn(getCloseableHttpResponse(504, Collections.emptyMap())).when(spyClient).execute(any(HttpUriRequest.class));
 
         try {
             stopwatch = Stopwatch.createStarted();
@@ -160,7 +169,7 @@ public class ApiClientRetryAsyncTest {
             final ApiResponse<ApiClientConnectorResponse> apiClientConnectorResponseApiResponse = response.get();
         } catch (Exception e) {
             Assert.assertEquals(504, ((ApiException) e.getCause()).getStatusCode());
-            Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) > 3000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 3100, "It will wait for every 200 Mills and retry for 5 times then it will backoff for 3 Sec once, 9 Sec once and 27 Sec before retrying");
+            Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) >= 2000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 2100, "It will wait for every 1 sec and retry for 2 times");
             stopwatch.stop();
         }
 
@@ -171,7 +180,7 @@ public class ApiClientRetryAsyncTest {
         ApiClient.RetryConfiguration retryConfiguration = new ApiClient.RetryConfiguration();
         apiClient = getApiClient(retryConfiguration);
 
-        when(client.execute(any(HttpUriRequest.class))).thenReturn(getCloseableHttpResponse(504, Collections.emptyMap()));
+        doReturn(getCloseableHttpResponse(504, Collections.emptyMap())).when(spyClient).execute(any(HttpUriRequest.class));
 
         try {
             stopwatch = Stopwatch.createStarted();
@@ -184,7 +193,6 @@ public class ApiClientRetryAsyncTest {
         }
 
     }
-
 
     private AsyncApiCallback<ApiResponse<ApiClientConnectorResponse>> getAsyncApiCallBack() {
         return new AsyncApiCallback<ApiResponse<ApiClientConnectorResponse>>() {
