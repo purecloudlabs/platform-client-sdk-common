@@ -136,7 +136,7 @@ To enable automatic retries, provide a RetryConfiguration object with the maximu
 Building a `RetryConfiguration` instance:
 ```{"language":"java"}
 ApiClient.RetryConfiguration retryConfiguration = new ApiClient.RetryConfiguration();
-retryConfiguration.setMaxRetryTime(30);
+retryConfiguration.setMaxRetryTimeSec(30);
 ```
 
 Setting `RetryConfiguration` instance to `ApiClient`:
