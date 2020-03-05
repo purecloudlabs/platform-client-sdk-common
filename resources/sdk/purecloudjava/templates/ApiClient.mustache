@@ -88,6 +88,7 @@ public class ApiClient implements AutoCloseable {
     private final ApiClientConnector connector;
 
     private RetryConfiguration retryConfiguration;
+    private static final RetryConfiguration DEFAULT_RETRY_CONFIG = new RetryConfiguration();
 
     public ApiClient() {
         this(Builder.standard());
@@ -100,7 +101,12 @@ public class ApiClient implements AutoCloseable {
         }
         this.basePath = basePath;
 
-        this.retryConfiguration = builder.retryConfiguration;
+        RetryConfiguration retryConfig = builder.retryConfiguration;
+        if (retryConfig == null) {
+            retryConfig = DEFAULT_RETRY_CONFIG;
+        }
+        this.retryConfiguration = retryConfig;
+
         this.defaultHeaderMap = new HashMap<>(builder.defaultHeaderMap);
         this.properties = builder.properties.copy();
         this.shouldThrowErrors = builder.shouldThrowErrors == null ? true : builder.shouldThrowErrors;
@@ -567,7 +573,7 @@ public class ApiClient implements AutoCloseable {
         ApiClientConnectorRequest connectorRequest = prepareConnectorRequest(request, isAuthRequest);
         ApiClientConnectorResponse connectorResponse = null;
         try {
-            Retry retry = new Retry(retryConfiguration == null ? new RetryConfiguration() : retryConfiguration);
+            Retry retry = new Retry(retryConfiguration);
             do {
                 connectorResponse = connector.invoke(connectorRequest);
             } while (retry.shouldRetry(connectorResponse));
@@ -589,7 +595,7 @@ public class ApiClient implements AutoCloseable {
         final SettableFuture<ApiResponse<T>> future = SettableFuture.create();
         try {
             ApiClientConnectorRequest connectorRequest = prepareConnectorRequest(request, false);
-            Retry retry = new Retry(retryConfiguration == null ? new RetryConfiguration() : retryConfiguration);
+            Retry retry = new Retry(retryConfiguration);
             getAPIResponseAsyncWithRetry(connectorRequest, returnType, callback, retry, future);
         } catch (Throwable exception) {
             notifyFailure(future, callback, exception);
@@ -1007,30 +1013,30 @@ public class ApiClient implements AutoCloseable {
     }
 
     public static class RetryConfiguration {
-        public long backoffInterval = 300000L;
-        public long defaultDelay = 3000L;
-        public int maxRetryTime = 0;
-        public int maxRetriesBeforeBackoff = 5;
+        private long backoffIntervalMs = 300000L;
+        private long retryAfterDefaultMs = 3000L;
+        private int maxRetryTimeSec = 0;
+        private int maxRetriesBeforeBackoff = 5;
 
-        public void setBackoffInterval(long backoffInterval) {
-            if (backoffInterval < 0) {
+        public void setBackoffIntervalMs(long backoffIntervalMs) {
+            if (backoffIntervalMs < 0) {
                 throw new IllegalArgumentException("backoffInterval should be a positive integer");
             }
-            this.backoffInterval = backoffInterval;
+            this.backoffIntervalMs = backoffIntervalMs;
         }
 
-        public void setDefaultDelay(long defaultDelay) {
-            if (defaultDelay < 0) {
+        public void setRetryAfterDefaultMs(long retryAfterDefaultMs) {
+            if (retryAfterDefaultMs < 0) {
                 throw new IllegalArgumentException("defaultDelay should be a positive integer");
             }
-            this.defaultDelay = defaultDelay;
+            this.retryAfterDefaultMs = retryAfterDefaultMs;
         }
 
-        public void setMaxRetryTime(int maxRetryTime) {
-            if (maxRetryTime < 0) {
+        public void setMaxRetryTimeSec(int maxRetryTimeSec) {
+            if (maxRetryTimeSec < 0) {
                 throw new IllegalArgumentException("maxRetryTime should be a positive integer");
             }
-            this.maxRetryTime = maxRetryTime;
+            this.maxRetryTimeSec = maxRetryTimeSec;
         }
 
         public void setMaxRetriesBeforeBackoff(int maxRetriesBeforeBackoff) {
@@ -1042,50 +1048,50 @@ public class ApiClient implements AutoCloseable {
     }
 
     public static class Retry {
-        private long backoffInterval;
-        private long defaultDelay;
-        private int maxRetryTime;
+        private long backoffIntervalMs;
+        private long retryAfterDefaultMs;
+        private int maxRetryTimeSec;
         private int maxRetriesBeforeBackoff;
         private int retryCountBeforeBackOff = 0;
-        private long waitTimeInMillis;
+        private long retryAfterMs;
         private Stopwatch stopwatch = null;
 
         private final List<Integer> statusCodes = Arrays.asList(429, 502, 503, 504);
         private static Logger LOGGER = LoggerFactory.getLogger(Retry.class);
 
         public Retry(RetryConfiguration retryConfiguration) {
-            this.backoffInterval = retryConfiguration.backoffInterval;
-            this.defaultDelay = retryConfiguration.defaultDelay;
-            this.maxRetryTime = retryConfiguration.maxRetryTime;
+            this.backoffIntervalMs = retryConfiguration.backoffIntervalMs;
+            this.retryAfterDefaultMs = retryConfiguration.retryAfterDefaultMs;
+            this.maxRetryTimeSec = retryConfiguration.maxRetryTimeSec;
             this.maxRetriesBeforeBackoff = retryConfiguration.maxRetriesBeforeBackoff;
             stopwatch = Stopwatch.createStarted();
         }
 
         public boolean shouldRetry(ApiClientConnectorResponse connectorResponse) {
-            if (stopwatch.elapsed(TimeUnit.MILLISECONDS) < maxRetryTime * 1000L && statusCodes.contains(connectorResponse.getStatusCode())) {
+            if (stopwatch.elapsed(TimeUnit.MILLISECONDS) < maxRetryTimeSec * 1000L && statusCodes.contains(connectorResponse.getStatusCode())) {
 
                 if (connectorResponse.getHeaders().containsKey("Retry-After")) {
-                    waitTimeInMillis = Integer.parseInt(connectorResponse.getHeaders().getOrDefault("Retry-After", "3")) * 1000L;
+                    retryAfterMs = Integer.parseInt(connectorResponse.getHeaders().getOrDefault("Retry-After", "3")) * 1000L;
                 } else {
-                    waitTimeInMillis = defaultDelay;
+                    retryAfterMs = retryAfterDefaultMs;
                 }
                 //If status code is 429 then wait until retry-after time and retry. OR If status code is retryable then for the first 5 times: wait until retry-after time and retry.
                 if (connectorResponse.getStatusCode() == 429 || retryCountBeforeBackOff++ < maxRetriesBeforeBackoff) {
-                    return waitBeforeRetry(waitTimeInMillis);
+                    return waitBeforeRetry(retryAfterMs);
                 }
 
                 //If status code is 50x then wait for every 3 Sec and retry until 5 minutes then after wait for every 9 Sec and retry until next 5 minutes afterwards wait for every 27 Sec and retry.
-                return waitBeforeRetry(getWaitTimeExp(Math.min(3, Math.floor(stopwatch.elapsed(TimeUnit.MILLISECONDS) / backoffInterval) + 1)));
+                return waitBeforeRetry(getWaitTimeExp(Math.min(3, Math.floor(stopwatch.elapsed(TimeUnit.MILLISECONDS) / backoffIntervalMs) + 1)));
 
             }
             stopwatch.stop();
             return false;
         }
 
-        private boolean waitBeforeRetry(long waitTimeInMillis){
+        private boolean waitBeforeRetry(long retryAfterMs){
             try {
-                LOGGER.info("SDK will be sleeping for: " + waitTimeInMillis + " milliseconds before retrying.");
-                Thread.sleep(waitTimeInMillis);
+                LOGGER.info("SDK will be sleeping for: " + retryAfterMs + " milliseconds before retrying.");
+                Thread.sleep(retryAfterMs);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }

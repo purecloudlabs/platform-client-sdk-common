@@ -66,7 +66,7 @@ public class ApiClientRetryAsyncTest {
     public void invokeAsyncTestWith_429() throws IOException {
         ApiClient.RetryConfiguration retryConfiguration = new ApiClient.RetryConfiguration();
 
-        retryConfiguration.setMaxRetryTime(5);
+        retryConfiguration.setMaxRetryTimeSec(5);
         apiClient = getApiClient(retryConfiguration);
 
         Map<String, String> headers = new HashMap<>();
@@ -110,9 +110,9 @@ public class ApiClientRetryAsyncTest {
     public void invokeAsyncTestWith_502() throws IOException {
         ApiClient.RetryConfiguration retryConfiguration = new ApiClient.RetryConfiguration();
 
-        retryConfiguration.setMaxRetryTime(13);
-        retryConfiguration.setDefaultDelay(2000);
-        retryConfiguration.setBackoffInterval(11000);
+        retryConfiguration.setMaxRetryTimeSec(13);
+        retryConfiguration.setRetryAfterDefaultMs(2000);
+        retryConfiguration.setBackoffIntervalMs(11000);
         apiClient = getApiClient(retryConfiguration);
 
         doReturn(getCloseableHttpResponse(502, Collections.emptyMap())).when(spyClient).execute(any(HttpUriRequest.class));
@@ -133,9 +133,9 @@ public class ApiClientRetryAsyncTest {
     public void invokeAsyncTestWith_503() throws IOException {
         ApiClient.RetryConfiguration retryConfiguration = new ApiClient.RetryConfiguration();
 
-        retryConfiguration.setMaxRetryTime(40);
-        retryConfiguration.setDefaultDelay(200);
-        retryConfiguration.setBackoffInterval(3000);
+        retryConfiguration.setMaxRetryTimeSec(40);
+        retryConfiguration.setRetryAfterDefaultMs(200);
+        retryConfiguration.setBackoffIntervalMs(3000);
         apiClient = getApiClient(retryConfiguration);
 
         doReturn(getCloseableHttpResponse(503, Collections.emptyMap())).when(spyClient).execute(any(HttpUriRequest.class));
@@ -156,8 +156,8 @@ public class ApiClientRetryAsyncTest {
     public void invokeAsyncTestWith_504() throws IOException {
         ApiClient.RetryConfiguration retryConfiguration = new ApiClient.RetryConfiguration();
 
-        retryConfiguration.setMaxRetryTime(2);
-        retryConfiguration.setDefaultDelay(1000);
+        retryConfiguration.setMaxRetryTimeSec(2);
+        retryConfiguration.setRetryAfterDefaultMs(1000);
 
         apiClient = getApiClient(retryConfiguration);
 
