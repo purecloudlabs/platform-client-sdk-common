@@ -87,7 +87,7 @@ public class ApiClient implements AutoCloseable {
     private final Map<String, Authentication> authentications;
     private final ApiClientConnector connector;
 
-    private RetryConfiguration retryConfiguration;
+    private final RetryConfiguration retryConfiguration;
     private static final RetryConfiguration DEFAULT_RETRY_CONFIG = new RetryConfiguration();
 
     public ApiClient() {
