@@ -141,7 +141,14 @@ function setEnvironment() {
         return platformClient.PureCloudRegionHosts.ap_northeast_1;
       case "mypurecloud.de":
         return platformClient.PureCloudRegionHosts.eu_central_1;
-  
+      case "usw2.pure.cloud":
+        return platformClient.PureCloudRegionHosts.us_west_2;
+      case "cac1.pure.cloud":
+        return platformClient.PureCloudRegionHosts.ca_central_1;
+      case "apne2.pure.cloud":
+        return platformClient.PureCloudRegionHosts.ap_northeast_2;
+      case "euw2.pure.cloud":
+        return platformClient.PureCloudRegionHosts.eu_west_2;
       default:
         console.log(
           "Value does not exist in PureCloudRegionHosts defaulting to PURECLOUD ENVIRONMENT value"
