@@ -144,7 +144,11 @@ class SdkTests(unittest.TestCase):
 			'mypurecloud.ie': PureCloudPlatformClientV2.PureCloudRegionHosts.eu_west_1,
 			'mypurecloud.com.au': PureCloudPlatformClientV2.PureCloudRegionHosts.ap_southeast_2,
 			'mypurecloud.jp': PureCloudPlatformClientV2.PureCloudRegionHosts.ap_northeast_1,
-			'eu_central_1': PureCloudPlatformClientV2.PureCloudRegionHosts.eu_central_1
+			'mypurecloud.de': PureCloudPlatformClientV2.PureCloudRegionHosts.eu_central_1,
+			'usw2.pure.cloud': PureCloudPlatformClientV2.PureCloudRegionHosts.us_west_2,
+			'cac1.pure.cloud': PureCloudPlatformClientV2.PureCloudRegionHosts.ca_central_1,
+			'apne2.pure.cloud': PureCloudPlatformClientV2.PureCloudRegionHosts.ap_northeast_2,
+			'euw2.pure.cloud': PureCloudPlatformClientV2.PureCloudRegionHosts.eu_west_2
 			}.get(x,x)
 
 
