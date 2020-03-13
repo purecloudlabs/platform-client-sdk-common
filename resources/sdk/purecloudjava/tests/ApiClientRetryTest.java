@@ -5,6 +5,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.mock;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Stopwatch;
@@ -17,6 +18,7 @@ import org.testng.annotations.Test;
 import org.testng.annotations.BeforeMethod;
 import org.testng.Assert;
 import org.apache.http.*;
+import org.apache.http.Header;
 import org.apache.http.params.HttpParams;
 import org.apache.http.message.BasicStatusLine;
 import org.apache.http.ProtocolVersion;
@@ -53,6 +55,9 @@ public class ApiClientRetryTest {
 
     ApacheHttpClientConnector connector;
 
+    @Mock
+    private CloseableHttpResponse mockResponse;
+
     @BeforeMethod
     public void setup() {
         client = HttpClientBuilder.create().build();
@@ -70,11 +75,16 @@ public class ApiClientRetryTest {
 
         apiClient = getApiClient(retryConfiguration);
 
-        Map<String, String> headers = new HashMap<>();
-        headers.put("Retry-After", "3");
+        mockResponse = getMockCloseableHttpResponse(429);
+
+        Header header = mock(Header.class);
+        when(header.getName()).thenReturn("Retry-After");
+        when(header.getValue()).thenReturn("3");
+
+        when(mockResponse.getAllHeaders()).thenReturn(new Header[]{header});
+        doReturn(mockResponse).when(spyClient).execute(any(HttpUriRequest.class));
 
         try {
-            doReturn(getCloseableHttpResponse(429, headers)).when(spyClient).execute(any(HttpUriRequest.class));
 
             stopwatch = Stopwatch.createStarted();
             ApiResponse<ApiClientConnectorResponse> response = apiClient.invoke(getConnectorRequest(), getReturnType());
@@ -90,12 +100,16 @@ public class ApiClientRetryTest {
         ApiClient.RetryConfiguration retryConfiguration = new ApiClient.RetryConfiguration();
         apiClient = getApiClient(retryConfiguration);
 
-        Map<String, String> headers = new HashMap<>();
-        headers.put("Retry-After", "3");
+        mockResponse = getMockCloseableHttpResponse(429);
+
+        Header header = mock(Header.class);
+        when(header.getName()).thenReturn("Retry-After");
+        when(header.getValue()).thenReturn("3");
+
+        when(mockResponse.getAllHeaders()).thenReturn(new Header[]{header});
+        doReturn(mockResponse).when(spyClient).execute(any(HttpUriRequest.class));
 
         try {
-            doReturn(getCloseableHttpResponse(429, headers)).when(spyClient).execute(any(HttpUriRequest.class));
-
             stopwatch = Stopwatch.createStarted();
             ApiResponse<ApiClientConnectorResponse> response = apiClient.invoke(getConnectorRequest(), getReturnType());
         } catch (ApiException ex) {
@@ -115,9 +129,12 @@ public class ApiClientRetryTest {
 
         apiClient = getApiClient(retryConfiguration);
 
-        try {
-            doReturn(getCloseableHttpResponse(502, Collections.emptyMap())).when(spyClient).execute(any(HttpUriRequest.class));
+        mockResponse = getMockCloseableHttpResponse(502);
 
+        when(mockResponse.getAllHeaders()).thenReturn(new Header[]{});
+        doReturn(mockResponse).when(spyClient).execute(any(HttpUriRequest.class));
+
+        try {
             stopwatch = Stopwatch.createStarted();
             ApiResponse<ApiClientConnectorResponse> response = apiClient.invoke(getConnectorRequest(), getReturnType());
         } catch (ApiException ex) {
@@ -137,9 +154,12 @@ public class ApiClientRetryTest {
 
         apiClient = getApiClient(retryConfiguration);
 
-        try {
-            doReturn(getCloseableHttpResponse(503, Collections.emptyMap())).when(spyClient).execute(any(HttpUriRequest.class));
+        mockResponse = getMockCloseableHttpResponse(503);
 
+        when(mockResponse.getAllHeaders()).thenReturn(new Header[]{});
+        doReturn(mockResponse).when(spyClient).execute(any(HttpUriRequest.class));
+
+        try {
             stopwatch = Stopwatch.createStarted();
             ApiResponse<ApiClientConnectorResponse> response = apiClient.invoke(getConnectorRequest(), getReturnType());
         } catch (ApiException ex) {
@@ -158,10 +178,12 @@ public class ApiClientRetryTest {
         retryConfiguration.setRetryAfterDefaultMs(1000);
 
         apiClient = getApiClient(retryConfiguration);
+        mockResponse = getMockCloseableHttpResponse(504);
+
+        when(mockResponse.getAllHeaders()).thenReturn(new Header[]{});
+        doReturn(mockResponse).when(spyClient).execute(any(HttpUriRequest.class));
 
         try {
-            doReturn(getCloseableHttpResponse(504, Collections.emptyMap())).when(spyClient).execute(any(HttpUriRequest.class));
-
             stopwatch = Stopwatch.createStarted();
             ApiResponse<ApiClientConnectorResponse> response = apiClient.invoke(getConnectorRequest(), getReturnType());
         } catch (ApiException ex) {
@@ -177,9 +199,12 @@ public class ApiClientRetryTest {
 
         apiClient = getApiClient(retryConfiguration);
 
-        try {
-            doReturn(getCloseableHttpResponse(504, Collections.emptyMap())).when(spyClient).execute(any(HttpUriRequest.class));
+        mockResponse = getMockCloseableHttpResponse(504);
 
+        when(mockResponse.getAllHeaders()).thenReturn(new Header[]{});
+        doReturn(mockResponse).when(spyClient).execute(any(HttpUriRequest.class));
+
+        try {
             stopwatch = Stopwatch.createStarted();
             ApiResponse<ApiClientConnectorResponse> response = apiClient.invoke(getConnectorRequest(), getReturnType());
         } catch (ApiException ex) {
@@ -321,173 +346,10 @@ public class ApiClientRetryTest {
 
     }
 
-    private CloseableHttpResponse getCloseableHttpResponse(int statusCode, Map<String, String> headerMap) {
-        return new CloseableHttpResponse() {
-            @Override
-            public void close() throws IOException {
-
-            }
-
-            @Override
-            public StatusLine getStatusLine() {
-                return new BasicStatusLine(new ProtocolVersion("HTTP/1.1", 1, 1), statusCode, "Bad GateWay");
-            }
-
-            @Override
-            public void setStatusLine(StatusLine statusline) {
-            }
-
-            @Override
-            public void setStatusLine(ProtocolVersion ver, int code) {
-            }
-
-            @Override
-            public void setStatusLine(ProtocolVersion ver, int code, String reason) {
-
-            }
-
-            @Override
-            public void setStatusCode(int code) throws IllegalStateException {
-            }
-
-            @Override
-            public void setReasonPhrase(String reason) throws IllegalStateException {
-
-            }
-
-            @Override
-            public HttpEntity getEntity() {
-                return null;
-            }
-
-            @Override
-            public void setEntity(HttpEntity entity) {
-
-            }
-
-            @Override
-            public Locale getLocale() {
-                return null;
-            }
-
-            @Override
-            public void setLocale(Locale loc) {
-
-            }
-
-            @Override
-            public ProtocolVersion getProtocolVersion() {
-                return null;
-            }
-
-            @Override
-            public boolean containsHeader(String name) {
-                return false;
-            }
-
-            @Override
-            public Header[] getHeaders(String name) {
-                return new Header[0];
-            }
-
-            @Override
-            public Header getFirstHeader(String name) {
-                return null;
-            }
-
-            @Override
-            public Header getLastHeader(String name) {
-                return null;
-            }
-
-            @Override
-            public Header[] getAllHeaders() {
-                Header header = new Header() {
-                    @Override
-                    public String getName() {
-                        String name = null;
-                        if (!headerMap.isEmpty()) {
-                            for (String key : headerMap.keySet()) {
-                                name = key;
-                            }
-                        }
-                        return name;
-                    }
-
-                    @Override
-                    public String getValue() {
-                        String value = null;
-                        if (!headerMap.isEmpty()) {
-                            value = headerMap.get("Retry-After");
-                        }
-                        return value;
-                    }
-
-                    @Override
-                    public HeaderElement[] getElements() throws ParseException {
-                        return new HeaderElement[0];
-                    }
-                };
-                Header[] allHeader = new Header[1];
-                allHeader[0] = header;
-                return allHeader;
-            }
-
-            @Override
-            public void addHeader(Header header) {
-
-            }
-
-            @Override
-            public void addHeader(String name, String value) {
-
-            }
-
-            @Override
-            public void setHeader(Header header) {
-
-            }
-
-            @Override
-            public void setHeader(String name, String value) {
-
-            }
-
-            @Override
-            public void setHeaders(Header[] headers) {
-
-            }
-
-            @Override
-            public void removeHeader(Header header) {
-
-            }
-
-            @Override
-            public void removeHeaders(String name) {
-
-            }
-
-            @Override
-            public HeaderIterator headerIterator() {
-                return null;
-            }
-
-            @Override
-            public HeaderIterator headerIterator(String name) {
-                return null;
-            }
-
-            @Override
-            public HttpParams getParams() {
-                return null;
-            }
-
-            @Override
-            public void setParams(HttpParams params) {
-
-            }
-        };
+    private CloseableHttpResponse getMockCloseableHttpResponse(int statusCode) {
+        final CloseableHttpResponse mockCloseableHttpResponse = mock(CloseableHttpResponse.class);
+        when(mockCloseableHttpResponse.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("HTTP/1.1", 1, 1), statusCode, "Not Okay"));
+        return mockCloseableHttpResponse;
     }
 
     private ApiClientConnectorResponse getConnectorResponse(int statusCode, Map<String, String> headers) {
