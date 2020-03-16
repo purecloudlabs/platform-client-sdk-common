@@ -782,6 +782,13 @@ public class ApiClient implements AutoCloseable {
             return this;
         }
 
+        public Builder withAuthenticatedProxy(Proxy proxy, String user, String pass) {
+            withProxy(proxy);
+            properties.setProperty(ApiClientConnectorProperty.PROXY_USER, user);
+            properties.setProperty(ApiClientConnectorProperty.PROXY_PASS, pass);
+            return this;
+        }
+
         public Builder withProperty(String name, Object value) {
             properties.setProperty(name, value);
             return this;
