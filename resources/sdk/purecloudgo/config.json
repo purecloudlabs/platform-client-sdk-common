@@ -70,6 +70,13 @@
         },
         {
           "type": "command",
+          "command": "go",
+      		"cwd": "${SDK_REPO}",
+      		"args":[ "get", "github.com/google/uuid" ],
+          "failOnError": true
+        },
+        {
+          "type": "command",
           "command": "make",
       		"cwd": "${SDK_REPO}",
       		"args":[ "build", "test" ],
