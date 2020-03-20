@@ -400,6 +400,7 @@ function buildImpl() {
 
 		// Copy readme from build to docs and repo root
 		log.info('Copying readme...');
+		fs.ensureDirSync(path.join(getEnv('SDK_REPO'), 'build/docs'));
 		fs.createReadStream(path.join(getEnv('SDK_REPO'), 'build/README.md'))
 			.pipe(fs.createWriteStream(path.join(getEnv('SDK_REPO'), 'build/docs/index.md')));
 		fs.createReadStream(path.join(getEnv('SDK_REPO'), 'build/README.md'))
