@@ -1,0 +1,21 @@
+package {{packageName}}
+{{#models}}
+import ({{#imports}}
+	"{{import}}"{{/imports}}
+	"encoding/json"
+)
+{{#model}}
+
+// {{classname}}{{#description}} - {{{description}}}{{/description}}
+type {{classname}} struct { {{#vars}}
+	// {{name}}{{#description}} - {{{description}}}{{/description}}
+	{{name}} *{{{datatype}}} `json:"{{baseName}},omitempty"`
+
+{{/vars}}}
+
+// String returns a JSON representation of the model
+func (o *{{classname}}) String() string {
+	j, _ := json.Marshal(o)
+	return string(j)
+}
+{{/model}}{{/models}}
