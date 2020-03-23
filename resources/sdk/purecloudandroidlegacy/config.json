@@ -1,0 +1,105 @@
+{
+  "name": "Android Legacy SDK",
+  "envVars": {
+  },
+  "settings": {
+    "sdkRepo": {
+      "repo": "https://github.com/MyPureCloud/platform-client-sdk-java.git",
+      "branch": "master"
+    },
+    "versionFile": "${SDK_REPO}/version.json",
+    "logLevel": "debug",
+    "extensionsDestination": "${SDK_REPO}/build/src/main/java/com/mypurecloud/sdk/v2",
+    "swagger": {
+      "oldSwaggerPath": "${SDK_REPO}/swagger.json",
+      "newSwaggerPath": "https://api.mypurecloud.com/api/v2/docs/swagger",
+      "saveNewSwaggerPath": "${SDK_REPO}/swagger.json"
+    },
+    "swaggerCodegen": {
+      "resourceLanguage": "purecloudandroidlegacy",
+      "codegenLanguage": "purecloudandroidlegacy",
+      "jarPath": "${WORKSPACE}/swagger-codegen/modules/swagger-codegen-cli/target/swagger-codegen-cli.jar",
+      "configFile": "${SDK_TEMP}/config.json",
+      "extraGeneratorOptions": []
+    },
+    "releaseNoteTemplatePath": "${COMMON_ROOT}/resources/templates/githubSdkReleaseNotes.md",
+    "releaseNoteSummaryTemplatePath": "${COMMON_ROOT}/resources/templates/githubSdkReleaseNoteSummary.md",
+    "debugConfig": false,
+    "enableLoggerColor": false,
+    "mavenSettingsFilePath": "/var/build/settings.xml",
+    "mavenTarget": "deploy",
+    "apiHealthCheckUrl": "https://api.mypurecloud.com/api/v2/health/check"
+  },
+  "stageSettings": {
+    "prebuild": {
+      "preRunScripts": [
+        {
+          "type": "node",
+          "path": "test.js",
+          "args": [
+            "prebuild-prerun"
+          ],
+          "failOnError": true
+        }
+      ],
+      "postRunScripts": [
+        {
+          "type": "node",
+          "path": "prebuild-postrun.js",
+          "args": [
+            {
+              "$ref": "#/settings/swaggerCodegen/configFile"
+            },
+            {
+              "$ref": "#/settings/versionFile"
+            },
+            "android-legacy-client-v2"
+          ],
+          "failOnError": true
+        }
+      ]
+    },
+    "build": {
+      "preRunScripts": [
+        {
+          "type": "node",
+          "path": "test.js",
+          "args": [
+            "build-prerun"
+          ],
+          "failOnError": true
+        }
+      ],
+      "compileScripts": [
+        {
+          "type": "shell",
+          "path": "copyTests.sh",
+          "args": [
+            "${COMMON_ROOT}/resources/sdk/purecloudandroidlegacy/tests",
+            "${SDK_REPO}/build/src/test/purecloudandroidlegacy/com/mypurecloud/sdk/v2"
+          ],
+	        "failOnError": true
+        },
+        {
+          "type": "shell",
+          "path": "compile.sh",
+          "args": [
+            { "$ref": "#/settings/mavenTarget" },
+            "${SDK_REPO}/build",
+            { "$ref": "#/settings/mavenSettingsFilePath" },
+            "${DPGP_PASSPHRASE}"
+          ],
+	        "appendIsNewReleaseArg": true,
+	        "failOnError": true
+        }
+      ],
+      "postRunScripts": []
+    },
+    "postbuild": {
+      "gitCommit": false,
+      "publishRelease": false,
+      "preRunScripts": [],
+      "postRunScripts": []
+    }
+  }
+}
