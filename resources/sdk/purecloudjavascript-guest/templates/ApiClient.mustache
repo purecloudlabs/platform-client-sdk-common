@@ -153,10 +153,8 @@ class ApiClient {
 	 */
 	_saveSettings(opts) {
 		try {
-			if (opts.apiKey) {
-				this.authData.apiKey = opts.apiKey;
-				this.authentications['Guest Chat JWT'].apiKey = opts.apiKey;
-			}
+			this.authData.apiKey = opts.apiKey;
+			this.authentications['Guest Chat JWT'].apiKey = opts.apiKey;
 
 			if (opts.state) {
 				this.authData.state = opts.state;
