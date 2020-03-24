@@ -153,10 +153,8 @@ class ApiClient {
 	 */
 	_saveSettings(opts) {
 		try {
-			if (opts.accessToken) {
-				this.authData.accessToken = opts.accessToken;
-				this.authentications['PureCloud OAuth'].accessToken = opts.accessToken;
-			}
+			this.authData.accessToken = opts.accessToken;
+			this.authentications['PureCloud OAuth'].accessToken = opts.accessToken;
 
 			if (opts.state) {
 				this.authData.state = opts.state;
