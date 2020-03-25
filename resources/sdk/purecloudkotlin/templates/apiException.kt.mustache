@@ -1,0 +1,52 @@
+package {{invokerPackage}}
+
+import java.util.Collections
+
+class ApiException : Exception, ApiResponse<Any?> {
+    override val statusCode: Int
+    override val headers: Map<String?, String?>
+    override var pBody: Any? = null
+
+    constructor(statusCode: Int, message: String?, headers: MutableMap<String, String>?, body: String?) : super(message) {
+        this.statusCode = statusCode
+        this.headers = Collections.unmodifiableMap(headers)
+        this.pBody = body
+    }
+
+    constructor(cause: Throwable?) : super(cause) {
+        statusCode = -1
+        headers = emptyMap()
+        pBody = null
+    }
+
+    override val exception: java.lang.Exception?
+        get() = this
+
+    override fun hasRawBody(): Boolean {
+        val bodyTemp = pBody as String?
+        return pBody != null && bodyTemp?.isNotEmpty() ?: false
+    }
+
+    override fun getHeader(key: String?): String? {
+        return headers[key]
+    }
+
+    override fun getCorrelationId(): String? {
+        return getHeader("ININ-Correlation-Id")
+    }
+
+    @Throws(Exception::class)
+    override fun close() {
+    }
+
+    override fun getStatusReasonPhrase(): String? {
+        return message
+    }
+
+    override val rawBody: String?
+        get() = pBody as String?
+
+    override fun getBody(): Any? {
+        return null
+    }
+}

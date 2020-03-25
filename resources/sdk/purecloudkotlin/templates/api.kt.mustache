@@ -1,0 +1,106 @@
+package {{package}}
+
+import com.fasterxml.jackson.core.type.TypeReference
+
+import {{invokerPackage}}.ApiException
+import {{invokerPackage}}.ApiClient
+import {{invokerPackage}}.ApiRequest
+import {{invokerPackage}}.ApiResponse
+import {{invokerPackage}}.Configuration
+import {{modelPackage}}.*
+import {{invokerPackage}}.Pair
+
+{{#imports}}import {{import}}
+{{/imports}}
+
+{{#operations}}{{#operation}}
+import {{package}}.request.{{requestClassname}}{{/operation}}{{/operations}}
+
+import java.io.IOException
+
+{{#operations}}
+class {{classname}} @JvmOverloads constructor(private val {{localVariablePrefix}}apiClient: ApiClient? = Configuration.defaultApiClient) {
+  {{#operation}}
+  /**
+   * {{summary}}
+   * {{notes}}{{#allParams}}
+   * @param {{paramName}} {{description}}{{#required}} (required){{/required}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}{{/allParams}}{{#returnType}}
+   * @return {{{returnType}}}{{/returnType}}
+   * @throws ApiException if the request fails on the server
+   * @throws IOException if the request fails to be processed
+   */
+  @Throws(IOException::class, ApiException::class)
+  fun {{operationId}}({{#allParams}}{{paramName}}: {{{dataType}}}{{^required}}?{{/required}}{{#hasMore}}, {{/hasMore}}{{/allParams}}) {{#returnType}}: {{{returnType}}}?{{/returnType}}{{^returnType}}{{/returnType}} {
+      {{#returnType}}return {{/returnType}}{{operationId}}(create{{requestClassname}}({{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}}))
+  }
+
+  /**
+   * {{summary}}
+   * {{notes}}{{#allParams}}
+   * @param {{paramName}} {{description}}{{#required}} (required){{/required}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}{{/allParams}}{{#returnType}}
+   * @return {{{returnType}}}{{/returnType}}
+   * @throws IOException if the request fails to be processed
+   */
+  @Throws(IOException::class)
+  fun {{operationId}}WithHttpInfo({{#allParams}}{{paramName}}: {{{dataType}}}{{^required}}?{{/required}}{{#hasMore}}, {{/hasMore}}{{/allParams}}): ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> {
+    return {{operationId}}(create{{requestClassname}}({{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}}).withHttpInfo())
+  }
+
+  private fun create{{requestClassname}}({{#allParams}}{{paramName}}: {{{dataType}}}{{^required}}?{{/required}}{{#hasMore}}, {{/hasMore}}{{/allParams}}): {{requestClassname}} {
+    return {{requestClassname}}.builder(){{#allParams}}
+            .with{{paramTitle}}({{paramName}})
+            {{/allParams}}
+            .build()
+  }
+
+  /**
+   * {{summary}}
+   * {{notes}}
+   * @param request The request object{{#returnType}}
+   * @return {{{returnType}}}{{/returnType}}
+   * @throws ApiException if the request fails on the server
+   * @throws IOException if the request fails to be processed
+   */
+  @Throws(IOException::class, ApiException::class)
+  fun {{operationId}}(request: {{requestClassname}}){{#returnType}}: {{{returnType}}}? {{/returnType}}{{^returnType}}{{/returnType}}{
+      {{#returnType}}return {{/returnType}}{{^returnType}}{{/returnType}}try {
+          {{#returnType}}val response = {{/returnType}}{{^returnType}}{{/returnType}}{{localVariablePrefix}}apiClient!!.invoke{{#returnType}}{{/returnType}}{{^returnType}}<Void>{{/returnType}}(request.withHttpInfo(), {{#returnType}}object: TypeReference<{{{returnType}}}>() {}{{/returnType}}{{^returnType}}null{{/returnType}})
+          {{#returnType}}response.getBody(){{/returnType}}{{^returnType}}{{/returnType}}
+      } catch (exception: ApiException) {
+          if ({{localVariablePrefix}}apiClient!!.shouldThrowErrors) throw exception
+          {{#returnType}}null{{/returnType}}{{^returnType}}{{/returnType}}
+      } catch (exception: IOException) {
+          if ({{localVariablePrefix}}apiClient!!.shouldThrowErrors) throw exception
+          {{#returnType}}null{{/returnType}}{{^returnType}}{{/returnType}}
+      }
+  }
+
+  /**
+   * {{summary}}
+   * {{notes}}
+   * @param request The request object
+   * @return the response
+   * @throws IOException if the request fails to be processed
+   */
+  fun {{operationId}}(request: ApiRequest<{{#bodyParam}}{{{dataType}}}?{{/bodyParam}}{{^bodyParam}}Void{{/bodyParam}}>): {{#returnType}}ApiResponse<{{{returnType}}}>{{/returnType}}{{^returnType}}ApiResponse<Void>{{/returnType}} {
+    return try {
+      {{localVariablePrefix}}apiClient!!.invoke(request, {{#returnType}}object: TypeReference<{{{returnType}}}>() {}{{/returnType}}{{^returnType}}null{{/returnType}})
+    }
+    catch (exception: ApiException) {
+      @Suppress("UNCHECKED_CAST")
+      exception as ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>
+    }
+    catch (exception: Throwable) {
+      if ({{localVariablePrefix}}apiClient!!.shouldThrowErrors) {
+        if (exception is IOException) {
+          throw exception
+        }
+        throw RuntimeException(exception)
+      }
+      @Suppress("UNCHECKED_CAST")
+      ApiException(exception) as ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>
+    }
+
+  }{{/operation}}
+}
+{{/operations}}
