@@ -104,8 +104,7 @@ namespace {{packageName}}.Client
         public RestClient RestClient { get; set; }
 
         private RetryConfiguration retryConfig;
-       // private const RetryConfiguration DEFAULT_RETRY_CONFIG = new RetryConfiguration();
-
+        private readonly RetryConfiguration DEFAULT_RETRY_CONFIG = new RetryConfiguration();
         public RetryConfiguration RetryConfig
         {
             get
@@ -117,7 +116,7 @@ namespace {{packageName}}.Client
             {
             if (value == null)
             {
-               retryConfig = new RetryConfiguration();
+               retryConfig = DEFAULT_RETRY_CONFIG;
             }
            else
             {
