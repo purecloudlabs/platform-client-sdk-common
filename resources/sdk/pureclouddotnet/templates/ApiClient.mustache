@@ -204,19 +204,17 @@ namespace {{packageName}}.Client
             // Set SDK version
             request.AddHeader("purecloud-sdk", "{{packageVersion}}");
 
-            {{^supportsUWP}}
             Retry retry = new Retry(this.RetryConfig);
-            IRestResponse response = null;
-
+            IRestResponse response;
             do{
+            {{^supportsUWP}}
                 response = RestClient.Execute(request);
-               }while(retry.ShouldRetry(response));
-
             {{/supportsUWP}}
             {{#supportsUWP}}
             // Using async method to perform sync call (uwp-only)
-            var response = RestClient.ExecuteTaskAsync(request).Result;
+               response = RestClient.ExecuteTaskAsync(request).Result;
             {{/supportsUWP}}
+            }while(retry.ShouldRetry(response));
             return (Object) response;
         }
         {{#supportsAsync}}
@@ -242,7 +240,13 @@ namespace {{packageName}}.Client
             var request = PrepareRequest(
                 path, method, queryParams, postBody, headerParams, formParams, fileParams,
                 pathParams, contentType);
-            var response = await RestClient.ExecuteTaskAsync(request);
+
+             Retry retry = new Retry(this.RetryConfig);
+             IRestResponse response;
+            do{
+               response = await RestClient.ExecuteTaskAsync(request);
+               }while(retry.ShouldRetry(response));
+
             return (Object)response;
         }{{/supportsAsync}}
 
@@ -611,7 +615,7 @@ namespace {{packageName}}.Client
         private int maxRetriesBeforeBackoff = 0;
         private int retryCountBeforeBackOff = 0;
         private long retryAfterMs;
-        private Stopwatch stopwatch = null;
+        private Stopwatch stopwatch;
 
         private readonly List<int> statusCodes = new List<int>() { 429, 502, 503, 504 };
 
@@ -619,8 +623,7 @@ namespace {{packageName}}.Client
             this.backoffIntervalMs = retryConfiguration.BackOffIntervalMs;
             this.retryAfterDefaultMs = retryConfiguration.RetryAfterDefaultMs;
             this.maxRetryTimeSec = retryConfiguration.MaxRetryTimeSec;
-            stopwatch = new Stopwatch();
-            stopwatch.Start();
+            stopwatch = Stopwatch.StartNew();
         }
 
         /// <summary>
