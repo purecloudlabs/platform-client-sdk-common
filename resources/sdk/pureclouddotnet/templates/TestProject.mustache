@@ -63,6 +63,12 @@
         <HintPath Condition="Exists('..\..\packages')">..\..\packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
         <HintPath Condition="Exists('{{binRelativePath}}')">{{binRelativePath}}\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
     </Reference>
+    <Reference Include="Moq">
+        <HintPath Condition="Exists('$(SolutionDir)\packages')">$(SolutionDir)\packages\Moq.4.13.1\lib\Moq.dll</HintPath>
+        <HintPath Condition="Exists('..\packages')">..\packages\Moq.4.13.1\lib\Moq.dll</HintPath>
+        <HintPath Condition="Exists('..\..\packages')">..\..\packages\Moq.4.13.1\lib\Moq.dll</HintPath>
+        <HintPath Condition="Exists('{{binRelativePath}}')">{{binRelativePath}}\Moq.4.13.1\lib\Moq.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="**\*.cs"/>
