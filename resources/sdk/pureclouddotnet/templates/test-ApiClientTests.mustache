@@ -8,6 +8,7 @@ using {{packageName}}.Model;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using RestSharp;
 using System.Linq;
 using Parameter = RestSharp.Parameter;
@@ -25,8 +26,17 @@ public class ApiClientTests
     string environment = Environment.GetEnvironmentVariable("PURECLOUD_ENVIRONMENT");
 
     private Stopwatch stopwatch;
-    private AuthTokenInfo authTokenInfo;
-    private String accessToken;
+    private static AuthTokenInfo authTokenInfo;
+    private static String accessToken;
+    private static String path = "/api/v2/users";
+    private static RestSharp.Method method = Method.GET;
+    private static Dictionary<String, String> pathParams = new Dictionary<String, String>();
+    private static List<Tuple<String, String>> queryParams = new List<Tuple<String, String>>();
+    private static Dictionary<String, String> headerParams = new Dictionary<String, String>();
+    private static Dictionary<String, String> formParams = new Dictionary<String, String>();
+    private static Dictionary<String, FileParameter> fileParams = new Dictionary<String, FileParameter>();
+    private static Object postBody = null;
+    private static String contentType = null;
 
     [OneTimeSetUp]
     public void Init()
@@ -41,6 +51,7 @@ public class ApiClientTests
             PureCloudRegionHosts regionval = region.GetValueOrDefault();
             Configuration.Default.ApiClient.setBasePath(regionval);
         }
+        Configuration.Default.ApiClient.Configuration = Configuration.Default;
         authTokenInfo = Configuration.Default.ApiClient.PostToken(clientId, clientSecret);
         accessToken = authTokenInfo.AccessToken;
     }
@@ -48,7 +59,7 @@ public class ApiClientTests
     [Test]
     public void invokeTestWith_429()
     {
-        var retryConfig = new ApiClient.RetryConfiguration
+         var retryConfig = new ApiClient.RetryConfiguration
         {
             MaxRetryTimeSec = 6,
             RetryAfterDefaultMs = 100
@@ -69,11 +80,10 @@ public class ApiClientTests
         {{packageName}}.Client.Configuration.Default.ApiClient.RetryConfig = retryConfig;
         {{packageName}}.Client.Configuration.Default.ApiClient.RestClient = mockRestClient.Object;
 
-        var usersApi = new UsersApi();
         try
         {
-            stopwatch = Stopwatch.StartNew();
-            var me = usersApi.GetUsers();
+          stopwatch = Stopwatch.StartNew();
+          var user = Configuration.Default.ApiClient.CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
         }
         catch (ApiException ex)
         {
@@ -83,7 +93,7 @@ public class ApiClientTests
         }
     }
 
-    [Test]
+   [Test]
     public void invokeTestWith_429_And_No_MaxRetryTime()
     {
         var retryConfig = new ApiClient.RetryConfiguration
@@ -107,11 +117,10 @@ public class ApiClientTests
         {{packageName}}.Client.Configuration.Default.ApiClient.RetryConfig = retryConfig;
         {{packageName}}.Client.Configuration.Default.ApiClient.RestClient = mockRestClient.Object;
 
-        var usersApi = new UsersApi();
         try
         {
-            stopwatch = Stopwatch.StartNew();
-            var me = usersApi.GetUsers();
+         stopwatch = Stopwatch.StartNew();
+         var user = Configuration.Default.ApiClient.CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
         }
         catch (ApiException ex)
         {
@@ -140,11 +149,10 @@ public class ApiClientTests
         {{packageName}}.Client.Configuration.Default.ApiClient.RetryConfig = retryConfig;
         {{packageName}}.Client.Configuration.Default.ApiClient.RestClient = mockRestClient.Object;
 
-        var usersApi = new UsersApi();
         try
         {
-            stopwatch = Stopwatch.StartNew();
-            var me = usersApi.GetUsers();
+         stopwatch = Stopwatch.StartNew();
+         var user = Configuration.Default.ApiClient.CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
         }
         catch (ApiException ex)
         {
@@ -173,11 +181,10 @@ public class ApiClientTests
         {{packageName}}.Client.Configuration.Default.ApiClient.RetryConfig = retryConfig;
         {{packageName}}.Client.Configuration.Default.ApiClient.RestClient = mockRestClient.Object;
 
-        var usersApi = new UsersApi();
         try
         {
             stopwatch = Stopwatch.StartNew();
-            var me = usersApi.GetUsers();
+            var user = Configuration.Default.ApiClient.CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
         }
         catch (ApiException ex)
         {
@@ -205,11 +212,10 @@ public class ApiClientTests
         {{packageName}}.Client.Configuration.Default.ApiClient.RetryConfig = retryConfig;
         {{packageName}}.Client.Configuration.Default.ApiClient.RestClient = mockRestClient.Object;
 
-        var usersApi = new UsersApi();
         try
         {
             stopwatch = Stopwatch.StartNew();
-            var me = usersApi.GetUsers();
+            var user = Configuration.Default.ApiClient.CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
         }
         catch (ApiException ex)
         {
@@ -236,11 +242,10 @@ public class ApiClientTests
         {{packageName}}.Client.Configuration.Default.ApiClient.RetryConfig = retryConfig;
         {{packageName}}.Client.Configuration.Default.ApiClient.RestClient = mockRestClient.Object;
 
-        var usersApi = new UsersApi();
         try
         {
             stopwatch = Stopwatch.StartNew();
-            var me = usersApi.GetUsers();
+            var user = Configuration.Default.ApiClient.CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
         }
         catch (ApiException ex)
         {
@@ -249,7 +254,6 @@ public class ApiClientTests
             stopwatch.Stop();
         }
     }
-
 
     public Nullable<PureCloudRegionHosts> getRegion(String str = "http://api.mypurecloud.com")
     {
