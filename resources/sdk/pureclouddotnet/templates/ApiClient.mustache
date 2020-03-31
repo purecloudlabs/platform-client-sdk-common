@@ -101,7 +101,7 @@ namespace {{packageName}}.Client
         /// Gets or sets the RestClient.
         /// </summary>
         /// <value>An instance of the RestClient</value>
-        public RestClient RestClient { get; set; }
+        public IRestClient RestClient { get; set; }
 
         private RetryConfiguration retryConfig;
         private readonly RetryConfiguration DEFAULT_RETRY_CONFIG = new RetryConfiguration();
@@ -312,7 +312,7 @@ namespace {{packageName}}.Client
          /// <summary>
         /// Creates a restclient with a base path string input
         /// <returns>Returns a rest client</returns>
-        public RestClient setBasePath(String basePath){
+        public IRestClient setBasePath(String basePath){
             if (String.IsNullOrEmpty(basePath))
                 throw new ArgumentException("basePath cannot be empty");
 
@@ -323,7 +323,7 @@ namespace {{packageName}}.Client
         /// <summary>
         /// Creates a restclient with a PureCloudRegionHost string input
         /// <returns>Returns a rest client</returns>
-        public RestClient setBasePath(PureCloudRegionHosts region){
+        public IRestClient setBasePath(PureCloudRegionHosts region){
          return setBasePath(region.GetDescription());
         }
 
@@ -611,7 +611,7 @@ namespace {{packageName}}.Client
         private long backoffIntervalMs;
         private long retryAfterDefaultMs;
         private int maxRetryTimeSec;
-        private int maxRetriesBeforeBackoff = 0;
+        private int maxRetriesBeforeBackoff = 5;
         private int retryCountBeforeBackOff = 0;
         private long retryAfterMs;
         private Stopwatch stopwatch;
@@ -634,7 +634,7 @@ namespace {{packageName}}.Client
         {
             if (stopwatch.ElapsedMilliseconds < maxRetryTimeSec * 1000L && statusCodes.Contains((int)response.StatusCode))
             {
-                var retryAfterHeader = response.Headers.ToList().FirstOrDefault(y => y.Name.Equals("Retry-After"));
+                var retryAfterHeader = response.Headers.FirstOrDefault(y => y.Name.Equals("Retry-After"));
 
                 if (retryAfterHeader != null && Int32.TryParse(retryAfterHeader.Value.ToString(), out int retryAfterSec)){
                 retryAfterMs =  retryAfterSec * 1000;
@@ -650,7 +650,7 @@ namespace {{packageName}}.Client
                 }
 
                 //If status code is 50x then wait for every 3 Sec and retry until 5 minutes then after wait for every 9 Sec and retry until next 5 minutes afterwards wait for every 27 Sec and retry.
-                return waitBeforeRetry(getWaitTimeExp(Math.Min(3, (stopwatch.ElapsedMilliseconds / backoffIntervalMs) + 1)));
+                return waitBeforeRetry(getWaitTimeExp(Math.Min(3, Math.Floor(stopwatch.ElapsedMilliseconds / backoffIntervalMs * 1.0) + 1)));
 
             }
             stopwatch.Stop();
@@ -670,7 +670,7 @@ namespace {{packageName}}.Client
             return true;
         }
 
-        private long getWaitTimeExp(long bucketCount)
+        private long getWaitTimeExp(double bucketCount)
         {
             return (long)Math.Pow(3, bucketCount) * 1000L;
         }
