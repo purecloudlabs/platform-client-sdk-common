@@ -14,106 +14,269 @@ using Parameter = RestSharp.Parameter;
 using System.Net;
 using Moq;
 
-namespace {{packageName}}.Tests
+namespace {{packageName }}.Tests
 {
 
-    [TestFixture]
-    public class ApiClientTests
+[TestFixture]
+public class ApiClientTests
+{
+    string clientId = Environment.GetEnvironmentVariable("PURECLOUD_CLIENT_ID");
+    string clientSecret = Environment.GetEnvironmentVariable("PURECLOUD_CLIENT_SECRET");
+    string environment = Environment.GetEnvironmentVariable("PURECLOUD_ENVIRONMENT");
+
+    private Stopwatch stopwatch;
+    private AuthTokenInfo authTokenInfo;
+    private String accessToken;
+
+    [OneTimeSetUp]
+    public void Init()
     {
-       // string clientId = Environment.GetEnvironmentVariable("PURECLOUD_CLIENT_ID");
-       // string clientSecret = Environment.GetEnvironmentVariable("PURECLOUD_CLIENT_SECRET");
-      //  string environment = Environment.GetEnvironmentVariable("PURECLOUD_ENVIRONMENT");
-
-        string clientId = "4c2bb5c6-c94d-4eec-bff7-d9449ba7b4ff";
-       string clientSecret = "ONogM5GqbML6t-YhDQD8VcmNylDncXiCP9NqY3sX4ZY";
-
-
-    /*    [Test]
-        public void myTestMethod1()
+        PureCloudRegionHosts? region = getRegion(environment);
+        if (region == null)
         {
-            Console.WriteLine("nAuthenticating...");
-
-            AuthenticateApiClient();
-
-            Console.WriteLine("Authentication Success.");
-
-            var usersApi = new UsersApi();
-
-            Console.WriteLine("Calling Users API to DCA");
-
-
-            var mockRestClient = new Mock<IRestClient>();
-            var mockRestResponse = new Mock<IRestResponse>();
-
-            IRestResponse response = new RestResponse();
-            response.StatusCode = (HttpStatusCode)429;
-
-            response.Headers.Add(new Parameter
-            {
-                Name = "Retry-After",
-                Value = 3,
-                Type = ParameterType.HttpHeader
-            });
-
-            mockRestClient
-               .Setup(x => x.Execute(It.IsAny<IRestRequest>()))
-               .Returns(response);
-            var me = usersApi.GetUsers();
-            Console.WriteLine($"Hello, {me}");
-
-
-           // var result = usersApi.GetUsersAsync();
-           // Console.WriteLine(result.Result);
-
-            Console.WriteLine("Got Users from DCA");
-
-        } */
-
-
-        public void AuthenticateApiClient()
-        {
-          //  PureCloudRegionHosts? region = getRegion(environment);
-          //  if (region == null)
-          //  { //Returned in the case of default value
-              //  Configuration.Default.ApiClient.setBasePath("https://api." + environment);
-                {{packageName}}.Client.Configuration.Default.ApiClient.setBasePath("https://api.inindca.com");
-         //   }
-         //   else
-         //   {
-         //       PureCloudRegionHosts regionval = region.GetValueOrDefault();
-         //       {{packageName}}.Client.Configuration.Default.ApiClient.setBasePath(regionval);
-         //   }
-
-            var accessTokenInfo = {{packageName}}.Client.Configuration.Default.ApiClient.PostToken(clientId, clientSecret);
-            {{packageName}}.Client.Configuration.Default.AccessToken = accessTokenInfo.AccessToken;
+            Configuration.Default.ApiClient.setBasePath("https://api.inindca.com");
         }
-
-        public Nullable<PureCloudRegionHosts> getRegion(String str = "http://api.mypurecloud.com")
+        else
         {
-            switch (str)
-            {
-                case "mypurecloud.com":
-                    return PureCloudRegionHosts.us_east_1;
-                case "mypurecloud.ie":
-                    return PureCloudRegionHosts.eu_west_1;
-                case "mypurecloud.de":
-                    return PureCloudRegionHosts.eu_central_1;
-                case "mypurecloud.jp":
-                    return PureCloudRegionHosts.ap_northeast_1;
-                case "mypurecloud.com.au":
-                    return PureCloudRegionHosts.ap_southeast_1;
-                case "usw2.pure.cloud":
-                    return PureCloudRegionHosts.us_west_2;
-                case "cac1.pure.cloud":
-                    return PureCloudRegionHosts.ca_central_1;
-                case "apne2.pure.cloud":
-                    return PureCloudRegionHosts.ap_northeast_2;
-                case "euw2.pure.cloud":
-                    return PureCloudRegionHosts.eu_west_2;
-                default:
-                    Console.WriteLine("Value does not exist in enum using default val");
-                    return null;
-            }
+            PureCloudRegionHosts regionval = region.GetValueOrDefault();
+            Configuration.Default.ApiClient.setBasePath(regionval);
+        }
+        authTokenInfo = Configuration.Default.ApiClient.PostToken(clientId, clientSecret);
+        accessToken = authTokenInfo.AccessToken;
+    }
+
+    [Test]
+    public void invokeTestWith_429()
+    {
+        var retryConfig = new ApiClient.RetryConfiguration
+        {
+            MaxRetryTimeSec = 6,
+            RetryAfterDefaultMs = 100
+        };
+
+        var mockRestClient = new Mock<IRestClient>();
+        RestResponse response = new RestResponse();
+        response.StatusCode = (HttpStatusCode)429;
+        response.Headers.Add(new Parameter
+        {
+            Name = "Retry-After",
+            Value = 3,
+            Type = ParameterType.HttpHeader
+        });
+
+        mockRestClient.Setup(x => x.Execute(It.IsAny<RestRequest>())).Returns(response);
+        {{packageName}}.Client.Configuration.Default.AccessToken = accessToken;
+        {{packageName}}.Client.Configuration.Default.ApiClient.RetryConfig = retryConfig;
+        {{packageName}}.Client.Configuration.Default.ApiClient.RestClient = mockRestClient.Object;
+
+        var usersApi = new UsersApi();
+        try
+        {
+            stopwatch = Stopwatch.StartNew();
+            var me = usersApi.GetUsers();
+        }
+        catch (ApiException ex)
+        {
+            Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 6000 && stopwatch.ElapsedMilliseconds < 6100, "It will wait for every 100 Mills and retry until 6 Seconds");
+            Assert.AreEqual(429, ex.ErrorCode);
+            stopwatch.Stop();
         }
     }
+
+    [Test]
+    public void invokeTestWith_429_And_No_MaxRetryTime()
+    {
+        var retryConfig = new ApiClient.RetryConfiguration
+        {
+            MaxRetryTimeSec = 0,
+            RetryAfterDefaultMs = 100
+        };
+
+        var mockRestClient = new Mock<IRestClient>();
+        RestResponse response = new RestResponse();
+        response.StatusCode = (HttpStatusCode)429;
+        response.Headers.Add(new Parameter
+        {
+            Name = "Retry-After",
+            Value = 3,
+            Type = ParameterType.HttpHeader
+        });
+
+        mockRestClient.Setup(x => x.Execute(It.IsAny<RestRequest>())).Returns(response);
+        {{packageName}}.Client.Configuration.Default.AccessToken = accessToken;
+        {{packageName}}.Client.Configuration.Default.ApiClient.RetryConfig = retryConfig;
+        {{packageName}}.Client.Configuration.Default.ApiClient.RestClient = mockRestClient.Object;
+
+        var usersApi = new UsersApi();
+        try
+        {
+            stopwatch = Stopwatch.StartNew();
+            var me = usersApi.GetUsers();
+        }
+        catch (ApiException ex)
+        {
+            Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 0 && stopwatch.ElapsedMilliseconds < 100, "Since maxRetryTime is not provided it will not retry even if the status code is 429");
+            Assert.AreEqual(429, ex.ErrorCode);
+            stopwatch.Stop();
+        }
+    }
+
+    [Test]
+    public void invokeTestWith_502()
+    {
+        var retryConfig = new ApiClient.RetryConfiguration
+        {
+            MaxRetryTimeSec = 13,
+            RetryAfterDefaultMs = 2000,
+            BackOffIntervalMs = 11000
+        };
+
+        var mockRestClient = new Mock<IRestClient>();
+        RestResponse response = new RestResponse();
+        response.StatusCode = (HttpStatusCode)502;
+
+        mockRestClient.Setup(x => x.Execute(It.IsAny<RestRequest>())).Returns(response);
+        {{packageName}}.Client.Configuration.Default.AccessToken = accessToken;
+        {{packageName}}.Client.Configuration.Default.ApiClient.RetryConfig = retryConfig;
+        {{packageName}}.Client.Configuration.Default.ApiClient.RestClient = mockRestClient.Object;
+
+        var usersApi = new UsersApi();
+        try
+        {
+            stopwatch = Stopwatch.StartNew();
+            var me = usersApi.GetUsers();
+        }
+        catch (ApiException ex)
+        {
+            Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 13000 && stopwatch.ElapsedMilliseconds < 13100, "It will wait for every 2 Sec and retry for 5 times then it will backoff for 3 sec and retry then it exits.");
+            Assert.AreEqual(502, ex.ErrorCode);
+            stopwatch.Stop();
+        }
+    }
+
+    [Test]
+    public void invokeTestWith_503()
+    {
+        var retryConfig = new ApiClient.RetryConfiguration
+        {
+            MaxRetryTimeSec = 40,
+            RetryAfterDefaultMs = 200,
+            BackOffIntervalMs = 3000
+        };
+
+        var mockRestClient = new Mock<IRestClient>();
+        RestResponse response = new RestResponse();
+        response.StatusCode = (HttpStatusCode)503;
+
+        mockRestClient.Setup(x => x.Execute(It.IsAny<RestRequest>())).Returns(response);
+        {{packageName}}.Client.Configuration.Default.AccessToken = accessToken;
+        {{packageName}}.Client.Configuration.Default.ApiClient.RetryConfig = retryConfig;
+        {{packageName}}.Client.Configuration.Default.ApiClient.RestClient = mockRestClient.Object;
+
+        var usersApi = new UsersApi();
+        try
+        {
+            stopwatch = Stopwatch.StartNew();
+            var me = usersApi.GetUsers();
+        }
+        catch (ApiException ex)
+        {
+            Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 40000 && stopwatch.ElapsedMilliseconds < 40100, "It will wait for every 200 Mills and retry for 5 times then it will backoff for 3 Sec once, 9 Sec once and 27 Sec before retrying");
+            Assert.AreEqual(503, ex.ErrorCode);
+            stopwatch.Stop();
+        }
+    }
+
+    [Test]
+    public void invokeTestWith_504()
+    {
+        var retryConfig = new ApiClient.RetryConfiguration
+        {
+            MaxRetryTimeSec = 2,
+            RetryAfterDefaultMs = 1000
+        };
+
+        var mockRestClient = new Mock<IRestClient>();
+        RestResponse response = new RestResponse();
+        response.StatusCode = (HttpStatusCode)504;
+
+        mockRestClient.Setup(x => x.Execute(It.IsAny<RestRequest>())).Returns(response);
+        {{packageName}}.Client.Configuration.Default.AccessToken = accessToken;
+        {{packageName}}.Client.Configuration.Default.ApiClient.RetryConfig = retryConfig;
+        {{packageName}}.Client.Configuration.Default.ApiClient.RestClient = mockRestClient.Object;
+
+        var usersApi = new UsersApi();
+        try
+        {
+            stopwatch = Stopwatch.StartNew();
+            var me = usersApi.GetUsers();
+        }
+        catch (ApiException ex)
+        {
+            Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 2000 && stopwatch.ElapsedMilliseconds < 2100, "It will wait for every 1 sec and retry for 2 times");
+            Assert.AreEqual(504, ex.ErrorCode);
+            stopwatch.Stop();
+        }
+    }
+
+    [Test]
+    public void invokeTestWith_504_No_MaxRetryTime()
+    {
+        var retryConfig = new ApiClient.RetryConfiguration
+        {
+            MaxRetryTimeSec = 0
+        };
+
+        var mockRestClient = new Mock<IRestClient>();
+        RestResponse response = new RestResponse();
+        response.StatusCode = (HttpStatusCode)504;
+
+        mockRestClient.Setup(x => x.Execute(It.IsAny<RestRequest>())).Returns(response);
+        {{packageName}}.Client.Configuration.Default.AccessToken = accessToken;
+        {{packageName}}.Client.Configuration.Default.ApiClient.RetryConfig = retryConfig;
+        {{packageName}}.Client.Configuration.Default.ApiClient.RestClient = mockRestClient.Object;
+
+        var usersApi = new UsersApi();
+        try
+        {
+            stopwatch = Stopwatch.StartNew();
+            var me = usersApi.GetUsers();
+        }
+        catch (ApiException ex)
+        {
+            Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 0 && stopwatch.ElapsedMilliseconds < 100, "Since maxRetryTime is not provided it will not retry even if the status code is 504");
+            Assert.AreEqual(504, ex.ErrorCode);
+            stopwatch.Stop();
+        }
+    }
+
+
+    public Nullable<PureCloudRegionHosts> getRegion(String str = "http://api.mypurecloud.com")
+    {
+        switch (str)
+        {
+            case "mypurecloud.com":
+                return PureCloudRegionHosts.us_east_1;
+            case "mypurecloud.ie":
+                return PureCloudRegionHosts.eu_west_1;
+            case "mypurecloud.de":
+                return PureCloudRegionHosts.eu_central_1;
+            case "mypurecloud.jp":
+                return PureCloudRegionHosts.ap_northeast_1;
+            case "mypurecloud.com.au":
+                return PureCloudRegionHosts.ap_southeast_1;
+            case "usw2.pure.cloud":
+                return PureCloudRegionHosts.us_west_2;
+            case "cac1.pure.cloud":
+                return PureCloudRegionHosts.ca_central_1;
+            case "apne2.pure.cloud":
+                return PureCloudRegionHosts.ap_northeast_2;
+            case "euw2.pure.cloud":
+                return PureCloudRegionHosts.eu_west_2;
+            default:
+                Console.WriteLine("Value does not exist in enum using default val");
+                return null;
+        }
+    }
+}
 }
