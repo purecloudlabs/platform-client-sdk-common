@@ -30,7 +30,7 @@ cp $BUILD_DIR/packages/Newtonsoft.Json.11.0.2/lib/net45/Newtonsoft.Json.dll $BUI
 cp $BUILD_DIR/packages/RestSharp.106.3.1/lib/net452/RestSharp.dll $BUILD_DIR/bin/RestSharp.dll;
 cp $BUILD_DIR/packages/WebSocketSharp.1.0.3-rc11/lib/websocket-sharp.dll $BUILD_DIR/bin/websocket-sharp.dll;
 cp $BUILD_DIR/packages/NUnit.3.10.1/lib/net45/nunit.framework.dll $BUILD_DIR/bin/nunit.framework.dll;
-cp $BUILD_DIR/packages/Moq.4.7.0/lib/net45/Moq.dll $BUILD_DIR/bin/Moq.dll;
+cp $BUILD_DIR/packages/Moq.4.5.3/lib/net45/Moq.dll $BUILD_DIR/bin/Moq.dll;
 
 echo "Compiling SDK..."
 mcs -r:$BUILD_DIR/bin/Newtonsoft.Json.dll,\
