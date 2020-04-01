@@ -26,8 +26,6 @@ public class ApiClientTests
     string environment = Environment.GetEnvironmentVariable("PURECLOUD_ENVIRONMENT");
 
     private Stopwatch stopwatch;
-    private static AuthTokenInfo authTokenInfo;
-    private static String accessToken;
     private static String path = "/api/v2/users";
     private static RestSharp.Method method = Method.GET;
     private static Dictionary<String, String> pathParams = new Dictionary<String, String>();
@@ -51,36 +49,37 @@ public class ApiClientTests
             PureCloudRegionHosts regionval = region.GetValueOrDefault();
             Configuration.Default.ApiClient.setBasePath(regionval);
         }
-        Configuration.Default.ApiClient.Configuration = Configuration.Default;
-        authTokenInfo = Configuration.Default.ApiClient.PostToken(clientId, clientSecret);
-        accessToken = authTokenInfo.AccessToken;
+        var accessTokenInfo = Configuration.Default.ApiClient.PostToken(clientId, clientSecret);
+        Configuration.Default.AccessToken = accessTokenInfo.AccessToken;
     }
 
     [Test]
     public void InvokeTestWith_429()
     {
-         var retryConfig = new ApiClient.RetryConfiguration
+        var retryConfig = new ApiClient.RetryConfiguration
         {
             MaxRetryTimeSec = 6,
             RetryAfterDefaultMs = 100
         };
 
         var mockRestClient = new Mock<IRestClient>();
-        RestResponse response = GetTestResponse( 429, "3");
+        RestResponse response = GetTestResponse(429, "3");
 
         mockRestClient.Setup(x => x.Execute(It.IsAny<RestRequest>())).Returns(response);
-        {{packageName}}.Client.Configuration.Default.AccessToken = accessToken;
-        {{packageName}}.Client.Configuration.Default.ApiClient.RetryConfig = retryConfig;
-        {{packageName}}.Client.Configuration.Default.ApiClient.RestClient = mockRestClient.Object;
 
-          stopwatch = Stopwatch.StartNew();
-          RestResponse user = (RestResponse) Configuration.Default.ApiClient.CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
-          Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 6000 && stopwatch.ElapsedMilliseconds < 6100, "It will wait for every 100 Mills and retry until 6 Seconds");
-          Assert.AreEqual(429, (int)user.StatusCode);
-          stopwatch.Stop();
+        var configuration = new Configuration();
+        var apiClient = new ApiClient(configuration);
+        apiClient.RetryConfig = retryConfig;
+        apiClient.RestClient = mockRestClient.Object;
+
+        stopwatch = Stopwatch.StartNew();
+        RestResponse user = (RestResponse)apiClient.CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
+        Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 6000 && stopwatch.ElapsedMilliseconds < 6100, "It will wait for every 100 Mills and retry until 6 Seconds");
+        Assert.AreEqual(429, (int)user.StatusCode);
+        stopwatch.Stop();
     }
 
-   [Test]
+    [Test]
     public void InvokeTestWith_429_And_No_MaxRetryTime()
     {
         var retryConfig = new ApiClient.RetryConfiguration
@@ -90,18 +89,19 @@ public class ApiClientTests
         };
 
         var mockRestClient = new Mock<IRestClient>();
-        RestResponse response = GetTestResponse( 429, "3");
+        RestResponse response = GetTestResponse(429, "3");
 
         mockRestClient.Setup(x => x.Execute(It.IsAny<RestRequest>())).Returns(response);
-        {{packageName}}.Client.Configuration.Default.AccessToken = accessToken;
-        {{packageName}}.Client.Configuration.Default.ApiClient.RetryConfig = retryConfig;
-        {{packageName}}.Client.Configuration.Default.ApiClient.RestClient = mockRestClient.Object;
 
-         stopwatch = Stopwatch.StartNew();
-         RestResponse user = (RestResponse) Configuration.Default.ApiClient.CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
-         Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 0 && stopwatch.ElapsedMilliseconds < 100, "Since maxRetryTime is not provided it will not retry even if the status code is 429");
-         Assert.AreEqual(429, (int)user.StatusCode);
-         stopwatch.Stop();
+        var apiClient = new ApiClient(new Configuration());
+        apiClient.RetryConfig = retryConfig;
+        apiClient.RestClient = mockRestClient.Object;
+
+        stopwatch = Stopwatch.StartNew();
+        RestResponse user = (RestResponse)apiClient.CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
+        Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 0 && stopwatch.ElapsedMilliseconds < 100, "Since maxRetryTime is not provided it will not retry even if the status code is 429");
+        Assert.AreEqual(429, (int)user.StatusCode);
+        stopwatch.Stop();
     }
 
     [Test]
@@ -119,15 +119,16 @@ public class ApiClientTests
         response.StatusCode = (HttpStatusCode)502;
 
         mockRestClient.Setup(x => x.Execute(It.IsAny<RestRequest>())).Returns(response);
-        {{packageName}}.Client.Configuration.Default.AccessToken = accessToken;
-        {{packageName}}.Client.Configuration.Default.ApiClient.RetryConfig = retryConfig;
-        {{packageName}}.Client.Configuration.Default.ApiClient.RestClient = mockRestClient.Object;
 
-         stopwatch = Stopwatch.StartNew();
-         RestResponse user = (RestResponse) Configuration.Default.ApiClient.CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
-         Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 13000 && stopwatch.ElapsedMilliseconds < 13100, "It will wait for every 2 Sec and retry for 5 times then it will backoff for 3 sec and retry then it exits.");
-         Assert.AreEqual(502, (int)user.StatusCode);
-         stopwatch.Stop();
+        var apiClient = new ApiClient(new Configuration());
+        apiClient.RetryConfig = retryConfig;
+        apiClient.RestClient = mockRestClient.Object;
+
+        stopwatch = Stopwatch.StartNew();
+        RestResponse user = (RestResponse)apiClient.CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
+        Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 13000 && stopwatch.ElapsedMilliseconds < 13100, "It will wait for every 2 Sec and retry for 5 times then it will backoff for 3 sec and retry then it exits.");
+        Assert.AreEqual(502, (int)user.StatusCode);
+        stopwatch.Stop();
     }
 
     [Test]
@@ -145,12 +146,13 @@ public class ApiClientTests
         response.StatusCode = (HttpStatusCode)503;
 
         mockRestClient.Setup(x => x.Execute(It.IsAny<RestRequest>())).Returns(response);
-        {{packageName}}.Client.Configuration.Default.AccessToken = accessToken;
-        {{packageName}}.Client.Configuration.Default.ApiClient.RetryConfig = retryConfig;
-        {{packageName}}.Client.Configuration.Default.ApiClient.RestClient = mockRestClient.Object;
+
+        var apiClient = new ApiClient(new Configuration());
+        apiClient.RetryConfig = retryConfig;
+        apiClient.RestClient = mockRestClient.Object;
 
         stopwatch = Stopwatch.StartNew();
-        RestResponse user = (RestResponse) Configuration.Default.ApiClient.CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
+        RestResponse user = (RestResponse)apiClient.CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
         Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 40000 && stopwatch.ElapsedMilliseconds < 40100, "It will wait for every 200 Mills and retry for 5 times then it will backoff for 3 Sec once, 9 Sec once and 27 Sec before retrying");
         Assert.AreEqual(503, (int)user.StatusCode);
         stopwatch.Stop();
@@ -170,12 +172,13 @@ public class ApiClientTests
         response.StatusCode = (HttpStatusCode)504;
 
         mockRestClient.Setup(x => x.Execute(It.IsAny<RestRequest>())).Returns(response);
-        {{packageName}}.Client.Configuration.Default.AccessToken = accessToken;
-        {{packageName}}.Client.Configuration.Default.ApiClient.RetryConfig = retryConfig;
-        {{packageName}}.Client.Configuration.Default.ApiClient.RestClient = mockRestClient.Object;
+
+        var apiClient = new ApiClient(new Configuration());
+        apiClient.RetryConfig = retryConfig;
+        apiClient.RestClient = mockRestClient.Object;
 
         stopwatch = Stopwatch.StartNew();
-        RestResponse user = (RestResponse) Configuration.Default.ApiClient.CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
+        RestResponse user = (RestResponse)apiClient.CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
         Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 2000 && stopwatch.ElapsedMilliseconds < 2100, "It will wait for every 1 sec and retry for 2 times");
         Assert.AreEqual(504, (int)user.StatusCode);
         stopwatch.Stop();
@@ -194,12 +197,13 @@ public class ApiClientTests
         response.StatusCode = (HttpStatusCode)504;
 
         mockRestClient.Setup(x => x.Execute(It.IsAny<RestRequest>())).Returns(response);
-        {{packageName}}.Client.Configuration.Default.AccessToken = accessToken;
-        {{packageName}}.Client.Configuration.Default.ApiClient.RetryConfig = retryConfig;
-        {{packageName}}.Client.Configuration.Default.ApiClient.RestClient = mockRestClient.Object;
+
+        var apiClient = new ApiClient(new Configuration());
+        apiClient.RetryConfig = retryConfig;
+        apiClient.RestClient = mockRestClient.Object;
 
         stopwatch = Stopwatch.StartNew();
-        RestResponse user = (RestResponse) Configuration.Default.ApiClient.CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
+        RestResponse user = (RestResponse)apiClient.CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
         Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 0 && stopwatch.ElapsedMilliseconds < 100, "Since maxRetryTime is not provided it will not retry even if the status code is 504");
         Assert.AreEqual(504, (int)user.StatusCode);
         stopwatch.Stop();
@@ -208,47 +212,49 @@ public class ApiClientTests
     [Test]
     public async Task InvokeAsyncTestWith_429()
     {
-         var retryConfig = new ApiClient.RetryConfiguration
+        var retryConfig = new ApiClient.RetryConfiguration
         {
             MaxRetryTimeSec = 5
         };
 
         var mockRestClient = new Mock<IRestClient>();
-        RestResponse response = GetTestResponse( 429, "1");
+        RestResponse response = GetTestResponse(429, "1");
 
-         mockRestClient.Setup(x => x.ExecuteTaskAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<IRestResponse>(response));
-        {{packageName}}.Client.Configuration.Default.AccessToken = accessToken;
-        {{packageName}}.Client.Configuration.Default.ApiClient.RetryConfig = retryConfig;
-        {{packageName}}.Client.Configuration.Default.ApiClient.RestClient = mockRestClient.Object;
+        mockRestClient.Setup(x => x.ExecuteTaskAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<IRestResponse>(response));
 
-          stopwatch = Stopwatch.StartNew();
-          RestResponse user = (RestResponse) await Configuration.Default.ApiClient.CallApiAsync(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
-          Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 5000 && stopwatch.ElapsedMilliseconds < 5100, "It will wait for every 1 Sec provided by Retry-After header Sec and retry for 5 Sec");
-          Assert.AreEqual(429, (int)user.StatusCode);
-          stopwatch.Stop();
+        var apiClient = new ApiClient(new Configuration());
+        apiClient.RetryConfig = retryConfig;
+        apiClient.RestClient = mockRestClient.Object;
+
+        stopwatch = Stopwatch.StartNew();
+        RestResponse user = (RestResponse)await apiClient.CallApiAsync(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
+        Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 5000 && stopwatch.ElapsedMilliseconds < 5100, "It will wait for every 1 Sec provided by Retry-After header Sec and retry for 5 Sec");
+        Assert.AreEqual(429, (int)user.StatusCode);
+        stopwatch.Stop();
     }
 
     [Test]
     public async Task InvokeAsyncTestWith_429_And_No_MaxRetryTime()
     {
-         var retryConfig = new ApiClient.RetryConfiguration
+        var retryConfig = new ApiClient.RetryConfiguration
         {
             MaxRetryTimeSec = 0
         };
 
         var mockRestClient = new Mock<IRestClient>();
-        RestResponse response = GetTestResponse( 429, "1");
+        RestResponse response = GetTestResponse(429, "1");
 
-         mockRestClient.Setup(x => x.ExecuteTaskAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<IRestResponse>(response));
-        {{packageName}}.Client.Configuration.Default.AccessToken = accessToken;
-        {{packageName}}.Client.Configuration.Default.ApiClient.RetryConfig = retryConfig;
-        {{packageName}}.Client.Configuration.Default.ApiClient.RestClient = mockRestClient.Object;
+        mockRestClient.Setup(x => x.ExecuteTaskAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<IRestResponse>(response));
 
-          stopwatch = Stopwatch.StartNew();
-          RestResponse user = (RestResponse) await Configuration.Default.ApiClient.CallApiAsync(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
-          Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 0 && stopwatch.ElapsedMilliseconds < 100, "Since maxWaitTime is 0 it will not retry even if status code is 429");
-          Assert.AreEqual(429, (int)user.StatusCode);
-          stopwatch.Stop();
+        var apiClient = new ApiClient(new Configuration());
+        apiClient.RetryConfig = retryConfig;
+        apiClient.RestClient = mockRestClient.Object;
+
+        stopwatch = Stopwatch.StartNew();
+        RestResponse user = (RestResponse)await apiClient.CallApiAsync(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
+        Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 0 && stopwatch.ElapsedMilliseconds < 100, "Since maxWaitTime is 0 it will not retry even if status code is 429");
+        Assert.AreEqual(429, (int)user.StatusCode);
+        stopwatch.Stop();
     }
 
     [Test]
@@ -265,16 +271,17 @@ public class ApiClientTests
         RestResponse response = new RestResponse();
         response.StatusCode = (HttpStatusCode)502;
 
-         mockRestClient.Setup(x => x.ExecuteTaskAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<IRestResponse>(response));
-        {{packageName}}.Client.Configuration.Default.AccessToken = accessToken;
-        {{packageName}}.Client.Configuration.Default.ApiClient.RetryConfig = retryConfig;
-        {{packageName}}.Client.Configuration.Default.ApiClient.RestClient = mockRestClient.Object;
+        mockRestClient.Setup(x => x.ExecuteTaskAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<IRestResponse>(response));
 
-          stopwatch = Stopwatch.StartNew();
-          RestResponse user = (RestResponse) await Configuration.Default.ApiClient.CallApiAsync(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
-          Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 13000 && stopwatch.ElapsedMilliseconds < 13100, "It will wait for every 2 Sec and retry for 5 times then it will backoff for 3 sec and retry then it exits.");
-          Assert.AreEqual(502, (int)user.StatusCode);
-          stopwatch.Stop();
+        var apiClient = new ApiClient(new Configuration());
+        apiClient.RetryConfig = retryConfig;
+        apiClient.RestClient = mockRestClient.Object;
+
+        stopwatch = Stopwatch.StartNew();
+        RestResponse user = (RestResponse)await apiClient.CallApiAsync(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
+        Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 13000 && stopwatch.ElapsedMilliseconds < 13100, "It will wait for every 2 Sec and retry for 5 times then it will backoff for 3 sec and retry then it exits.");
+        Assert.AreEqual(502, (int)user.StatusCode);
+        stopwatch.Stop();
     }
 
     [Test]
@@ -291,16 +298,17 @@ public class ApiClientTests
         RestResponse response = new RestResponse();
         response.StatusCode = (HttpStatusCode)503;
 
-         mockRestClient.Setup(x => x.ExecuteTaskAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<IRestResponse>(response));
-        {{packageName}}.Client.Configuration.Default.AccessToken = accessToken;
-        {{packageName}}.Client.Configuration.Default.ApiClient.RetryConfig = retryConfig;
-        {{packageName}}.Client.Configuration.Default.ApiClient.RestClient = mockRestClient.Object;
+        mockRestClient.Setup(x => x.ExecuteTaskAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<IRestResponse>(response));
 
-          stopwatch = Stopwatch.StartNew();
-          RestResponse user = (RestResponse) await Configuration.Default.ApiClient.CallApiAsync(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
-          Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 40000 && stopwatch.ElapsedMilliseconds < 40100, "It will wait for every 200 Mills and retry for 5 times then it will backoff for 3 Sec once, 9 Sec once and 27 Sec before retrying");
-          Assert.AreEqual(503, (int)user.StatusCode);
-          stopwatch.Stop();
+        var apiClient = new ApiClient(new Configuration());
+        apiClient.RetryConfig = retryConfig;
+        apiClient.RestClient = mockRestClient.Object;
+
+        stopwatch = Stopwatch.StartNew();
+        RestResponse user = (RestResponse)await apiClient.CallApiAsync(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
+        Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 40000 && stopwatch.ElapsedMilliseconds < 40100, "It will wait for every 200 Mills and retry for 5 times then it will backoff for 3 Sec once, 9 Sec once and 27 Sec before retrying");
+        Assert.AreEqual(503, (int)user.StatusCode);
+        stopwatch.Stop();
     }
 
     [Test]
@@ -316,16 +324,17 @@ public class ApiClientTests
         RestResponse response = new RestResponse();
         response.StatusCode = (HttpStatusCode)504;
 
-         mockRestClient.Setup(x => x.ExecuteTaskAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<IRestResponse>(response));
-        {{packageName}}.Client.Configuration.Default.AccessToken = accessToken;
-        {{packageName}}.Client.Configuration.Default.ApiClient.RetryConfig = retryConfig;
-        {{packageName}}.Client.Configuration.Default.ApiClient.RestClient = mockRestClient.Object;
+        mockRestClient.Setup(x => x.ExecuteTaskAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<IRestResponse>(response));
 
-          stopwatch = Stopwatch.StartNew();
-          RestResponse user = (RestResponse) await Configuration.Default.ApiClient.CallApiAsync(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
-          Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 2000 && stopwatch.ElapsedMilliseconds < 2100, "It will wait for every 1 sec and retry for 2 times");
-          Assert.AreEqual(504, (int)user.StatusCode);
-          stopwatch.Stop();
+        var apiClient = new ApiClient(new Configuration());
+        apiClient.RetryConfig = retryConfig;
+        apiClient.RestClient = mockRestClient.Object;
+
+        stopwatch = Stopwatch.StartNew();
+        RestResponse user = (RestResponse)await apiClient.CallApiAsync(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
+        Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 2000 && stopwatch.ElapsedMilliseconds < 2100, "It will wait for every 1 sec and retry for 2 times");
+        Assert.AreEqual(504, (int)user.StatusCode);
+        stopwatch.Stop();
     }
 
     [Test]
@@ -340,16 +349,17 @@ public class ApiClientTests
         RestResponse response = new RestResponse();
         response.StatusCode = (HttpStatusCode)504;
 
-         mockRestClient.Setup(x => x.ExecuteTaskAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<IRestResponse>(response));
-        {{packageName}}.Client.Configuration.Default.AccessToken = accessToken;
-        {{packageName}}.Client.Configuration.Default.ApiClient.RetryConfig = retryConfig;
-        {{packageName}}.Client.Configuration.Default.ApiClient.RestClient = mockRestClient.Object;
+        mockRestClient.Setup(x => x.ExecuteTaskAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<IRestResponse>(response));
 
-          stopwatch = Stopwatch.StartNew();
-          RestResponse user = (RestResponse) await Configuration.Default.ApiClient.CallApiAsync(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
-          Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 0 && stopwatch.ElapsedMilliseconds < 100, "Since maxRetryTime is not provided it will not retry even if the status code is 504");
-          Assert.AreEqual(504, (int)user.StatusCode);
-          stopwatch.Stop();
+        var apiClient = new ApiClient(new Configuration());
+        apiClient.RetryConfig = retryConfig;
+        apiClient.RestClient = mockRestClient.Object;
+
+        stopwatch = Stopwatch.StartNew();
+        RestResponse user = (RestResponse)await apiClient.CallApiAsync(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
+        Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 0 && stopwatch.ElapsedMilliseconds < 100, "Since maxRetryTime is not provided it will not retry even if the status code is 504");
+        Assert.AreEqual(504, (int)user.StatusCode);
+        stopwatch.Stop();
     }
 
     private RestResponse GetTestResponse(int statusCode, String retryAfterHeader)
@@ -359,8 +369,8 @@ public class ApiClientTests
         response.Headers.Add(new Parameter
         {
             Name = "Retry-After",
-                    Value = retryAfterHeader,
-                    Type = ParameterType.HttpHeader
+            Value = retryAfterHeader,
+            Type = ParameterType.HttpHeader
         });
         return response;
     }
