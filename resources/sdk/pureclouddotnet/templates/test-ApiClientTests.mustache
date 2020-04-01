@@ -15,7 +15,7 @@ using Parameter = RestSharp.Parameter;
 using System.Net;
 using Moq;
 
-namespace {{packageName }}.Tests
+namespace {{packageName}}.Tests
 {
 
 [TestFixture]
@@ -67,8 +67,7 @@ public class ApiClientTests
 
         mockRestClient.Setup(x => x.Execute(It.IsAny<RestRequest>())).Returns(response);
 
-        var configuration = new Configuration();
-        var apiClient = new ApiClient(configuration);
+        var apiClient = new ApiClient(new Configuration());
         apiClient.RetryConfig = retryConfig;
         apiClient.RestClient = mockRestClient.Object;
 
