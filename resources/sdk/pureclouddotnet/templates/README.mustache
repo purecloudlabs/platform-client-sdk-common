@@ -150,15 +150,15 @@ To enable automatic retries, provide a RetryConfiguration object with the maximu
 
 Building a `RetryConfiguration` instance:
 ```{"language":"csharp"}
- var retryConfig = new ApiClient.RetryConfiguration
-            {
-                MaxRetryTimeSec = 10
-            };
+var retryConfig = new ApiClient.RetryConfiguration
+{
+  MaxRetryTimeSec = 10
+};
 ```
 
 Setting `RetryConfiguration` instance to `ApiClient`:
  ```{"language":"csharp"}
-        Configuration.Default.ApiClient.RetryConfig = retryConfig;
+Configuration.Default.ApiClient.RetryConfig = retryConfig;
 ```
 Set the `MaxRetryTimeSec` to the number of seconds to process retries before returning an error.
 When the retry time is a a positive integer, the SDK will follow the recommended backoff logic using the provided configuration.

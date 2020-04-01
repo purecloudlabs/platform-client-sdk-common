@@ -38,6 +38,7 @@ namespace {{packageName}}.Client
 
             Configuration = Configuration.Default;
             RestClient = new RestClient("{{basePath}}");
+            RetryConfig = DEFAULT_RETRY_CONFIG;
             AddSerializerSettings();
         }
 
@@ -57,6 +58,7 @@ namespace {{packageName}}.Client
                 Configuration = config;
 
             RestClient = new RestClient("{{basePath}}");
+            RetryConfig = DEFAULT_RETRY_CONFIG;
             AddSerializerSettings();
         }
 
@@ -74,6 +76,7 @@ namespace {{packageName}}.Client
                 throw new ArgumentException("basePath cannot be empty");
 
             RestClient = new RestClient(basePath);
+            RetryConfig = DEFAULT_RETRY_CONFIG;
             Configuration = Configuration.Default;
             AddSerializerSettings();
         }
@@ -104,26 +107,8 @@ namespace {{packageName}}.Client
         public IRestClient RestClient { get; set; }
 
         private RetryConfiguration retryConfig;
-        private readonly RetryConfiguration DEFAULT_RETRY_CONFIG = new RetryConfiguration();
-        public RetryConfiguration RetryConfig
-        {
-            get
-            {
-                return retryConfig;
-            }
-
-            set
-            {
-            if (value == null)
-            {
-               retryConfig = DEFAULT_RETRY_CONFIG;
-            }
-           else
-            {
-                retryConfig = value;
-            }
-            }
-        }
+        public RetryConfiguration RetryConfig { get; set; }
+        private static readonly RetryConfiguration DEFAULT_RETRY_CONFIG = new RetryConfiguration();
 
         // Creates and sets up a RestRequest prior to a call.
         private RestRequest PrepareRequest(
@@ -205,7 +190,8 @@ namespace {{packageName}}.Client
 
             Retry retry = new Retry(this.RetryConfig);
             IRestResponse response;
-            do{
+            do
+            {
             {{^supportsUWP}}
                 response = RestClient.Execute(request);
             {{/supportsUWP}}
@@ -551,59 +537,58 @@ namespace {{packageName}}.Client
 
     public class RetryConfiguration
     {
-    private long backoffIntervalMs = 300000L;
-    private long retryAfterDefaultMs = 3000L;
-    private int maxRetryTimeSec = 0;
+        private long backoffIntervalMs = 300000L;
+        private long retryAfterDefaultMs = 3000L;
+        private int maxRetryTimeSec = 0;
 
-    public long BackOffIntervalMs
-    {
-        get
+        public long BackOffIntervalMs
         {
-            return backoffIntervalMs;
-        }
-
-        set
-        {
-            if (value < 0)
+            get
             {
-                throw new ArgumentException("backoffInterval should be a positive integer");
+                return backoffIntervalMs;
             }
-            this.backoffIntervalMs = value;
-        }
-    }
 
-    public long RetryAfterDefaultMs
-    {
-        get
-        {
-            return retryAfterDefaultMs;
-        }
-        set
-        {
-            if (value < 0)
+            set
             {
-                throw new ArgumentException("defaultDelay should be a positive integer");
+                if (value < 0)
+                {
+                    throw new ArgumentException("BackOffIntervalMs should be a positive integer");
+                }
+                this.backoffIntervalMs = value;
             }
-            this.retryAfterDefaultMs = value;
         }
-    }
 
-    public int MaxRetryTimeSec
-    {
-        get
+        public long RetryAfterDefaultMs
         {
-            return maxRetryTimeSec;
-        }
-        set
-        {
-
-            if (value < 0)
+            get
             {
-                throw new ArgumentException("maxRetryTime should be a positive integer");
+                return retryAfterDefaultMs;
             }
-            this.maxRetryTimeSec = value;
+            set
+            {
+                if (value < 0)
+                {
+                    throw new ArgumentException("RetryAfterDefaultMs should be a positive integer");
+                }
+                this.retryAfterDefaultMs = value;
+            }
         }
-    }
+
+        public int MaxRetryTimeSec
+        {
+            get
+            {
+                return maxRetryTimeSec;
+            }
+            set
+            {
+                if (value < 0)
+                {
+                    throw new ArgumentException("MaxRetryTimeSec should be a positive integer");
+                }
+                this.maxRetryTimeSec = value;
+            }
+        }
     }
 
     private class Retry
@@ -618,7 +603,8 @@ namespace {{packageName}}.Client
 
         private readonly List<int> statusCodes = new List<int>() { 429, 502, 503, 504 };
 
-        public Retry(RetryConfiguration retryConfiguration) {
+        public Retry(RetryConfiguration retryConfiguration)
+        {
             this.backoffIntervalMs = retryConfiguration.BackOffIntervalMs;
             this.retryAfterDefaultMs = retryConfiguration.RetryAfterDefaultMs;
             this.maxRetryTimeSec = retryConfiguration.MaxRetryTimeSec;
@@ -636,8 +622,9 @@ namespace {{packageName}}.Client
             {
                 var retryAfterHeader = response.Headers.FirstOrDefault(y => y.Name.Equals("Retry-After"));
 
-                if (retryAfterHeader != null && Int32.TryParse(retryAfterHeader.Value.ToString(), out int retryAfterSec)){
-                retryAfterMs =  retryAfterSec * 1000;
+                if (retryAfterHeader != null && Int32.TryParse(retryAfterHeader.Value.ToString(), out int retryAfterSec))
+                {
+                    retryAfterMs =  retryAfterSec * 1000;
                 }
                 else
                 {
