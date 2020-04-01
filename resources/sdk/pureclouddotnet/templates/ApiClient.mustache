@@ -228,9 +228,10 @@ namespace {{packageName}}.Client
 
              Retry retry = new Retry(this.RetryConfig);
              IRestResponse response;
-            do{
-               response = await RestClient.ExecuteTaskAsync(request);
-               }while(retry.ShouldRetry(response));
+            do
+            {
+                response = await RestClient.ExecuteTaskAsync(request);
+            }while(retry.ShouldRetry(response));
 
             return (Object)response;
         }{{/supportsAsync}}
