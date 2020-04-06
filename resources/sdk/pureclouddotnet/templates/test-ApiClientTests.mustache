@@ -40,8 +40,13 @@ public class ApiClientTests
     public void Init()
     {
         PureCloudRegionHosts? region = getRegion(environment);
-        PureCloudRegionHosts regionval = region.GetValueOrDefault();
-        {{packageName}}.Client.Configuration.Default.ApiClient.setBasePath(regionval);
+        if(region == null){ //Returned in the case of default value
+            {{packageName}}.Client.Configuration.Default.ApiClient.setBasePath("https://api." + environment);
+        }
+        else {
+            PureCloudRegionHosts regionval = region.GetValueOrDefault();
+            {{packageName}}.Client.Configuration.Default.ApiClient.setBasePath(regionval);
+        }
         var accessTokenInfo = {{packageName}}.Client.Configuration.Default.ApiClient.PostToken(clientId, clientSecret);
         {{packageName}}.Client.Configuration.Default.AccessToken = accessTokenInfo.AccessToken;
     }
