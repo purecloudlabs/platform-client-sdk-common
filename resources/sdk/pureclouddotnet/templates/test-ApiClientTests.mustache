@@ -40,17 +40,10 @@ public class ApiClientTests
     public void Init()
     {
         PureCloudRegionHosts? region = getRegion(environment);
-        if (region == null)
-        {
-            Configuration.Default.ApiClient.setBasePath("https://api.inindca.com");
-        }
-        else
-        {
-            PureCloudRegionHosts regionval = region.GetValueOrDefault();
-            Configuration.Default.ApiClient.setBasePath(regionval);
-        }
-        var accessTokenInfo = Configuration.Default.ApiClient.PostToken(clientId, clientSecret);
-        Configuration.Default.AccessToken = accessTokenInfo.AccessToken;
+        PureCloudRegionHosts regionval = region.GetValueOrDefault();
+        {{packageName}}.Client.Configuration.Default.ApiClient.setBasePath(regionval);
+        var accessTokenInfo = {{packageName}}.Client.Configuration.Default.ApiClient.PostToken(clientId, clientSecret);
+        {{packageName}}.Client.Configuration.Default.AccessToken = accessTokenInfo.AccessToken;
     }
 
     [Test]
@@ -67,7 +60,7 @@ public class ApiClientTests
 
         mockRestClient.Setup(x => x.Execute(It.IsAny<RestRequest>())).Returns(response);
 
-        var apiClient = new ApiClient(new Configuration());
+        var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
         apiClient.RestClient = mockRestClient.Object;
 
@@ -92,7 +85,7 @@ public class ApiClientTests
 
         mockRestClient.Setup(x => x.Execute(It.IsAny<RestRequest>())).Returns(response);
 
-        var apiClient = new ApiClient(new Configuration());
+        var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
         apiClient.RestClient = mockRestClient.Object;
 
@@ -119,7 +112,7 @@ public class ApiClientTests
 
         mockRestClient.Setup(x => x.Execute(It.IsAny<RestRequest>())).Returns(response);
 
-        var apiClient = new ApiClient(new Configuration());
+        var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
         apiClient.RestClient = mockRestClient.Object;
 
@@ -146,7 +139,7 @@ public class ApiClientTests
 
         mockRestClient.Setup(x => x.Execute(It.IsAny<RestRequest>())).Returns(response);
 
-        var apiClient = new ApiClient(new Configuration());
+        var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
         apiClient.RestClient = mockRestClient.Object;
 
@@ -172,7 +165,7 @@ public class ApiClientTests
 
         mockRestClient.Setup(x => x.Execute(It.IsAny<RestRequest>())).Returns(response);
 
-        var apiClient = new ApiClient(new Configuration());
+        var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
         apiClient.RestClient = mockRestClient.Object;
 
@@ -197,7 +190,7 @@ public class ApiClientTests
 
         mockRestClient.Setup(x => x.Execute(It.IsAny<RestRequest>())).Returns(response);
 
-        var apiClient = new ApiClient(new Configuration());
+        var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
         apiClient.RestClient = mockRestClient.Object;
 
@@ -221,7 +214,7 @@ public class ApiClientTests
 
         mockRestClient.Setup(x => x.ExecuteTaskAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<IRestResponse>(response));
 
-        var apiClient = new ApiClient(new Configuration());
+        var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
         apiClient.RestClient = mockRestClient.Object;
 
@@ -245,7 +238,7 @@ public class ApiClientTests
 
         mockRestClient.Setup(x => x.ExecuteTaskAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<IRestResponse>(response));
 
-        var apiClient = new ApiClient(new Configuration());
+        var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
         apiClient.RestClient = mockRestClient.Object;
 
@@ -272,7 +265,7 @@ public class ApiClientTests
 
         mockRestClient.Setup(x => x.ExecuteTaskAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<IRestResponse>(response));
 
-        var apiClient = new ApiClient(new Configuration());
+        var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
         apiClient.RestClient = mockRestClient.Object;
 
@@ -299,7 +292,7 @@ public class ApiClientTests
 
         mockRestClient.Setup(x => x.ExecuteTaskAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<IRestResponse>(response));
 
-        var apiClient = new ApiClient(new Configuration());
+        var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
         apiClient.RestClient = mockRestClient.Object;
 
@@ -325,7 +318,7 @@ public class ApiClientTests
 
         mockRestClient.Setup(x => x.ExecuteTaskAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<IRestResponse>(response));
 
-        var apiClient = new ApiClient(new Configuration());
+        var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
         apiClient.RestClient = mockRestClient.Object;
 
@@ -350,7 +343,7 @@ public class ApiClientTests
 
         mockRestClient.Setup(x => x.ExecuteTaskAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<IRestResponse>(response));
 
-        var apiClient = new ApiClient(new Configuration());
+        var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
         apiClient.RestClient = mockRestClient.Object;
 
