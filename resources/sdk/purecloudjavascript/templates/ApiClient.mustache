@@ -283,7 +283,7 @@ class ApiClient {
 					this._debugTrace(error);
 					var query = {
 						client_id: encodeURIComponent(this.clientId),
-						redirect_uri: encodeURI(this.redirectUri),
+						redirect_uri: encodeURIComponent(this.redirectUri),
 						response_type: 'token'
 					};
 					if (opts.state) query.state = encodeURIComponent(opts.state);
