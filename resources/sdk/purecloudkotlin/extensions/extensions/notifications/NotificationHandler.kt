@@ -8,6 +8,7 @@ import com.mypurecloud.sdk.v2.api.NotificationsApi
 import com.mypurecloud.sdk.v2.api.request.PostNotificationsChannelsRequest
 import com.mypurecloud.sdk.v2.model.Channel
 import com.mypurecloud.sdk.v2.model.ChannelTopic
+import com.mypurecloud.sdk.v2.model.SystemMessageSystemMessage
 import com.neovisionaries.ws.client.*
 import org.slf4j.LoggerFactory
 import java.io.IOException
@@ -15,7 +16,7 @@ import java.util.*
 
 class NotificationHandler private constructor(builder: Builder) : Any() {
     private var notificationsApi: NotificationsApi? = NotificationsApi()
-    private val webSocket: WebSocket?
+    private var webSocket: WebSocket?
     var channel: Channel? = null
     private val typeMap: MutableMap<String?, NotificationListener<*>> = HashMap()
     private var webSocketListener: WebSocketListener? = null
@@ -116,13 +117,23 @@ class NotificationHandler private constructor(builder: Builder) : Any() {
         val topics: MutableList<ChannelTopic> = LinkedList()
         for (listener in listeners!!) {
             typeMap[listener.getTopic()] = listener
-            if ("channel.metadata" != listener.getTopic()) {
+            if ("channel.metadata" != listener.getTopic() && !listener.getTopic()?.startsWith("v2.system")!!) {
                 val channelTopic = ChannelTopic()
                 channelTopic.id = listener.getTopic()
                 topics.add(channelTopic)
             }
         }
         notificationsApi!!.postNotificationsChannelSubscriptions(channel!!.id!!, topics)
+    }
+
+    fun <T> addHandlerNoSubscribe(listener: NotificationListener<T>) {
+        addHandlersNoSubscribe(listOf<NotificationListener<*>>(listener))
+    }
+
+    fun addHandlersNoSubscribe(listeners: List<NotificationListener<*>>?) {
+        for (listener in listeners!!) {
+            typeMap[listener.getTopic()] = listener
+        }
     }
 
     @Throws(IOException::class, ApiException::class)
@@ -153,7 +164,7 @@ class NotificationHandler private constructor(builder: Builder) : Any() {
     }
 
     fun disconnect() {
-        if (webSocket != null && webSocket.isOpen) webSocket.disconnect()
+        if (webSocket != null && webSocket?.isOpen!!) webSocket?.disconnect()
     }
 
     @Throws(Throwable::class)
@@ -169,7 +180,8 @@ class NotificationHandler private constructor(builder: Builder) : Any() {
         private val LOGGER = LoggerFactory.getLogger(NotificationHandler::class.java)
     }
 
-    init { // Construct notifications API
+    init { 
+        // Construct notifications API
         notificationsApi = when {
             builder.notificationsApi != null -> {
                 builder.notificationsApi
@@ -181,6 +193,7 @@ class NotificationHandler private constructor(builder: Builder) : Any() {
                 NotificationsApi()
             }
         }
+
         // Set object mapper
         objectMapper = when {
             builder.objectMapper != null -> {
@@ -193,6 +206,7 @@ class NotificationHandler private constructor(builder: Builder) : Any() {
                 defaultApiClient!!.objectMapper
             }
         }
+
         // Set channel
         channel = when (builder.channel) {
             null -> {
@@ -202,12 +216,19 @@ class NotificationHandler private constructor(builder: Builder) : Any() {
                 builder.channel
             }
         }
+
         // Set notification listeners
         addSubscriptions(builder.notificationListeners)
+
+        // Add handler for socket closing event
+        addHandlerNoSubscribe(SocketClosingHandler())
+
         // Set web socket listener
         setWebSocketListener(builder.webSocketListener)
+
         // Initialize web socket
         val factory = WebSocketFactory()
+
         if (builder.proxyHost != null) factory.proxySettings.setServer(builder.proxyHost)
         webSocket = factory
                 .createSocket(channel!!.connectUri)
@@ -268,5 +289,25 @@ class NotificationHandler private constructor(builder: Builder) : Any() {
                     }
                 })
         if (builder.connectAsync != null) connect(builder.connectAsync!!)
+    }
+
+    inner class SocketClosingHandler : NotificationListener<SystemMessageSystemMessage?> {
+        private val topic: String = "v2.system.socket_closing"
+
+        override fun getTopic(): String? {
+            return topic
+        }
+
+        override fun getEventBodyClass(): Class<SystemMessageSystemMessage>? {
+            return SystemMessageSystemMessage::class.java
+        }
+
+        override fun onEvent(event: NotificationEvent<*>?) {
+            try {
+                webSocket = webSocket!!.recreate()
+            } catch (ex: Exception) {
+                LOGGER.error(ex.message, ex)
+            }
+        }
     }
 }
