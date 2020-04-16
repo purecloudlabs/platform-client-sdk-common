@@ -1,0 +1,118 @@
+package {{package}}
+
+import com.fasterxml.jackson.core.type.TypeReference
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.SettableFuture
+
+import {{invokerPackage}}.AsyncApiCallback
+import {{invokerPackage}}.ApiException
+import {{invokerPackage}}.ApiClient
+import {{invokerPackage}}.ApiRequest
+import {{invokerPackage}}.ApiResponse
+import {{invokerPackage}}.Configuration
+import {{modelPackage}}.*
+import {{invokerPackage}}.Pair
+
+{{#operations}}{{#operation}}
+import {{package}}.request.{{requestClassname}}{{/operation}}{{/operations}}
+
+import java.util.concurrent.Future
+
+{{#operations}}
+class {{classname}}Async @JvmOverloads constructor(private val {{localVariablePrefix}}apiClient: ApiClient? = Configuration.defaultApiClient) {
+    {{#operation}}
+    /**
+    * {{summary}}
+    * {{notes}}
+    * @param request the request object
+    * @param callback the action to perform when the request is completed
+    * @return the future indication when the request has completed
+    */
+    fun {{operationId}}Async(request: {{requestClassname}}, callback: AsyncApiCallback<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}?>?): Future<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}?> {
+        return try {
+            val future = SettableFuture.create<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}?>()
+            val shouldThrowErrors = {{localVariablePrefix}}apiClient!!.shouldThrowErrors
+            {{localVariablePrefix}}apiClient.invokeAsync(request.withHttpInfo(), {{#returnType}}object : TypeReference<{{{returnType}}}>() {}{{/returnType}}{{^returnType}}null{{/returnType}}, object : AsyncApiCallback<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>> {
+                override fun onCompleted(response: ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>) {
+                    notifySuccess(future, callback, response.getBody())
+                }
+
+                override fun onFailed(exception: Throwable) {
+                    if (shouldThrowErrors) {
+                        notifyFailure(future, callback, exception)
+                    } else {
+                        notifySuccess(future, callback, null)
+                    }
+                }
+            })
+            future
+        } catch (exception: Throwable) {
+            Futures.immediateFailedFuture(exception)
+        }
+    }
+
+    /**
+    * {{summary}}
+    * {{notes}}
+    * @param request the request object
+    * @param callback the action to perform when the request is completed
+    * @return the future indication when the request has completed
+    */
+    fun {{operationId}}Async(request: ApiRequest<{{#bodyParam}}{{{dataType}}}{{/bodyParam}}{{^bodyParam}}Void{{/bodyParam}}?>, callback: AsyncApiCallback<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>>?): Future<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>> {
+        return try {
+            val future = SettableFuture.create<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>>()
+            val shouldThrowErrors = {{localVariablePrefix}}apiClient!!.shouldThrowErrors
+            {{localVariablePrefix}}apiClient.invokeAsync(request, {{#returnType}}object : TypeReference<{{{returnType}}}>() {}{{/returnType}}{{^returnType}}null{{/returnType}}, object : AsyncApiCallback<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>> {
+                override fun onCompleted(response: ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>) {
+                    notifySuccess<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>>(future, callback, response)
+                }
+
+                override fun onFailed(exception: Throwable) {
+                    if (exception is ApiException) {
+                        @Suppress("UNCHECKED_CAST")
+                        val response = exception as ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>
+                        notifySuccess<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>>(future, callback, response)
+                    }
+                    if (shouldThrowErrors) {
+                        notifyFailure<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>>(future, callback, exception)
+                    } else {
+                        @Suppress("UNCHECKED_CAST")
+                        val response = ApiException(exception) as ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>
+                        notifySuccess<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>>(future, callback, response)
+                    }
+                }
+            })
+            future
+        } catch (exception: Throwable) {
+            Futures.immediateFailedFuture(exception)
+        }
+    }
+    {{/operation}}
+
+    private fun <T> notifySuccess(future: SettableFuture<T>, callback: AsyncApiCallback<T>?, result: T) {
+        if (callback != null) {
+            try {
+                callback.onCompleted(result)
+                future.set(result)
+            } catch (exception: Throwable) {
+                future.setException(exception)
+            }
+        } else {
+            future.set(result)
+        }
+    }
+
+    private fun <T> notifyFailure(future: SettableFuture<T>, callback: AsyncApiCallback<T>?, exception: Throwable) {
+        if (callback != null) {
+            try {
+                callback.onFailed(exception)
+                future.setException(exception)
+            } catch (callbackException: Throwable) {
+                future.setException(callbackException)
+            }
+        } else {
+            future.setException(exception)
+        }
+    }
+}
+{{/operations}}

@@ -1,0 +1,25 @@
+  /**
+   * {{^description}}Gets or Sets {{{name}}}{{/description}}{{#description}}{{{description}}}{{/description}}
+   */
+   enum class {{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}(private val value: String) {
+    {{#allowableValues}}{{#enumVars}}{{{name}}}({{{value}}}){{^-last}},
+    {{/-last}}{{#-last}};{{/-last}}{{/enumVars}}{{/allowableValues}}
+
+    companion object {
+      @JsonCreator
+      fun fromString(key: String?): {{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}? {
+        if (key == null) return null
+        for (value in values()) {
+          if (key.equals(value.toString(), ignoreCase = true)) {
+            return value
+          }
+        }
+        return values()[0]
+      }
+    }
+
+    @JsonValue
+    override fun toString(): String {
+      return value
+    }
+  }

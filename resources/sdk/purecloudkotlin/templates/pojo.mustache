@@ -1,0 +1,64 @@
+{{#isPagedResource}}import {{invokerPackage}}.PagedResource{{/isPagedResource}}
+
+/**
+ * {{#description}}{{.}}{{/description}}{{^description}}{{classname}}{{/description}}
+ */{{#description}}{{/description}}
+class {{classname}} {{#serializableModel}}{{#isPagedResource}}: Serializable, PagedResource<{{{pagedResourceType}}}>{{/isPagedResource}}{{^isPagedResource}}: Serializable{{/isPagedResource}}{{/serializableModel}}{{#isPagedResource}}{{^serializableModel}}: PagedResource<{{{pagedResourceType}}}>{{/serializableModel}}{{/isPagedResource}} {
+  {{#vars}}{{#isEnum}}
+
+  {{>modelInnerEnum}}{{/isEnum}}{{#items.isEnum}}{{#items}}
+
+  {{>modelInnerEnum}}{{/items}}{{/items.isEnum}}
+  @get:ApiModelProperty({{#example}}example = "{{example}}", {{/example}}{{#required}}required = {{required}}, {{/required}}value = "{{{description}}}")
+  @get:JsonProperty("{{baseName}}")
+  {{#isPagedResource}}override {{/isPagedResource}}var {{name}}: {{{datatypeWithEnum}}}? = {{{defaultValue}}}{{/vars}}
+
+  {{#vars}}{{^isReadOnly}}
+  {{/isReadOnly}}{{#vendorExtensions.extraAnnotation}}
+  {{vendorExtensions.extraAnnotation}}{{/vendorExtensions.extraAnnotation}}
+  /**{{#description}}
+   * {{{description}}}{{/description}}{{#minimum}}
+   * minimum: {{minimum}}{{/minimum}}{{#maximum}}
+   * maximum: {{maximum}}{{/maximum}}
+   **/
+  fun {{name}}({{name}}: {{{datatypeWithEnum}}}): {{classname}} {
+    this.{{name}} = {{name}}
+    return this
+  }
+  {{/vars}}
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) {
+      return true
+    }
+    if (other == null || javaClass != other.javaClass) {
+      return false
+    }{{#hasVars}}
+    val {{classVarName}} = other as {{classname}}
+    return {{#vars}}this.{{name}} == {{classVarName}}.{{name}}{{#hasMore}} &&
+      {{/hasMore}}{{/vars}}{{#parent}} &&
+      super.equals(o){{/parent}}{{/hasVars}}{{^hasVars}}
+    return true{{/hasVars}}
+  }
+
+    override fun hashCode(): Int {
+        return Objects.hash({{#vars}}{{name}}{{#hasMore}}, {{/hasMore}}{{/vars}}{{#parent}}{{#hasVars}}, {{/hasVars}}super.hashCode(){{/parent}})
+    }
+
+    override fun toString(): String {
+      val sb = StringBuilder()
+      sb.append("class {{classname}} {\n")
+      {{#parent}}sb.append("    ").append(toIndentedString(super.toString())).append("\n"){{/parent}}
+      {{#vars}}sb.append("    {{name}}: ").append(toIndentedString({{name}})).append("\n")
+      {{/vars}}sb.append("}")
+      return sb.toString()
+    }
+
+    /**
+     * Convert the given object to string with each line indented by 4 spaces
+     * (except the first line).
+     */
+    private fun toIndentedString(o: Any?): String {
+        return o?.toString()?.replace("\n", "\n    ") ?: "null"
+    }
+}

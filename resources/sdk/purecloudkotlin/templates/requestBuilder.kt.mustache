@@ -1,0 +1,152 @@
+package {{package}}
+
+import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonValue
+import {{invokerPackage}}.ApiException
+import {{invokerPackage}}.ApiClient
+import {{invokerPackage}}.ApiRequest
+import {{invokerPackage}}.ApiRequestBuilder
+import {{invokerPackage}}.ApiResponse
+import {{invokerPackage}}.Configuration
+import {{modelPackage}}.*
+import {{invokerPackage}}.Pair
+import java.io.UnsupportedEncodingException
+import java.net.URLEncoder
+import java.util.regex.Pattern
+
+{{#imports}}import {{import}}
+{{/imports}}
+
+{{#operation}}
+class {{requestClassname}} {
+    {{#allParams}}
+	var {{paramName}}: {{{dataType}}}? = null
+
+    fun with{{paramTitle}}({{paramName}}: {{{dataType}}}?): {{requestClassname}} {
+        this.{{paramName}} = {{paramName}}
+        return this
+    } {{#allowableValuesForEnum}}
+
+	enum class {{paramName}}Values(private val value: {{#baseType}}{{.}}{{/baseType}}{{^baseType}}{{dataType}}{{/baseType}}) { {{#values}}
+		{{Item1}}("{{Item2}}"){{^-last}}, {{/-last}}{{/values}};
+
+        companion object {
+            @JsonCreator
+            fun fromString(key: String?): {{paramName}}Values? {
+                if (key == null) return null
+
+                for (value in values()) {
+                    if (key.equals(value.toString(), ignoreCase = true)) {
+                        return value
+                    }
+                }
+
+                return values()[0]
+            }
+        }
+
+        @JsonValue
+        override fun toString(): String {
+            return value
+        }
+	}{{/allowableValuesForEnum}}
+    {{/allParams}}
+
+    private val customHeaders: MutableMap<String, String> = HashMap()
+    fun getCustomHeaders(): MutableMap<String, String> {
+        return customHeaders
+    }
+
+    fun setCustomHeaders(customHeaders: MutableMap<String, String>?) {
+        this.customHeaders.clear()
+        this.customHeaders.putAll(customHeaders!!)
+    }
+
+    fun addCustomHeader(name: String, value: String) {
+        customHeaders[name] = value
+    }
+
+    fun withCustomHeader(name: String, value: String): {{requestClassname}} {
+        addCustomHeader(name, value)
+        return this
+    }
+
+    fun withHttpInfo(): ApiRequest<{{#bodyParam}}{{{dataType}}}?{{/bodyParam}}{{^bodyParam}}Void{{/bodyParam}}> {
+        {{#allParams}}{{#required}}
+        // verify the required parameter '{{paramName}}' is set
+        checkNotNull({{paramName}}) { "Missing the required parameter '{{paramName}}' when building request for {{requestClassname}}." }
+        {{/required}}{{/allParams}}
+        return ApiRequestBuilder.create("{{httpMethod}}", "{{path}}"){{#pathParams}}
+                .withPathParameter("{{{baseName}}}", {{paramName}})
+        {{/pathParams}}{{#queryParams}}
+                .withQueryParameters("{{{baseName}}}", "{{#collectionFormat}}{{{collectionFormat}}}{{/collectionFormat}}", {{paramName}})
+        {{/queryParams}}{{#formParams}}
+                .withFormParameter("{{{baseName}}}", {{paramName}})
+        {{/formParams}}{{#headerParams}}
+                .withHeaderParameter("{{{baseName}}}", {{paramName}})
+        {{/headerParams}}{{#bodyParam}}
+                .withBody({{paramName}})
+        {{/bodyParam}}
+                .withCustomHeaders(customHeaders)
+                .withContentTypes({{#consumes}}"{{mediaType}}"{{#hasMore}}, {{/hasMore}}{{/consumes}})
+                .withAccepts({{#produces}}"{{mediaType}}"{{#hasMore}}, {{/hasMore}}{{/produces}})
+                .withAuthNames({{#authMethods}}"{{name}}"{{#hasMore}}, {{/hasMore}}{{/authMethods}})
+                .build()
+    }
+
+    class Builder {
+        private var request: {{requestClassname}} = {{requestClassname}}()
+
+        {{#allParams}}
+        fun with{{paramTitle}}({{paramName}}: {{{dataType}}}?): Builder {
+            request.{{paramName}} = {{paramName}}
+            return this
+        }{{#allowableValuesForEnum}}
+
+        fun {{#isContainer}}with{{paramTitle}}EnumValues({{paramName}}: List<{{paramName}}Values>): Builder {
+		    val stringList: MutableList<String> = ArrayList()
+	        for (e in {{paramName}}) {
+	            stringList.add(e.toString())
+	        }
+	        request.{{paramName}} = stringList
+            return this
+		}{{/isContainer}}{{^isContainer}}with{{paramTitle}}({{paramName}}: {{paramName}}Values?): Builder {
+		    request.{{paramName}} = {{paramName}}.toString()
+		    return this
+		}{{/isContainer}}{{/allowableValuesForEnum}}
+        {{/allParams}}
+
+		{{#hasRequiredParams}}
+		fun withRequiredParams({{#requiredParams}}{{^-first}}, {{/-first}}{{{paramName}}}: {{{dataType}}}?{{/requiredParams}}): Builder {
+{{#requiredParams}}			request.{{paramName}} = {{paramName}}
+			{{/requiredParams}}
+			return this
+		}
+		{{/hasRequiredParams}}
+
+        fun build(): {{requestClassname}} {
+            {{#allParams}}{{#required}}
+            // verify the required parameter '{{paramName}}' is set
+            checkNotNull(request.{{paramName}}) { "Missing the required parameter '{{paramName}}' when building request for {{classname}}." }
+            {{/required}}{{/allParams}}
+            return request
+        }
+
+        init {
+            request = {{requestClassname}}()
+        }
+    }
+
+    companion object {
+        fun builder(): Builder {
+            return Builder()
+        }
+        {{#hasRequiredParams}}
+        fun builder({{#requiredParams}}{{^-first}}, {{/-first}}{{paramName}}: {{{dataType}}}?{{/requiredParams}}): Builder {
+            return Builder()
+                    .withRequiredParams({{#requiredParams}}{{^-first}}, {{/-first}}{{paramName}}{{/requiredParams}})
+        }
+        {{/hasRequiredParams}}
+    }
+}
+{{/operation}}

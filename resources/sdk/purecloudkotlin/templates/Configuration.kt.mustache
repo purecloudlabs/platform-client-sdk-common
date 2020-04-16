@@ -1,0 +1,9 @@
+package {{invokerPackage}}
+
+object Configuration {
+    var defaultApiClient: ApiClient? = null
+        get() {
+            if (field == null) defaultApiClient = ApiClient()
+            return field
+        }
+}
