@@ -83,12 +83,13 @@ namespace {{=it.packageName}}.Extensions.Notifications
         /// </summary>
         private void SubscribeToSystemEvents()
         {
-            var topic = "v2.system.socket_closing";
-            AddHandlerNoSubscribe(topic, typeof(SystemMessageSystemMessage));
+            var socketClosingTopic = "v2.system.socket_closing";
+            AddHandlerNoSubscribe(socketClosingTopic, typeof(SystemMessageSystemMessage));
+            AddHandlerNoSubscribe("channel.metadata", typeof(ChannelMetadataNotification));
             NotificationReceived += (data) =>
             {
                 if (data.GetType() == typeof (NotificationData<SystemMessageSystemMessage>) &&
-                    string.Compare(data.TopicName, topic) == 0)
+                    string.Compare(data.TopicName, socketClosingTopic) == 0)
                 {
                     WebSocket.Close();
                     WebSocket.Connect();
