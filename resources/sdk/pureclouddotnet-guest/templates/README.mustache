@@ -1,0 +1,201 @@
+---
+title: Platform API Guest Chat Client SDK - .NET
+---
+[![NuGet Badge](https://buildstats.info/nuget/PureCloudPlatform.Client.V2.Guest)](https://www.nuget.org/packages/PureCloudPlatform.Client.V2.Guest/)
+
+Documentation can be found at [https://developer.mypurecloud.com/api/rest/client-libraries/dotnet-guest/](https://developer.mypurecloud.com/api/rest/client-libraries/dotnet-guest/)
+
+## Install Using nuget
+
+```{"language":"csharp"}
+install-package PureCloudPlatform.Client.V2.Guest
+```
+
+Package info can be found at [https://www.nuget.org/packages/PureCloudPlatform.Client.V2.Guest/](https://www.nuget.org/packages/PureCloudPlatform.Client.V2.Guest/)
+
+## Using the Library
+
+### Referencing the Library
+
+If you've used the [Package Manager Console](https://docs.nuget.org/consume/package-manager-console) to install the package, there are no additional steps.
+
+If you're building from source or otherwise not using nuget, reference your version of PureCloudPlatform.Client.V2.Guest.dll in your project and add references or install packages for [RestSharp](http://www.nuget.org/packages/RestSharp/) and [JSON.NET](http://www.nuget.org/packages/Newtonsoft.Json/).
+
+### Creating a chat
+
+The guest chat APIs do not require standard PureCloud authentication, but do require a JWT token for all API calls other than creating a new chat.
+
+```{"language":"csharp"}
+var organizationId = "12b1a3fe-7a80-4b50-45fs-df88c0f9efad";
+var deploymentId = "a3e316a7-ec8b-4fe9-5a49-dded9dcc097e";
+var queueName = "Chat Queue";
+var guestName = "Chat Guest";
+var guestImage = "http://yoursite.com/path/to/guest/image.png";
+
+PureCloudRegionHosts region = PureCloudRegionHosts.us_east_1;
+Configuration.Default.ApiClient.setBasePath(region);
+
+// Build create chat request
+CreateWebChatConversationRequest request = new CreateWebChatConversationRequest();
+request.OrganizationId = organizationId;
+request.DeploymentId = deploymentId;
+
+WebChatRoutingTarget target = new WebChatRoutingTarget();
+target.TargetType = WebChatRoutingTarget.TargetTypeEnum.Queue;
+target.TargetAddress = queueName;
+request.RoutingTarget = target;
+
+GuestMemberInfo memberInfo = new GuestMemberInfo();
+memberInfo.DisplayName = guestName;
+memberInfo.AvatarImageUrl = guestImage;
+request.MemberInfo = memberInfo;
+
+// Instantiate API
+WebChatApi webChatApi = new WebChatApi();
+
+// Create new chat
+ApiResponse<CreateWebChatConversationResponse> response;
+try {
+    response = webChatApi.PostWebchatGuestConversationsWithHttpInfo(request);
+}
+catch (Exception ex)
+{
+    Console.WriteLine(ex);
+    return;
+}
+
+// Store chat info in local var for easy access
+CreateWebChatConversationResponse chatInfo = response.Data;
+Console.WriteLine("Conversation ID: " + chatInfo.Id);
+WebChatMemberInfo webChatMemberInfo = chatInfo.Member;
+Console.WriteLine("Member Id: " + webChatMemberInfo.Id);
+
+// Set JWT in SDK
+Configuration.Default.SetJwt(chatInfo.Jwt);
+
+// Create websocket instance
+var WebSocket = new WebSocket(chatInfo.EventStreamUri);
+WebSocket.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
+WebSocket.OnMessage += (sender, e) =>
+{
+    // Handle message here
+};
+// Connect to host
+WebSocket.Connect();
+
+// At this point, the chat has been created and will be routed per the target's configuration
+Console.ReadLine();
+```
+
+### Making Requests
+
+#### Setting the Environment
+
+If connecting to a PureCloud environment other than mypurecloud.com (e.g. mypurecloud.ie), set the new base path before constructing any API classes. The new base path should be the base path to the Platform API for your environment.
+
+```{"language":"csharp"}
+PureCloudRegionHosts region = PureCloudRegionHosts.us_east_1;
+Configuration.Default.ApiClient.setBasePath(region);
+```
+
+### Making Requests
+
+There are three steps to making requests:
+
+1. Set the JWT on the SDK
+2. Instantiate the WebChat API class
+3. Invoke the methods on the API object
+
+Example of getting the authenticated user's information:
+
+#### Set the JWT (access token)
+
+The JWT from the newly created chat must be applied to the SDK before any requests can be made targeting the chat. Do this by setting the JWT on the ApiClient instance.
+
+```{"language":"csharp"}
+Configuration.Default.SetJwt(chatInfo.Jwt);
+```
+
+### Make request using method parameters
+
+```{"language":"csharp"}
+WebChatApi webChatApi = new WebChatApi();
+
+// This example assumes a chat has been created and the JWT has been set
+
+CreateWebChatMessageRequest createWebChatMessageRequest = new CreateWebChatMessageRequest();
+createWebChatMessageRequest.Body = "chat message text";
+var createWebChatConversationResponseApiResponse = 
+    webChatApi.PostWebchatGuestConversationMemberMessages(chatInfo.Id, chatInfo.Member.Id, createWebChatMessageRequest);
+```
+
+#### Getting extended info
+
+The DotNet SDK has the ability to return extended information about the response in addition to the response body. There are varieties of each API method call that are suffixed with _WithHttpInfo_. E.g. The `WebChatApi` has a method `postWebchatGuestConversationMemberMessages(...)` as well as `postWebchatGuestConversationMemberMessagesWithHttpInfo(...)`.
+
+The extended responses will be of type [ApiResponse<T>](https://github.com/MyPureCloud/platform-client-sdk-dotnet/blob/master/build/src/PureCloudPlatform.Client.V2/Client/ApiResponse.cs). This interface provides the ability to get the HTTP status code, get the status description associated with the status code, get all headers, get a specific header, get the correlation ID header, and get the response body as a raw string or as a typed object.
+
+Examples:
+
+```{"language":"csharp"}
+// Using the WithHttpInfo method
+ApiResponse<WebChatMessage> response = webChatApi.PostWebchatGuestConversationMemberMessagesWithHttpInfo(
+  chatInfo.Id,
+  chatInfo.Member.Id,
+  body
+);
+```
+
+#### Setting the max retry time
+
+By default, the .NET SDK does not automatically retry any failed requests.
+To enable automatic retries, provide a RetryConfiguration object with the maximum number of seconds to retry requests when building the ApiClient instance.
+
+Building a `RetryConfiguration` instance:
+```{"language":"csharp"}
+var retryConfig = new ApiClient.RetryConfiguration
+{
+  MaxRetryTimeSec = 10
+};
+```
+
+Setting `RetryConfiguration` instance to `ApiClient`:
+ ```{"language":"csharp"}
+Configuration.Default.ApiClient.RetryConfig = retryConfig;
+```
+Set the `MaxRetryTimeSec` to the number of seconds to process retries before returning an error.
+When the retry time is a a positive integer, the SDK will follow the recommended backoff logic using the provided configuration.
+The best practices are documented in the [Rate Limiting](https://developer.mypurecloud.com/api/rest/rate_limits.html) Developer Center article.
+
+## SDK Information
+
+### REST Requests
+
+The SDK library uses [RestSharp](http://restsharp.org/) to make the REST reqests. The majority of this work is done in [ApiClient.cs](https://github.com/MyPureCloud/platform-client-sdk-dotnet-guest/blob/master/build/src/PureCloudPlatform.Client.V2.Guest/Client/ApiClient.cs)
+
+### Building from Source
+
+If you're working inside Visual Studio, adding the files to your project allows you to edit and build inside an IDE.
+
+1. Clone the repo
+2. Open the solution file: [PureCloudPlatform.Client.V2.Guest.sln](https://github.com/MyPureCloud/platform-client-sdk-dotnet-guest/blob/master/build/PureCloudPlatform.Client.V2.Guest.sln)
+3. Resolve/restore dependencies (`Update-Package –reinstall` in the _Package Manager Console_)
+4. Build the project in Visual Studio
+
+Alternatively, the code can be compiled via the command line. The official builds do this using cross-platform tools: [compile.sh](https://github.com/MyPureCloud/platform-client-sdk-common/blob/master/resources/sdk/pureclouddotnet-guest/scripts/compile.sh)
+
+## SDK Source Code Generation
+
+The SDK is automatically regenerated and published from the API's definition after each API release. For more information on the build process, see the [platform-client-sdk-common](https://github.com/MyPureCloud/platform-client-sdk-common) project.
+
+
+## Versioning
+
+The SDK's version is incremented according to the [Semantic Versioning Specification](https://semver.org/). The decision to increment version numbers is determined by [diffing the Platform API's swagger](https://github.com/purecloudlabs/platform-client-sdk-common/blob/master/modules/swaggerDiff.js) for automated builds, and optionally forcing a version bump when a build is triggered manually (e.g. releasing a bugfix).
+
+
+## Support
+
+This package is intended to be forwards compatible with v2 of PureCloud's Platform API. While the general policy for the API is not to introduce breaking changes, there are certain additions and changes to the API that cause breaking changes for the SDK, often due to the way the API is expressed in its swagger definition. Because of this, the SDK can have a major version bump while the API remains at major version 2. While the SDK is intended to be forward compatible, patches will only be released to the latest version. For these reasons, it is strongly recommended that all applications using this SDK are kept up to date and use the latest version of the SDK.
+
+For any issues, questions, or suggestions for the SDK, visit the [PureCloud Developer Forum](https://developer.mypurecloud.com/forum/).
