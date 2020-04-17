@@ -1,85 +1,310 @@
-# {{packageName}} - Kotlin client library for {{appName}}
+---
+title: Platform API Client SDK - Kotlin
+---
 
-## Requires
+## Using the SDK
 
-* Kotlin 1.1.2
-* Gradle 3.3
+### Referencing the Package
 
-## Build
+Import the necessary packages:
 
-First, create the gradle wrapper script:
+```{"language":"kotlin"}
+import com.mypurecloud.sdk.v2.ApiException
+import com.mypurecloud.sdk.v2.Configuration
+import com.mypurecloud.sdk.v2.api.UsersApi
+import com.mypurecloud.sdk.v2.model.User
+import com.mypurecloud.sdk.v2.model.UserMe
+import com.mypurecloud.sdk.v2.model.UsersEntityListing
+import com.mypurecloud.sdk.v2.PureCloudRegionHosts
+```
+
+### Authenticating
+
+The Kotlin SDK contains a helper method to execute a Client Credentials OAuth flow. This is appropriate for non-user Kotlin applications, typically when there is no UI. Invoking `authorizeClientCredentials(clientId: String, clientSecret: String)` will execute the client credentials OAuth grant and store the access token within the ApiClient class. 
+
+```{"language":"kotlin"}
+val clientId = System.getenv("PURECLOUD_CLIENT_ID")
+val clientSecret = System.getenv("PURECLOUD_CLIENT_SECRET")
+
+//Set Region
+val region = PureCloudRegionHosts.us_east_1
+
+val apiClient: ApiClient = ApiClient.Builder.standard().withBasePath(region).build()
+val authResponse = apiClient.authorizeClientCredentials(clientId, clientSecret)
+
+// Don't actually do this, this logs your auth token to the console!
+println(authResponse.getBody().toString())
+
+// Use the ApiClient instance
+Configuration.defaultApiClient = apiClient
+
+// Create API instances and make authenticated API requests
+val usersApi = UsersApi()
+val users = usersApi.getUsers(null, null, null, null, null, null, null)
+```
+
+For user applications, the consuming application must complete an implicit, auth token, or SAML2 Bearer OAuth flow to get an access token outside the scope of the SDK. Once an access token is obtained, it should be set on the SDK via constructing a new ApiClient instance (use `withAccessToken(token: String)`). For more information about authenticating with OAuth, see the Developer Center article [Authorization](https://developer.mypurecloud.com/api/rest/authorization/index.html). For more information about SAML2 Bearer Oauth flow view the example below 
+
+## Authentication with SAML2Bearer token
+
+```{"language":"kotlin"}
+val clientId = System.getenv("PURECLOUD_CLIENT_ID")
+val clientSecret = System.getenv("PURECLOUD_CLIENT_SECRET")
+val orgName = "YourOrg" // Your org name 
+val encodedSamlAssertion= "" // Base64 encoded SAML assertion
+
+//Set Region
+val region = PureCloudRegionHosts.us_east_1
+
+val apiClient: ApiClient = ApiClient.Builder.standard().withBasePath(region).build()
+val authResponse = apiClient.authorizeSaml2Bearer(clientId, clientSecret, orgName, encodedSamlAssertion)
+println("Authentication successful. Access token expires in ${authResponse.getBody()?.expires_in} seconds")
 
 ```
-gradle wrapper
+
+### Building an ApiClient Instance
+
+`ApiClient` implements a builder pattern to construct new instances:
+
+```{"language":"kotlin"}
+// Create ApiClient instance
+// Set Region
+val region = PureCloudRegionHosts.us_east_1
+val apiClient: ApiClient = ApiClient.Builder.standard()
+		.withAccessToken(accessToken)
+		.withBasePath(region)
+		.build()
+
+// Use the ApiClient instance
+Configuration.defaultApiClient = apiClient
+
+// Create API instances and make authenticated API requests
+val apiInstance = UsersApi()
+val response = apiInstance.getUsers(null, null, null, null, null, null)
 ```
 
-Then, run:
+#### Setting the access token
 
+If not authorizing using the `authorizeClientCredentials(...)` helper, provide the access token to use for API requests:
+
+```{"language":"kotlin"}
+.withAccessToken("aisuefh89734hfkhsaldkh348jf")
 ```
-./gradlew check assemble
+
+#### Setting the environment
+
+Provide the full base url if not using `https://api.mypurecloud.com`:
+
+```{"language":"kotlin"}
+.withBasePath("https://api.mypurecloud.ie")
 ```
 
-This runs all tests and packages the library.
+#### Setting the HTTP connector
 
-## Features/Implementation Notes
+The SDK supports the following HTTP connectors:
 
-* Supports JSON inputs/outputs, File inputs, and Form inputs.
-* Supports collection formats for query parameters: csv, tsv, ssv, pipes.
-* Some Kotlin and Java types are fully qualified to avoid conflicts with types defined in Swagger definitions.
-* Implementation of ApiClient is intended to reduce method counts, specifically to benefit Android targets.
+* Apache (_default_, synchronous), use `ApacheHttpClientConnectorProvider`
+* Ning (async), use `AsyncHttpClientConnectorProvider`
+* OkHTTP (synchronous, recommended for Android), use `OkHttpClientConnectorProvider`
 
-{{#generateApiDocs}}
-<a name="documentation-for-api-endpoints"></a>
-## Documentation for API Endpoints
+Specify the connector in the builder:
 
-All URIs are relative to *{{{basePath}}}*
+```{"language":"kotlin"}
+.withProperty(ApiClientConnectorProperty.CONNECTOR_PROVIDER, OkHttpClientConnectorProvider())
+```
 
-Class | Method | HTTP request | Description
------------- | ------------- | ------------- | -------------
-{{#apiInfo}}{{#apis}}{{#operations}}{{#operation}}*{{classname}}* | [**{{operationId}}**]({{apiDocPath}}{{classname}}.md#{{operationIdLowerCase}}) | **{{httpMethod}}** {{path}} | {{#summary}}{{{summary}}}{{/summary}}
-{{/operation}}{{/operations}}{{/apis}}{{/apiInfo}}
-{{/generateApiDocs}}
+#### Setting the max retry time
 
-{{#generateModelDocs}}
-<a name="documentation-for-models"></a>
-## Documentation for Models
+By default, the Kotlin SDK does not automatically retry any failed requests.
+To enable automatic retries, provide a RetryConfiguration object with the maximum number of seconds to retry requests when building the ApiClient instance.
 
-{{#modelPackage}}
-{{#models}}{{#model}} - [{{{modelPackage}}}.{{{classname}}}]({{modelDocPath}}{{{classname}}}.md)
-{{/model}}{{/models}}
-{{/modelPackage}}
-{{^modelPackage}}
-No model defined in this package
-{{/modelPackage}}
-{{/generateModelDocs}}
+Building a `RetryConfiguration` instance:  
+```{"language":"kotlin"}
+val retryConfiguration = ApiClient.RetryConfiguration()
+retryConfiguration.maxRetryTimeSec = 30
+```
 
-<a name="documentation-for-authorization"></a>{{! TODO: optional documentation for authorization? }}
-## Documentation for Authorization
+Setting `RetryConfiguration` instance to `ApiClient`:
+```{"language":"kotlin"}
+.withRetryConfiguration(retryConfiguration)
+```
+Set the `maxRetryTimeSec` to the number of seconds to process retries before returning an error.
+When the retry time is a a positive integer, the SDK will follow the recommended backoff logic using the provided configuration.
+The best practices are documented in the [Rate Limiting](https://developer.mypurecloud.com/api/rest/rate_limits.html) Developer Center article.
 
-{{^authMethods}}
-All endpoints do not require authorization.
-{{/authMethods}}
-{{#authMethods}}
-{{#last}}
-Authentication schemes defined for the API:
-{{/last}}
-{{/authMethods}}
-{{#authMethods}}
-<a name="{{name}}"></a>
-### {{name}}
+#### Other ApiClient.Builder methods
 
-{{#isApiKey}}- **Type**: API key
-- **API key parameter name**: {{keyParamName}}
-- **Location**: {{#isKeyInQuery}}URL query string{{/isKeyInQuery}}{{#isKeyInHeader}}HTTP header{{/isKeyInHeader}}
-{{/isApiKey}}
-{{#isBasic}}- **Type**: HTTP basic authentication
-{{/isBasic}}
-{{#isOAuth}}- **Type**: OAuth
-- **Flow**: {{flow}}
-- **Authorization URL**: {{authorizationUrl}}
-- **Scopes**: {{^scopes}}N/A{{/scopes}}
-{{#scopes}}  - {{scope}}: {{description}}
-{{/scopes}}
-{{/isOAuth}}
+* `withDefaultHeader(header: String, value: String)` Specifies additional headers to be sent with every request
+* `withUserAgent(userAgent: String)` Overrides the default user agent header
+* `withObjectMapper(objectMapper: ObjectMapper)` Overrides the default `ObjectMapper` used for deserialization
+* `withDateFormat(dateFormat: DateFormat)` Overrides the default `DateFormat`
+* `withConnectionTimeout(connectionTimeout: Int)` Overrides the default connection timeout
+* `withShouldThrowErrors(shouldThrowErrors: Boolean)` Set to `false` to suppress throwing of all errors
+* `withProxy(proxy: Proxy)` Sets a proxy to use for requests
+* `withAuthenticatedProxy(proxy: Proxy, user: String, pass: String)` Sets an authenticated proxy to use for requests
 
-{{/authMethods}}
+### Making Requests
+
+There are two steps to making requests:
+
+1. Instantiate one of the API classes in the com.mypurecloud.sdk.v2.api namespace
+2. Invoke the methods on the API object
+
+Example of getting the authenticated user's information:
+
+#### Using a request builder
+
+Request builders allow requests to be constructed by only providing values for the properties you want to set. This is useful for methods with long signatures when you only need to set some properties and will help future-proof your code if the method signature changes (i.e. new parameters added).
+
+```{"language":"kotlin"}
+val usersApi = UsersApi()
+val request = GetUsersMeRequest.builder()
+        .withExpand(Collections.singletonList("presence"))
+        .build()
+val me = usersApi.getUsersMe(request)
+println("Hello ${me?.name}")
+```
+
+#### Using method parameters
+
+This request is identical to the request above, but uses the method with explicit parameters instead of a builder. These methods construct the request builder behind the scenes.
+
+```{"language":"kotlin"}
+val usersApi = UsersApi()
+val me = usersApi.getUsersMe(Collections.singletonList("presence"))
+println("Hello ${me?.name}")
+```
+
+
+#### Getting extended info
+
+The Kotlin SDK has the ability to return extended information about the response in addition to the response body. There are varieties of each API method call that are suffixed with _WithHttpInfo_. E.g. The `UsersApi` has a method `getUsersMe(...)` as well as `getUsersMeWithHttpInfo(...)`. Additionally, the request builder classes (e.g. `GetUsersMeRequest`) has a method `withHttpInfo()` that can be used to transform the request into an `ApiRequest` object that will return the extended information.
+
+The extended responses will be of type ApiResponse<T>
+
+Examples:
+
+```{"language":"kotlin"}
+// Using the WithHttpInfo method
+val meWithHttpInfo = usersApi.getUsersMeWithHttpInfo(mutableListOf())
+println(meWithHttpInfo.headers)
+println(meWithHttpInfo.getCorrelationId())
+println(meWithHttpInfo.getBody()?.name)
+```
+
+```{"language":"kotlin"}
+// Using the request builder
+val getUsersMeRequestWithHttpInfo = GetUsersMeRequest.builder()
+        .withExpand(mutableListOf())
+        .build()
+        .withHttpInfo()
+
+// Execute request
+val meWithHttpInfo = usersApi.getUsersMe(getUsersMeRequestWithHttpInfo)
+println(meWithHttpInfo.headers)
+println(meWithHttpInfo.getCorrelationId())
+println(meWithHttpInfo.getBody()?.name)
+```
+
+
+## NotificationHandler Helper Class
+
+The Kotlin SDK includes a helper class, `NotificationHandler`, to assist in managing PureCloud notifications. The class will create a single notification channel, or use an existing one, and provides methods to add and remove subscriptions and raises an event with a deserialized notification object whenever one is received.
+
+### Using NotificationHandler
+
+**Create a new instance**
+
+The preferred way to create a `NotificationHandler` instance is to use its builder to construct a new instance. This comes with the advantage of being able to set listeners and add subscriptions before the websocket is opened.
+
+```{"language":"kotlin"}
+val notificationHandler: NotificationHandler = NotificationHandler.Builder.standard()
+    .withWebSocketListener(MyWebSocketListener())
+    // Individually
+    .withNotificationListener(UserPresenceListener(me.id))
+    .withNotificationListener(ChannelMetadataListener())
+    // As a list
+    .withNotificationListeners(mutableListOf(UserPresenceListener(me.id), ChannelMetadataListener()))
+    .withAutoConnect(false)
+    .build()
+```
+
+Alternatively, the `NotificationHandler` instance can be constructed with the default constructor and will connect to the websocket automatically. Listeners and subscriptions can then be managed from the instance regardless of how it was constructed. The following example is equivalent to the builder except that the socket will be connected in the constructor and the listeners and subscriptions will be added after it is connected:
+
+```{"language":"kotlin"}
+val notificationHandler = NotificationHandler()
+notificationHandler.setWebSocketListener(MyWebSocketListener())
+// Individually
+notificationHandler.addSubscription(UserPresenceListener(me.id))
+notificationHandler.addSubscription(ChannelMetadataListener())
+// As a list
+notificationHandler.addSubscriptions(
+    mutableListOf(UserPresenceListener(me.id), ChannelMetadataListener())
+)
+```
+
+**Send a ping**
+
+To test the connection, you may send a ping. For more information about this ping, see [Use the notification service](https://developer.mypurecloud.com/api/rest/v2/notifications/notification_service.html) under the _WebSocket Health Check_ heading.
+
+```{"language":"kotlin"}
+notificationHandler.sendPing()
+```
+
+**Handle incoming notification events**
+
+To handle incoming events, implement the `NotificationListener<T>` interface to handle registered topics and the `WebSocketListener` interface for information about the websocket itself. This is a basic example of how to handle user presence events:
+
+```{"language":"kotlin"}
+class UserPresenceListener(private var userId: String) : NotificationListener<PresenceEventUserPresence?> {
+    private val topic: String = "v2.users.$userId.presence"
+    
+    override fun getTopic(): String? {
+        return topic
+    }
+
+    override fun getEventBodyClass(): Class<PresenceEventUserPresence>? {
+        return PresenceEventUserPresence::class.java
+    }
+
+    override fun onEvent(event: NotificationEvent<*>?) {
+        val presenceEvent = event?.getEventBody() as PresenceEventUserPresence
+        println("system presence -> ${presenceEvent.presenceDefinition.systemPresence}")
+    }
+}
+```
+
+And an example of listening to the channel metadata events (periodic heartbeat and ping/pong message):
+
+```{"language":"kotlin"}
+class ChannelMetadataListener : NotificationListener<ChannelMetadataNotification?> {
+    override fun getTopic(): String? {
+        return "channel.metadata"
+    }
+
+    override fun getEventBodyClass(): Class<ChannelMetadataNotification>? {
+        return ChannelMetadataNotification::class.java
+    }
+
+    override fun onEvent(event: NotificationEvent<*>?) {
+        val channelMetadataNotification = event?.getEventBody() as ChannelMetadataNotification
+        println("[channel.metadata] ${channelMetadataNotification.getMessage()}")
+    }
+}
+```
+
+## SDK Source Code Generation
+
+The SDK is automatically regenerated and published from the API's definition after each API release. For more information on the build process, see the [platform-client-sdk-common](https://github.com/MyPureCloud/platform-client-sdk-common) project.
+
+
+## Versioning
+
+The SDK's version is incremented according to the [Semantic Versioning Specification](https://semver.org/). The decision to increment version numbers is determined by [diffing the Platform API's swagger](https://github.com/purecloudlabs/platform-client-sdk-common/blob/master/modules/swaggerDiff.js) for automated builds, and optionally forcing a version bump when a build is triggered manually (e.g. releasing a bugfix).
+
+
+## Support
+
+This package is intended to be forwards compatible with v2 of PureCloud's Platform API. While the general policy for the API is not to introduce breaking changes, there are certain additions and changes to the API that cause breaking changes for the SDK, often due to the way the API is expressed in its swagger definition. Because of this, the SDK can have a major version bump while the API remains at major version 2. While the SDK is intended to be forward compatible, patches will only be released to the latest version. For these reasons, it is strongly recommended that all applications using this SDK are kept up to date and use the latest version of the SDK.
+
+For any issues, questions, or suggestions for the SDK, visit the [PureCloud Developer Forum](https://developer.mypurecloud.com/forum/).
