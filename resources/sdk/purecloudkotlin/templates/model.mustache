@@ -1,0 +1,17 @@
+package {{package}}
+
+import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonValue
+import io.swagger.annotations.ApiModelProperty
+import com.fasterxml.jackson.annotation.JsonProperty
+import java.util.*
+import java.math.*
+import org.joda.time.LocalDateTime
+import com.fasterxml.jackson.databind.*
+import com.fasterxml.jackson.databind.node.*
+{{#serializableModel}}import java.io.Serializable{{/serializableModel}}
+{{#models}}
+{{#model}}
+{{#isEnum}}{{>modelEnum}}{{/isEnum}}{{^isEnum}}{{>pojo}}{{/isEnum}}
+{{/model}}
+{{/models}}

@@ -1,0 +1,905 @@
+package {{invokerPackage}}
+
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.databind.module.SimpleModule
+import com.fasterxml.jackson.datatype.joda.JodaModule
+import com.google.common.base.Stopwatch
+import com.google.common.util.concurrent.SettableFuture
+import com.mypurecloud.sdk.v2.ApiException
+import {{invokerPackage}}.auth.ApiKeyAuth
+import {{invokerPackage}}.auth.Authentication
+import {{invokerPackage}}.auth.OAuth
+import {{invokerPackage}}.connector.*
+import {{invokerPackage}}.extensions.AuthResponse
+import org.slf4j.LoggerFactory
+import java.io.ByteArrayInputStream
+import java.io.IOException
+import java.io.InputStream
+import java.io.UnsupportedEncodingException
+import java.net.Proxy
+import java.net.URLEncoder
+import java.text.DateFormat
+import java.text.ParseException
+import org.threeten.bp.LocalDate
+import java.util.*
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
+import javax.xml.bind.DatatypeConverter
+import kotlin.math.floor
+import kotlin.math.pow
+
+class ApiClient private constructor(builder: Builder) : AutoCloseable {
+    private val defaultHeaderMap: Map<String, String>
+    private val dateFormat: DateFormat?
+    private val properties: ConnectorProperties
+    private val authentications: Map<String, Authentication>
+    private val connector: ApiClientConnector?
+    private val retryConfiguration: RetryConfiguration?
+
+    val basePath: String?
+    val shouldThrowErrors: Boolean
+    val objectMapper: ObjectMapper?
+
+    constructor() : this(Builder.standard())
+
+    @Throws(Exception::class)
+    override fun close() {
+        connector!!.close()
+    }
+
+    private fun buildDateFormat(): DateFormat {
+        return ApiDateFormat()
+    }
+
+    private fun buildAuthentications(builder: Builder): Map<String, Authentication> {
+        val authentications = buildAuthentications()
+        val accessToken = builder.accessToken
+        for (authentication in authentications.values) {
+            if (authentication is OAuth && accessToken != null) {
+                authentication.accessToken = accessToken
+            }
+        }
+        return authentications
+    }
+
+    private fun buildHttpConnector(builder: Builder): ApiClientConnector? {
+        return ApiClientConnectorLoader.load(properties)
+    }
+
+    /**
+     * Helper method to set access token for the first OAuth2 authentication.
+     */
+    fun setAccessToken(accessToken: String?) {
+        for (auth in authentications.values) {
+            if (auth is OAuth) {
+                auth.accessToken = accessToken
+                return
+            }
+        }
+        throw RuntimeException("No OAuth2 authentication configured!")
+    }
+
+    /**
+     * Authorizes the SDK by completing a client credentials OAuth grant
+     * @param clientId The OAuth client's Client ID
+     * @param clientSecret The OAuth client's Client Secret
+     */
+    @Throws(IOException::class, ApiException::class)
+    fun authorizeClientCredentials(clientId: String, clientSecret: String): ApiResponse<AuthResponse?> {
+        val encodedAuth = DatatypeConverter.printBase64Binary("$clientId:$clientSecret".toByteArray(charset("UTF-8")))
+        val request = ApiRequestBuilder.create("POST", "/oauth/token")
+                .withCustomHeader("Authorization", "Basic $encodedAuth")
+                .withCustomHeader("Content-Type", "application/x-www-form-urlencoded")
+                .withFormParameter("grant_type", "client_credentials")
+                .build()
+        val response = getAPIResponse(request, object : TypeReference<AuthResponse?>() {}, true)
+        setAccessToken(response.getBody()?.access_token)
+        return response
+    }
+
+    @Throws(IOException::class, ApiException::class)
+    fun authorizeSaml2Bearer(clientId: String, clientSecret: String, orgName: String?, assertion: String?): ApiResponse<AuthResponse?> {
+        val encodedAuth = DatatypeConverter.printBase64Binary("$clientId:$clientSecret".toByteArray(charset("UTF-8")))
+        val request = ApiRequestBuilder.create("POST", "/oauth/token")
+                .withCustomHeader("Authorization", "Basic $encodedAuth")
+                .withCustomHeader("Content-Type", "application/x-www-form-urlencoded")
+                .withFormParameter("grant_type", "urn:ietf:params:oauth:grant-type:saml2-bearer")
+                .withFormParameter("orgName", orgName!!)
+                .withFormParameter("assertion", assertion!!)
+                .build()
+        val response = getAPIResponse(request, object : TypeReference<AuthResponse?>() {}, true)
+        setAccessToken(response.getBody()?.access_token)
+        return response
+    }
+
+    /**
+     * Connect timeout (in milliseconds).
+     */
+    fun getConnectTimeout(): Int {
+        return properties.getProperty(ApiClientConnectorProperty.CONNECTION_TIMEOUT, Int::class.java, 0) ?: 0
+    }
+
+    /**
+     * Parse the given string into Date object.
+     */
+    fun parseDate(str: String?): Date {
+        try {
+            synchronized(dateFormat!!) { return dateFormat.parse(str) }
+        } catch (e: ParseException) {
+            throw RuntimeException(e)
+        }
+    }
+
+    /**
+     * Format the given Date object into string.
+     */
+    fun formatDate(date: Date?): String {
+        synchronized(dateFormat!!) { return dateFormat.format(date) }
+    }
+
+    /**
+     * Format the given parameter object into string.
+     */
+    fun parameterToString(param: Any?): String {
+        return when (param) {
+            null -> {
+                ""
+            }
+            is Date -> {
+                formatDate(param as Date?)
+            }
+            is Collection<*> -> {
+                val b = StringBuilder()
+                for (o in param) {
+                    if (b.isNotEmpty()) {
+                        b.append(",")
+                    }
+                    b.append(o.toString())
+                }
+                b.toString()
+            }
+            else -> {
+                param.toString()
+            }
+        }
+    }
+
+    /*
+      Format to {@code Pair} objects.
+    */
+    fun parameterToPairs(collectionFormat: String?, name: String?, value: Any?): List<Pair> {
+        var collectionFormatLocal = collectionFormat
+        val params: MutableList<Pair> = ArrayList()
+        // preconditions
+        if (name == null || name.isEmpty() || value == null) return params
+        val valueCollection: Collection<*>?
+        valueCollection = if (value is Collection<*>) {
+            value
+        } else {
+            params.add(Pair(name, parameterToString(value)))
+            return params
+        }
+        if (valueCollection.isEmpty()) {
+            return params
+        }
+        // get the collection format
+        collectionFormatLocal = if (collectionFormatLocal == null || collectionFormatLocal.isEmpty()) "csv" else collectionFormatLocal // default: csv
+        // create the params based on the collection format
+        if (collectionFormatLocal == "multi") {
+            for (item in valueCollection) {
+                params.add(Pair(name, parameterToString(item)))
+            }
+            return params
+        }
+        var delimiter = ","
+        when (collectionFormatLocal) {
+            "csv" -> {
+                delimiter = ","
+            }
+            "ssv" -> {
+                delimiter = " "
+            }
+            "tsv" -> {
+                delimiter = "\t"
+            }
+            "pipes" -> {
+                delimiter = "|"
+            }
+        }
+        val sb = StringBuilder()
+        for (item in valueCollection) {
+            sb.append(delimiter)
+            sb.append(parameterToString(item))
+        }
+        params.add(Pair(name, sb.substring(1)))
+        return params
+    }
+
+    /**
+     * Check if the given MIME is a JSON MIME.
+     * JSON MIME examples:
+     * application/json
+     * application/json; charset=UTF8
+     * APPLICATION/JSON
+     */
+    fun isJsonMime(mime: String?): Boolean {
+        return mime != null && mime.matches(Regex("(?i)application\\/json(;.*)?"))
+    }
+
+    /**
+     * Select the Content-Type header's value from the given array:
+     * if JSON exists in the given array, use it;
+     * otherwise use the first one of the array.
+     *
+     * @param contentTypes The Content-Type array to select from
+     * @return The Content-Type header to use. If the given array is empty,
+     * JSON will be used.
+     */
+    fun selectHeaderContentType(contentTypes: Array<String>): String {
+        if (contentTypes.isEmpty()) {
+            return "application/json"
+        }
+        for (contentType in contentTypes) {
+            if (isJsonMime(contentType)) {
+                return contentType
+            }
+        }
+        return contentTypes[0]
+    }
+
+    /**
+     * Escape the given string to be used as URL query value.
+     */
+    fun escapeString(str: String?): String? {
+        return try {
+            URLEncoder.encode(str, "utf8").replace("\\+".toRegex(), "%20")
+        } catch (e: UnsupportedEncodingException) {
+            str
+        }
+    }
+
+    /**
+     * Serialize the given Java object into string according the given
+     * Content-Type (only JSON is supported for now).
+     */
+    @Throws(IOException::class)
+    fun serialize(obj: Any?): String? {
+        return objectMapper?.writeValueAsString(obj)
+    }
+
+    /**
+     * Deserialize the string into the provided type
+     *
+     * @param obj the string to deserialize
+     * @param type the target type for deserialization
+     */
+    @Throws(IOException::class)
+    fun <T> deserialize(obj: String?, type: Class<T>?): T {
+        return objectMapper!!.readValue(obj, type)
+    }
+
+    /**
+     * Build full URL by concatenating base path, the given sub path and query parameters.
+     *
+     * @param path The sub path
+     * @param queryParams The query parameters
+     * @return The full URL
+     */
+    private fun buildUrl(path: String, pathParams: Map<String, String>?, queryParams: List<Pair>?, isAuthRequest: Boolean): String {
+        var pathLocal = path
+        pathLocal = pathLocal.replace("\\{format\\}".toRegex(), "json")
+        if (pathParams != null && pathParams.isNotEmpty()) {
+            for ((key, value) in pathParams) {
+                pathLocal = pathLocal.replace("{$key}", value, true)
+            }
+        }
+        val url = StringBuilder()
+        if (isAuthRequest) {
+            val parts = basePath!!.split("\\.".toRegex(), 2).toTypedArray()
+            url.append("https://login.").append(parts[1]).append(pathLocal)
+        } else {
+            url.append(basePath).append(pathLocal)
+        }
+        if (queryParams != null && queryParams.isNotEmpty()) { // support (constant) query string in `path`, e.g. "/posts?draft=1"
+            var prefix: String? = if (pathLocal.contains("?")) "&" else "?"
+            for (param in queryParams) {
+                if (prefix != null) {
+                    url.append(prefix)
+                    prefix = null
+                } else {
+                    url.append("&")
+                }
+                val value = parameterToString(param.value)
+                url.append(escapeString(param.name)).append("=").append(escapeString(value))
+            }
+        }
+        return url.toString()
+    }
+
+    @Throws(IOException::class)
+    private fun prepareConnectorRequest(request: ApiRequest<*>, isAuthRequest: Boolean): ApiClientConnectorRequest {
+        val path = request.path
+        val queryParams: List<Pair> = ArrayList(request.queryParams)
+        // Add headers
+        val headers: MutableMap<String?, String?> = mutableMapOf()
+        val accept = request.accepts
+        if (accept != null && accept.isNotEmpty()) {
+            headers["Accept"] = accept
+        }
+        val contentType = request.contentType
+        if (contentType != null && contentType.isNotEmpty()) {
+            headers["Content-Type"] = contentType
+        }
+        val headerParams = request.headerParams
+        if (headerParams.isNotEmpty()) {
+            for ((key, value) in headerParams) {
+                headers[key] = value
+            }
+        }
+        val customHeaders = request.customHeaders
+        if (customHeaders.isNotEmpty()) {
+            for ((key, value) in customHeaders) {
+                headers[key] = value
+            }
+        }
+        for ((key, value) in defaultHeaderMap) {
+            if (!headers.containsKey(key)) headers[key] = value
+        }
+        updateParamsForAuth(request.authNames, queryParams, headers)
+        val url = buildUrl(path, request.pathParams, queryParams, isAuthRequest)
+        val body = request.body
+        val formParams = request.formParams
+        val serializedBody: String?
+        check(!(body != null && formParams.isNotEmpty())) { "Request cannot have both form and body parameters." }
+        serializedBody = when {
+            body != null -> {
+                serialize(body)
+            }
+            else -> {
+                getXWWWFormUrlencodedParams(formParams)
+            }
+        }
+        return object : ApiClientConnectorRequest {
+            override var method: String? = null
+                get() = request.method
+            override var url: String = ""
+                get() = url
+            override var headers: MutableMap<String?, String?> = mutableMapOf()
+                get() = headers
+            override var body: InputStream? = null
+                get() = ByteArrayInputStream(serializedBody?.toByteArray(charset("UTF8")))
+
+            override fun hasBody(): Boolean {
+                return serializedBody != null
+            }
+
+            @Throws(IOException::class)
+            override fun readBody(): String? {
+                return serializedBody
+            }
+        }
+    }
+
+    @Throws(ApiException::class, IOException::class)
+    private fun <T> interpretConnectorResponse(response: ApiClientConnectorResponse?, returnType: TypeReference<T>?): ApiResponse<T> {
+        val statusCode = response!!.statusCode
+        val reasonPhrase = response.statusReasonPhrase
+        val headers = response.getHeaders()
+        return if (statusCode in 200..299) {
+            var body: String? = null
+            var entity: T? = null
+            if (statusCode != 204 && returnType != null && returnType.type !== Void::class.java && response.hasBody()) {
+                body = response.readBody()
+                if (body != null && body.isNotEmpty() && returnType.type === String::class.java) {
+                    @Suppress("UNCHECKED_CAST")
+                    entity = body as T
+                } else if (body != null && body.isNotEmpty()) {
+                    entity = objectMapper!!.readValue(body, returnType)
+                }
+            }
+            ApiResponseWrapper<T>(statusCode, reasonPhrase!!, headers, body!!, entity)
+        } else {
+            val message = "error"
+            val body = response.readBody()
+            throw ApiException(statusCode, message, headers as MutableMap<String, String>?, body)
+        }
+    }
+
+    @Throws(IOException::class, ApiException::class)
+    private fun <T> getAPIResponse(request: ApiRequest<*>, returnType: TypeReference<T>?, isAuthRequest: Boolean): ApiResponse<T> {
+        val connectorRequest = prepareConnectorRequest(request, isAuthRequest)
+        var connectorResponse: ApiClientConnectorResponse? = null
+        return try {
+            val retry = Retry(retryConfiguration)
+            do {
+                connectorResponse = connector!!.invoke(connectorRequest)
+            } while (retry.shouldRetry(connectorResponse))
+            interpretConnectorResponse(connectorResponse, returnType)
+        } finally {
+            if (connectorResponse != null) {
+                try {
+                    connectorResponse.close()
+                } catch (exception: Throwable) {
+                    throw RuntimeException(exception)
+                }
+            }
+        }
+    }
+
+    private fun <T> getAPIResponseAsync(request: ApiRequest<*>, returnType: TypeReference<T>?, callback: AsyncApiCallback<ApiResponse<T>>): Future<ApiResponse<T>> {
+        val future: SettableFuture<ApiResponse<T>> = SettableFuture.create()
+        try {
+            val connectorRequest = prepareConnectorRequest(request, false)
+            val retry = Retry(retryConfiguration)
+            getAPIResponseAsyncWithRetry(connectorRequest, returnType, callback, retry, future)
+        } catch (exception: Throwable) {
+            notifyFailure(future, callback, exception)
+        }
+        return future
+    }
+
+    private fun <T> getAPIResponseAsyncWithRetry(connectorRequest: ApiClientConnectorRequest,
+                                                 returnType: TypeReference<T>?,
+                                                 callback: AsyncApiCallback<ApiResponse<T>>,
+                                                 retry: Retry,
+                                                 future: SettableFuture<ApiResponse<T>>) {
+        try {
+            connector!!.invokeAsync(connectorRequest, object : AsyncApiCallback<ApiClientConnectorResponse?> {
+                override fun onCompleted(connectorResponse: ApiClientConnectorResponse?) {
+                    try {
+                        val response: ApiResponse<T>
+                        if (!retry.shouldRetry(connectorResponse)) {
+                            try {
+                                response = interpretConnectorResponse(connectorResponse, returnType)
+                            } finally {
+                                connectorResponse?.close()
+                            }
+                            notifySuccess(future, callback, response)
+                            return
+                        }
+                        getAPIResponseAsyncWithRetry(connectorRequest, returnType, callback, retry, future)
+                    } catch (exception: Throwable) {
+                        notifyFailure(future, callback, exception)
+                    }
+                }
+
+                override fun onFailed(exception: Throwable) {
+                    notifyFailure(future, callback, exception)
+                }
+            })
+        } catch (exception: Throwable) {
+            notifyFailure(future, callback, exception)
+        }
+    }
+
+    private fun <T> notifySuccess(future: SettableFuture<T>, callback: AsyncApiCallback<T>?, result: T) {
+        if (callback != null) {
+            try {
+                callback.onCompleted(result)
+                future.set(result)
+            } catch (exception: Throwable) {
+                future.setException(exception)
+            }
+        } else {
+            future.set(result)
+        }
+    }
+
+    private fun <T> notifyFailure(future: SettableFuture<T>, callback: AsyncApiCallback<T>?, exception: Throwable) {
+        if (callback != null) {
+            try {
+                callback.onFailed(exception)
+                future.setException(exception)
+            } catch (callbackException: Throwable) {
+                future.setException(callbackException)
+            }
+        } else {
+            future.setException(exception)
+        }
+    }
+
+    @Throws(ApiException::class, IOException::class)
+    operator fun <T> invoke(request: ApiRequest<*>, returnType: TypeReference<T>?): ApiResponse<T> {
+        return getAPIResponse(request, returnType, false)
+    }
+
+    fun <T> invokeAsync(request: ApiRequest<*>, returnType: TypeReference<T>?, callback: AsyncApiCallback<ApiResponse<T>>): Future<ApiResponse<T>> {
+        return getAPIResponseAsync(request, returnType, callback)
+    }
+
+    /**
+     * Update query and header parameters based on authentication settings.
+     *
+     * @param authNames The authentications to apply
+     */
+    private fun updateParamsForAuth(authNames: Array<String?>?, queryParams: List<Pair?>, headerParams: MutableMap<String?, String?>) {
+        for (authName in authNames!!) {
+            val auth = authentications[authName] ?: throw RuntimeException("Authentication undefined: $authName")
+            auth.applyToParams(queryParams as MutableList<Pair?>, headerParams)
+        }
+    }
+
+    /**
+     * Encode the given form parameters as request body.
+     */
+    private fun getXWWWFormUrlencodedParams(formParams: Map<String, Any>): String {
+        val formParamBuilder = StringBuilder()
+        for ((key, value) in formParams) {
+            val valueStr = parameterToString(value)
+            try {
+                formParamBuilder.append(URLEncoder.encode(key, "utf8"))
+                        .append("=")
+                        .append(URLEncoder.encode(valueStr, "utf8"))
+                formParamBuilder.append("&")
+            } catch (e: UnsupportedEncodingException) { // move on to next
+            }
+        }
+        var encodedFormParams = formParamBuilder.toString()
+        if (encodedFormParams.endsWith("&")) {
+            encodedFormParams = encodedFormParams.substring(0, encodedFormParams.length - 1)
+        }
+        return encodedFormParams
+    }
+
+    class Builder private constructor(properties: ConnectorProperties?) {
+        val defaultHeaderMap: MutableMap<String, String> = HashMap()
+        val properties: ConnectorProperties = properties?.copy() ?: ConnectorProperties()
+        var accessToken: String? = null
+        var objectMapper: ObjectMapper? = null
+        var dateFormat: DateFormat? = null
+        var basePath: String? = null
+        var retryConfiguration: RetryConfiguration? = null
+        var shouldThrowErrors: Boolean? = true
+        fun withDefaultHeader(header: String, value: String): Builder {
+            defaultHeaderMap[header] = value
+            return this
+        }
+
+        fun withAccessToken(accessToken: String?): Builder {
+            this.accessToken = accessToken
+            return this
+        }
+
+        fun withUserAgent(userAgent: String): Builder {
+            return withDefaultHeader(USER_AGENT_HEADER, userAgent)
+        }
+
+        fun withObjectMapper(objectMapper: ObjectMapper?): Builder {
+            this.objectMapper = objectMapper
+            return this
+        }
+
+        fun withDateFormat(dateFormat: DateFormat?): Builder {
+            this.dateFormat = dateFormat
+            return this
+        }
+
+        fun withBasePath(basePath: String?): Builder {
+            this.basePath = basePath
+            return this
+        }
+
+        fun withBasePath(region: PureCloudRegionHosts): Builder {
+            basePath = region.apiHost
+            return this
+        }
+
+        fun withRetryConfiguration(retryConfiguration: RetryConfiguration?): Builder {
+            this.retryConfiguration = retryConfiguration
+            return this
+        }
+
+        fun withConnectionTimeout(connectionTimeout: Int): Builder {
+            properties.setProperty(ApiClientConnectorProperty.CONNECTION_TIMEOUT, connectionTimeout)
+            return this
+        }
+
+        fun withShouldThrowErrors(shouldThrowErrors: Boolean): Builder {
+            this.shouldThrowErrors = shouldThrowErrors
+            return this
+        }
+
+        fun withDetailLevel(detailLevel: DetailLevel?): Builder {
+            properties.setProperty(ApiClientConnectorProperty.DETAIL_LEVEL, detailLevel)
+            return this
+        }
+
+        fun withProxy(proxy: Proxy?): Builder {
+            properties.setProperty(ApiClientConnectorProperty.PROXY, proxy)
+            return this
+        }
+
+        fun withAuthenticatedProxy(proxy: Proxy?, user: String?, pass: String?): Builder {
+            withProxy(proxy)
+            properties.setProperty(ApiClientConnectorProperty.PROXY_USER, user)
+            properties.setProperty(ApiClientConnectorProperty.PROXY_PASS, pass)
+            return this
+        }
+
+        fun withProperty(name: String?, value: Any?): Builder {
+            properties.setProperty(name, value)
+            return this
+        }
+
+        fun build(): ApiClient {
+            return ApiClient(this)
+        }
+
+        companion object {
+            fun standard(): Builder {
+                return Builder(ConnectorProperties())
+            }
+
+            fun from(client: ApiClient?): Builder {
+                if (client == null) {
+                    throw NullPointerException()
+                }
+                val builder = Builder(client.properties)
+                builder.defaultHeaderMap.putAll(client.defaultHeaderMap)
+                for (authentication in client.authentications.values) {
+                    if (authentication is OAuth) {
+                        builder.accessToken = authentication.accessToken
+                    }
+                }
+                builder.dateFormat = client.dateFormat
+                builder.objectMapper = client.objectMapper
+                builder.basePath = client.basePath
+                builder.retryConfiguration = client.retryConfiguration
+                builder.shouldThrowErrors = client.shouldThrowErrors
+                return builder
+            }
+
+            fun defaultClient(): ApiClient {
+                return standard().build()
+            }
+        }
+
+        init {
+            withUserAgent(DEFAULT_USER_AGENT)
+            withDefaultHeader("purecloud-sdk", "{{artifactVersion}}")
+        }
+    }
+
+    class ConnectorProperties : ApiClientConnectorProperties {
+        private val properties: MutableMap<String, Any>
+
+        constructor() {
+            properties = HashMap()
+        }
+
+        constructor(properties: Map<String, Any>?) {
+            this.properties = HashMap()
+            if (properties != null) {
+                this.properties.putAll(properties)
+            }
+        }
+
+        override fun <T> getProperty(key: String?, propertyClass: Class<T>, defaultValue: T?): T? {
+            val value = properties[key]
+            return if (propertyClass.isInstance(value)) {
+                propertyClass.cast(value)
+            } else defaultValue
+        }
+
+        fun setProperty(key: String?, value: Any?) {
+            if (key != null) {
+                if (value != null) {
+                    properties[key] = value
+                } else {
+                    properties.remove(key)
+                }
+            }
+        }
+
+        fun copy(): ConnectorProperties {
+            return ConnectorProperties(properties)
+        }
+    }
+
+    private class ApiRequestWrapper<T>(override val path: String,
+                                       override val method: String,
+                                       override val queryParams: List<Pair>,
+                                       override val body: T,
+                                       override val headerParams: Map<String, String>,
+                                       override val formParams: Map<String, Any>,
+                                       private val accept: String,
+                                       override val contentType: String,
+                                       override val authNames: Array<String?>) : ApiRequest<T> {
+        override val pathParams: Map<String, String>
+            get() = Collections.emptyMap()
+        override val customHeaders: Map<String, String>
+            get() = Collections.emptyMap()
+        override val accepts: String?
+            get() = accept
+    }
+
+    private class ApiResponseWrapper<T>(override val statusCode: Int,
+                                        private val reasonPhrase: String?,
+                                        headers: Map<String, String>,
+                                        body: String?, entity: T?) : ApiResponse<T> {
+        override var headers: MutableMap<String?, String?> = mutableMapOf()
+        @Suppress("UNCHECKED_CAST")
+        override var pBody: T = body as T
+        private val entity: T?
+
+        override fun getStatusReasonPhrase(): String? {
+            return reasonPhrase
+        }
+
+        override fun hasRawBody(): Boolean {
+            val bodyTemp = pBody as String?
+            return pBody != null && bodyTemp?.isNotEmpty() ?: false
+        }
+
+        override fun getBody(): T? {
+            return entity
+        }
+
+        override fun getCorrelationId(): String {
+            return headers["ININ-Correlation-ID"] ?: error("")
+        }
+
+        @Throws(Exception::class)
+        override fun close() {
+        }
+
+        init {
+            val caseInsensitiveMap: MutableMap<String?, String?> = TreeMap(java.lang.String.CASE_INSENSITIVE_ORDER)
+            caseInsensitiveMap.putAll(headers)
+            this.headers = Collections.unmodifiableMap<String, String>(caseInsensitiveMap)
+            @Suppress("UNCHECKED_CAST")
+            this.pBody = body as T
+            this.entity = entity
+        }
+
+        override val rawBody: String?
+            get() = pBody as String?
+        override val exception: java.lang.Exception?
+            get() = null
+
+        override fun getHeader(key: String?): String? {
+            return headers[key]
+        }
+    }
+
+    class RetryConfiguration {
+        var backoffIntervalMs = 300000L
+            set(backoffIntervalMs) {
+                require(backoffIntervalMs >= 0) { "backoffInterval should be a positive integer" }
+                field = backoffIntervalMs
+            }
+        var retryAfterDefaultMs = 3000L
+            set(retryAfterDefaultMs) {
+                require(retryAfterDefaultMs >= 0) { "defaultDelay should be a positive integer" }
+                field = retryAfterDefaultMs
+            }
+        var maxRetryTimeSec = 0
+            set(maxRetryTimeSec) {
+                require(maxRetryTimeSec >= 0) { "maxRetryTime should be a positive integer" }
+                field = maxRetryTimeSec
+            }
+        var maxRetriesBeforeBackoff = 5
+            set(maxRetriesBeforeBackoff) {
+                require(maxRetriesBeforeBackoff >= 0) { "maxRetriesBeforeBackoff can not be a negative integer" }
+                field = maxRetriesBeforeBackoff
+            }
+    }
+
+    class Retry(retryConfiguration: RetryConfiguration?) {
+        private val backoffIntervalMs: Long
+        private val retryAfterDefaultMs: Long
+        private val maxRetryTimeSec: Int
+        private val maxRetriesBeforeBackoff: Int
+        private var retryCountBeforeBackOff = 0
+        private var retryAfterMs: Long = 0
+        private var stopwatch: Stopwatch? = null
+        private val statusCodes = listOf(429, 502, 503, 504)
+        fun shouldRetry(connectorResponse: ApiClientConnectorResponse?): Boolean {
+            if (stopwatch!!.elapsed(TimeUnit.MILLISECONDS) < maxRetryTimeSec * 1000L && statusCodes.contains(connectorResponse!!.statusCode)) {
+                retryAfterMs = if (connectorResponse.getHeaders().containsKey("Retry-After")) {
+                    connectorResponse.getHeaders().getOrDefault("Retry-After", "3").toInt() * 1000L
+                } else {
+                    retryAfterDefaultMs
+                }
+                //If status code is 429 then wait until retry-after time and retry. OR If status code is retryable then for the first 5 times: wait until retry-after time and retry.
+                return if (connectorResponse.statusCode == 429 || retryCountBeforeBackOff++ < maxRetriesBeforeBackoff) {
+                    waitBeforeRetry(retryAfterMs)
+                } else {
+                    waitBeforeRetry(getWaitTimeExp(3.0.coerceAtMost(floor(stopwatch!!.elapsed(TimeUnit.MILLISECONDS) / backoffIntervalMs.toDouble()) + 1)))
+                }
+                //If status code is 50x then wait for every 3 Sec and retry until 5 minutes then after wait for every 9 Sec and retry until next 5 minutes afterwards wait for every 27 Sec and retry.
+            }
+            stopwatch!!.stop()
+            return false
+        }
+
+        private fun waitBeforeRetry(retryAfterMs: Long): Boolean {
+            try {
+                LOGGER.info("SDK will be sleeping for: $retryAfterMs milliseconds before retrying.")
+                Thread.sleep(retryAfterMs)
+            } catch (e: InterruptedException) {
+                Thread.currentThread().interrupt()
+            }
+            return true
+        }
+
+        private fun getWaitTimeExp(bucketCount: Double): Long {
+            return 3.0.pow(bucketCount).toLong() * 1000L
+        }
+
+        companion object {
+            private val LOGGER = LoggerFactory.getLogger(Retry::class.java)
+        }
+
+        init {
+            backoffIntervalMs = retryConfiguration!!.backoffIntervalMs
+            retryAfterDefaultMs = retryConfiguration.retryAfterDefaultMs
+            maxRetryTimeSec = retryConfiguration.maxRetryTimeSec
+            maxRetriesBeforeBackoff = retryConfiguration.maxRetriesBeforeBackoff
+            stopwatch = Stopwatch.createStarted()
+        }
+    }
+
+    companion object {
+        private const val DEFAULT_BASE_PATH = "{{basePath}}"
+        private const val DEFAULT_USER_AGENT = "{{#httpUserAgent}}{{.}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen{{/httpUserAgent}}/java"
+        private const val USER_AGENT_HEADER = "User-Agent"
+        private fun buildAuthentications(): Map<String, Authentication> {
+            val authentications: MutableMap<String, Authentication> = HashMap(){{#authMethods}}{{#isBasic}}
+            authentications["{{name}}"] = HttpBasicAuth(){{/isBasic}}{{#isApiKey}}
+            authentications["{{name}}"] = ApiKeyAuth({{#isKeyInHeader}}"header"{{/isKeyInHeader}}{{^isKeyInHeader}}"query"{{/isKeyInHeader}}, "{{keyParamName}}"){{/isApiKey}}{{#isOAuth}}
+            authentications["{{name}}"] = OAuth(){{/isOAuth}}{{/authMethods}}
+
+            return Collections.unmodifiableMap(authentications)
+        }
+
+        private val DEFAULT_RETRY_CONFIG = RetryConfiguration()
+        fun buildObjectMapper(dateFormat: DateFormat?): ObjectMapper {
+            val objectMapper = ObjectMapper()
+            objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL)
+            objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+            objectMapper.enable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING)
+            objectMapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING)
+            objectMapper.registerModule(JodaModule())
+            objectMapper.dateFormat = dateFormat
+            val localDateModule = SimpleModule()
+            localDateModule.addSerializer(LocalDate::class.java, LocalDateSerializer())
+            localDateModule.addDeserializer(LocalDate::class.java, LocalDateDeserializer())
+            objectMapper.registerModule(localDateModule)
+            return objectMapper
+        }
+    }
+
+    init {
+        var basePath = builder.basePath
+        if (basePath == null) {
+            basePath = DEFAULT_BASE_PATH
+        }
+        this.basePath = basePath
+        var retryConfig = builder.retryConfiguration
+        if (retryConfig == null) {
+            retryConfig = DEFAULT_RETRY_CONFIG
+        }
+        retryConfiguration = retryConfig
+        defaultHeaderMap = HashMap(builder.defaultHeaderMap)
+        properties = builder.properties.copy()
+        shouldThrowErrors = if (builder.shouldThrowErrors == null) true else builder.shouldThrowErrors!!
+        var dateFormat = builder.dateFormat
+        if (dateFormat == null) {
+            dateFormat = buildDateFormat()
+        }
+        this.dateFormat = dateFormat
+        var objectMapper = builder.objectMapper
+        if (objectMapper == null) {
+            objectMapper = buildObjectMapper(dateFormat)
+        }
+        this.objectMapper = objectMapper
+        authentications = buildAuthentications(builder)
+        connector = buildHttpConnector(builder)
+    }
+}

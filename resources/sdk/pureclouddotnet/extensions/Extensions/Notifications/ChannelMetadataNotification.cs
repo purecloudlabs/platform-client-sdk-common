@@ -1,6 +1,6 @@
 using System.Runtime.Serialization;
 
-namespace Extensions.Notifications
+namespace {{=it.packageName}}.Extensions.Notifications
 {
     public class ChannelMetadataNotification
     {
