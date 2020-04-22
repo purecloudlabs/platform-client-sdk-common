@@ -35,7 +35,7 @@
     "github-api-promise": "^1.12.2",
     "json-schema-deref-sync": "^0.3.3",
     "klaw-sync": "^3.0.2",
-    "lodash": "^4.0.0",
+    "lodash": "^4.17.13",
     "lognext": "0.0.4",
     "moment-timezone": "^0.5.11",
     "mustache": "^2.3.0",
