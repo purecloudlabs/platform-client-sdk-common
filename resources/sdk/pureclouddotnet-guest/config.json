@@ -1,0 +1,114 @@
+{
+  "name": ".NET Guest SDK",
+  "envVars": {
+    "DOTNET_NAMESPACE": "PureCloudPlatform.Client.V2.Guest",
+    "EXCLUDE_NOTIFICATIONS": true
+  },
+  "settings": {
+    "sdkRepo": {
+      "repo": "https://github.com/MyPureCloud/purecloud-guest-chat-client-dotnet",
+      "branch": "master"
+    },
+    "versionFile": "${SDK_REPO}/version.json",
+    "logLevel": "debug",
+    "resourcePaths": {
+    	"extensions": "${SDK_TEMP}/pureclouddotnet-guest/extensions"
+    },
+    "extensionsDestination": "${SDK_REPO}/build/src/${DOTNET_NAMESPACE}",
+    "swagger": {
+      "oldSwaggerPath": "${SDK_REPO}/swagger.json",
+      "newSwaggerSourcePath": "https://api.mypurecloud.com/api/v2/docs/swaggerall",
+      "newSwaggerPath": "${SDK_TEMP}/swagger-pruned.json",
+      "saveNewSwaggerPath": "${SDK_REPO}/swagger.json"
+    },
+    "swaggerCodegen": {
+      "resourceLanguage": "pureclouddotnet-guest",
+      "codegenLanguage": "pureclouddotnet-guest",
+      "jarPath": "${WORKSPACE}/swagger-codegen/modules/swagger-codegen-cli/target/swagger-codegen-cli.jar",
+      "configFile": "${SDK_TEMP}/config.json",
+      "extraGeneratorOptions": []
+    },
+    "releaseNoteTemplatePath": "${COMMON_ROOT}/resources/templates/githubSdkReleaseNotes.md",
+    "releaseNoteSummaryTemplatePath": "${COMMON_ROOT}/resources/templates/githubSdkReleaseNoteSummary.md",
+    "debugConfig": false,
+    "enableLoggerColor": false,
+    "namespace": "${DOTNET_NAMESPACE}",
+    "apiHealthCheckUrl": "https://api.mypurecloud.com/api/v2/health/check"
+  },
+  "stageSettings": {
+    "prebuild": {
+      "preRunScripts": [
+        {
+          "type": "node",
+          "path": "pruneSwagger.js",
+          "args": [
+            {
+              "$ref": "#/settings/swagger/newSwaggerSourcePath"
+            },
+            {
+              "$ref": "#/settings/swagger/newSwaggerPath"
+            }
+          ],
+          "failOnError": true
+        }
+      ],
+      "postRunScripts": [
+        {
+          "type": "node",
+          "path": "prebuild-postrun.js",
+          "args": [
+            {
+              "$ref": "#/settings/swaggerCodegen/configFile"
+            },
+            {
+              "$ref": "#/settings/versionFile"
+            },
+            {
+              "$ref": "#/settings/namespace"
+            },
+            "${COMMON_ROOT}/resources/sdk/pureclouddotnet-guest/bin/nuget.exe"
+          ],
+          "failOnError": true
+        }
+      ]
+    },
+    "build": {
+      "preRunScripts": [
+        {
+          "type": "node",
+          "path": "processExtensions.js",
+          "args": [
+            "${COMMON_ROOT}/resources/sdk/pureclouddotnet-guest/extensions",
+            {
+              "$ref": "#/settings/resourcePaths.extensions"
+            },
+            {
+              "$ref": "#/settings/namespace"
+            }
+          ],
+          "failOnError": true
+        }
+      ],
+      "compileScripts": [
+        {
+          "type": "shell",
+          "path": "compile.sh",
+          "args": [
+            "${SDK_REPO}/build",
+            "${COMMON_ROOT}",
+            {
+              "$ref": "#/settings/namespace"
+            }
+          ]
+        }
+      ],
+      "postRunScripts": []
+    },
+    "postbuild": {
+      "gitCommit": false,
+      "publishRelease": false,
+      "preRunScripts": [],
+      "postRunScripts": []
+    }
+  }
+}
