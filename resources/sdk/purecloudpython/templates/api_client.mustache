@@ -644,6 +644,12 @@ class ApiClient(object):
         :param klass: class literal.
         :return: model object.
         """
+
+        # ArrayNode used in /api/v2/search is generic
+        # return the loaded json as is
+        if type(instance).__name__ == 'ArrayNode':
+            return data
+
         instance = klass()
 
         for attr, attr_type in iteritems(instance.swagger_types):

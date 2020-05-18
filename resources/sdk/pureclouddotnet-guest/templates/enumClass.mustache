@@ -1,0 +1,22 @@
+        /// <summary>
+        /// {{^description}}Gets or Sets {{{name}}}{{/description}}{{#description}}{{{description}}}{{/description}}
+        /// </summary>{{#description}}
+        /// <value>{{{description}}}</value>{{/description}}
+        [JsonConverter(typeof(UpgradeSdkEnumConverter))]
+        public enum {{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}
+        {
+            /// <summary>
+            /// Your SDK version is out of date and an unknown enum value was encountered. 
+            /// Please upgrade the SDK using the command "Upgrade-Package PureCloudApiSdk" 
+            /// in the Package Manager Console
+            /// </summary>
+            [EnumMember(Value = "OUTDATED_SDK_VERSION")]
+            OutdatedSdkVersion,
+            {{#allowableValues}}{{#enumVars}}
+            /// <summary>
+            /// Enum {{name}} for {{{value}}}
+            /// </summary>
+            [EnumMember(Value = {{#isLong}}"{{/isLong}}{{#isInteger}}"{{/isInteger}}{{#isFloat}}"{{/isFloat}}{{#isDouble}}"{{/isDouble}}{{{value}}}{{#isLong}}"{{/isLong}}{{#isInteger}}"{{/isInteger}}{{#isDouble}}"{{/isDouble}}{{#isFloat}}"{{/isFloat}})]
+            {{name}}{{#isLong}} = {{{value}}}{{/isLong}}{{#isInteger}} = {{{value}}}{{/isInteger}}{{^-last}},
+            {{/-last}}{{/enumVars}}{{/allowableValues}}
+        }
