@@ -27,7 +27,7 @@ cp -r $BUILD_DIR/dist $PACKAGE_DIR
 
 cd $PACKAGE_DIR
 
-echo "ca=null
+echo "registry=https://registry.npmjs.org
 //registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}" > ./.npmrc
 
 cat ./.npmrc
