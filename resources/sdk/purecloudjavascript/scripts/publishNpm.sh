@@ -30,6 +30,4 @@ cd $PACKAGE_DIR
 echo "registry=https://registry.npmjs.org
 //registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}" > ./.npmrc
 
-cat ./.npmrc
-
 npm publish
