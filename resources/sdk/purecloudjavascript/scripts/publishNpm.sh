@@ -30,4 +30,6 @@ cd $PACKAGE_DIR
 echo "ca=null
 //registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}" > ./.npmrc
 
+cat ./.npmrc
+
 npm publish
