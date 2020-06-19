@@ -36,6 +36,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import com.google.common.base.Stopwatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.joda.time.DateTime;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.impl.ResponseMarshaller;
@@ -78,6 +79,8 @@ public class ApiClient implements AutoCloseable {
     private final Map<String, String> defaultHeaderMap;
     private final String basePath;
     private final Boolean shouldThrowErrors;
+    private final Boolean shouldRefreshAccessToken;
+    private final int refreshTokenWaitTime;
 
     private final DateFormat dateFormat;
     private final ObjectMapper objectMapper;
@@ -89,6 +92,11 @@ public class ApiClient implements AutoCloseable {
 
     private final RetryConfiguration retryConfiguration;
     private static final RetryConfiguration DEFAULT_RETRY_CONFIG = new RetryConfiguration();
+    // These fields are only applicable to the Code Authorization OAuth flow:
+    private String clientId;
+    private String clientSecret;
+    private String refreshToken;
+    private AtomicBoolean refreshInProgress = new AtomicBoolean(false);
 
     public ApiClient() {
         this(Builder.standard());
@@ -110,6 +118,8 @@ public class ApiClient implements AutoCloseable {
         this.defaultHeaderMap = new HashMap<>(builder.defaultHeaderMap);
         this.properties = builder.properties.copy();
         this.shouldThrowErrors = builder.shouldThrowErrors == null ? true : builder.shouldThrowErrors;
+        this.shouldRefreshAccessToken = builder.shouldRefreshAccessToken == null ? true : builder.shouldRefreshAccessToken;
+        this.refreshTokenWaitTime = builder.refreshTokenWaitTime == 0 ? 10 : builder.refreshTokenWaitTime;
 
         DateFormat dateFormat = builder.dateFormat;
         if (dateFormat == null) {
@@ -172,6 +182,14 @@ public class ApiClient implements AutoCloseable {
         return shouldThrowErrors;
     }
 
+    public int getRefreshTokenWaitTime() {
+        return refreshTokenWaitTime;
+    }
+
+    public boolean getShouldRefreshAccessToken() {
+        return shouldRefreshAccessToken;
+    }
+
     public String getBasePath() {
         return basePath;
     }
@@ -228,6 +246,46 @@ public class ApiClient implements AutoCloseable {
 
         return response;
 }
+
+    public ApiResponse<AuthResponse> authorizeCodeAuthorization(String clientId, String clientSecret, String authCode, String redirectUri) throws IOException, ApiException {
+        this.clientId = clientId;
+        this.clientSecret = clientSecret;
+        String encodedAuth = DatatypeConverter.printBase64Binary((clientId + ":" + clientSecret).getBytes("UTF-8"));
+        ApiRequest<Void> request = ApiRequestBuilder.create("POST", "/oauth/token")
+                .withCustomHeader("Authorization", "Basic " + encodedAuth)
+                .withCustomHeader("Content-Type", "application/x-www-form-urlencoded")
+                .withFormParameter("grant_type", "authorization_code")
+                .withFormParameter("code", authCode)
+                .withFormParameter("redirect_uri", redirectUri)
+                .build();
+        
+        ApiResponse<AuthResponse> response = this.getAPIResponse(request, new TypeReference<AuthResponse>() {}, true);
+        
+        setAccessToken(response.getBody().getAccess_token());
+        this.refreshToken = response.getBody().getRefresh_token();
+
+        return response;
+    }
+
+    public ApiResponse<AuthResponse> refreshCodeAuthorization(String clientId, String clientSecret, String refreshToken) throws IOException, ApiException {
+        String encodedAuth = DatatypeConverter.printBase64Binary((clientId + ":" + clientSecret).getBytes("UTF-8"));
+        ApiRequest<Void> request = ApiRequestBuilder.create("POST", "/oauth/token")
+                .withCustomHeader("Authorization", "Basic " + encodedAuth)
+                .withCustomHeader("Content-Type", "application/x-www-form-urlencoded")
+                .withFormParameter("grant_type", "refresh_token")
+                .withFormParameter("refresh_token", refreshToken)
+                .build();
+
+        ApiResponse<AuthResponse> response = this.getAPIResponse(request, new TypeReference<AuthResponse>() {}, true);
+        setAccessToken(response.getBody().getAccess_token());
+        this.refreshToken = response.getBody().getRefresh_token();
+
+        return response;
+    }
+
+    private ApiResponse<AuthResponse> refreshCodeAuthorization() throws IOException, ApiException {
+        return this.refreshCodeAuthorization(this.clientId, this.clientSecret, this.refreshToken);
+    }
 
     /**
      * Connect timeout (in milliseconds).
@@ -549,7 +607,8 @@ public class ApiClient implements AutoCloseable {
         String reasonPhrase = response.getStatusReasonPhrase();
         Map<String, String> headers = response.getHeaders();
 
-        if (statusCode >= 200 && statusCode < 300) {
+        // If the response indicates that the access_token has expired, and we wish to refresh it transparently, we'll return from this method and let the caller handle it
+        if (statusCode >= 200 && statusCode < 300 || statusCode == 401 && shouldRefreshAccessToken) {
             String body = null;
             T entity = null;
             if (statusCode != 204 && returnType != null && returnType.getType() != Void.class && response.hasBody()) {
@@ -569,6 +628,37 @@ public class ApiClient implements AutoCloseable {
         }
     }
 
+    private void handleExpiredAccessToken() throws IOException, ApiException {
+        // Attempt to refresh the access_token if a refresh isn't in progress and lock any other threads out of the method
+        if (refreshInProgress.compareAndSet(false, true)) {
+            try {
+                ApiResponse<AuthResponse> refreshResponse = this.refreshCodeAuthorization();
+                if (refreshResponse.getStatusCode() != 200) {
+                    String message = "error";
+                    throw new ApiException(refreshResponse.getStatusCode(), message, refreshResponse.getHeaders(), refreshResponse.getRawBody());
+                }
+            } finally {
+                refreshInProgress.set(false);
+            }
+        } else {
+            double timeSpentWaiting = 0;
+            int sleepDuration = 200;
+            // Sleep for 200ms at a time for a maximum of refreshTokenWaitTime for other thread to complete refresh
+            while (timeSpentWaiting < refreshTokenWaitTime) {
+                try {
+                    Thread.sleep(sleepDuration);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                timeSpentWaiting += (double) sleepDuration / 1000;
+                if (!refreshInProgress.get())
+                    return;
+            }
+            // Abort with error if we have waited refreshTokenWaitTime and refresh still isn't complete
+            throw new ApiException(new Exception("Token refresh took longer than " + refreshTokenWaitTime + " seconds"));
+        }
+    }
+
     private <T> ApiResponse<T> getAPIResponse(ApiRequest<?> request, TypeReference<T> returnType, boolean isAuthRequest) throws IOException, ApiException {
         ApiClientConnectorRequest connectorRequest = prepareConnectorRequest(request, isAuthRequest);
         ApiClientConnectorResponse connectorResponse = null;
@@ -578,7 +668,13 @@ public class ApiClient implements AutoCloseable {
                 connectorResponse = connector.invoke(connectorRequest);
             } while (retry.shouldRetry(connectorResponse));
 
-            return interpretConnectorResponse(connectorResponse, returnType);
+            ApiResponse<T> interpretedResponse = interpretConnectorResponse(connectorResponse, returnType);
+            if (interpretedResponse.getStatusCode() == 401) {
+                handleExpiredAccessToken();
+                return getAPIResponse(request, returnType, isAuthRequest);
+            } else {
+                return interpretedResponse;
+            }
 
         } finally {
             if (connectorResponse != null) {
@@ -619,6 +715,9 @@ public class ApiClient implements AutoCloseable {
                                 response = interpretConnectorResponse(connectorResponse, returnType);
                             } finally {
                                 connectorResponse.close();
+                            }
+                            if (response.getStatusCode() == 401) {
+                                handleExpiredAccessToken();
                             }
                             notifySuccess(future, callback, response);
                             return;
@@ -738,6 +837,8 @@ public class ApiClient implements AutoCloseable {
             builder.basePath = client.basePath;
             builder.retryConfiguration = client.retryConfiguration;
             builder.shouldThrowErrors = client.shouldThrowErrors;
+            builder.shouldRefreshAccessToken = client.shouldRefreshAccessToken;
+            builder.refreshTokenWaitTime = client.refreshTokenWaitTime;
             return builder;
         }
 
@@ -753,6 +854,8 @@ public class ApiClient implements AutoCloseable {
         private String basePath;
         private RetryConfiguration retryConfiguration;
         private Boolean shouldThrowErrors = true;
+        private Boolean shouldRefreshAccessToken = true;
+        private int refreshTokenWaitTime = 10;
 
         private Builder(ConnectorProperties properties) {
             this.properties = (properties != null) ? properties.copy() : new ConnectorProperties();
@@ -805,6 +908,16 @@ public class ApiClient implements AutoCloseable {
 
         public Builder withShouldThrowErrors(boolean shouldThrowErrors) {
             this.shouldThrowErrors = shouldThrowErrors;
+            return this;
+        }
+
+        public Builder withShouldRefreshAccessToken(boolean shouldRefreshAccessToken) {
+            this.shouldRefreshAccessToken = shouldRefreshAccessToken;
+            return this;
+        }
+
+        public Builder withRefreshTokenWaitTime(int refreshTokenWaitTime) {
+            this.refreshTokenWaitTime = refreshTokenWaitTime;
             return this;
         }
 
