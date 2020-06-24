@@ -47,8 +47,7 @@ public class ApiClientTests
             PureCloudRegionHosts regionval = region.GetValueOrDefault();
             {{packageName}}.Client.Configuration.Default.ApiClient.setBasePath(regionval);
         }
-        var accessTokenInfo = {{packageName}}.Client.Configuration.Default.ApiClient.PostToken(clientId, clientSecret);
-        {{packageName}}.Client.Configuration.Default.AccessToken = accessTokenInfo.AccessToken;
+        {{packageName}}.Client.Configuration.Default.ApiClient.PostToken(clientId, clientSecret);
     }
 
     [Test]

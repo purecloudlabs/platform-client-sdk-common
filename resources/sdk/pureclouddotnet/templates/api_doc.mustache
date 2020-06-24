@@ -51,7 +51,11 @@ namespace Example
             // Uncomment below to setup prefix (e.g. BEARER) for API key, if needed
             // Configuration.Default.ApiKeyPrefix.Add('{{{keyParamName}}}', 'BEARER');{{/isApiKey}}{{#isOAuth}}
             // Configure OAuth2 access token for authorization: {{{name}}}
-            Configuration.Default.AccessToken = "YOUR_ACCESS_TOKEN";{{/isOAuth}}{{/authMethods}}{{/hasAuthMethods}}
+            // The following example is using the [Authorization Code Grant](https://developer.mypurecloud.com/api/rest/authorization/use-authorization-code.html)
+            var accessTokenInfo = Configuration.Default.ApiClient.PostToken("18a4c365-7ea3-4f0g-9fb7-884fb4d2e9c6",
+                "M7FfdYQyL5TA6BdbEZ8M9-Wx4uZai1rNQ7jcuFdcJJo",
+                "http://redirecturi.com/",
+                "6Zxcb0oASMBI55wQJ6bVmOmO57k8CxXBKgzDKtYXbtk");{{/isOAuth}}{{/authMethods}}{{/hasAuthMethods}}
 
             var apiInstance = new {{classname}}();{{#allParams}}{{#isPrimitiveType}}
             var {{paramName}} = {{example}};  // {{{dataType}}} | {{{description}}}{{^required}} (optional) {{/required}}{{#defaultValue}} (default to {{{.}}}){{/defaultValue}}{{/isPrimitiveType}}{{^isPrimitiveType}}
