@@ -74,6 +74,10 @@ class Configuration(object):
 {{#authMethods}}{{#isOAuth}}
         # access token for OAuth
         self.access_token = ""
+        # used to determine if access token should be refresh transparently when using Code Authorization
+        self.should_refresh_access_token = True
+        # maximum amount of time other threads will wait for a thread to request a new access token when it expires
+        self.refresh_token_wait_time = 10
 {{/isOAuth}}{{/authMethods}}
 
         # Logging Settings
