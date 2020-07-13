@@ -333,7 +333,7 @@ class ApiClient(object):
             response_data = self.request(method, url, query_params=query_params,
                                         headers=header_params, post_params=post_params, body=body)
         except ApiException as e:
-            if Configuration().should_refresh_access_token and e.status == 401:
+            if Configuration().should_refresh_access_token and e.status == 401 and self.refresh_token != "":
                 self.handle_expired_access_token()
                 return self.__call_api(resource_path, method, path_params,
                             query_params, header_params, body, post_params,
