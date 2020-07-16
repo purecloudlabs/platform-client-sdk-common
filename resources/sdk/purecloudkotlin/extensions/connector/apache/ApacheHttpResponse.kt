@@ -18,7 +18,7 @@ internal class ApacheHttpResponse(private val response: CloseableHttpResponse) :
         get() = response.statusLine.reasonPhrase
 
     override fun getHeaders(): Map<String, String> {
-        val map: MutableMap<String, String> = HashMap()
+        val map: MutableMap<String, String> = mutableMapOf()
         for (header in response.allHeaders) {
             map[header.name] = header.value
         }

@@ -232,7 +232,7 @@ class SLF4JInterceptor @JvmOverloads constructor(@field:Volatile private var det
          * @return a string containing all of the headers
          */
         private fun formatHeaders(headers: Array<Header>): String {
-            val sortedHeaders = Arrays.asList(*headers)
+            val sortedHeaders = listOf(*headers)
             Collections.sort(sortedHeaders, HeaderComparator())
             val sb = StringBuilder()
             for (header in sortedHeaders) {

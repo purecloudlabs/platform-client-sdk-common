@@ -7,7 +7,7 @@ import java.security.Principal
 import java.util.*
 
 class ApacheHttpCredentialsProvider(hostname: String?, port: Int, user: String, pass: String) : CredentialsProvider {
-    private val map = HashMap<String, Credentials>()
+    private val map = mutableMapOf<String, Credentials>()
     override fun setCredentials(authScope: AuthScope, credentials: Credentials) {
         map[authDescription(authScope)] = credentials
     }

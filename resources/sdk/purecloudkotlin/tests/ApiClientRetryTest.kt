@@ -188,7 +188,7 @@ class ApiClientRetryTest {
     @Test
     @Throws(IOException::class)
     fun shouldRetryTestWith_429() {
-        val headers: MutableMap<String, String> = HashMap()
+        val headers: MutableMap<String, String> = mutableMapOf()
         headers["Retry-After"] = "1"
         val response: ApiClientConnectorResponse = getConnectorResponse(429, headers)
         val retryConfiguration = RetryConfiguration()
@@ -204,7 +204,7 @@ class ApiClientRetryTest {
     @Test
     @Throws(IOException::class)
     fun shouldRetryTestWith_502() {
-        val headers: MutableMap<String, String> = HashMap()
+        val headers: MutableMap<String, String> = mutableMapOf()
         headers["Retry-After"] = "1"
         val response: ApiClientConnectorResponse = getConnectorResponse(502, headers)
         val retryConfiguration = RetryConfiguration()

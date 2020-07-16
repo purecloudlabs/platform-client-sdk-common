@@ -173,7 +173,7 @@ class ApiClient private constructor(builder: Builder) : AutoCloseable {
     */
     fun parameterToPairs(collectionFormat: String?, name: String?, value: Any?): List<Pair> {
         var collectionFormatLocal = collectionFormat
-        val params: MutableList<Pair> = ArrayList()
+        val params: MutableList<Pair> = mutableListOf()
         // preconditions
         if (name == null || name.isEmpty() || value == null) return params
         val valueCollection: Collection<*>?
@@ -304,7 +304,8 @@ class ApiClient private constructor(builder: Builder) : AutoCloseable {
         } else {
             url.append(basePath).append(pathLocal)
         }
-        if (queryParams != null && queryParams.isNotEmpty()) { // support (constant) query string in `path`, e.g. "/posts?draft=1"
+        if (queryParams != null && queryParams.isNotEmpty()) {
+            // support (constant) query string in `path`, e.g. "/posts?draft=1"
             var prefix: String? = if (pathLocal.contains("?")) "&" else "?"
             for (param in queryParams) {
                 if (prefix != null) {
@@ -535,7 +536,8 @@ class ApiClient private constructor(builder: Builder) : AutoCloseable {
                         .append("=")
                         .append(URLEncoder.encode(valueStr, "utf8"))
                 formParamBuilder.append("&")
-            } catch (e: UnsupportedEncodingException) { // move on to next
+            } catch (e: UnsupportedEncodingException) {
+                // move on to next
             }
         }
         var encodedFormParams = formParamBuilder.toString()
@@ -546,7 +548,7 @@ class ApiClient private constructor(builder: Builder) : AutoCloseable {
     }
 
     class Builder private constructor(properties: ConnectorProperties?) {
-        val defaultHeaderMap: MutableMap<String, String> = HashMap()
+        val defaultHeaderMap: MutableMap<String, String> = mutableMapOf()
         val properties: ConnectorProperties = properties?.copy() ?: ConnectorProperties()
         var accessToken: String? = null
         var objectMapper: ObjectMapper? = null
@@ -668,11 +670,11 @@ class ApiClient private constructor(builder: Builder) : AutoCloseable {
         private val properties: MutableMap<String, Any>
 
         constructor() {
-            properties = HashMap()
+            properties = mutableMapOf()
         }
 
         constructor(properties: Map<String, Any>?) {
-            this.properties = HashMap()
+            this.properties = mutableMapOf()
             if (properties != null) {
                 this.properties.putAll(properties)
             }
@@ -805,13 +807,13 @@ class ApiClient private constructor(builder: Builder) : AutoCloseable {
                 } else {
                     retryAfterDefaultMs
                 }
-                //If status code is 429 then wait until retry-after time and retry. OR If status code is retryable then for the first 5 times: wait until retry-after time and retry.
+                // If status code is 429 then wait until retry-after time and retry. OR If status code is retryable then for the first 5 times: wait until retry-after time and retry.
                 return if (connectorResponse.statusCode == 429 || retryCountBeforeBackOff++ < maxRetriesBeforeBackoff) {
                     waitBeforeRetry(retryAfterMs)
                 } else {
+                    // If status code is 50x then wait for every 3 Sec and retry until 5 minutes then after wait for every 9 Sec and retry until next 5 minutes afterwards wait for every 27 Sec and retry.
                     waitBeforeRetry(getWaitTimeExp(3.0.coerceAtMost(floor(stopwatch!!.elapsed(TimeUnit.MILLISECONDS) / backoffIntervalMs.toDouble()) + 1)))
                 }
-                //If status code is 50x then wait for every 3 Sec and retry until 5 minutes then after wait for every 9 Sec and retry until next 5 minutes afterwards wait for every 27 Sec and retry.
             }
             stopwatch!!.stop()
             return false
@@ -849,7 +851,7 @@ class ApiClient private constructor(builder: Builder) : AutoCloseable {
         private const val DEFAULT_USER_AGENT = "{{#httpUserAgent}}{{.}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen{{/httpUserAgent}}/java"
         private const val USER_AGENT_HEADER = "User-Agent"
         private fun buildAuthentications(): Map<String, Authentication> {
-            val authentications: MutableMap<String, Authentication> = HashMap(){{#authMethods}}{{#isBasic}}
+            val authentications: MutableMap<String, Authentication> = mutableMapOf(){{#authMethods}}{{#isBasic}}
             authentications["{{name}}"] = HttpBasicAuth(){{/isBasic}}{{#isApiKey}}
             authentications["{{name}}"] = ApiKeyAuth({{#isKeyInHeader}}"header"{{/isKeyInHeader}}{{^isKeyInHeader}}"query"{{/isKeyInHeader}}, "{{keyParamName}}"){{/isApiKey}}{{#isOAuth}}
             authentications["{{name}}"] = OAuth(){{/isOAuth}}{{/authMethods}}

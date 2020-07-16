@@ -62,7 +62,7 @@ class {{classname}} @JvmOverloads constructor(private val {{localVariablePrefix}
    * @throws IOException if the request fails to be processed
    */
   @Throws(IOException::class, ApiException::class)
-  fun {{operationId}}(request: {{requestClassname}}){{#returnType}}: {{{returnType}}}? {{/returnType}}{{^returnType}}{{/returnType}}{
+  fun {{operationId}}(request: {{requestClassname}}){{#returnType}}: {{{returnType}}}?{{/returnType}}{{^returnType}}{{/returnType}} {
       {{#returnType}}return {{/returnType}}{{^returnType}}{{/returnType}}try {
           {{#returnType}}val response = {{/returnType}}{{^returnType}}{{/returnType}}{{localVariablePrefix}}apiClient!!.invoke{{#returnType}}{{/returnType}}{{^returnType}}<Void>{{/returnType}}(request.withHttpInfo(), {{#returnType}}object: TypeReference<{{{returnType}}}>() {}{{/returnType}}{{^returnType}}null{{/returnType}})
           {{#returnType}}response.getBody(){{/returnType}}{{^returnType}}{{/returnType}}
@@ -85,12 +85,10 @@ class {{classname}} @JvmOverloads constructor(private val {{localVariablePrefix}
   fun {{operationId}}(request: ApiRequest<{{#bodyParam}}{{{dataType}}}?{{/bodyParam}}{{^bodyParam}}Void{{/bodyParam}}>): {{#returnType}}ApiResponse<{{{returnType}}}>{{/returnType}}{{^returnType}}ApiResponse<Void>{{/returnType}} {
     return try {
       {{localVariablePrefix}}apiClient!!.invoke(request, {{#returnType}}object: TypeReference<{{{returnType}}}>() {}{{/returnType}}{{^returnType}}null{{/returnType}})
-    }
-    catch (exception: ApiException) {
+    } catch (exception: ApiException) {
       @Suppress("UNCHECKED_CAST")
       exception as ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>
-    }
-    catch (exception: Throwable) {
+    } catch (exception: Throwable) {
       if ({{localVariablePrefix}}apiClient!!.shouldThrowErrors) {
         if (exception is IOException) {
           throw exception
@@ -100,7 +98,6 @@ class {{classname}} @JvmOverloads constructor(private val {{localVariablePrefix}
       @Suppress("UNCHECKED_CAST")
       ApiException(exception) as ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>
     }
-
   }{{/operation}}
 }
 {{/operations}}
