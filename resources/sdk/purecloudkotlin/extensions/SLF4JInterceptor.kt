@@ -59,9 +59,8 @@ class SLF4JInterceptor @JvmOverloads constructor(@field:Volatile var detailLevel
                 requestLine = BasicRequestLine("<UNKNOWN METHOD>", "<UNKNOWN URL>", null)
                 tookMs = -1
             } else {
-                val requestData = reqDataAttr
-                requestLine = requestData.requestLine
-                tookMs = System.currentTimeMillis() - requestData.startTime
+                requestLine = reqDataAttr.requestLine
+                tookMs = System.currentTimeMillis() - reqDataAttr.startTime
             }
             logResponse(response, requestLine, tookMs)
         }
@@ -84,17 +83,17 @@ class SLF4JInterceptor @JvmOverloads constructor(@field:Volatile var detailLevel
      */
     @Throws(IOException::class)
     private fun logRequest(request: HttpRequest) {
-        if (detailLevel.compareTo(DetailLevel.MINIMAL) >= 0) {
+        if (detailLevel >= DetailLevel.MINIMAL) {
             val messageBuilder = StringBuilder()
             // Log the verb and url
             val uriString = String.format(">>>> %s %s >>>>", request.requestLine.method, request.requestLine.uri)
             messageBuilder.append(uriString).append(System.lineSeparator())
             // Add the headers
-            if (detailLevel.compareTo(DetailLevel.HEADERS) >= 0) {
+            if (detailLevel >= DetailLevel.HEADERS) {
                 messageBuilder.append("---- HEADERS ----").append(System.lineSeparator())
                 messageBuilder.append(formatHeaders(request.allHeaders))
                 // Add the request body if it exists
-                if (detailLevel.compareTo(DetailLevel.FULL) >= 0) { // This is ugly, but it's the only way to access the body
+                if (detailLevel >= DetailLevel.FULL) { // This is ugly, but it's the only way to access the body
                     if (request is HttpEntityEnclosingRequest &&
                             request.entity != null) {
                         val data = extractRequestBody(request)
@@ -129,7 +128,7 @@ class SLF4JInterceptor @JvmOverloads constructor(@field:Volatile var detailLevel
      */
     @Throws(IOException::class)
     private fun logResponse(response: HttpResponse, requestLine: RequestLine, tookMs: Long) {
-        if (detailLevel.compareTo(DetailLevel.MINIMAL) >= 0) {
+        if (detailLevel >= DetailLevel.MINIMAL) {
             val messageBuilder = StringBuilder()
             // Log the verb and url, along with the status code
             val uriString = String.format("<<<< %s %s <<<<", requestLine.method, requestLine.uri)
@@ -140,11 +139,11 @@ class SLF4JInterceptor @JvmOverloads constructor(@field:Volatile var detailLevel
                     tookMs))
                     .append(System.lineSeparator())
             // Append the headers
-            if (detailLevel.compareTo(DetailLevel.HEADERS) >= 0) {
+            if (detailLevel >= DetailLevel.HEADERS) {
                 messageBuilder.append("---- HEADERS ----").append(System.lineSeparator())
                 messageBuilder.append(formatHeaders(response.allHeaders))
                 // Add the response body if it exists
-                if (detailLevel.compareTo(DetailLevel.FULL) >= 0) { // Write the log message
+                if (detailLevel >= DetailLevel.FULL) { // Write the log message
                     if (response.entity != null) {
                         val responseBody = extractResponseBody(response)
                         messageBuilder.append(String.format("---- BODY (%d bytes) ----", responseBody.size)).append(System.lineSeparator())
@@ -229,7 +228,7 @@ class SLF4JInterceptor @JvmOverloads constructor(@field:Volatile var detailLevel
          * @return a string containing all of the headers
          */
         private fun formatHeaders(headers: Array<Header>): String {
-            val sortedHeaders = Arrays.asList(*headers)
+            val sortedHeaders = listOf(*headers)
             Collections.sort(sortedHeaders, HeaderComparator())
             val sb = StringBuilder()
             for (header in sortedHeaders) {

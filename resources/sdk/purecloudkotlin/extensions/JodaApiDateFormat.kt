@@ -44,7 +44,7 @@ class JodaApiDateFormat : DateFormat() {
     init {
         setCalendar(Calendar.getInstance(TimeZone.getTimeZone("UTC")))
         setNumberFormat(NumberFormat.getInstance())
-        formats = Lists.newArrayList(
+        formats = arrayListOf(
                 ISODateTimeFormat.dateTime(),
                 DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ssZ"),
                 DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")

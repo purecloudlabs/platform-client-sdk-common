@@ -16,7 +16,7 @@ class OkHttpResponse(private val response: Response) : ApiClientConnectorRespons
         get() = response.message()
 
     override fun getHeaders(): Map<String, String> {
-        val map: MutableMap<String, String> = HashMap()
+        val map: MutableMap<String, String> = mutableMapOf()
         val headers: Headers? = response.headers()
         if (headers != null) {
             for (name in headers.names()) {

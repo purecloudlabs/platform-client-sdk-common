@@ -16,7 +16,7 @@ class AsyncHttpResponse(private val response: Response) : ApiClientConnectorResp
 
     override fun getHeaders(): Map<String, String> {
         val headers: HttpHeaders = response.headers
-        val map: MutableMap<String, String> = HashMap()
+        val map: MutableMap<String, String> = mutableMapOf()
         for (name in headers.names()) {
             map[name] = headers.get(name)
         }

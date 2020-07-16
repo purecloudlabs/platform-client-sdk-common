@@ -18,7 +18,7 @@ class NotificationHandler private constructor(builder: Builder) : Any() {
     private var notificationsApi: NotificationsApi? = NotificationsApi()
     private var webSocket: WebSocket?
     var channel: Channel? = null
-    private val typeMap: MutableMap<String?, NotificationListener<*>> = HashMap()
+    private val typeMap: MutableMap<String?, NotificationListener<*>> = mutableMapOf()
     private var webSocketListener: WebSocketListener? = null
     private var objectMapper: ObjectMapper? = null
 
@@ -86,7 +86,7 @@ class NotificationHandler private constructor(builder: Builder) : Any() {
         companion object {
             fun standard(): Builder {
                 val builder = Builder()
-                builder.notificationListeners = ArrayList()
+                builder.notificationListeners = mutableListOf()
                 builder.webSocketListener = null
                 builder.channel = null
                 builder.connectAsync = null

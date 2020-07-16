@@ -52,7 +52,7 @@ class {{requestClassname}} {
 	}{{/allowableValuesForEnum}}
     {{/allParams}}
 
-    private val customHeaders: MutableMap<String, String> = HashMap()
+    private val customHeaders: MutableMap<String, String> = mutableMapOf()
     fun getCustomHeaders(): MutableMap<String, String> {
         return customHeaders
     }
@@ -104,7 +104,7 @@ class {{requestClassname}} {
         }{{#allowableValuesForEnum}}
 
         fun {{#isContainer}}with{{paramTitle}}EnumValues({{paramName}}: List<{{paramName}}Values>): Builder {
-		    val stringList: MutableList<String> = ArrayList()
+		    val stringList: MutableList<String> = mutableListOf()
 	        for (e in {{paramName}}) {
 	            stringList.add(e.toString())
 	        }

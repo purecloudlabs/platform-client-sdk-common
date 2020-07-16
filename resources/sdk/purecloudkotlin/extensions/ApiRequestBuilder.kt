@@ -21,11 +21,11 @@ class ApiRequestBuilder<T> {
     private constructor(method: String, path: String) {
         this.method = method
         this.path = path
-        pathParams = HashMap()
-        formParams = HashMap()
-        queryParams = ArrayList()
-        headerParams = HashMap()
-        customHeaders = HashMap()
+        pathParams = mutableMapOf()
+        formParams = mutableMapOf()
+        queryParams = mutableListOf()
+        headerParams = mutableMapOf()
+        customHeaders = mutableMapOf()
     }
 
     private constructor(parent: ApiRequestBuilder<*>, body: T) {
@@ -174,14 +174,11 @@ class ApiRequestBuilder<T> {
 
         private fun initializeDateFormat(dateFormat: DateFormat) {
             initialDateFormat = dateFormat
-        }// Initialize the source date format object
-        // Ensure date format object has a value
-        // Return an instance for the calling thread
+        }
 
-        // Set initial date format object
-        // Lazy load ApiDateFormat
         var dateFormat: DateFormat?
-            get() { // Lazy load ApiDateFormat
+            get() {
+                // Lazy load ApiDateFormat
                 synchronized(EMPTY) {
                     // Initialize the source date format object
                     if (initialDateFormat == null) {
@@ -217,21 +214,26 @@ class ApiRequestBuilder<T> {
          * Format the given parameter object into string.
          */
         private fun parameterToString(param: Any?): String {
-            return if (param == null) {
-                ""
-            } else if (param is Date) {
-                formatDate(param as Date?)
-            } else if (param is Collection<*>) {
-                val b = StringBuilder()
-                for (o in param) {
-                    if (b.length > 0) {
-                        b.append(",")
-                    }
-                    b.append(o.toString())
+            return when (param) {
+                null -> {
+                    ""
                 }
-                b.toString()
-            } else {
-                param.toString()
+                is Date -> {
+                    formatDate(param as Date?)
+                }
+                is Collection<*> -> {
+                    val b = StringBuilder()
+                    for (o in param) {
+                        if (b.isNotEmpty()) {
+                            b.append(",")
+                        }
+                        b.append(o.toString())
+                    }
+                    b.toString()
+                }
+                else -> {
+                    param.toString()
+                }
             }
         }
 
@@ -240,7 +242,7 @@ class ApiRequestBuilder<T> {
         */
         private fun parameterToPairs(collectionFormat: String, name: String?, value: Any?): List<Pair> {
             var myCollectionFormat: String? = collectionFormat
-            val params: MutableList<Pair> = ArrayList()
+            val params: MutableList<Pair> = mutableListOf()
             // preconditions
             if (name == null || name.isEmpty() || value == null) return params
             val valueCollection: Collection<*>?
@@ -263,14 +265,19 @@ class ApiRequestBuilder<T> {
                 return params
             }
             var delimiter = ","
-            if (myCollectionFormat == "csv") {
-                delimiter = ","
-            } else if (myCollectionFormat == "ssv") {
-                delimiter = " "
-            } else if (myCollectionFormat == "tsv") {
-                delimiter = "\t"
-            } else if (myCollectionFormat == "pipes") {
-                delimiter = "|"
+            when (myCollectionFormat) {
+                "csv" -> {
+                    delimiter = ","
+                }
+                "ssv" -> {
+                    delimiter = " "
+                }
+                "tsv" -> {
+                    delimiter = "\t"
+                }
+                "pipes" -> {
+                    delimiter = "|"
+                }
             }
             val sb = StringBuilder()
             for (item in valueCollection) {
@@ -302,7 +309,7 @@ class ApiRequestBuilder<T> {
          * null will be returned (not to set the Accept header explicitly).
          */
         private fun selectHeaderAccept(accepts: Array<String?>): String? {
-            if (accepts.size == 0) {
+            if (accepts.isEmpty()) {
                 return null
             }
             for (accept in accepts) {
@@ -323,7 +330,7 @@ class ApiRequestBuilder<T> {
          * JSON will be used.
          */
         private fun selectHeaderContentType(contentTypes: Array<String?>): String? {
-            if (contentTypes.size == 0) {
+            if (contentTypes.isEmpty()) {
                 return "application/json"
             }
             for (contentType in contentTypes) {
