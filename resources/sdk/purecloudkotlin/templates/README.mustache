@@ -23,8 +23,8 @@ import com.mypurecloud.sdk.v2.PureCloudRegionHosts
 The Kotlin SDK contains a helper method to execute a Client Credentials OAuth flow. This is appropriate for non-user Kotlin applications, typically when there is no UI. Invoking `authorizeClientCredentials(clientId: String, clientSecret: String)` will execute the client credentials OAuth grant and store the access token within the ApiClient class. 
 
 ```{"language":"kotlin"}
-val clientId = System.getenv("PURECLOUD_CLIENT_ID")
-val clientSecret = System.getenv("PURECLOUD_CLIENT_SECRET")
+val clientId = System.getenv("GENESYS_CLOUD_CLIENT_ID")
+val clientSecret = System.getenv("GENESYS_CLOUD_CLIENT_SECRET")
 
 //Set Region
 val region = PureCloudRegionHosts.us_east_1
@@ -45,11 +45,11 @@ val users = usersApi.getUsers(null, null, null, null, null, null, null)
 
 For user applications, the consuming application must complete an implicit, auth token, or SAML2 Bearer OAuth flow to get an access token outside the scope of the SDK. Once an access token is obtained, it should be set on the SDK via constructing a new ApiClient instance (use `withAccessToken(token: String)`). For more information about authenticating with OAuth, see the Developer Center article [Authorization](https://developer.mypurecloud.com/api/rest/authorization/index.html). For more information about SAML2 Bearer Oauth flow view the example below 
 
-## Authentication with SAML2Bearer token
+#### Authentication with SAML2Bearer token
 
 ```{"language":"kotlin"}
-val clientId = System.getenv("PURECLOUD_CLIENT_ID")
-val clientSecret = System.getenv("PURECLOUD_CLIENT_SECRET")
+val clientId = System.getenv("GENESYS_CLOUD_CLIENT_ID")
+val clientSecret = System.getenv("GENESYS_CLOUD_CLIENT_SECRET")
 val orgName = "YourOrg" // Your org name 
 val encodedSamlAssertion= "" // Base64 encoded SAML assertion
 
@@ -59,7 +59,44 @@ val region = PureCloudRegionHosts.us_east_1
 val apiClient: ApiClient = ApiClient.Builder.standard().withBasePath(region).build()
 val authResponse = apiClient.authorizeSaml2Bearer(clientId, clientSecret, orgName, encodedSamlAssertion)
 println("Authentication successful. Access token expires in ${authResponse.getBody()?.expires_in} seconds")
+```
 
+#### Authentication with Authorization Code
+
+See example on how to authenticate with an authorization code below. For more information see the article on [Code Authorization](https://developer.mypurecloud.com/api/rest/authorization/use-authorization-code.html)
+
+```{"language":"kotlin"}
+val clientId = "a0bda580-cb41-4ff6-8f06-28ffb4227594"
+val clientSecret = "e4meQ53cXGq53j6uffdULVjRl8It8M3FVsupKei0nSg"
+val authorizationCode = "YourAuthorizationCode" // Your authorization code 
+val redirectUri= "" // Your redirect URI
+
+//Set Region
+val region = PureCloudRegionHosts.us_east_1
+
+val apiClient: ApiClient = ApiClient.Builder.standard()
+        .withBasePath(region)
+        .build()
+val authResponse = apiClient.authorizeCodeAuthorization(clientId, clientSecret, authorizationCode, redirectUri)
+println("Authentication successful. Access token expires in ${authResponse.getBody()!!.expires_in} seconds")
+```
+
+By default the SDK will transparently request a new access token when it expires. If you wish to apply the refresh logic yourself, build the ApiClient with `withShouldRefreshAccessToken(false)` and store the refresh token. The `expires_in` field of the `authResponse` can be used to preemptively request a new token. Use `refreshCodeAuthorization` to request a new token when necessary
+
+```{"language":"kotlin"}
+val apiClient: ApiClient = ApiClient.Builder.standard()
+        .withBasePath(region)
+        .withShouldRefreshAccessToken(false)
+        .build()
+var authResponse = apiClient.authorizeCodeAuthorization(clientId, clientSecret, authorizationCode, redirectUri)
+var refreshToken = authResponse.getBody()!!.refresh_token
+var expiresIn = authResponse.getBody()!!.expires_in
+println("Authentication successful. Access token expires in ${expiresIn} seconds")
+
+// When token expires
+authResponse = apiClient.refreshCodeAuthorization(clientId, clientSecret, refreshToken as String)
+refreshToken = authResponse.getBody()!!.refresh_token
+expiresIn = authResponse.getBody()!!.expires_in
 ```
 
 ### Building an ApiClient Instance
@@ -85,7 +122,7 @@ val response = apiInstance.getUsers(null, null, null, null, null, null)
 
 #### Setting the access token
 
-If not authorizing using the `authorizeClientCredentials(...)` helper, provide the access token to use for API requests:
+If not authorizing using the authorization method helpers, provide the access token to use for API requests:
 
 ```{"language":"kotlin"}
 .withAccessToken("aisuefh89734hfkhsaldkh348jf")
@@ -142,6 +179,7 @@ The best practices are documented in the [Rate Limiting](https://developer.mypur
 * `withShouldThrowErrors(shouldThrowErrors: Boolean)` Set to `false` to suppress throwing of all errors
 * `withProxy(proxy: Proxy)` Sets a proxy to use for requests
 * `withAuthenticatedProxy(proxy: Proxy, user: String, pass: String)` Sets an authenticated proxy to use for requests
+* `withRefreshTokenWaitTime(refreshTokenWaitTime: Int)` Overrides the default time a thread will wait for another thread to request a new access token. The default is 10 seconds
 
 ### Making Requests
 
