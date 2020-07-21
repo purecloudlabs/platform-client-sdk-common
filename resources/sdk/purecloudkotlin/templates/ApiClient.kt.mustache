@@ -28,6 +28,7 @@ import org.threeten.bp.LocalDate
 import java.util.*
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.xml.bind.DatatypeConverter
 import kotlin.math.floor
 import kotlin.math.pow
@@ -39,9 +40,15 @@ class ApiClient private constructor(builder: Builder) : AutoCloseable {
     private val authentications: Map<String, Authentication>
     private val connector: ApiClientConnector?
     private val retryConfiguration: RetryConfiguration?
+    private var clientId = ""
+    private var clientSecret = ""
+    private var refreshToken = ""
+    private val refreshInProgress = AtomicBoolean(false)
 
     val basePath: String?
     val shouldThrowErrors: Boolean
+    val shouldRefreshAccessToken: Boolean
+    val refreshTokenWaitTime: Int
     val objectMapper: ObjectMapper?
 
     constructor() : this(Builder.standard())
@@ -114,6 +121,56 @@ class ApiClient private constructor(builder: Builder) : AutoCloseable {
         val response = getAPIResponse(request, object : TypeReference<AuthResponse?>() {}, true)
         setAccessToken(response.getBody()?.access_token)
         return response
+    }
+
+    @Throws(IOException::class, ApiException::class)
+    fun authorizeCodeAuthorization(clientId: String, clientSecret: String, authCode: String, redirectUri: String): ApiResponse<AuthResponse?> {
+        this.clientId = clientId
+        this.clientSecret = clientSecret
+        val encodedAuth = DatatypeConverter.printBase64Binary("$clientId:$clientSecret".toByteArray(charset("UTF-8")))
+        val request = ApiRequestBuilder.create("POST", "/oauth/token")
+                .withCustomHeader("Authorization", "Basic $encodedAuth")
+                .withCustomHeader("Content-Type", "application/x-www-form-urlencoded")
+                .withFormParameter("grant_type", "authorization_code")
+                .withFormParameter("code", authCode)
+                .withFormParameter("redirect_uri", redirectUri)
+                .build()
+        val response = getAPIResponse(request, object : TypeReference<AuthResponse?>() {}, true)
+        setAccessToken(response.getBody()?.access_token)
+        val refreshToken = response.getBody()?.refresh_token
+        if (refreshToken == null) {
+            throw ApiException(Exception("No refresh token included in response"))
+        } else {
+            this.refreshToken = refreshToken
+        }
+ 
+        return response
+    }
+
+    @Throws(IOException::class, ApiException::class)
+    fun refreshCodeAuthorization(clientId: String, clientSecret: String, refreshToken: String): ApiResponse<AuthResponse?> {
+        val encodedAuth = DatatypeConverter.printBase64Binary("$clientId:$clientSecret".toByteArray(charset("UTF-8")))
+        val request = ApiRequestBuilder.create("POST", "/oauth/token")
+                .withCustomHeader("Authorization", "Basic $encodedAuth")
+                .withCustomHeader("Content-Type", "application/x-www-form-urlencoded")
+                .withFormParameter("grant_type", "refresh_token")
+                .withFormParameter("refresh_token", refreshToken)
+                .build()
+        val response = getAPIResponse(request, object : TypeReference<AuthResponse?>() {}, true)
+        setAccessToken(response.getBody()?.access_token)
+        val refreshToken = response.getBody()?.refresh_token
+        if (refreshToken == null) {
+            throw ApiException(Exception("No refresh token included in response"))
+        } else {
+            this.refreshToken = refreshToken
+        }
+
+        return response
+    }
+
+    @Throws(IOException::class, ApiException::class)
+    private fun refreshCodeAuthorization(): ApiResponse<AuthResponse?> {
+        return this.refreshCodeAuthorization(clientId, clientSecret, refreshToken)
     }
 
     /**
@@ -389,7 +446,8 @@ class ApiClient private constructor(builder: Builder) : AutoCloseable {
         val statusCode = response!!.statusCode
         val reasonPhrase = response.statusReasonPhrase
         val headers = response.getHeaders()
-        return if (statusCode in 200..299) {
+        // If the response indicates that the access_token has expired, and we wish to refresh it transparently, we'll return from this method and let the caller handle it
+        return if (statusCode in 200..299 || shouldRefreshAccessToken && statusCode == 401) {
             var body: String? = null
             var entity: T? = null
             if (statusCode != 204 && returnType != null && returnType.type !== Void::class.java && response.hasBody()) {
@@ -410,6 +468,36 @@ class ApiClient private constructor(builder: Builder) : AutoCloseable {
     }
 
     @Throws(IOException::class, ApiException::class)
+    private fun handleExpiredAccessToken() {
+        // Attempt to refresh the access_token if a refresh isn't in progress and lock any other threads out of the method
+        if (refreshInProgress.compareAndSet(false, true)) {
+            try {
+                val refreshResponse = this.refreshCodeAuthorization()
+                if (refreshResponse.statusCode != 200) {
+                    val message = "error"
+                    throw ApiException(refreshResponse.statusCode, message, refreshResponse.headers as MutableMap<String, String>?, refreshResponse.rawBody)
+                }
+            } finally {
+                refreshInProgress.set(false)
+            }
+        } else {
+            var timeSpentWaiting = 0.0
+            val sleepDuration = 200
+            // Sleep for 200ms at a time for a maximum of refreshTokenWaitTime for other thread to complete refresh
+            while (timeSpentWaiting < refreshTokenWaitTime) {
+                try {
+                    Thread.sleep(sleepDuration.toLong())
+                } catch (e: InterruptedException) {
+                    Thread.currentThread().interrupt()
+                }
+                timeSpentWaiting += sleepDuration.toDouble() / 1000
+                if (!refreshInProgress.get()) return
+            }
+            throw ApiException(Exception("Token refresh took longer than $refreshTokenWaitTime seconds"))
+        }
+    }
+
+    @Throws(IOException::class, ApiException::class)
     private fun <T> getAPIResponse(request: ApiRequest<*>, returnType: TypeReference<T>?, isAuthRequest: Boolean): ApiResponse<T> {
         val connectorRequest = prepareConnectorRequest(request, isAuthRequest)
         var connectorResponse: ApiClientConnectorResponse? = null
@@ -418,7 +506,13 @@ class ApiClient private constructor(builder: Builder) : AutoCloseable {
             do {
                 connectorResponse = connector!!.invoke(connectorRequest)
             } while (retry.shouldRetry(connectorResponse))
-            interpretConnectorResponse(connectorResponse, returnType)
+            val interpretedResponse: ApiResponse<T> = interpretConnectorResponse(connectorResponse, returnType)
+            if (interpretedResponse.statusCode == 401) {
+                handleExpiredAccessToken()
+                getAPIResponse(request, returnType, isAuthRequest)
+            } else {
+                interpretedResponse
+            }
         } finally {
             if (connectorResponse != null) {
                 try {
@@ -457,6 +551,9 @@ class ApiClient private constructor(builder: Builder) : AutoCloseable {
                                 response = interpretConnectorResponse(connectorResponse, returnType)
                             } finally {
                                 connectorResponse?.close()
+                            }
+                            if (response.statusCode == 401) {
+                                handleExpiredAccessToken()
                             }
                             notifySuccess(future, callback, response)
                             return
@@ -554,6 +651,8 @@ class ApiClient private constructor(builder: Builder) : AutoCloseable {
         var basePath: String? = null
         var retryConfiguration: RetryConfiguration? = null
         var shouldThrowErrors: Boolean? = true
+        var shouldRefreshAccessToken: Boolean? = true
+        var refreshTokenWaitTime: Int = 10
         fun withDefaultHeader(header: String, value: String): Builder {
             defaultHeaderMap[header] = value
             return this
@@ -600,6 +699,16 @@ class ApiClient private constructor(builder: Builder) : AutoCloseable {
 
         fun withShouldThrowErrors(shouldThrowErrors: Boolean): Builder {
             this.shouldThrowErrors = shouldThrowErrors
+            return this
+        }
+
+        fun withShouldRefreshAccessToken(shouldRefreshAccessToken: Boolean): Builder {
+            this.shouldRefreshAccessToken = shouldRefreshAccessToken
+            return this
+        }
+
+        fun withRefreshTokenWaitTime(refreshTokenWaitTime: Int): Builder {
+            this.refreshTokenWaitTime = refreshTokenWaitTime
             return this
         }
 
@@ -650,6 +759,8 @@ class ApiClient private constructor(builder: Builder) : AutoCloseable {
                 builder.basePath = client.basePath
                 builder.retryConfiguration = client.retryConfiguration
                 builder.shouldThrowErrors = client.shouldThrowErrors
+                builder.shouldRefreshAccessToken = client.shouldRefreshAccessToken
+                builder.refreshTokenWaitTime = client.refreshTokenWaitTime
                 return builder
             }
 
@@ -889,6 +1000,8 @@ class ApiClient private constructor(builder: Builder) : AutoCloseable {
         defaultHeaderMap = HashMap(builder.defaultHeaderMap)
         properties = builder.properties.copy()
         shouldThrowErrors = if (builder.shouldThrowErrors == null) true else builder.shouldThrowErrors!!
+        shouldRefreshAccessToken = if (builder.shouldRefreshAccessToken == null) true else builder.shouldRefreshAccessToken!!
+        refreshTokenWaitTime = if (builder.refreshTokenWaitTime == 0) 10 else builder.refreshTokenWaitTime
         var dateFormat = builder.dateFormat
         if (dateFormat == null) {
             dateFormat = buildDateFormat()
