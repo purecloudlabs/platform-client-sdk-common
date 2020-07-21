@@ -95,7 +95,7 @@ ApiResponse<AuthResponse> authResponse = apiClient.authorizeCodeAuthorization(cl
 System.out.println("Authentication successful. Access token expires in " + authResponse.getBody().getExpires_in() + " seconds");
 ```
 
-By default the SDK will transparently request a new access token when it expires. If you wish to apply the refresh logic yourself, build the ApiClient with `withShouldRefreshAccessToken(false)` and store the refresh token. The `getExpires_in()` memthor of the `authResponse` can be used to preemptively request a new token. Use `refreshCodeAuthorization` to request a new token when necessary
+By default the SDK will transparently request a new access token when it expires. If you wish to apply the refresh logic yourself, build the ApiClient with `withShouldRefreshAccessToken(false)` and store the refresh token. The `getExpires_in()` value of the `authResponse` can be used to preemptively request a new token. Use `refreshCodeAuthorization` to request a new token when necessary
 
 ```{"language":"java"}
 ApiClient apiClient = ApiClient.Builder.standard()
@@ -193,7 +193,7 @@ The best practices are documented in the [Rate Limiting](https://developer.mypur
 * `withShouldThrowErrors(boolean shouldThrowErrors)` Set to `false` to suppress throwing of all errors
 * `withProxy(Proxy proxy)` Sets a proxy to use for requests
 * `withAuthenticatedProxy(Proxy proxy, String user, String pass)` Sets an authenticated proxy to use for requests
-* `withRefreshTokenWaitTime(int refreshTokenWaitTime`) Overrides the default time a thread will wait for another thread to request a new access token. The default is 10 seconds
+* `withRefreshTokenWaitTime(int refreshTokenWaitTime)` Overrides the default time a thread will wait for another thread to request a new access token. The default is 10 seconds
 
 ### Making Requests
 
