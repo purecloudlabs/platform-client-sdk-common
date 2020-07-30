@@ -38,19 +38,19 @@ export PATH=$PATH:/usr/local/maven/bin
 # CD to build dir
 cd $BUILD_DIR
 
-find . -name "DivsPermittedEntityListing.kt" -exec sed -i '' s/'override var allDivsPermitted'/'var allDivsPermitted'/g {} \;
+find . -name "DivsPermittedEntityListing.kt" | xargs sed -i -e "s/override var allDivsPermitted/var allDivsPermitted/g"
 # Kotlin generates JVM bytecode for getters + setters of public properties, this causes a clash with another method named "isPaid" in this class
 # The solution here makes the property private and implements our own getter + setter
-find . -name "WfmAgentScheduleUpdateTopicWfmFullDayTimeOffMarker.kt" -exec sed -i '' \
-			-e s/'@get:ApiModelProperty(example = "null", value = "isPaid")'/'@ApiModelProperty(example = "null", value = "")'/g \
-			-e s/'@get:JsonProperty("isPaid")'/'@JsonProperty("isPaid")'/g \
-			-e $'s/var isPaid: Boolean? = null/private var isPaid: Boolean? = null \
-											\\\tfun getIsPaid(): Boolean? { \
-											\\\t\\\treturn isPaid \
-											\\\t} \
-											\\\tfun setIsPaid(isPaid: Boolean?) { \
-											\\\t\\\tthis.isPaid = isPaid \
-											\\\t}/g' {} \;
+find . -name "WfmAgentScheduleUpdateTopicWfmFullDayTimeOffMarker.kt" \
+	| xargs sed -i -e "s/@get:ApiModelProperty(example = \"null\", value = \"isPaid\")/@ApiModelProperty(example = \"null\", value = \"\")/g"
+find . -name "WfmAgentScheduleUpdateTopicWfmFullDayTimeOffMarker.kt" \
+	| xargs sed -i -e $'s/var isPaid: Boolean? = null/private var isPaid: Boolean? = null \
+fun getIsPaid(): Boolean? { \
+  return isPaid \
+} \
+fun setIsPaid(isPaid: Boolean?) { \
+  this.isPaid = isPaid \
+}/g'
 
 # Build
 mvn $MAVEN_SETTINGS_FILE $BUILD_MODE $DPGP_PASSPHRASE
