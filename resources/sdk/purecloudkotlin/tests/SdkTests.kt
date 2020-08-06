@@ -166,7 +166,7 @@ class SdkTests {
     val user: Unit
         get() {
             try {
-                val user = usersApi!!.getUser(userId!!, mutableListOf("profileSkills"), null)
+                val user = usersApi!!.getUser(userId!!, mutableListOf("profileSkills"), null, null)
                 Assert.assertEquals(user!!.id, userId)
                 Assert.assertEquals(user.name, userName)
                 Assert.assertEquals(user.email, userEmail)
