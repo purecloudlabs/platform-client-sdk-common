@@ -95,8 +95,14 @@ func (a {{classname}}) {{nickname}}({{#allParams}}{{paramName}} {{{dataType}}}{{
 	}
 	{{/isListContainer}}
 	{{^isListContainer}}
-		collectionFormat = ""
+	collectionFormat = ""
+	if str, ok := interface{}({{paramName}}).(string); ok {
+		if str != "" {
+			queryParams["{{paramName}}"] = a.Configuration.APIClient.ParameterToString({{paramName}}, collectionFormat)
+		}
+	} else {
 		queryParams["{{paramName}}"] = a.Configuration.APIClient.ParameterToString({{paramName}}, collectionFormat)
+	}
 	{{/isListContainer}}
 	{{/queryParams}}{{/hasQueryParams}}
 
