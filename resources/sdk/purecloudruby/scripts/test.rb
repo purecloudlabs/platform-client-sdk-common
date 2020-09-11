@@ -1,5 +1,4 @@
 require 'purecloudplatformclientv2'
-gem 'test-unit'
 require 'test/unit'
 require 'securerandom'
 
