@@ -50,7 +50,8 @@ try {
 
 	console.log('downloading nuget...');
 	let data = cp.execFileSync('curl', ['--silent', '-L', 'https://dist.nuget.org/win-x86-commandline/latest/nuget.exe'], {
-		encoding: 'binary'
+		encoding: 'binary',
+		maxBuffer: 1024 * 1024 * 10
 	});
 	fs.writeFileSync(nugetPath, data, 'binary');
 } catch (err) {
