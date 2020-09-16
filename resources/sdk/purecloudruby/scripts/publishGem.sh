@@ -46,7 +46,7 @@ then
 fi
 
 # Install gems
-gem update --system
+gem install bundler -v "$(grep -A 1 "BUNDLED WITH" Gemfile.lock | tail -n 1)"
 bundle install
 
 # Publish gem
