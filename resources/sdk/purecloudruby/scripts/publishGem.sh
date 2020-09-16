@@ -47,6 +47,8 @@ fi
 
 # Install gems
 gem update --system
+gem install gems
+gem install rubygems
 bundle show gems
 bundle install
 
