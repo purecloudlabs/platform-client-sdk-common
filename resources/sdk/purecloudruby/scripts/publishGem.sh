@@ -46,6 +46,7 @@ then
 fi
 
 # Install gems
+gem update --system
 bundle install
 
 # Publish gem
