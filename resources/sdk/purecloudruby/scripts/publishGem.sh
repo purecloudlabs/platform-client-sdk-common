@@ -46,9 +46,11 @@ then
 fi
 
 # Install gems
-gem update --system
-gem install bundler
+#gem update --system
+echo "Bundle location"
+which bundle
 bundle show gems
+
 bundle install
 bundle update
 
