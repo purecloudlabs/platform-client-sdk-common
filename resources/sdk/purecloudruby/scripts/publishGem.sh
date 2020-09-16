@@ -42,14 +42,13 @@ then
 
 	gem install io-console -v 0.5.4
 	gem install rake
-	gem install gems
 	gem env
 fi
 
 # Install gems
-rvm list
-gem install bundler -v "$(grep -A 1 "BUNDLED WITH" Gemfile.lock | tail -n 1)"
+gem update --system
+bundle show gems
 bundle install
 
 # Publish gem
-rake release
+rake release --trace
