@@ -52,4 +52,5 @@ bundle install
 
 # Publish gem
 echo "Publishing gems"
+gem uninstall psych
 rake release --trace
