@@ -42,6 +42,7 @@ then
 
 	gem install io-console -v 0.5.4
 	gem install rake
+	gem install gems
 	gem env
 fi
 
