@@ -47,8 +47,8 @@ then
 fi
 
 # Install gems
+echo /home/jenkins/.gem/ruby/2.4.0/gems/rake-13.0.1/exe/rake
 gem install bundler -v "$(grep -A 1 "BUNDLED WITH" Gemfile.lock | tail -n 1)"
-gem environment
 bundle install
 
 # Publish gem
