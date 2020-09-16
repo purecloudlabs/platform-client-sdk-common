@@ -48,9 +48,9 @@ fi
 # Install gems
 gem update --system
 gem install gems
-gem install rubygems
 bundle show gems
 bundle install
 
 # Publish gem
+echo "Publishing gems"
 rake release --trace
