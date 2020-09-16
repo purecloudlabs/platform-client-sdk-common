@@ -47,8 +47,7 @@ fi
 
 # Install gems
 gem update --system
-gem install psych
-gem install gems
+bundle update
 bundle show gems
 bundle install
 
