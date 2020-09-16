@@ -47,6 +47,7 @@ fi
 
 # Install gems
 gem update --system
+gem install bundler
 bundle show gems
 bundle install
 bundle update
