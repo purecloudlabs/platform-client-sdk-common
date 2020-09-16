@@ -48,11 +48,7 @@ fi
 # Install gems
 #gem update --system
 echo "Bundle location"
-which bundle
-bundle show gems
-
 bundle install
-bundle update
 
 # Publish gem
 echo "Publishing gems"
