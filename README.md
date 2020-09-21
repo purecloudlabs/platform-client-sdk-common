@@ -10,6 +10,7 @@ This repository contains scripts, templates, and configuration files that are us
 * [Python](https://github.com/MyPureCloud/platform-client-sdk-python)
 * [Ruby](https://github.com/MyPureCloud/platform-client-sdk-ruby)
 
+**Note:  As of 9.17.2020 - Genesys Cloud has deprecated Ruby SDK support.  The Genesys Cloud team will keep a branch ([FROZEN-LAST-VERSION-RUBY-SDK-GENERATION](https://github.com/purecloudlabs/platform-client-sdk-common/tree/FROZEN-LAST-VERSION-RUBY-SDK-GENERATION)) for the Ruby SDK generation process, but the Ruby SDK code generation will be removed from the main branch in this repository.**
 
 # Generating the SDK locally
 
