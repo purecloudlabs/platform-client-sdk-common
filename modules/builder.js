@@ -74,7 +74,7 @@ function Builder(configPath, localConfigPath) {
 		maybeInit(this, 'localConfig', {});
 		maybeInit(this.config, 'settings', {});
 		maybeInit(this.config.settings, 'swagger', {});
-		maybeInit(this.config.settings, 'sdkRepo', {'repo': undefined,'branch':  undefined});
+		maybeInit(this.config.settings, 'sdkRepo', { 'repo': undefined, 'branch': undefined });
 		maybeInit(this.config.settings, 'swaggerCodegen', {});
 		maybeInit(this.config.settings.swaggerCodegen, 'generateApiTests', false);
 		maybeInit(this.config.settings.swaggerCodegen, 'generateModelTests', false);
@@ -93,7 +93,7 @@ function Builder(configPath, localConfigPath) {
 		checkAndThrow(this.config.settings.swaggerCodegen, 'configFile');
 
 		// Normalize sdkRepo
-		if (typeof(this.config.settings.sdkRepo) === 'string') {
+		if (typeof (this.config.settings.sdkRepo) === 'string') {
 			this.config.settings.sdkRepo = {
 				repo: this.config.settings.sdkRepo,
 				branch: ''
@@ -118,22 +118,22 @@ function Builder(configPath, localConfigPath) {
 		resolveEnvVars(this.config);
 		resolveEnvVars(this.localConfig);
 		if (this.config.settings.debugConfig === true) {
-			log.debug('Local config file: \n' + JSON.stringify(this.localConfig,null,2));
-			log.debug('Config file: \n' + JSON.stringify(this.config,null,2));
+			log.debug('Local config file: \n' + JSON.stringify(this.localConfig, null, 2));
+			log.debug('Config file: \n' + JSON.stringify(this.config, null, 2));
 		}
 
 		// Initialize instance settings
 		log.setUseColor(this.config.settings.enableLoggerColor === true);
 		var resourceRoot = `./resources/sdk/${this.config.settings.swaggerCodegen.resourceLanguage}/`;
 		this.resourcePaths = {
-			extensions: path.resolve(this.config.settings.resourcePaths.extensions ? 
-				this.config.settings.resourcePaths.extensions : 
+			extensions: path.resolve(this.config.settings.resourcePaths.extensions ?
+				this.config.settings.resourcePaths.extensions :
 				path.join(resourceRoot, 'extensions')),
-			scripts: path.resolve(this.config.settings.resourcePaths.scripts ? 
-				this.config.settings.resourcePaths.scripts : 
+			scripts: path.resolve(this.config.settings.resourcePaths.scripts ?
+				this.config.settings.resourcePaths.scripts :
 				path.join(resourceRoot, 'scripts')),
-			templates: path.resolve(this.config.settings.resourcePaths.templates ? 
-				this.config.settings.resourcePaths.templates : 
+			templates: path.resolve(this.config.settings.resourcePaths.templates ?
+				this.config.settings.resourcePaths.templates :
 				path.join(resourceRoot, 'templates'))
 		};
 		newSwaggerTempFile = path.join(getEnv('SDK_TEMP'), 'newSwagger.json');
@@ -143,16 +143,16 @@ function Builder(configPath, localConfigPath) {
 			environment: getEnv('PURECLOUD_ENVIRONMENT', 'mypurecloud.com', true)
 		};
 		this.notificationDefinitions = {};
-		this.releaseNoteTemplatePath = this.config.settings.releaseNoteTemplatePath ? 
-			this.config.settings.releaseNoteTemplatePath : 
+		this.releaseNoteTemplatePath = this.config.settings.releaseNoteTemplatePath ?
+			this.config.settings.releaseNoteTemplatePath :
 			'./resources/templates/releaseNoteDetail.md';
-		this.releaseNoteSummaryTemplatePath = this.config.settings.releaseNoteSummaryTemplatePath ? 
-			this.config.settings.releaseNoteSummaryTemplatePath : 
+		this.releaseNoteSummaryTemplatePath = this.config.settings.releaseNoteSummaryTemplatePath ?
+			this.config.settings.releaseNoteSummaryTemplatePath :
 			'./resources/templates/releaseNoteSummary.md';
 
 		// Initialize other things
 		git.authToken = getEnv('GITHUB_TOKEN');
-	} catch(err) {
+	} catch (err) {
 		console.log(err);
 		throw err;
 	}
@@ -161,7 +161,7 @@ function Builder(configPath, localConfigPath) {
 
 /* PUBLIC FUNCTIONS */
 
-Builder.prototype.fullBuild = function() {
+Builder.prototype.fullBuild = function () {
 	var deferred = Q.defer();
 
 	log.info('Full build initiated!');
@@ -177,7 +177,7 @@ Builder.prototype.fullBuild = function() {
 	return deferred.promise;
 };
 
-Builder.prototype.prebuild = function() {
+Builder.prototype.prebuild = function () {
 	var deferred = Q.defer();
 
 	log.writeBox('STAGE: pre-build');
@@ -191,7 +191,7 @@ Builder.prototype.prebuild = function() {
 	return deferred.promise;
 };
 
-Builder.prototype.build = function() {
+Builder.prototype.build = function () {
 	var deferred = Q.defer();
 
 	log.writeBox('STAGE: build');
@@ -205,7 +205,7 @@ Builder.prototype.build = function() {
 	return deferred.promise;
 };
 
-Builder.prototype.postbuild = function() {
+Builder.prototype.postbuild = function () {
 	var deferred = Q.defer();
 
 	log.writeBox('STAGE: post-build');
@@ -238,16 +238,16 @@ function prebuildImpl() {
 		var startTime = moment();
 		log.info(`Cloning ${_this.config.settings.sdkRepo.repo} (${_this.config.settings.sdkRepo.branch}) to ${getEnv('SDK_REPO')}`);
 		git.clone(_this.config.settings.sdkRepo.repo, _this.config.settings.sdkRepo.branch, getEnv('SDK_REPO'))
-			.then(function(repository) {
+			.then(function (repository) {
 				log.debug(`Clone operation completed in ${measureDurationFrom(startTime)}`);
 			})
-			.then(function() {
+			.then(function () {
 				// Diff swagger
 				log.info('Diffing swagger files...');
 				swaggerDiff.useSdkVersioning = true;
 				swaggerDiff.getAndDiff(
-					_this.config.settings.swagger.oldSwaggerPath, 
-					_this.config.settings.swagger.newSwaggerPath, 
+					_this.config.settings.swagger.oldSwaggerPath,
+					_this.config.settings.swagger.newSwaggerPath,
 					_this.config.settings.swagger.saveOldSwaggerPath,
 					_this.config.settings.swagger.saveNewSwaggerPath);
 			})
@@ -259,7 +259,7 @@ function prebuildImpl() {
 				log.info(`Writing new swagger file to temp storage path: ${newSwaggerTempFile}`);
 				fs.writeFileSync(newSwaggerTempFile, JSON.stringify(swaggerDiff.newSwagger));
 			})
-			.then(function() {
+			.then(function () {
 				_this.version = {
 					major: 0,
 					minor: 0,
@@ -283,7 +283,7 @@ function prebuildImpl() {
 				log.debug(`Previous version: ${oldVersion}`);
 				swaggerDiff.incrementVersion(_this.version);
 				var newVersion = swaggerDiff.stringifyVersion(_this.version, true);
-				
+
 				// Determine if new version
 				_this.isNewVersion = oldVersion !== newVersion;
 				setEnv('SDK_NEW_VERSION', _this.isNewVersion);
@@ -301,28 +301,28 @@ function prebuildImpl() {
 				var deferred = Q.defer();
 				var resString = '';
 				log.info(`Getting API version from ${_this.config.settings.apiHealthCheckUrl}`);
-				https.get(_this.config.settings.apiHealthCheckUrl, function(res) {
+				https.get(_this.config.settings.apiHealthCheckUrl, function (res) {
 					res.on('data', function (chunk) {
 						resString += chunk;
 					});
-					res.on('end', function() {
+					res.on('end', function () {
 						deferred.resolve(JSON.parse(resString));
 					});
-					res.on('error', function(err) {
+					res.on('error', function (err) {
 						deferred.reject(err);
 					});
 				});
 
 				return deferred.promise;
 			})
-			.then(function(apiVersionData) {
+			.then(function (apiVersionData) {
 				// Sanitize and store API version data
 				var apiVersionDataClean = {};
-				_.forIn(apiVersionData, function(value, key) {
+				_.forIn(apiVersionData, function (value, key) {
 					apiVersionDataClean[key.replace(/\W+/g, '')] = value;
 				});
 				_this.apiVersionData = apiVersionDataClean;
-				log.debug(`API version data: ${JSON.stringify(apiVersionDataClean,null,2)}`);
+				log.debug(`API version data: ${JSON.stringify(apiVersionDataClean, null, 2)}`);
 
 				// Get extra release note data
 				var data = { extraNotes: getEnv('RELEASE_NOTES') };
@@ -341,7 +341,7 @@ function prebuildImpl() {
 			.then(() => executeScripts(_this.config.stageSettings.prebuild.postRunScripts, 'custom prebuild post-run'))
 			.then(() => deferred.resolve())
 			.catch((err) => deferred.reject(err));
-	} catch(err) {
+	} catch (err) {
 		deferred.reject(err);
 	}
 
@@ -382,7 +382,7 @@ function buildImpl() {
 
 		log.info('Running swagger-codegen...');
 		log.debug(`command: ${command}`);
-		var code = childProcess.execSync(command, {stdio:'inherit'});
+		var code = childProcess.execSync(command, { stdio: 'inherit' });
 
 		if (fs.existsSync(_this.resourcePaths.extensions)) {
 			log.info('Copying extensions...');
@@ -391,7 +391,7 @@ function buildImpl() {
 			log.warn(`Extensions path does not exist! Path: ${_this.resourcePaths.extensions}`);
 		}
 		// Ensure compile scripts fail on error
-		_.forEach(_this.config.stageSettings.build.compileScripts, function(script) {
+		_.forEach(_this.config.stageSettings.build.compileScripts, function (script) {
 			script.failOnError = true;
 		});
 
@@ -406,12 +406,18 @@ function buildImpl() {
 		fs.createReadStream(path.join(getEnv('SDK_REPO'), 'build/README.md'))
 			.pipe(fs.createWriteStream(path.join(getEnv('SDK_REPO'), 'README.md')));
 
+		//Copy the release notes from the build directory to the docs directory
+		log.info('Copying releaseNotes.md...');
+		fs.createReadStream(path.join(getEnv('SDK_REPO'), 'releaseNotes.md'))
+			.pipe(fs.createWriteStream(path.join(getEnv('SDK_REPO'), 'build/docs/releaseNotes.md')));
+
+
 		log.info('Zipping docs...');
 		zip.zipDir(path.join(outputDir, 'docs'), path.join(getEnv('SDK_TEMP'), 'docs.zip'))
 			.then(() => executeScripts(_this.config.stageSettings.build.postRunScripts, 'custom build post-run'))
 			.then(() => deferred.resolve())
 			.catch((err) => deferred.reject(err));
-	} catch(err) {
+	} catch (err) {
 		deferred.reject(err);
 	}
 
@@ -429,7 +435,7 @@ function postbuildImpl() {
 			.then(() => executeScripts(_this.config.stageSettings.postbuild.postRunScripts, 'custom postbuild post-run'))
 			.then(() => deferred.resolve())
 			.catch((err) => deferred.reject(err));
-	} catch(err) {
+	} catch (err) {
 		deferred.reject(err);
 	}
 
@@ -443,12 +449,12 @@ function applyOverrides(original, overrides) {
 	if (!original || !overrides)
 		return;
 
-	_.forOwn(overrides, function(value, key) {
+	_.forOwn(overrides, function (value, key) {
 		if (Array.isArray(value)) {
 			log.verbose(`Overriding array ${key}. Length old/new => ${original[key].length}/${value.length}`);
 			original[key] = value;
 		}
-		else if (typeof(value) == 'object') {
+		else if (typeof (value) == 'object') {
 			// Initialize original to ensure the full path to the override values
 			if (!original[key])
 				original[key] = {};
@@ -534,7 +540,7 @@ function addNotifications() {
 			deferred.resolve();
 			return deferred.promise;
 		}
-		
+
 		// Check PureCloud settings
 		checkAndThrow(_this.pureCloud, 'clientId', 'Environment variable PURECLOUD_CLIENT_ID must be set!');
 		checkAndThrow(_this.pureCloud, 'clientSecret', 'Environment variable PURECLOUD_CLIENT_SECRET must be set!');
@@ -554,7 +560,7 @@ function addNotifications() {
 				return notificationsApi.getAvailabletopics(['schema']);
 			})
 			.then((notifications) => {
-				var notificationMappings = {'notifications':[]};
+				var notificationMappings = { 'notifications': [] };
 
 				// Process schemas
 				log.info(`Processing ${notifications.entities.length} notification schemas...`);
@@ -566,7 +572,7 @@ function addNotifications() {
 
 					const schemaName = getNotificationClassName(entity.schema.id);
 					log.info(`Notification mapping: ${entity.id} (${schemaName})`);
-					notificationMappings.notifications.push({'topic': entity.id, 'class': schemaName});
+					notificationMappings.notifications.push({ 'topic': entity.id, 'class': schemaName });
 					extractDefinitons(entity.schema);
 					swaggerDiff.newSwagger.definitions[schemaName] = JSON.parse(JSON.stringify(entity.schema));
 				});
@@ -579,7 +585,7 @@ function addNotifications() {
 				deferred.resolve();
 			})
 			.catch((err) => deferred.reject(err));
-	} catch(err) {
+	} catch (err) {
 		deferred.reject(err);
 	}
 
@@ -615,14 +621,14 @@ function extractDefinitons(entity) {
 			// Rewrite URN refs to JSON refs
 			if (key == '$ref' && !property.startsWith('#')) {
 				entity[key] = '#/definitions/' + getNotificationClassName(property);
-			} 
+			}
 
 			// Recurse on objects
-			if (typeof(property) !== 'object') return;
+			if (typeof (property) !== 'object') return;
 			extractDefinitons(property);
 
 			// Update object to ref
-			if (property.id && typeof(property.id) === 'string') {
+			if (property.id && typeof (property.id) === 'string') {
 				let className = getNotificationClassName(property.id);
 
 				// Store definition
@@ -657,7 +663,7 @@ function executeScripts(scripts, phase) {
 	if (!scripts) return;
 	var scriptCount = lenSafe(scripts);
 	log.info(`Executing ${scriptCount} ${phase ? phase.trim() + ' ' : ''}${pluralize('scripts', scriptCount)}...`);
-	_.forEach(scripts, function(script) { executeScript(script); });
+	_.forEach(scripts, function (script) { executeScript(script); });
 }
 
 function executeScript(script) {
@@ -666,7 +672,7 @@ function executeScript(script) {
 
 	try {
 		var args = script.args ? script.args.slice() : [];
-		var options = {stdio:'inherit'};
+		var options = { stdio: 'inherit' };
 		if (script.cwd) {
 			log.debug('cwd: ' + script.cwd);
 			options['cwd'] = path.resolve(script.cwd);
@@ -755,7 +761,7 @@ function maybeInit(haystack, needle, defaultValue, warning) {
 		return;
 	}
 	if (!haystack[needle]) {
-		if (warning) 
+		if (warning)
 			log.warn(warning);
 
 		haystack[needle] = defaultValue;
@@ -783,7 +789,7 @@ function getEnv(varname, defaultValue, isDefaultValue) {
 			return true;
 		else if (envVar.toLowerCase() === 'true')
 			return false;
-		else 
+		else
 			return envVar;
 	}
 
@@ -791,7 +797,7 @@ function getEnv(varname, defaultValue, isDefaultValue) {
 }
 
 function setEnv(varname, value) {
-	var values = [ value ];
+	var values = [value];
 	resolveEnvVars(values);
 	varname = varname.trim();
 	log.silly(`ENV: ${varname}=${values[0]}`);
@@ -799,9 +805,9 @@ function setEnv(varname, value) {
 }
 
 function resolveEnvVars(config) {
-	_.forOwn(config, function(value, key) {
-		if (typeof(value) == 'string') {
-			config[key] = value.replace(/\$\{(.+?)\}/gi, function(match, p1, offset, string) {
+	_.forOwn(config, function (value, key) {
+		if (typeof (value) == 'string') {
+			config[key] = value.replace(/\$\{(.+?)\}/gi, function (match, p1, offset, string) {
 				return getEnv(p1);
 			});
 		} else {
