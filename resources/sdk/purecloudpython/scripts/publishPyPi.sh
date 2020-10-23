@@ -12,6 +12,10 @@ then
 	exit 0
 fi
 
+# Reinstall virtualenv becuase of corrupt installation on the jenkins executor
+echo "Force reinstall of virtualenv"
+pip install --force-reinstall virtualenv
+
 # Upgrade to latest version of setuptools
 echo "PIP setuptools version info (1):"
 python -m pip show setuptools
