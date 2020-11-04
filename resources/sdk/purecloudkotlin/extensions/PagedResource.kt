@@ -1,7 +1,5 @@
 package com.mypurecloud.sdk.v2
 
-import com.mypurecloud.sdk.v2.model.Evaluation
-
 interface PagedResource<T> {
     var entities: MutableList<T>?
     var pageSize: Int?

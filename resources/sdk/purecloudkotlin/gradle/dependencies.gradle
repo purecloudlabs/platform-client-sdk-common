@@ -1,0 +1,9 @@
+ext.libraries = [
+        deviceTests : [
+                espresso      : "androidx...:${versions.espresso}",
+                runner        : "androidx...:${versions.runner}"
+        ],
+        supportV4       : "com.android....:${versions.supportV4}"
+
+
+]
