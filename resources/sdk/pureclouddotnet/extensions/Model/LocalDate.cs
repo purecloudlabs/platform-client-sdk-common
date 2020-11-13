@@ -11,7 +11,11 @@ namespace {{=it.packageName }}.Model
   /// </summary>  
 public class LocalDate
 {
-  private DateTime dateTime;
+  public DateTime dateTime;
+
+  private LocalDate(){
+
+  }
 
   public LocalDate(DateTime dateTime)
   {
