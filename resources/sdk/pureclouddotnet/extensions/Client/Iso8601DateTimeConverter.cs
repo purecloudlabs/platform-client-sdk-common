@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using {{=it.packageName}}.Model;
 using Newtonsoft.Json;
 
 namespace {{=it.packageName}}.Client
@@ -8,18 +9,31 @@ namespace {{=it.packageName}}.Client
     {
         public override bool CanConvert(Type objectType)
         {
-            return (objectType == typeof(DateTime)) || (objectType == typeof(DateTime?));
+            return (objectType == typeof(LocalDate)) || (objectType == typeof(DateTime)) || (objectType == typeof(DateTime?));
         }
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            var date = (DateTime?)value;
-            if (!date.HasValue)
-                writer.WriteNull();
+            if (value is LocalDate) 
+            {
+               var localDate = (LocalDate)value;
+                if (localDate==null)
+                    writer.WriteNull();
+                else{
+                    var dateString = localDate.ToString();
+                    writer.WriteValue(dateString);
+                }         
+            }
             else
             {
-                var dateString = date.Value.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.FFFK", CultureInfo.InvariantCulture);
-                writer.WriteValue(dateString);
+                var date = (DateTime?)value;
+                if (!date.HasValue)
+                    writer.WriteNull();
+                else
+                {
+                    var dateString = date.Value.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.FFFK", CultureInfo.InvariantCulture);
+                    writer.WriteValue(dateString);
+                }
             }
         }
 
