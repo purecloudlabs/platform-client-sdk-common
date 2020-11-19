@@ -12,20 +12,16 @@ then
 	exit 0
 fi
 
-# Reinstall virtualenv becuase of corrupt installation on the jenkins executor
-echo "Force reinstall of virtualenv"
-pip install --force-reinstall virtualenv
-
 # Upgrade to latest version of setuptools
 echo "PIP setuptools version info (1):"
-python -m pip show setuptools
+python3 -m pip show setuptools
 echo "Installing pip, setuptools..."
-python -m pip install --user -U pip setuptools
+python3 -m pip install --user -U pip setuptools
 echo "PIP setuptools version info (2):"
-python -m pip show setuptools
+python3 -m pip show setuptools
 
 # Publish egg on PyPi
 echo "Registering egg..."
-python setup.py register -r $INDEX_SERVER
+python3 setup.py register -r $INDEX_SERVER
 echo "Uploading egg..."
-python setup.py sdist upload -r $INDEX_SERVER
+python3 setup.py sdist upload -r $INDEX_SERVER

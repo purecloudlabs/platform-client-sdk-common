@@ -30,18 +30,18 @@ class SdkTests(unittest.TestCase):
 		unittest.TestCase.run(self, result)
 
 	def test_1_trace_basic_information(self):
-		print 'PURECLOUD_ENVIRONMENT=%s' % (os.environ.get('PURECLOUD_ENVIRONMENT'))
+		print('PURECLOUD_ENVIRONMENT=%s' % (os.environ.get('PURECLOUD_ENVIRONMENT')))
 		self.assertIsNotNone(os.environ.get('PURECLOUD_ENVIRONMENT'))
 
-		print 'PURECLOUD_CLIENT_ID=%s' % (os.environ.get('PURECLOUD_CLIENT_ID'))
+		print('PURECLOUD_CLIENT_ID=%s' % (os.environ.get('PURECLOUD_CLIENT_ID')))
 		self.assertIsNotNone(os.environ.get('PURECLOUD_CLIENT_ID'))
 
 		self.assertIsNotNone(os.environ.get('PURECLOUD_CLIENT_SECRET'))
 
 		SdkTests.userEmail = '%s@%s' % (uuid.uuid4(), os.environ.get('PURECLOUD_ENVIRONMENT'))
-		print SdkTests.userEmail
+		print(SdkTests.userEmail)
 
-		print PureCloudPlatformClientV2
+		print(PureCloudPlatformClientV2)
 
 	def test_2_authenticate(self):
 		environment = os.environ.get('PURECLOUD_ENVIRONMENT');
@@ -99,11 +99,12 @@ class SdkTests(unittest.TestCase):
 		PureCloudPlatformClientV2.configuration.host = 'https://api.%s' % (os.environ.get('PURECLOUD_ENVIRONMENT'))
 
 		# Base64 encode the client ID and client secret
-		authorization = base64.b64encode('%s:%s' % (os.environ.get('PURECLOUD_CLIENT_ID'), os.environ.get('PURECLOUD_CLIENT_SECRET')))
+		id_and_secret = '%s:%s' % (os.environ.get('PURECLOUD_CLIENT_ID'), os.environ.get('PURECLOUD_CLIENT_SECRET'))
+		authorization = base64.b64encode(id_and_secret.encode('ascii'))
 
 		# Prepare for POST /oauth/token request
 		requestHeaders = {
-			'Authorization': 'Basic ' + authorization,
+			'Authorization': ('Basic '.encode() + authorization).decode('utf-8'),
 			'Content-Type': 'application/x-www-form-urlencoded'
 		}
 		requestBody = {

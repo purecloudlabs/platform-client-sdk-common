@@ -78,7 +78,7 @@ class {{classname}}(object):
         """
         {{#isEnum}}allowed_values = [{{#allowableValues}}{{#values}}"{{{this}}}"{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}}]
         if {{name}}.lower() not in map(str.lower, allowed_values):
-            # print "Invalid value for {{name}} -> " + {{name}}
+            # print("Invalid value for {{name}} -> " + {{name}})
             self._{{name}} = "outdated_sdk_version"
         else:
             self._{{name}} = {{name}}
