@@ -14,14 +14,14 @@ cp $TESTS_DIR/setup.cfg $BUILD_DIR/setup.cfg
 
 # Compile module
 cd $BUILD_DIR
-python setup.py build
+python3 setup.py build
 
 # Run tests
 echo "Running tests"
 cd "$TESTS_DIR"
 echo "Install requests..."
-python -m pip install requests
+python3 -m pip install --user -U requests
 echo "Install six..."
-python -m pip install six
+python3 -m pip install --user -U six
 echo "Run unit tests"
-python -m unittest SdkTests
+python3 -m unittest SdkTests
