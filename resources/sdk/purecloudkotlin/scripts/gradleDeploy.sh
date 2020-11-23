@@ -32,7 +32,7 @@ if [[ $HOME == *"jenkins"* ]]
 then
 	cat /var/build/gradle.properties >> gradle.properties
 	GPG_FILE_PATH="$HOME/.gnupg/secring.gpg"
-	./gradlew artifactoryPublish -Psigning.secretKeyRingFile=${GPG_FILE_PATH} ${DPGP_PASSPHRASE} ${DPGP_KEY_ID}
+	./gradlew publishSDK -Psigning.secretKeyRingFile=${GPG_FILE_PATH} ${DPGP_PASSPHRASE} ${DPGP_KEY_ID}
 else
 	echo "Deployment can only happen from Jenkins"
 fi
