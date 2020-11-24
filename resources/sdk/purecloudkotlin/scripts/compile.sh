@@ -1,44 +1,27 @@
-BUILD_MODE=$1 # package/verify/deploy/deploy:deploy
-BUILD_DIR=$2
-MAVEN_SETTINGS_FILE=$3
-DPGP_PASSPHRASE=$4
-IS_NEW_RELEASE=$5
+BUILD_DIR=$1
+DPGP_PASSPHRASE=$2
+DPGP_KEY_ID=$3
+IS_NEW_RELEASE=$4
 
-echo "BUILD_MODE=$BUILD_MODE"
 echo "BUILD_DIR=$BUILD_DIR"
-echo "MAVEN_SETTINGS_FILE=$MAVEN_SETTINGS_FILE"
+echo "DPGP_KEY_ID=$DPGP_KEY_ID"
 echo "IS_NEW_RELEASE=$IS_NEW_RELEASE"
 
-# Verify settings
-if [ ! -z "$MAVEN_SETTINGS_FILE" ]
+if [ ! -z "$DPGP_KEY_ID" ]
 then
-	MAVEN_SETTINGS_FILE="--settings $MAVEN_SETTINGS_FILE"
+	DPGP_KEY_ID="-Psigning.keyId=$DPGP_KEY_ID"
 fi
 
 if [ ! -z "$DPGP_PASSPHRASE" ]
 then
-	DPGP_PASSPHRASE="-Dgpg.passphrase=$DPGP_PASSPHRASE"
+	DPGP_PASSPHRASE="-Psigning.password=$DPGP_PASSPHRASE"
 fi
-
-if [ ! "$BUILD_MODE" = "package" ] && [ ! "$BUILD_MODE" = "verify" ] && [ ! "$BUILD_MODE" = "deploy" ]
-then
-	echo "Unknown build mode $BUILD_MODE"
-	exit 1
-fi
-
-if [ "$BUILD_MODE" = "deploy" ] && [ ! "$IS_NEW_RELEASE" = "true" ]
-then
-	echo "IS_NEW_RELEASE=$IS_NEW_RELEASE and BUILD_MODE=$BUILD_MODE, forcing BUILD_MODE to verify"
-	BUILD_MODE="verify"
-fi
-
-# Add maven to PATH
-export PATH=$PATH:/usr/local/maven/bin
 
 # CD to build dir
 cd $BUILD_DIR
 
 find . -name "DivsPermittedEntityListing.kt" | xargs sed -i -e "s/override var allDivsPermitted/var allDivsPermitted/g"
+find . -name "LearningAssignmentUserListing.kt" | xargs sed -i -e "s/override var unfilteredTotal/var unfilteredTotal/g"
 # Kotlin generates JVM bytecode for getters + setters of public properties, this causes a clash with another method named "isPaid" in this class
 # The solution here makes the property private and implements our own getter + setter
 find . -name "WfmAgentScheduleUpdateTopicWfmFullDayTimeOffMarker.kt" \
@@ -52,5 +35,13 @@ fun setIsPaid(isPaid: Boolean?) { \
   this.isPaid = isPaid \
 }/g'
 
-# Build
-mvn $MAVEN_SETTINGS_FILE $BUILD_MODE $DPGP_PASSPHRASE
+# Need to compile NotificationHandler.kt from the api module because there would be circular dependencies if it was compiled from the core module
+# It will still appear in the com.mypurecloud.sdk.v2.extensions.notifications package
+NEW_NOTIFICATIONS_DIRECTORY=api/src/main/kotlin/com/mypurecloud/sdk/v2/extensions/notifications
+mkdir -p ${NEW_NOTIFICATIONS_DIRECTORY}
+mv core/src/main/kotlin/com/mypurecloud/sdk/v2/extensions/notifications/NotificationHandler.kt ${NEW_NOTIFICATIONS_DIRECTORY}
+
+echo "Running task: test"
+./gradlew test
+echo "Running task: build"
+./gradlew build

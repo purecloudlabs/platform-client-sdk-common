@@ -1,7 +1,7 @@
   /**
    * {{^description}}Gets or Sets {{{name}}}{{/description}}{{#description}}{{{description}}}{{/description}}
    */
-   enum class {{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}(private val value: String) {
+   enum class {{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}(private val value: {{datatype}}) {
     {{#allowableValues}}{{#enumVars}}{{{name}}}({{{value}}}){{^-last}},
     {{/-last}}{{#-last}};{{/-last}}{{/enumVars}}{{/allowableValues}}
 
@@ -20,6 +20,6 @@
 
     @JsonValue
     override fun toString(): String {
-      return value
+      return value.toString()
     }
   }

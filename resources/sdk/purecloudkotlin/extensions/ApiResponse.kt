@@ -1,6 +1,5 @@
 package com.mypurecloud.sdk.v2
 
-import com.mypurecloud.sdk.v2.model.InteractionStatsAlert
 import java.lang.Exception
 
 interface ApiResponse<T> : AutoCloseable {

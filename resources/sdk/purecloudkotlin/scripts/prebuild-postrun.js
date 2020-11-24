@@ -23,6 +23,15 @@ try {
 
 	fs.writeFileSync(swaggerCodegenConfigFilePath, JSON.stringify(config, null, 2));
 	console.log(`Config file written to ${swaggerCodegenConfigFilePath}`);
+
+	// TODO remove this when kotlin gets its own dedicated repo
+	var outputDir = path.join(process.env['SDK_REPO'], 'build');
+	fs.readdirSync(outputDir).forEach(file => {
+		if (file.includes("gradle")) {
+			fs.unlinkSync(path.join(outputDir, file));
+		}
+	});
+	fs.unlinkSync(path.join(outputDir, "pom.xml"));
 } catch (err) {
 	process.exitCode = 1;
 	console.log(err);
