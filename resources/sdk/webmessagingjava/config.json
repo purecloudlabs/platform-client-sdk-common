@@ -1,0 +1,77 @@
+{
+	"name": "Web Messaging SDK",
+	"envVars": {},
+	"settings": {
+		"sdkRepo": {
+			"repo": "https://github.com/MyPureCloud/web-messaging-sdk-java.git",
+			"branch": "main"
+		},
+		"versionFile": "${SDK_REPO}/version.json",
+		"logLevel": "debug",
+		"extensionsDestination": "${SDK_REPO}/build/src/main/java/cloud/genesys/webmessaging/sdk",
+		"swagger": {
+			"oldSwaggerPath": "${SDK_REPO}/swagger.json",
+			"newSwaggerPath": "https://s3.amazonaws.com/inin-prod-use1-purecloud-shared/webmessaging/swagger/swagger-latest.json",
+			"saveNewSwaggerPath": "${SDK_REPO}/swagger.json"
+		},
+		"swaggerCodegen": {
+			"resourceLanguage": "webmessagingjava",
+			"codegenLanguage": "webmessagingjava",
+			"jarPath": "${WORKSPACE}/swagger-codegen/modules/swagger-codegen-cli/target/swagger-codegen-cli.jar",
+			"configFile": "${SDK_TEMP}/config.json",
+			"extraGeneratorOptions": []
+		},
+		"releaseNoteTemplatePath": "${COMMON_ROOT}/resources/templates/githubSdkReleaseNotes.md",
+		"releaseNoteSummaryTemplatePath": "${COMMON_ROOT}/resources/templates/githubSdkReleaseNoteSummary.md",
+		"debugConfig": false,
+		"enableLoggerColor": false,
+		"mavenSettingsFilePath": "/var/build/settings.xml",
+		"mavenTarget": "package",
+		"apiHealthCheckUrl": "https://api.mypurecloud.com/api/v2/health/check"
+	},
+	"stageSettings": {
+		"prebuild": {
+			"preRunScripts": [],
+			"postRunScripts": [
+				{
+					"type": "node",
+					"path": "prebuild-postrun.js",
+					"args": [
+						{
+							"$ref": "#/settings/swaggerCodegen/configFile"
+						},
+						{
+							"$ref": "#/settings/versionFile"
+						},
+						"web-messaging-sdk"
+					],
+					"failOnError": true
+				}
+			]
+		},
+		"build": {
+			"preRunScripts": [],
+			"compileScripts": [
+				{
+					"type": "shell",
+					"path": "compile.sh",
+					"args": [
+						{ "$ref": "#/settings/mavenTarget" },
+						"${SDK_REPO}/build",
+						{ "$ref": "#/settings/mavenSettingsFilePath" },
+						"${DPGP_PASSPHRASE}"
+					],
+					"appendIsNewReleaseArg": true,
+					"failOnError": true
+				}
+			],
+			"postRunScripts": []
+		},
+		"postbuild": {
+			"gitCommit": false,
+			"publishRelease": false,
+			"preRunScripts": [],
+			"postRunScripts": []
+		}
+	}
+}

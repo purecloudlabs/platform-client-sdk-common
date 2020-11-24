@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>{{groupId}}</groupId>
+  <artifactId>{{artifactId}}</artifactId>
+  <version>{{artifactVersion}}</version>
+  <name>{{artifactId}}</name>
+  <description>{{packageDescription}}</description>
+  <url>{{packageUrl}}</url>
+
+  <developers>
+    <developer>
+      <name>Developer Engagement</name>
+      <email>DeveloperEvangelists@genesys.com</email>
+      <organization>Genesys</organization>
+      <organizationUrl>https://developer.mypurecloud.com</organizationUrl>
+    </developer>
+  </developers>
+
+  <licenses>
+    <license>
+      <name>The MIT License (MIT)</name>
+      <url>https://github.com/MyPureCloud/web-messaging-sdk-java/blob/master/LICENSE</url>
+    </license>
+  </licenses>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.11.2</version>
+    </dependency>
+    <dependency>
+      <groupId>io.swagger</groupId>
+      <artifactId>swagger-annotations</artifactId>
+      <version>1.6.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.30</version>
+    </dependency>
+  </dependencies>
+
+  <repositories>
+    <repository>
+      <id>central</id>
+      <url>https://repo.maven.apache.org/maven2/</url>
+    </repository>
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>central</id>
+      <url>https://repo.maven.apache.org/maven2/</url>
+    </pluginRepository>
+  </pluginRepositories>
+
+  <!-- Sonatype -->
+  <!--<distributionManagement>-->
+  <!--<snapshotRepository>-->
+  <!--<id>ossrh</id>-->
+  <!--<url>https://oss.sonatype.org/content/repositories/snapshots</url>-->
+  <!--</snapshotRepository>-->
+  <!--<repository>-->
+  <!--<id>ossrh</id>-->
+  <!--<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>-->
+  <!--</repository>-->
+  <!--</distributionManagement>-->
+
+  <build>
+    <plugins>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.0</version>
+        <configuration>
+          <source>11</source>
+          <target>11</target>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/lib</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+  </build>
+</project>

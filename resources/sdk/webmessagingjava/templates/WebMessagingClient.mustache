@@ -1,0 +1,401 @@
+package {{invokerPackage}};
+
+import cloud.genesys.webmessaging.sdk.model.*;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.event.EventListenerList;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.WebSocket;
+import java.net.http.WebSocket.Listener;
+import java.util.EventListener;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.regex.Pattern;
+
+/**
+ * A client used to connect to a Web Messaging session
+ */
+public class WebMessagingClient {
+    final Logger logger = LoggerFactory.getLogger(WebMessagingClient.class);
+    private String address = "wss://webmessaging.mypurecloud.com/v1";
+    private WebSocket webSocket;
+    private ObjectMapper objectMapper = new ObjectMapper();
+    private EventListenerList sessionListeners = new EventListenerList();
+
+    final Pattern configureSessionResponseRegex = Pattern.compile("\"sessionid\".+\"connected\"\\s*:\\s*true", Pattern.CASE_INSENSITIVE);
+
+
+    /**
+     * Creates a new Web Messaging client
+     *
+     * @param address The WebSocket server's address, including the wss:// protocol
+     */
+    public WebMessagingClient(String address) {
+        logger.info("Initializing WebMessagingClient");
+
+        this.address = address;
+
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        objectMapper.enable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING);
+        objectMapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
+    }
+
+    /**
+     * Full service operation to connect the WebSocket and configure the session
+     *
+     * @param deploymentId     The ID of the Web Messaging deployment
+     * @param guestInformation The guest's information
+     * @param initialMessage   The initial message to send once the session is ready
+     */
+    public void joinConversation(String deploymentId, GuestInformation guestInformation, String initialMessage) {
+        joinConversation(deploymentId, guestInformation, UUID.randomUUID().toString(), initialMessage);
+    }
+
+    /**
+     * Full service operation to connect the WebSocket and configure the session
+     *
+     * @param deploymentId     The ID of the Web Messaging deployment
+     * @param guestInformation The guest's information
+     * @param token            The session token
+     * @param initialMessage   The initial message to send once the session is ready
+     */
+    public void joinConversation(String deploymentId, GuestInformation guestInformation, String token, String initialMessage) {
+        WebMessagingClient self = this;
+        SessionListener listener = new SessionListener() {
+            @Override
+            public void responseReceived(BaseResponse response, String rawResponse) {
+
+            }
+
+            @Override
+            public void messageReceived(BaseResponse message, String rawResponse) {
+
+            }
+
+            @Override
+            public void unknownMessageReceived(BaseResponse message, String rawResponse) {
+
+            }
+
+            @Override
+            public void rawMessageReceived(String rawResponse) {
+
+            }
+
+            @Override
+            public void webSocketConnected() {
+                self.configureSession(deploymentId, guestInformation, token);
+            }
+
+            @Override
+            public void webSocketDisconnected(int statusCode, String reason) {
+
+            }
+
+            @Override
+            public void sessionReady() {
+                self.removeSessionListener(this);
+                self.sendMessage(initialMessage);
+            }
+        };
+        this.addSessionListener(listener);
+        this.connect();
+    }
+
+    /**
+     * Establishes a connection to Genesys Cloud via a WebSocket
+     */
+    public void connect() {
+        WebMessagingClient self = this;
+        // Create listener
+        Listener listener = new Listener() {
+            @Override
+            public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
+                logger.debug("WebSocket::onText: {}", data);
+
+                // Deserialize message
+                BaseResponse baseResponse = deserialize(data.toString(), BaseResponse.class);
+                onSessionEvent(data.toString(), baseResponse);
+
+                // Raise the session ready event when the configure session response is encountered
+                // HACK: Workaround to identify configure session response (SHYRKA-159)
+                if (configureSessionResponseRegex.matcher(data).find()) {
+                    self.onSessionReady();
+                }
+
+                return Listener.super.onText(webSocket, data, last);
+            }
+
+            @Override
+            public void onOpen(WebSocket webSocket) {
+                logger.info("WebSocket::onOpen");
+                onWebSocketConnected();
+                Listener.super.onOpen(webSocket);
+            }
+
+            @Override
+            public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
+                logger.info("WebSocket::onClose: {} {}", statusCode, reason);
+                onWebSocketDisconnected(statusCode, reason);
+                return Listener.super.onClose(webSocket, statusCode, reason);
+            }
+        };
+
+        // Configure WebSocket
+        CompletableFuture<WebSocket> completableFuture = HttpClient.
+                newHttpClient().
+                newWebSocketBuilder().
+                buildAsync(URI.create(address), listener);
+
+        // Connect to WebSocket server
+        logger.info("Connecting to remote WebSocket server...");
+        webSocket = completableFuture.join();
+    }
+
+    /**
+     * Configures a new session with a randomly generated session token
+     *
+     * @param deploymentId     The ID of the Web Messaging deployment
+     * @param guestInformation The guest's information
+     */
+    public void configureSession(String deploymentId, GuestInformation guestInformation) {
+        configureSession(deploymentId, guestInformation, UUID.randomUUID().toString());
+    }
+
+    /**
+     * Configures a session using the provided session token. This can be used to reconnect to active sessions.
+     *
+     * @param deploymentId     The ID of the Web Messaging deployment
+     * @param guestInformation The guest's information
+     * @param token            The session token
+     */
+    public void configureSession(String deploymentId, GuestInformation guestInformation, String token) {
+        try {
+            // Create configuration request
+            ConfigureSessionRequest configureSessionRequest = new ConfigureSessionRequest();
+            configureSessionRequest.setAction(RequestTypeConfigureSession.CONFIGURESESSION);
+            configureSessionRequest.setDeploymentId(deploymentId);
+            configureSessionRequest.setToken(token);
+            configureSessionRequest.setGuestInformation(guestInformation);
+            String payload = objectMapper.writeValueAsString(configureSessionRequest);
+
+            logger.info("Configuring session...");
+            logger.debug("Session config: {}" + payload);
+            webSocket.sendText(payload, true);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Closes the WebSocket connection
+     */
+    public void disconnect() {
+        logger.info("Closing WebSocket connection");
+        webSocket.sendClose(1000, "Guest client disconnect");
+    }
+
+    /**
+     * Sends a message that will cause a response to ensure the connection is active
+     */
+    public void ping() {
+        try {
+            // Create configuration request
+            EchoNotification echoNotification = new EchoNotification();
+            echoNotification.setAction(RequestTypeEchoMessage.ECHO);
+            IncomingNormalizedMessage incomingNormalizedMessage = new IncomingNormalizedMessage();
+            incomingNormalizedMessage.setType(NormalizedType.TEXT);
+            incomingNormalizedMessage.setText("ping");
+            echoNotification.setMessage(incomingNormalizedMessage);
+            String payload = objectMapper.writeValueAsString(echoNotification);
+
+            logger.debug("Sending ping: {}", payload);
+            webSocket.sendText(payload, true);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Sends a message to the conversation
+     *
+     * @param message The text to send
+     */
+    public void sendMessage(String message) {
+        try {
+            IncomingMessageNotification incomingMessageNotification = new IncomingMessageNotification();
+            incomingMessageNotification.setAction(RequestTypeIncomingMessage.ONMESSAGE);
+            IncomingNormalizedMessage incomingNormalizedMessage = new IncomingNormalizedMessage();
+            incomingNormalizedMessage.setType(NormalizedType.TEXT);
+            incomingNormalizedMessage.setText(message);
+            incomingMessageNotification.setMessage(incomingNormalizedMessage);
+            String payload = objectMapper.writeValueAsString(incomingMessageNotification);
+
+            logger.debug("Sending message: {}", payload);
+            webSocket.sendText(payload, true);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Deserializes a message payload
+     *
+     * @param json The message payload
+     * @param type The <code>Class</code> to which to deserialize the message
+     * @return The deserialized object
+     */
+    private <T> T deserialize(String json, Class<T> type) {
+        try {
+            return objectMapper.readValue(json, type);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * Invokes registered listeners for incoming WebSocket messages
+     *
+     * @param rawResponse The raw message payload JSON as a string
+     * @param event       The deserialized event object
+     */
+    private void onSessionEvent(String rawResponse, BaseResponse event) {
+        // Invoke each listener
+        SessionListener[] listeners = sessionListeners.getListeners(SessionListener.class);
+        for (SessionListener sessionListener : listeners) {
+            // Send raw message text
+            sessionListener.rawMessageReceived(rawResponse);
+
+            // Invoke method based on event type
+            switch (event.getType()) {
+                case MESSAGE: {
+                    sessionListener.messageReceived(event, rawResponse);
+                    break;
+                }
+                case RESPONSE: {
+                    sessionListener.responseReceived(event, rawResponse);
+                    break;
+                }
+                default: {
+                    sessionListener.unknownMessageReceived(event, rawResponse);
+                }
+            }
+        }
+    }
+
+    /**
+     * Invokes registered listeners when the connection to the remote server has been established
+     */
+    private void onWebSocketConnected() {
+        // Invoke each listener
+        SessionListener[] listeners = sessionListeners.getListeners(SessionListener.class);
+        for (SessionListener sessionListener : listeners) {
+            sessionListener.webSocketConnected();
+        }
+    }
+
+    /**
+     * Invokes registered listeners when the connection to the remote server has been closed
+     */
+    private void onWebSocketDisconnected(int statusCode, String reason) {
+        // Invoke each listener
+        SessionListener[] listeners = sessionListeners.getListeners(SessionListener.class);
+        for (SessionListener sessionListener : listeners) {
+            sessionListener.webSocketDisconnected(statusCode, reason);
+        }
+    }
+
+    /**
+     * Invokes registered listeners when the session is ready to begin sending and receiving messages
+     */
+    private void onSessionReady() {
+        // Invoke each listener
+        SessionListener[] listeners = sessionListeners.getListeners(SessionListener.class);
+        for (SessionListener sessionListener : listeners) {
+            sessionListener.sessionReady();
+        }
+    }
+
+    /**
+     * Registers a <code>SessionListener</code> to receive events
+     *
+     * @param sessionListener An implementation of <code>SessionListener</code>
+     */
+    public void addSessionListener(SessionListener sessionListener) {
+        sessionListeners.add(SessionListener.class, sessionListener);
+    }
+
+    /**
+     * Unregisters a <code>SessionListener</code> object
+     *
+     * @param sessionListener The <code>SessionListener</code> to remove
+     */
+    public void removeSessionListener(SessionListener sessionListener) {
+        sessionListeners.remove(SessionListener.class, sessionListener);
+    }
+
+    /**
+     * Implement this listener to receive messages from the Web Messaging session
+     */
+    public interface SessionListener extends EventListener {
+        /**
+         * Raised for responses to sent messages (type == BaseResponseType.RESPONSE)
+         *
+         * @param response    The deserialized event object
+         * @param rawResponse The raw message payload JSON as a string
+         */
+        void responseReceived(BaseResponse response, String rawResponse);
+
+        /**
+         * Raised for incoming messages (type == BaseResponseType.MESSAGE)
+         *
+         * @param message     The deserialized event object
+         * @param rawResponse The raw message payload JSON as a string
+         */
+        void messageReceived(BaseResponse message, String rawResponse);
+
+        /**
+         * Raised for unmatched BaseResponseType
+         *
+         * @param message     The deserialized event object
+         * @param rawResponse The raw message payload JSON as a string
+         */
+        void unknownMessageReceived(BaseResponse message, String rawResponse);
+
+        /**
+         * Raised for all messages. Use this instead of the other methods when implementing fully custom payload deserialization.
+         *
+         * @param rawResponse The raw message payload JSON as a string
+         */
+        void rawMessageReceived(String rawResponse);
+
+        /**
+         * Raised when the connection to the remote server has been established
+         */
+        void webSocketConnected();
+
+        /**
+         * Raised when the connection to the remote server has been closed
+         *
+         * @param statusCode
+         * @param reason
+         */
+        void webSocketDisconnected(int statusCode, String reason);
+
+        /**
+         * Raised when the session is ready to begin sending and receiving messages
+         */
+        void sessionReady();
+    }
+}
