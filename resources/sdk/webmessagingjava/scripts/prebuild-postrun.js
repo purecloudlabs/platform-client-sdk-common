@@ -3,13 +3,15 @@ const path = require('path');
 
 try {
 	var swaggerCodegenConfigFilePath = process.argv[2];
-	var version = require(path.resolve(process.argv[3]));
+	// var version = require(path.resolve(process.argv[3]));
 	var artifactId = process.argv[4];
 
 	var config = {
 		artifactId: artifactId || 'platform-client',
-		artifactVersion: version.displayFull,
+		// artifactVersion: version.displayFull,
+		artifactVersion: "0.0.0",
 		apiPackage: 'cloud.genesys.webmessaging.sdk.api',
+		httpUserAgent: 'PureCloud SDK',
 		modelPackage: 'cloud.genesys.webmessaging.sdk.model',
 		invokerPackage: 'cloud.genesys.webmessaging.sdk',
 		groupId: 'cloud.genesys',
