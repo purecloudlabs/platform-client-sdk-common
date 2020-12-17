@@ -87,7 +87,8 @@
             { "$ref": "#/settings/mavenTarget" },
             "${SDK_REPO}/build",
             { "$ref": "#/settings/mavenSettingsFilePath" },
-            "${DPGP_PASSPHRASE}"
+            "${DPGP_PASSPHRASE}",
+            "${SKIP_TESTS}"
           ],
 	        "appendIsNewReleaseArg": true,
 	        "failOnError": true

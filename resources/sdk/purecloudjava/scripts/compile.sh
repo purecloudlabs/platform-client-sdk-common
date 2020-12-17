@@ -2,11 +2,13 @@ BUILD_MODE=$1 # package/verify/deploy/deploy:deploy
 BUILD_DIR=$2
 MAVEN_SETTINGS_FILE=$3
 DPGP_PASSPHRASE=$4
-IS_NEW_RELEASE=$5
+SKIP_TESTS=$5
+IS_NEW_RELEASE=$6
 
 echo "BUILD_MODE=$BUILD_MODE"
 echo "BUILD_DIR=$BUILD_DIR"
 echo "MAVEN_SETTINGS_FILE=$MAVEN_SETTINGS_FILE"
+echo "SKIP_TESTS=$SKIP_TESTS"
 echo "IS_NEW_RELEASE=$IS_NEW_RELEASE"
 
 # Verify settings
@@ -32,6 +34,11 @@ then
 	BUILD_MODE="verify"
 fi
 
+if [ "$SKIP_TESTS" = "true" ]
+then
+	TESTS="-Dmaven.test.skip=true"
+fi
+
 # Add maven to PATH
 export PATH=$PATH:/usr/local/maven/bin
 
@@ -39,4 +46,4 @@ export PATH=$PATH:/usr/local/maven/bin
 cd $BUILD_DIR
 
 # Build
-mvn $MAVEN_SETTINGS_FILE $BUILD_MODE $DPGP_PASSPHRASE
+mvn $MAVEN_SETTINGS_FILE $BUILD_MODE $TESTS $DPGP_PASSPHRASE
