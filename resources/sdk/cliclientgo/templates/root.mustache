@@ -1,0 +1,65 @@
+package cmd
+
+import (
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
+	"flag"
+	"fmt"
+	{{=it.addImports}}
+	"log"
+	"os"
+)
+
+var profileName string
+var output string
+
+// rootCmd represents the base command when called without any subcommands
+var rootCmd = &cobra.Command{
+	Use:   "gc",
+	Short: "gc is a CLI for interacting with Genesys Cloud",
+	Long:  `gc is a CLI for interacting with Genesys Cloud`,
+}
+
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Print the version number of gc",
+	Long:  `All software has versions. This is gc version's`,
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println(".0.0.1-beta")
+	},
+}
+
+// Execute adds all child commands to the root command and sets flags appropriately.
+// This is called by main.main(). It only needs to happen once to the rootCmd.
+func Execute() {
+	flag.CommandLine.Parse(nil)
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
+
+func initViperConfig() {
+	viper.SetConfigName("config")                                 // name of config file (without extension)
+	viper.SetConfigType("toml")                                   // REQUIRED if the config file does not have the extension in the name
+	viper.AddConfigPath(fmt.Sprintf("%s/.gc", os.Getenv("HOME"))) // call multiple times to add many search paths
+	viper.AddConfigPath(".")                                      // optionally look for config in the working directory
+
+	viper.SetEnvPrefix("gc")
+	viper.AutomaticEnv()
+
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatalf("Error reading config file, %s", err)
+	}
+}
+
+func init() {
+	cobra.OnInitialize()
+	initViperConfig()
+
+	rootCmd.PersistentFlags().StringVarP(&profileName, "profile", "p", "DEFAULT", "Name of the profile to use for configuring the cli")
+
+	rootCmd.AddCommand(versionCmd)
+	{{=it.addCommands}}
+}

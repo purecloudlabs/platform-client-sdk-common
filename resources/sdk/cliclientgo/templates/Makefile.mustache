@@ -1,0 +1,16 @@
+ENV=GOPRIVATE=bitbucket.org/inindca
+  
+gc: bin/gc
+
+bin/gc: src/*
+	cd src && ${ENV} go build -o ../bin/gc
+
+install:
+	cd src && ${ENV} go install 
+
+fmt:
+	find src/cmd/ -name "*.go" | xargs sed -i '' -e "s/\&quot;/\"/g" -e "s/\&#39;/\'/g" 
+	gofmt -l -w src
+	
+clean:
+	rm -rf bin
