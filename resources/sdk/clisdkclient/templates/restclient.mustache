@@ -1,0 +1,196 @@
+package restclient
+
+import (
+	"net/http"
+
+	"bytes"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"gc/config"
+	"io/ioutil"
+	"log"
+	"net/url"
+	"strings"
+
+	"github.com/tidwall/pretty"
+)
+
+var (
+	Client HTTPClient
+)
+
+// HTTPClient interface
+type HTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
+type HttpStatusError struct {
+	Verb       string
+	Path       string
+	Body       string
+	StatusCode int
+}
+
+func (e *HttpStatusError) Error() string {
+	return fmt.Sprintf("HttpStatusCode error encountered while processing request to Genesys Cloud API. Verb %s, Path %s, Status Code %d, Body %v", e.Verb, e.Path, e.StatusCode, e.Body)
+}
+
+type RESTClient struct {
+	environment string
+	token       string
+}
+
+type oAuthToken struct {
+	AccessToken string `json:"access_token"`
+	TokenType   string `json:"token_type"`
+	ExpiresIn   string `json:"expires_in"`
+	Error       string `json:"error"`
+}
+
+//Get executes an HTTP Get
+func (r *RESTClient) Get(uri string) (string, error) {
+	return r.callAPI(http.MethodGet, uri, "")
+}
+
+//Put executes an HTTP Put
+func (r *RESTClient) Put(uri string, data string) (string, error) {
+	return r.callAPI(http.MethodPut, uri, data)
+}
+
+//Post executes an HTTP Post
+func (r *RESTClient) Post(uri string, data string) (string, error) {
+	return r.callAPI(http.MethodPost, uri, data)
+}
+
+//Patch executes an HTTP Patch
+func (r *RESTClient) Patch(uri string, data string) (string, error) {
+	return r.callAPI(http.MethodPatch, uri, data)
+}
+
+//Delete executes an HTTP Delete
+func (r *RESTClient) Delete(uri string) (string, error) {
+	return r.callAPI(http.MethodDelete, uri, "")
+}
+
+func (r *RESTClient) callAPI(method string, uri string, data string) (string, error) {
+	var apiURI *url.URL
+	if !strings.HasPrefix(uri, "/") {
+		uri = fmt.Sprintf("/%v", uri)
+	}
+	if !strings.Contains(r.environment, "localhost") {
+		apiURI, _ = url.Parse(fmt.Sprintf("https://api.%s%s", r.environment, uri))
+	} else {
+		apiURI, _ = url.Parse(fmt.Sprintf("http://%s%s", r.environment, uri))
+	}
+
+	request := &http.Request{
+		URL:    apiURI,
+		Close:  true,
+		Method: strings.ToUpper((method)),
+		Header: make(map[string][]string),
+	}
+
+	//Setting up the auth header
+	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", r.token))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Cache-Control", "no-cache")
+
+    //User-Agent and SDK version headers
+    request.Header.Set("User-Agent", "{{#httpUserAgent}}{{.}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen{{/httpUserAgent}}/go-cli")
+    request.Header.Set("purecloud-sdk", "{{packageVersion}}")
+
+	if data != "" {
+		request.Body = ioutil.NopCloser(bytes.NewBuffer([]byte(data)))
+	}
+
+	//Executing the request
+	resp, err := Client.Do(request)
+	if err != nil {
+		return "", err
+	}
+
+	defer resp.Body.Close()
+
+	response, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	responseData := string(response)
+
+	if (resp.StatusCode != http.StatusOK) && (resp.StatusCode != http.StatusAccepted) {
+		httpError := &HttpStatusError{Verb: method, Path: uri, StatusCode: resp.StatusCode, Body: fmt.Sprintf("%s", pretty.Pretty([]byte(responseData)))}
+		return "", httpError
+	}
+
+	return responseData, nil
+}
+
+//Login authenticates the user using the client credentials in their profile.
+func Login(config config.Configuration) (oAuthToken, error) {
+	if strings.Contains(config.Environment(), "localhost") {
+		return oAuthToken{}, nil
+	}
+	loginURI, _ := url.Parse(fmt.Sprintf("https://login.%s/oauth/token", config.Environment()))
+	oAuthTokenResponse := &oAuthToken{}
+
+	request := &http.Request{
+		URL:    loginURI,
+		Close:  true,
+		Method: "POST",
+		Header: make(map[string][]string),
+	}
+
+	//Setting up the basic auth headers for the call
+	authHeaderString := fmt.Sprintf("%s:%s", config.ClientID(), config.ClientSecret())
+	authHeader := base64.StdEncoding.EncodeToString([]byte(authHeaderString))
+	request.Header.Set("Authorization", fmt.Sprintf("Basic %s", authHeader))
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	//User-Agent and SDK version headers
+    request.Header.Set("User-Agent", "{{#httpUserAgent}}{{.}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen{{/httpUserAgent}}/go-cli")
+    request.Header.Set("purecloud-sdk", "{{packageVersion}}")
+
+	//Setting up the form data
+	form := url.Values{}
+	form["grant_type"] = []string{"client_credentials"}
+	request.Body = ioutil.NopCloser(strings.NewReader(form.Encode()))
+
+	//Executing the request
+	resp, err := Client.Do(request)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer resp.Body.Close()
+
+	if (resp.StatusCode != http.StatusOK) && (resp.StatusCode != http.StatusAccepted) {
+		httpError := &HttpStatusError{Verb: http.MethodPost, Path: loginURI.Path, StatusCode: resp.StatusCode}
+		return *oAuthTokenResponse, httpError
+	}
+
+	// Read Response Body
+	responseData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return *oAuthTokenResponse, err
+	}
+
+	json.Unmarshal(responseData, &oAuthTokenResponse)
+
+	return *oAuthTokenResponse, nil
+}
+
+//NewRESTClient is a constructor function to build an APIClient
+func NewRESTClient(config config.Configuration) *RESTClient {
+	oAuthToken, err := Login(config)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return &RESTClient{environment: config.Environment(), token: oAuthToken.AccessToken}
+}
+
+func init() {
+	Client = &http.Client{}
+}

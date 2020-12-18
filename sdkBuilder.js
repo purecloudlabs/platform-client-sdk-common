@@ -4,7 +4,7 @@ const fs = require('fs');
 
 const swaggerDiff = require('./modules/swaggerDiff');
 const Builder = require('./modules/builder');
-const sdkLanguageRegex = /^(purecloudjava|purecloudjava-guest|purecloudjavascript|purecloudjavascript-guest|pureclouddotnet|pureclouddotnet-guest|purecloudpython|purecloudios|purecloudswift4|purecloudgo|purecloudkotlin|cliclientgo)$/i;
+const sdkLanguageRegex = /^(purecloudjava|purecloudjava-guest|purecloudjavascript|purecloudjavascript-guest|pureclouddotnet|pureclouddotnet-guest|purecloudpython|purecloudios|purecloudswift4|purecloudgo|purecloudkotlin|clisdkclient)$/i;
 
 try {
 	// Parse language regex for hoomans
