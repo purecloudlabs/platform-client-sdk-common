@@ -7,7 +7,6 @@ public class ApiClientConnectorProperty {
     public static final String PROXY = PREFIX + "PROXY";
     public static final String PROXY_USER = PREFIX + "PROXY_USER";
     public static final String PROXY_PASS = PREFIX + "PROXY_PASS";
-    public static final String ASYNC_EXECUTOR_SERVICE = PREFIX + "ASYNC_EXECUTOR_SERVICE";
     public static final String CONNECTOR_PROVIDER = PREFIX + "CONNECTOR_PROVIDER";
 
     private ApiClientConnectorProperty() { }

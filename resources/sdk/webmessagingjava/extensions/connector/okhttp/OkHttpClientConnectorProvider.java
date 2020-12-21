@@ -28,11 +28,6 @@ public class OkHttpClientConnectorProvider implements ApiClientConnectorProvider
             client.setProxy(proxy);
         }
 
-        ExecutorService executorService = properties.getProperty(ApiClientConnectorProperty.ASYNC_EXECUTOR_SERVICE, ExecutorService.class, null);
-        if (executorService != null) {
-            client.setDispatcher(new Dispatcher(executorService));
-        }
-
         return new OkHttpClientConnector(client);
     }
 }

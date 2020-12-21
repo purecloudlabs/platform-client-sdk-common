@@ -480,9 +480,7 @@ public class WebMessagingClient {
      * Initializes the ApiClient used to make requests to the webmessaging API endpoint
      */
     private void initializeApiClient() {
-        String basePath = webSocketAddress
-                    .replace("wss://webmessaging.", "https://api.")
-                    .replace("/v1", "");
+        String basePath = GenesysCloudRegionWebSocketHosts.asApiHost(webSocketAddress);
 
         apiClient = ApiClient.Builder.standard()
                 .withBasePath(basePath)

@@ -12,11 +12,25 @@ public enum GenesysCloudRegionWebSocketHosts {
     eu_west_2("wss://webmessaging.euw2.pure.cloud/v1");
 
     private String webSocketHost;
-    GenesysCloudRegionWebSocketHosts(String apiHost) {
-        this.webSocketHost = apiHost;
+    GenesysCloudRegionWebSocketHosts(String host) {
+        this.webSocketHost = host;
     }
 
     public String getWebSocketHost() {
         return webSocketHost;
+    }
+
+    public String asApiHost() {
+        return asApiHost(webSocketHost);
+    }
+
+    public static String asApiHost(GenesysCloudRegionWebSocketHosts host) {
+        return asApiHost(host.getWebSocketHost());
+    }
+
+    public static String asApiHost(String host) {
+        return host
+                .replace("wss://webmessaging.", "https://api.")
+                .replace("/v1", "");
     }
 }

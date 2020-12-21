@@ -1,7 +1,6 @@
 package cloud.genesys.webmessaging.sdk.connector.apache;
 
 import com.google.common.util.concurrent.SettableFuture;
-import cloud.genesys.webmessaging.sdk.AsyncApiCallback;
 import cloud.genesys.webmessaging.sdk.connector.ApiClientConnector;
 import cloud.genesys.webmessaging.sdk.connector.ApiClientConnectorRequest;
 import cloud.genesys.webmessaging.sdk.connector.ApiClientConnectorResponse;
@@ -71,38 +70,6 @@ public class ApacheHttpClientConnector implements ApiClientConnector {
         CloseableHttpResponse response = client.execute(httpUriRequest);
 
         return new ApacheHttpResponse(response);
-    }
-
-    @Override
-    public Future<ApiClientConnectorResponse> invokeAsync(final ApiClientConnectorRequest request, final AsyncApiCallback<ApiClientConnectorResponse> callback) {
-        final SettableFuture<ApiClientConnectorResponse> future = SettableFuture.create();
-        Runnable task = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    ApiClientConnectorResponse response = invoke(request);
-                    callback.onCompleted(response);
-                    future.set(response);
-                }
-                catch (Throwable exception) {
-                    callback.onFailed(exception);
-                    future.setException(exception);
-                }
-            }
-        };
-        try {
-            if (executorService != null) {
-                executorService.submit(task);
-            }
-            else {
-                task.run();
-            }
-        }
-        catch (Throwable exception) {
-            callback.onFailed(exception);
-            future.setException(exception);
-        }
-        return future;
     }
 
     @Override

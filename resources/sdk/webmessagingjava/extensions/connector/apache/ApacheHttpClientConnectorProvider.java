@@ -61,10 +61,7 @@ public class ApacheHttpClientConnectorProvider implements ApiClientConnectorProv
         }
         CloseableHttpClient client = builder.build();
 
-        ExecutorService executorService = properties.getProperty(ApiClientConnectorProperty.ASYNC_EXECUTOR_SERVICE, ExecutorService.class, null);
-        if (executorService == null) {
-            executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("purecloud-sdk-%d").build());
-        }
+        ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("purecloud-sdk-%d").build());
 
         return new ApacheHttpClientConnector(client, executorService);
     }

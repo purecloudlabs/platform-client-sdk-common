@@ -1,7 +1,6 @@
 package cloud.genesys.webmessaging.sdk.connector.okhttp;
 
 import com.google.common.util.concurrent.SettableFuture;
-import cloud.genesys.webmessaging.sdk.AsyncApiCallback;
 import cloud.genesys.webmessaging.sdk.connector.ApiClientConnector;
 import cloud.genesys.webmessaging.sdk.connector.ApiClientConnectorRequest;
 import cloud.genesys.webmessaging.sdk.connector.ApiClientConnectorResponse;
@@ -22,33 +21,6 @@ public class OkHttpClientConnector implements ApiClientConnector {
     public ApiClientConnectorResponse invoke(ApiClientConnectorRequest request) throws IOException {
         Call call = client.newCall(buildRequest(request));
         return new OkHttpResponse(call.execute());
-    }
-
-    @Override
-    public Future<ApiClientConnectorResponse> invokeAsync(ApiClientConnectorRequest request, final AsyncApiCallback<ApiClientConnectorResponse> callback) {
-        final SettableFuture<ApiClientConnectorResponse> future = SettableFuture.create();
-        try {
-            Call call = client.newCall(buildRequest(request));
-            call.enqueue(new Callback() {
-                @Override
-                public void onFailure(Request request, IOException e) {
-                    callback.onFailed(e);
-                    future.setException(e);
-                }
-
-                @Override
-                public void onResponse(Response response) throws IOException {
-                    OkHttpResponse okHttpResponse = new OkHttpResponse(response);
-                    callback.onCompleted(okHttpResponse);
-                    future.set(new OkHttpResponse(response));
-                }
-            });
-        }
-        catch (Throwable exception) {
-            callback.onFailed(exception);
-            future.setException(exception);
-        }
-        return future;
     }
 
     private Request buildRequest(ApiClientConnectorRequest request) throws IOException {
