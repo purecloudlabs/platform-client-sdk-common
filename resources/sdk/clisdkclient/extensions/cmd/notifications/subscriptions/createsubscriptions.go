@@ -2,6 +2,7 @@ package subscriptions
 import (
 	"fmt"
 	"gc/utils"
+	"gc/services"
 	"log"
 
 	"github.com/spf13/cobra"
@@ -17,7 +18,8 @@ var createSubscriptionsCmd = &cobra.Command{
 		data := utils.ResolveInputData(cmd)
 
 		targetURI := fmt.Sprintf("%s/channels/%s/subscriptions", BaseURI, args[0])
-		results, err := CommandService.Post(targetURI, data)
+		retryFunc := services.RetryWithData(targetURI, data, CommandService.Post)
+		results, err := retryFunc(nil)
 		if err != nil {
 			log.Fatal(err)
 		}

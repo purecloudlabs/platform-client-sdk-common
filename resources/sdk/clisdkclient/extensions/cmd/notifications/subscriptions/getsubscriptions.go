@@ -3,6 +3,7 @@ package subscriptions
 import (
 	"fmt"
 	"gc/utils"
+	"gc/services"
 	"log"
 
 	"github.com/spf13/cobra"
@@ -16,7 +17,8 @@ var getSubscriptionsCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 		targetURI := fmt.Sprintf("%s/channels/%s/subscriptions", BaseURI, args[0])
-		results, err := CommandService.Get(targetURI)
+		retryFunc := services.Retry(targetURI, CommandService.Get)
+		results, err := retryFunc(nil)
 		if err != nil {
 			log.Fatal(err)
 		}

@@ -2,6 +2,7 @@ package phones
 
 import (
 	"gc/utils"
+	"gc/services"
 	"log"
 	"strings"
 
@@ -24,7 +25,8 @@ var rebootPhonesCmd = &cobra.Command{
 		path := "/api/v2/telephony/providers/edges/phones/{phoneId}/reboot"
 		path = strings.Replace(path, "{phoneId}", args[0], 1)
 
-		results, err := CommandService.Post(path, data)
+		retryFunc := services.RetryWithData(path, data, CommandService.Post)
+		results, err := retryFunc(nil)
 		if err != nil {
 			log.Fatal(err)
 		}

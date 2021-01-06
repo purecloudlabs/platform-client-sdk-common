@@ -30,9 +30,10 @@ type HttpStatusError struct {
 	Path       string
 	Body       string
 	StatusCode int
+	Headers    map[string][]string
 }
 
-func (e *HttpStatusError) Error() string {
+func (e HttpStatusError) Error() string {
 	return fmt.Sprintf("HttpStatusCode error encountered while processing request to Genesys Cloud API. Verb %s, Path %s, Status Code %d, Body %v", e.Verb, e.Path, e.StatusCode, e.Body)
 }
 
@@ -120,7 +121,7 @@ func (r *RESTClient) callAPI(method string, uri string, data string) (string, er
 	responseData := string(response)
 
 	if (resp.StatusCode != http.StatusOK) && (resp.StatusCode != http.StatusAccepted) {
-		httpError := &HttpStatusError{Verb: method, Path: uri, StatusCode: resp.StatusCode, Body: fmt.Sprintf("%s", pretty.Pretty([]byte(responseData)))}
+		httpError := HttpStatusError{Verb: method, Path: uri, StatusCode: resp.StatusCode, Headers: resp.Header, Body: fmt.Sprintf("%s", pretty.Pretty([]byte(responseData)))}
 		return "", httpError
 	}
 
@@ -138,7 +139,7 @@ func Login(config config.Configuration) (oAuthToken, error) {
 	request := &http.Request{
 		URL:    loginURI,
 		Close:  true,
-		Method: "POST",
+		Method: http.MethodPost,
 		Header: make(map[string][]string),
 	}
 
@@ -165,15 +166,15 @@ func Login(config config.Configuration) (oAuthToken, error) {
 
 	defer resp.Body.Close()
 
-	if (resp.StatusCode != http.StatusOK) && (resp.StatusCode != http.StatusAccepted) {
-		httpError := &HttpStatusError{Verb: http.MethodPost, Path: loginURI.Path, StatusCode: resp.StatusCode}
-		return *oAuthTokenResponse, httpError
-	}
-
 	// Read Response Body
 	responseData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return *oAuthTokenResponse, err
+	}
+
+	if (resp.StatusCode != http.StatusOK) && (resp.StatusCode != http.StatusAccepted) {
+		httpError := HttpStatusError{Verb: http.MethodPost, Path: loginURI.Path, StatusCode: resp.StatusCode, Headers: resp.Header, Body: fmt.Sprintf("%s", pretty.Pretty(responseData))}
+		return *oAuthTokenResponse, httpError
 	}
 
 	json.Unmarshal(responseData, &oAuthTokenResponse)

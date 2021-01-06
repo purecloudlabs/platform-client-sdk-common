@@ -3,6 +3,7 @@ package queues
 import (
 	"fmt"
 	"gc/utils"
+	"gc/services"
 	"log"
 	"net/url"
 	"strings"
@@ -39,7 +40,8 @@ var getEstimatedWaitTimeQueuesCmd = &cobra.Command{
 			urlString = strings.TrimSuffix(urlString, "&")
 		}
 
-		results, err := CommandService.Get(urlString)
+		retryFunc := services.Retry(urlString, CommandService.Get)
+		results, err := retryFunc(nil)
 		if err != nil {
 			log.Fatal(err)
 		}

@@ -3,6 +3,7 @@ package topics
 import (
 	"fmt"
 	"gc/utils"
+	"gc/services"
 	"log"
 
 	"github.com/spf13/cobra"
@@ -23,7 +24,8 @@ var listAvailableTopicsCmd = &cobra.Command{
 			targetURI = fmt.Sprintf("%s/availabletopics?expand=description,requiresPermissions,schema,transports,publicApiTemplateUriPaths", BaseURI)
 		}
 
-		results, err := CommandService.Get(targetURI)
+		retryFunc := services.Retry(targetURI, CommandService.Get)
+		results, err := retryFunc(nil)
 		if err != nil {
 			log.Fatal(err)
 		}

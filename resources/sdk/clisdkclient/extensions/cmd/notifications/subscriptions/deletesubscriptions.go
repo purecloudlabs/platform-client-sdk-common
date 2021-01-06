@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"gc/utils"
+	"gc/services"
 
 	"github.com/spf13/cobra"
 )
@@ -16,11 +17,12 @@ var deleteSubscriptionsCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 		targetURI := fmt.Sprintf("%s/channels/%s/subscriptions", BaseURI, args[0])
-		response, err := CommandService.Delete(targetURI)
+		retryFunc := services.Retry(targetURI, CommandService.Delete)
+		results, err := retryFunc(nil)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		utils.Render(response)
+		utils.Render(results)
 	},
 }

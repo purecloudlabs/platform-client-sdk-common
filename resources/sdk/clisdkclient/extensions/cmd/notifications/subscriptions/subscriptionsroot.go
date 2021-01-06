@@ -3,8 +3,6 @@ package subscriptions
 import (
 	"gc/services"
 
-	// "gc/notifications/subscriptions"
-
 	"github.com/spf13/cobra"
 )
 

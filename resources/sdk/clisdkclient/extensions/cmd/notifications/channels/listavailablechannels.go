@@ -3,6 +3,7 @@ package channels
 import (
 	"fmt"
 	"gc/utils"
+	"gc/services"
 	"log"
 
 	"github.com/spf13/cobra"
@@ -17,7 +18,8 @@ var listAvailableChannelsCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 		targetURI := fmt.Sprintf("%s/channels", BaseURI)
-		results, err := CommandService.List(targetURI)
+		retryFunc := services.Retry(targetURI, CommandService.List)
+		results, err := retryFunc(nil)
 		if err != nil {
 			log.Fatal(err)
 		}

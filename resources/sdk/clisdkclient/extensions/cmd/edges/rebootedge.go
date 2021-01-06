@@ -2,6 +2,7 @@ package edges
 
 import (
 	"gc/utils"
+	"gc/services"
 	"log"
 	"strings"
 
@@ -24,7 +25,8 @@ var rebootEdgesCmd = &cobra.Command{
 		path := "/api/v2/telephony/providers/edges/{edgeId}/reboot"
 		path = strings.Replace(path, "{edgeId}", args[0], 1)
 
-		results, err := CommandService.Post(path, data)
+		retryFunc := services.RetryWithData(path, data, CommandService.Post)
+		results, err := retryFunc(nil)
 		if err != nil {
 			log.Fatal(err)
 		}

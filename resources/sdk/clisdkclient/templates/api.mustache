@@ -56,7 +56,13 @@ var {{operationId}}Cmd = &cobra.Command{
 			urlString = strings.TrimSuffix(urlString, "&")
 		}
 
-		results, err := CommandService.DetermineAction("{{httpMethod}}", "{{operationId}}", urlString)
+		retryFunc := CommandService.DetermineAction("{{httpMethod}}", "{{operationId}}", urlString)
+		// TODO read from config file
+		retryConfig := &services.RetryConfiguration{
+			MaxRetriesBeforeQuitting: 3,
+			MaxRetryTimeSec: 10,
+		}
+		results, err := retryFunc(retryConfig)
 		if err != nil {
 			log.Fatal(err)
 		}
