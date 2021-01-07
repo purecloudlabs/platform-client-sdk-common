@@ -5,6 +5,7 @@ import (
 	"gc/config"
 	"gc/mocks"
 	"gc/restclient"
+	"gc/models"
 	"log"
 	"os"
 	"strings"
@@ -102,10 +103,10 @@ func overrideConfig(name string) bool {
 }
 
 func validateCredentials(config config.Configuration) bool {
-	oauthToken, err := restclient.Login(config)
+	oauthToken, err := restclient.Authorize(config)
 	if err != nil || oauthToken.AccessToken == "" {
 		//Check to see if its an HTTP error and if its check to see if its what we are expecting
-		if _, ok := err.(*restclient.HttpStatusError); ok {
+		if _, ok := err.(*models.HttpStatusError); ok {
 			return false
 		}
 		log.Fatal(err)

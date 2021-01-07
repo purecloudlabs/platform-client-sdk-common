@@ -110,14 +110,18 @@ func ConvertFileJSON(fileName string) string {
 // ResolveInputData is used to determine where the Put, Patch and Delete Post data should be read from
 func ResolveInputData(cmd *cobra.Command) string {
 	fileName, _ := cmd.Flags().GetString("file")
-
 	if fileName != "" {
 		return ConvertFileJSON(fileName)
+	}
+	for _, command := range cmd.Commands() {
+		fileName, _ := command.Flags().GetString("file")
+		if fileName != "" {
+			return ConvertFileJSON(fileName)
+		}
 	}
 
 	return ConvertStdInString()
 }
-
 func GenerateGuid() string {
 	b := make([]byte, 16)
 	_, err := rand.Read(b)

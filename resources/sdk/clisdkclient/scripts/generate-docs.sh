@@ -20,6 +20,7 @@ else
 fi
 
 bin/$GC &> /dev/null
+sleep 1
 
 cd $SDK_TEMP
 unzip docs.zip

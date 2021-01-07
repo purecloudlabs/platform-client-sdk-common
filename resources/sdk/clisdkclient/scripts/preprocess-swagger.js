@@ -29,6 +29,11 @@ const inclusionList = {
 	},
 	"/api/v2/telephony/providers/edges": {},
 	"/api/v2/telephony/providers/edges/{edgeId}": {},
+	"/api/v2/telephony/providers/edges/{edgeId}/reboot": {
+		"post": {
+			operationId: "reboot"
+		}
+	},
 	"/api/v2/groups": {},
 	"/api/v2/groups/{groupId}": {},
 	"/api/v2/locations": {},
@@ -39,8 +44,24 @@ const inclusionList = {
 	"/api/v2/telephony/providers/edges/phones/{phoneId}": {
 		tags: ["Phones"]
 	},
+	"/api/v2/telephony/providers/edges/phones/{phoneId}/reboot": {
+		tags: ["Phones"],
+		"post": {
+			operationId: "reboot"
+		}
+	},
 	"/api/v2/routing/queues": {},
 	"/api/v2/routing/queues/{queueId}": {},
+	"/api/v2/routing/queues/{queueId}/estimatedwaittime": {
+		"get": {
+			operationId: "estimatedwait"
+		}
+	},
+	"/api/v2/routing/queues/{queueId}/users": {
+		"get": {
+			operationId: "users"
+		}
+	},
 	"/api/v2/telephony/providers/edges/sites": {
 		tags: ["Sites"]
 	},
@@ -55,22 +76,57 @@ const inclusionList = {
 	},
 	"/api/v2/stations": {},
 	"/api/v2/stations/{stationId}": {},
-	"/api/v2/usage/query": {},
-	"/api/v2/usage/query/{executionId}/results": {},
 	"/api/v2/users": {},
-	"/api/v2/users/{userId}": {}
+	"/api/v2/users/{userId}": {},
+	"/api/v2/notifications/availabletopics": {
+		tags: ["Topics"],
+		"get": {
+			operationId: "list"
+		}
+	},
+	"/api/v2/notifications/channels": {
+		tags: ["Channels"]
+	},
+	"/api/v2/notifications/channels/{channelId}/subscriptions": {
+		tags: ["Subscriptions"],
+		"get": {},
+		"post": {
+			operationId: "subscribe"
+		},
+		"delete": {}
+	},
+	"/api/v2/usage/query/{executionId}/results": {
+		"get": {
+			operationId: "results"
+		}
+	}
 }
 
 for (const path of Object.keys(newSwagger["paths"])) {
 	if (Object.keys(inclusionList).includes(path)) {
+		// Override tags if possible
 		for (let value of Object.values(newSwagger["paths"][path])) {
-			// Override tags if possible
 			value.tags = inclusionList[path].tags || value.tags
 		}
-		// Override methods if possible
-		if (inclusionList[path].methods !== undefined) {
-			paths[path] = {}
-			for (const method of inclusionList[path].methods) {
+
+		// Override operationId if possible
+		for (const method of Object.keys(newSwagger["paths"][path])) {
+			if (!Object.keys(inclusionList[path]).includes(method)) continue
+			if (inclusionList[path][method].operationId !== undefined) {
+				newSwagger["paths"][path][method].operationId = `SWAGGER_OVERRIDE_${inclusionList[path][method].operationId}`
+			}
+		}
+
+		// Exclude HTTP methods if possible
+		let includedMethods = []
+        for (const httpMethod of Object.keys(inclusionList[path])) {
+            if (httpMethod === "tags") continue
+            includedMethods.push(httpMethod)
+        }
+
+		paths[path] = {}
+		if (includedMethods.length > 0) {
+			for (const method of includedMethods) {
 				paths[path][method] = newSwagger["paths"][path][method]
 			}
 		} else {

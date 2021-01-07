@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"gc/mocks"
+	"gc/models"
 	"gc/utils"
 	"io/ioutil"
 	"net/http"
@@ -100,7 +101,7 @@ func TestLogin(t *testing.T) {
 	}
 
 	Client = mock
-	oauth, _ := Login(mockConfig)
+	oauth, _ := Authorize(mockConfig)
 
 	if oauth.AccessToken != accessToken {
 		t.Errorf("OAuth Access Token incorrect, got: %s, want: %s.", oauth.AccessToken, accessToken)
@@ -185,7 +186,7 @@ func TestLowLevelRestClient(t *testing.T) {
 		//Later on checks like this will be important when we add
 		if err != nil {
 			//Check to see if its an HTTP error and if its check to see if its what we are expecting
-			if e, ok := err.(*HttpStatusError); ok && e.StatusCode != tc.expectedStatusCode {
+			if e, ok := err.(*models.HttpStatusError); ok && e.StatusCode != tc.expectedStatusCode {
 				t.Errorf("Did not get the right HttpStatus Code for the error expected, got: %d, want: %d.", e.StatusCode, tc.expectedStatusCode)
 			}
 		} else {
@@ -226,7 +227,7 @@ func TestHighLevelRestClient(t *testing.T) {
 		//Rechecking the error codes for the higher level RestClient functions
 		if err != nil {
 			//Check to see if its an HTTP error and if its check to see if its what we are expecting
-			if e, ok := err.(*HttpStatusError); ok && e.StatusCode != tc.expectedStatusCode {
+			if e, ok := err.(*models.HttpStatusError); ok && e.StatusCode != tc.expectedStatusCode {
 				t.Errorf("Did not get the right HttpStatus Code for the error expected, got: %d, want: %d.", e.StatusCode, tc.expectedStatusCode)
 			}
 		} else {

@@ -2,6 +2,7 @@ package {{classVarName}}
 {{#operations}}
 import (
 	"fmt"
+	"gc/retry"
 	"gc/utils"
 	"gc/services"
 	"github.com/spf13/cobra"
@@ -58,7 +59,7 @@ var {{operationId}}Cmd = &cobra.Command{
 
 		retryFunc := CommandService.DetermineAction("{{httpMethod}}", "{{operationId}}", urlString)
 		// TODO read from config file
-		retryConfig := &services.RetryConfiguration{
+		retryConfig := &retry.RetryConfiguration{
 			MaxRetriesBeforeQuitting: 3,
 			MaxRetryTimeSec: 10,
 		}

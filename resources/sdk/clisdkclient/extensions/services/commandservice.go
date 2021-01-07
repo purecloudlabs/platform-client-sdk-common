@@ -6,15 +6,14 @@ import (
 	"gc/config"
 	"gc/models"
 	"gc/restclient"
+	"gc/retry"
 	"gc/utils"
+	"github.com/spf13/cobra"
 	"log"
 	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
-
-	"github.com/spf13/cobra"
 )
 
 //CommandService holds the method signatures for all common Command object invocations
@@ -25,27 +24,16 @@ type CommandService interface {
 	Patch(uri string, payload string) (string, error)
 	Put(uri string, payload string) (string, error)
 	Delete(uri string) (string, error)
-	DetermineAction(httpMethod string, operationId string, uri string) func(retryConfiguration *RetryConfiguration) (string, error)
+	DetermineAction(httpMethod string, operationId string, uri string) func(retryConfiguration *retry.RetryConfiguration) (string, error)
 }
 
 type commandService struct {
 	cmd *cobra.Command
 }
 
-type RetryConfiguration struct {
-	MaxRetryTimeSec          int
-	MaxRetriesBeforeQuitting int
-}
-
-type retry struct {
-	retryAfterMs             int64
-	retryCountBeforeQuitting int
-	RetryConfiguration
-}
-
 // The following functions are added as variables to allow reassignment to mock functions in unit tests
 var (
-	configGetConfig = config.GetConfig
+	configGetConfig         = config.GetConfig
 	restclientNewRESTClient = restclient.NewRESTClient
 )
 
@@ -177,110 +165,27 @@ func (c *commandService) upsert(method string, uri string, payload string) (stri
 	return response, err
 }
 
-func (c *commandService) DetermineAction(httpMethod string, operationId string, uri string) func(retryConfiguration *RetryConfiguration) (string, error) {
+func (c *commandService) DetermineAction(httpMethod string, operationId string, uri string) func(retryConfiguration *retry.RetryConfiguration) (string, error) {
 	switch httpMethod {
 	case http.MethodGet:
-		if strings.Compare(operationId, strings.ToLower(http.MethodGet)) == 0 {
-			return Retry(uri, c.Get)
+		listOverrides := make(map[string]int)
+		// Add overrides here for resources with custom operationIds requiring pagination
+		listOverrides["users"] = 1
+
+		_, ok := listOverrides[operationId]
+		if operationId == "list" || ok {
+			return retry.Retry(uri, c.List)
 		} else {
-			return Retry(uri, c.List)
-		}
+			return retry.Retry(uri, c.Get)
+		} 
 	case http.MethodPatch:
-		return RetryWithData(uri, utils.ResolveInputData(c.cmd), c.Patch)
+		return retry.RetryWithData(uri, utils.ResolveInputData(c.cmd), c.Patch)
 	case http.MethodPost:
-		return RetryWithData(uri, utils.ResolveInputData(c.cmd), c.Post)
+		return retry.RetryWithData(uri, utils.ResolveInputData(c.cmd), c.Post)
 	case http.MethodPut:
-		return RetryWithData(uri, utils.ResolveInputData(c.cmd), c.Put)
+		return retry.RetryWithData(uri, utils.ResolveInputData(c.cmd), c.Put)
 	case http.MethodDelete:
-		return Retry(uri, c.Delete)
+		return retry.Retry(uri, c.Delete)
 	}
 	return nil
-}
-
-func RetryWithData(uri string, data string, httpCall func(uri string, data string) (string, error)) func(retryConfiguration *RetryConfiguration) (string, error) {
-	return func(retryConfiguration *RetryConfiguration) (string, error) {
-		if retryConfiguration == nil {
-			retryConfiguration = &RetryConfiguration{
-				MaxRetriesBeforeQuitting: 3,
-				MaxRetryTimeSec: 10,
-			}
-		}
-		retry := retry{
-			RetryConfiguration: *retryConfiguration,
-		}
-		response, err := httpCall(uri, data)
-		now := time.Now()
-		for ok := true; ok; ok = retry.shouldRetry(now, err) {
-			response, err = httpCall(uri, data)
-		}
-		return response, err
-	}
-}
-
-func Retry(uri string, httpCall func(uri string) (string, error)) func(retryConfiguration *RetryConfiguration) (string, error) {
-	return func(retryConfiguration *RetryConfiguration) (string, error) {
-		if retryConfiguration == nil {
-			retryConfiguration = &RetryConfiguration{
-				MaxRetriesBeforeQuitting: 3,
-				MaxRetryTimeSec: 10,
-			}
-		}
-		retry := retry{
-			RetryConfiguration: *retryConfiguration,
-		}
-		response, err := httpCall(uri)
-		now := time.Now()
-		for ok := true; ok; ok = retry.shouldRetry(now, err) {
-			response, err = httpCall(uri)
-		}
-		return response, err
-	}
-}
-
-func (r *retry) shouldRetry(startTime time.Time, errorValue error) bool {
-	if errorValue == nil {
-		return false
-	}
-	e := errorValue.(restclient.HttpStatusError)
-
-	if time.Since(startTime) < secondsToNanoSeconds(r.MaxRetryTimeSec) && e.StatusCode == http.StatusTooManyRequests {
-		r.retryAfterMs = getRetryAfterValue(e.Headers)
-		r.retryCountBeforeQuitting++
-		if r.retryCountBeforeQuitting < r.MaxRetriesBeforeQuitting {
-			time.Sleep(milliSecondsToNanoSeconds(r.retryAfterMs))
-			return true
-		}
-	}
-	return false
-}
-
-func milliSecondsToNanoSeconds(milliSeconds int64) time.Duration {
-	return time.Duration(milliSeconds * 1000 * 1000)
-}
-
-func secondsToNanoSeconds(seconds int) time.Duration {
-	return milliSecondsToNanoSeconds(int64(seconds)) * 1000
-}
-
-func getRetryAfterValue(headers map[string][]string) int64 {
-	defaultValue := int64(3000)
-	retryAfterValues := headers["Retry-After"]
-	if retryAfterValues == nil {
-		return defaultValue
-	}
-
-	returnValue := int64(0)
-	for _, retryAfter := range retryAfterValues {
-		if retryAfter != "" {
-			returnValue, _ = strconv.ParseInt(retryAfter, 10, 64)
-			break
-		}
-	}
-
-	// Edge case where the retry-after header has no value
-	if returnValue == 0 {
-		returnValue = defaultValue
-	}
-
-	return returnValue
 }

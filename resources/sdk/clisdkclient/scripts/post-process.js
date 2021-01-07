@@ -6,16 +6,23 @@ try {
 	dot.templateSettings.strip = false;
 
 	const rootSource = path.resolve(process.argv[2]);
-	const rootDest = path.resolve(process.argv[3]);
+	const rootDest = rootSource;
 
 	console.log(`rootSource=${rootSource}`);
 	console.log(`rootDest=${rootDest}`);
 
+	const exclusionList = [
+		"channels",
+		"subscriptions",
+		"topics",
+		"root.go"
+	]
 	let addCommands = ""
 	let addImports = ""
 	const dir = fs.opendirSync(rootDest)
 	let dirent
 	while ((dirent = dir.readSync()) !== null) {
+		if (exclusionList.includes(dirent.name)) continue
 		// imports for packages under cmd
 		addImports += `"gc/cmd/${dirent.name}"\n\t`
 		let packageName = `${dirent.name}`;
@@ -24,7 +31,7 @@ try {
 	}
 	dir.closeSync()
 
-	let templateString = fs.readFileSync(path.join(rootSource, "root.mustache"), 'utf8');
+	let templateString = fs.readFileSync(path.join(rootSource, "root.go"), 'utf8');
 	let template = dot.template(templateString, null, { addImports: addImports, addCommands: addCommands });
 	let result = template({ addImports: addImports, addCommands: addCommands });
 

@@ -14,6 +14,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func init() {
+	channelsCmd.AddCommand(listenChannelCmd)
+}
+
 //processWSMessage is the function that processes a WebSocket channel.
 func processWSMessage(c *websocket.Conn, done chan struct{}) {
 	defer close(done)
@@ -67,7 +71,7 @@ func waitForWSClose(c *websocket.Conn, done chan struct{}) {
 var listenChannelCmd = &cobra.Command{
 	Use:   "listen [channel id]",
 	Short: "Listens to a channel and sends messages to standard out",
-	Long:  `Listent to a channel and sends messages to standard out`,
+	Long:  `Listens to a channel and sends messages to standard out`,
 	Args:  cobra.ExactArgs(1),
 
 	Run: func(cmd *cobra.Command, args []string) {

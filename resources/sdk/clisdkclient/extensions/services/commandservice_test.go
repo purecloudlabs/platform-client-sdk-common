@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"gc/config"
 	"gc/mocks"
+	"gc/models"
 	"gc/restclient"
+	"gc/retry"
 	"gc/utils"
 	"github.com/spf13/cobra"
 	"io/ioutil"
@@ -41,15 +43,15 @@ func TestRetryWithData(t *testing.T) {
 		expectedStatusCode: http.StatusTooManyRequests}
 	restclient.Client = buildRestClientDoMock(tc, 10)
 
-	retryFunc := RetryWithData(tc.targetPath, "", c.Patch)
-	retryConfig := &RetryConfiguration{
+	retryFunc := retry.RetryWithData(tc.targetPath, "", c.Patch)
+	retryConfig := &retry.RetryConfiguration{
 		MaxRetryTimeSec:          100,
 		MaxRetriesBeforeQuitting: maxRetriesBeforeQuitting,
 	}
 	_, err := retryFunc(retryConfig)
 	if err != nil {
 		//Check to see if its an HTTP error and if its check to see if its what we are expecting
-		e, _ := err.(restclient.HttpStatusError)
+		e, _ := err.(models.HttpStatusError)
 		if e.StatusCode != tc.expectedStatusCode {
 			t.Errorf("Did not get the right HttpStatus Code for the error expected, got: %d, want: %d.", e.StatusCode, tc.expectedStatusCode)
 		}
@@ -67,12 +69,12 @@ func TestRetryWithData(t *testing.T) {
 	tc.expectedResponse = fmt.Sprintf(`{"numRetries":"%v"}`, expectedNumCalls)
 	restclient.Client = buildRestClientDoMock(tc, 10)
 
-	retryFunc = RetryWithData(tc.targetPath, "", c.Patch)
+	retryFunc = retry.RetryWithData(tc.targetPath, "", c.Patch)
 	retryConfig.MaxRetryTimeSec = maxRetryTimeSec
 	_, err = retryFunc(retryConfig)
 	if err != nil {
 		//Check to see if its an HTTP error and if its check to see if its what we are expecting
-		e, _ := err.(restclient.HttpStatusError)
+		e, _ := err.(models.HttpStatusError)
 		if e.StatusCode != tc.expectedStatusCode {
 			t.Errorf("Did not get the right HttpStatus Code for the error expected, got: %d, want: %d.", e.StatusCode, tc.expectedStatusCode)
 		}
@@ -90,7 +92,7 @@ func TestRetryWithData(t *testing.T) {
 	tc.expectedResponse = fmt.Sprintf(`{"numRetries":"%v"}`, expectedNumCalls)
 	restclient.Client = buildRestClientDoMock(tc, 3)
 
-	retryFunc = RetryWithData(tc.targetPath, "", c.Patch)
+	retryFunc = retry.RetryWithData(tc.targetPath, "", c.Patch)
 	retryConfig.MaxRetryTimeSec = maxRetryTimeSec
 	retryConfig.MaxRetriesBeforeQuitting = maxRetriesBeforeQuitting
 	results, err := retryFunc(retryConfig)

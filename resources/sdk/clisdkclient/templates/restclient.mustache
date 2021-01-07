@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"gc/config"
+	"gc/models"
 	"io/ioutil"
 	"log"
 	"net/url"
@@ -23,18 +24,6 @@ var (
 // HTTPClient interface
 type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
-}
-
-type HttpStatusError struct {
-	Verb       string
-	Path       string
-	Body       string
-	StatusCode int
-	Headers    map[string][]string
-}
-
-func (e HttpStatusError) Error() string {
-	return fmt.Sprintf("HttpStatusCode error encountered while processing request to Genesys Cloud API. Verb %s, Path %s, Status Code %d, Body %v", e.Verb, e.Path, e.StatusCode, e.Body)
 }
 
 type RESTClient struct {
@@ -97,9 +86,9 @@ func (r *RESTClient) callAPI(method string, uri string, data string) (string, er
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Cache-Control", "no-cache")
 
-    //User-Agent and SDK version headers
-    request.Header.Set("User-Agent", "{{#httpUserAgent}}{{.}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen{{/httpUserAgent}}/go-cli")
-    request.Header.Set("purecloud-sdk", "{{packageVersion}}")
+	//User-Agent and SDK version headers
+	request.Header.Set("User-Agent", "{{#httpUserAgent}}{{.}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen{{/httpUserAgent}}/go-cli")
+	request.Header.Set("purecloud-sdk", "{{packageVersion}}")
 
 	if data != "" {
 		request.Body = ioutil.NopCloser(bytes.NewBuffer([]byte(data)))
@@ -120,16 +109,16 @@ func (r *RESTClient) callAPI(method string, uri string, data string) (string, er
 
 	responseData := string(response)
 
-	if (resp.StatusCode != http.StatusOK) && (resp.StatusCode != http.StatusAccepted) {
-		httpError := HttpStatusError{Verb: method, Path: uri, StatusCode: resp.StatusCode, Headers: resp.Header, Body: fmt.Sprintf("%s", pretty.Pretty([]byte(responseData)))}
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		httpError := models.HttpStatusError{Verb: method, Path: uri, StatusCode: resp.StatusCode, Headers: resp.Header, Body: fmt.Sprintf("%s", pretty.Pretty([]byte(responseData)))}
 		return "", httpError
 	}
 
 	return responseData, nil
 }
 
-//Login authenticates the user using the client credentials in their profile.
-func Login(config config.Configuration) (oAuthToken, error) {
+//Authorize authenticates the user using the client credentials in their profile.
+func Authorize(config config.Configuration) (oAuthToken, error) {
 	if strings.Contains(config.Environment(), "localhost") {
 		return oAuthToken{}, nil
 	}
@@ -150,8 +139,8 @@ func Login(config config.Configuration) (oAuthToken, error) {
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	//User-Agent and SDK version headers
-    request.Header.Set("User-Agent", "{{#httpUserAgent}}{{.}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen{{/httpUserAgent}}/go-cli")
-    request.Header.Set("purecloud-sdk", "{{packageVersion}}")
+	request.Header.Set("User-Agent", "{{#httpUserAgent}}{{.}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen{{/httpUserAgent}}/go-cli")
+	request.Header.Set("purecloud-sdk", "{{packageVersion}}")
 
 	//Setting up the form data
 	form := url.Values{}
@@ -172,8 +161,8 @@ func Login(config config.Configuration) (oAuthToken, error) {
 		return *oAuthTokenResponse, err
 	}
 
-	if (resp.StatusCode != http.StatusOK) && (resp.StatusCode != http.StatusAccepted) {
-		httpError := HttpStatusError{Verb: http.MethodPost, Path: loginURI.Path, StatusCode: resp.StatusCode, Headers: resp.Header, Body: fmt.Sprintf("%s", pretty.Pretty(responseData))}
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		httpError := models.HttpStatusError{Verb: http.MethodPost, Path: loginURI.Path, StatusCode: resp.StatusCode, Headers: resp.Header, Body: fmt.Sprintf("%s", pretty.Pretty(responseData))}
 		return *oAuthTokenResponse, httpError
 	}
 
@@ -184,7 +173,7 @@ func Login(config config.Configuration) (oAuthToken, error) {
 
 //NewRESTClient is a constructor function to build an APIClient
 func NewRESTClient(config config.Configuration) *RESTClient {
-	oAuthToken, err := Login(config)
+	oAuthToken, err := Authorize(config)
 	if err != nil {
 		log.Fatal(err)
 	}

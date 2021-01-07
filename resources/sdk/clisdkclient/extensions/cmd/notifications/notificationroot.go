@@ -1,18 +1,12 @@
 package notifications
 
 import (
-	"gc/cmd/notifications/channels"
-	"gc/cmd/notifications/topics"
-	"gc/cmd/notifications/subscriptions"
-	"gc/services"
-
-	// "gc/notifications/subscriptions"
+	"gc/cmd/channels"
+	"gc/cmd/topics"
+	"gc/cmd/subscriptions"
 
 	"github.com/spf13/cobra"
 )
-
-var BaseURI = "api/v2/notifications"
-var CommandService services.CommandService
 
 var notificationsCmd = &cobra.Command{
 	Use:   "notifications",
@@ -21,13 +15,9 @@ var notificationsCmd = &cobra.Command{
 }
 
 func Cmdnotifications() *cobra.Command {
-	notificationsCmd.AddCommand(topics.TopicsCmd())
-	notificationsCmd.AddCommand(channels.ChannelsCmd())
-	notificationsCmd.AddCommand(subscriptions.SubscriptionsCmd())
+	notificationsCmd.AddCommand(topics.Cmdtopics())
+	notificationsCmd.AddCommand(channels.Cmdchannels())
+	notificationsCmd.AddCommand(subscriptions.Cmdsubscriptions())
 
 	return notificationsCmd
-}
-
-func init() {
-	CommandService = services.NewCommandService(notificationsCmd)
 }

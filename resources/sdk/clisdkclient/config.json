@@ -4,8 +4,7 @@
   },
   "settings": {
     "sdkRepo": {
-      "repo": "https://github.com/ronanwatkins/platform-client-sdk-go.git",
-      "branch": "cli_sdk"
+      "repo": "https://github.com/MyPureCloud/platform-client-sdk-cli"
     },
     "versionFile": "${SDK_REPO}/version.json",
     "logLevel": "debug",
@@ -68,7 +67,6 @@
           "type": "node",
           "path": "post-process.js",
           "args": [
-            "${COMMON_ROOT}/resources/sdk/clisdkclient/templates/",
             "${SDK_REPO}/build/src/cmd/"
           ],
           "failOnError": true
