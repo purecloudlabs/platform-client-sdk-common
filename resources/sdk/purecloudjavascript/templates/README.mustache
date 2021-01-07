@@ -104,6 +104,52 @@ client.loginSaml2BearerGrant(clientId,clientSecret,orgName,encodedAssertionStrin
   });
 ```
 
+**Node.js** [Authorization Code Grant](https://developer.mypurecloud.com/api/rest/authorization/use-authorization-code.html)
+
+The Authorization Code grant only works when used in node.js. This is restricted intentionally because it is impossible for client credentials to be handled securely in a browser application.
+
+```{"language":"javascript"}
+const client = {{moduleName}}.ApiClient.instance;
+client.loginCodeAuthorizationGrant(clientId,clientSecret,authCode,redirectUri)
+  .then(() => {
+    // Do authenticated things
+  })
+  .catch((err) => {
+    // Handle failure response
+    console.log(err);
+  });
+```
+
+By default the SDK will transparently request a new access token when it expires. By default the SDK will transparently request a new access token when it expires. If multiple threads are running 1 thread will request a new token, other threads will wait a maximum of 10 seconds for the token refresh to complete, this time can be overriden with the _refreshTokenWaitTime_ field of the _ApiClient_ object.  
+If you wish to apply the refresh logic yourself, set _shouldRefreshAccessToken_ to false and store the refresh token. The _tokenExpiryTime_ can be used to preemptively request a new token. Use _refreshCodeAuthorizationGrant_ to request a new token when necessary.
+
+```{"language":"javascript"}
+const client = {{moduleName}}.ApiClient.instance;
+client.shouldRefreshAccessToken = false;
+client.loginCodeAuthorizationGrant(clientId,clientSecret,authCode,redirectUri)
+  .then((authData) => {
+    refreshToken = authData.refreshToken;
+    tokenExpiryTime = authData.tokenExpiryTime;
+    // Do authenticated things
+  })
+  .catch((err) => {
+    // Handle failure response
+    console.log(err);
+  });
+
+// When token expires
+client.refreshCodeAuthorizationGrant(clientId,clientSecret,refreshToken)
+  .then((authData) => {
+    refreshToken = authData.refreshToken;
+    tokenExpiryTime = authData.tokenExpiryTime;
+    // Do authenticated things again
+  })
+  .catch((err) => {
+    // Handle failure response
+    console.log(err);
+  });
+```
+
 **Web** [Implicit grant](https://developer.mypurecloud.com/api/rest/authorization/use-implicit-grant.html)
 
 The Implicit grant only works when used in a browser. This is because a node.js application does not have a browser interface that can display the Genesys Cloud login window.

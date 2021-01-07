@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using {{packageName}}.Extensions;
 
 namespace {{packageName}}.Client
 {
@@ -36,6 +37,8 @@ namespace {{packageName}}.Client
                              string tempFolderPath = null,
                              string dateTimeFormat = null,
                              int timeout = 100000,
+                             bool shouldRefreshAccessToken = true,
+                             int refreshTokenWaitTime = 10,
                              string userAgent = "{{#httpUserAgent}}{{.}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen{{/httpUserAgent}}/dotnet"
                             )
         {
@@ -43,6 +46,7 @@ namespace {{packageName}}.Client
 
             Username = username;
             Password = password;
+            AuthTokenInfo = new AuthTokenInfo();
             AccessToken = accessToken;
             UserAgent = userAgent;
 
@@ -56,6 +60,8 @@ namespace {{packageName}}.Client
             TempFolderPath = tempFolderPath;
             DateTimeFormat = dateTimeFormat;
             Timeout = timeout;
+            ShouldRefreshAccessToken = shouldRefreshAccessToken;
+            RefreshTokenWaitTime = refreshTokenWaitTime;
         }
 
         /// <summary>
@@ -107,12 +113,13 @@ namespace {{packageName}}.Client
         /// <returns></returns>
         public void setApiClientUsingDefault (ApiClient apiClient = null)
         {
+            AuthTokenInfo = new AuthTokenInfo();
             if (apiClient == null)
             {
                 if (Default != null && Default.ApiClient == null)
-                    Default.ApiClient = new ApiClient();
+                    Default.ApiClient = new ApiClient(this);
 
-                ApiClient = Default != null ? Default.ApiClient : new ApiClient();
+                ApiClient = Default != null ? Default.ApiClient : new ApiClient(this);
             }
             else
             {
@@ -168,10 +175,39 @@ namespace {{packageName}}.Client
         public String Password { get; set; }
 
         /// <summary>
+        /// Gets or sets the AuthTokenInfo for OAuth2 authentication.
+        /// </summary>
+        /// <value>The access token.</value>
+        public AuthTokenInfo AuthTokenInfo { get; set; }
+
+        /// <summary>
         /// Gets or sets the access token for OAuth2 authentication.
         /// </summary>
         /// <value>The access token.</value>
-        public String AccessToken { get; set; }
+        public String AccessToken
+        {
+            get
+            { 
+                return AuthTokenInfo.AccessToken;
+            }
+
+            set
+            {
+                AuthTokenInfo.AccessToken = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the flag to indicate whether the access token should be refreshed transparently when using the Code Authorization flow.
+        /// </summary>
+        /// <value>The access token transparent refresh flag.</value>
+        public bool ShouldRefreshAccessToken { get; set; }
+
+        /// <summary>
+        /// The amount of time other threads will wait for a thread to request a new access token when it expires.
+        /// </summary>
+        /// <value>The access token transparent refresh flag.</value>
+        public int RefreshTokenWaitTime { get; set; }
 
         /// <summary>
         /// Gets or sets the API key based on the authentication name.
