@@ -1,5 +1,3 @@
-ENV=GOPRIVATE=bitbucket.org/inindca
-
 EXECUTABLE=gc
 WINDOWS=$(EXECUTABLE).exe
 LINUX=$(EXECUTABLE)_linux_amd64
@@ -21,13 +19,13 @@ linux: $(LINUX) ## Build for Linux
 darwin: $(DARWIN) ## Build for Darwin (macOS)
 
 $(WINDOWS):
-	cd src && env ${ENV} GOOS=windows GOARCH=amd64 go build -v -o ../bin/$(WINDOWS)
+	cd src && env GOOS=windows GOARCH=amd64 go build -v -o ../bin/$(WINDOWS)
 
 $(LINUX):
-	cd src && env ${ENV} GOOS=linux GOARCH=amd64 go build -v -o ../bin/$(LINUX)
+	cd src && env GOOS=linux GOARCH=amd64 go build -v -o ../bin/$(LINUX)
 
 $(DARWIN):
-	cd src && env ${ENV} GOOS=darwin GOARCH=amd64 go build -v -o ../bin/$(DARWIN)
+	cd src && env GOOS=darwin GOARCH=amd64 go build -v -o ../bin/$(DARWIN)
 
 clean:
 	rm -f $(WINDOWS) $(LINUX) $(DARWIN)
