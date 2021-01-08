@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 )
 
 type apiClientTest struct {
@@ -26,7 +27,115 @@ type apiClientTest struct {
 	expectedStatusCode  int
 }
 
-func buildMockConfig(profileName string, environment string, clientID string, clientSecret string) *mocks.MockClientConfig {
+func TestLogin(t *testing.T) {
+	UpdateOAuthToken = mocks.UpdateOAuthToken
+
+	mockConfig := buildMockConfig("DEFAULT", "mypurecloud.com", utils.GenerateGuid(), utils.GenerateGuid(), "")
+	accessToken := "aJdvugb8k1kwnOovm2qX6LXTctJksYvdzcoXPrRDi-nL1phQhcKRN-bjcflq7CUDOmUCQv5OWuBSkPQr0peWhw"
+	Client = buildRestClientDoMockForLogin(t, *mockConfig, accessToken)
+
+	oauthData, err := Login(mockConfig)
+	if err != nil {
+		t.Fatalf("err should be nil, got: %s", err)
+	}
+	if oauthData.AccessToken != accessToken {
+		t.Errorf("OAuth Access Token incorrect, got: %s, want: %s.", oauthData.AccessToken, accessToken)
+	}
+
+	// Check that the same token is returned when the the expiry time stamp is in the future
+	mockConfig = buildMockConfig(mockConfig.ProfileName() ,mockConfig.Environment(), mockConfig.ClientID(), mockConfig.ClientSecret(), oauthData.String())
+	oauthData, err = Login(mockConfig)
+	if err != nil {
+		t.Fatalf("err should be nil, got: %s", err)
+	}
+	if oauthData.AccessToken != accessToken {
+		t.Errorf("OAuth Access Token incorrect, got: %s, want: %s.", oauthData.AccessToken, accessToken)
+	}
+
+	// Check that a new token is retrieved when the the expiry time stamp is in the past
+	oauthData.OAuthTokenExpiry = time.Now().AddDate(0, 0, -1).Format(time.RFC3339)
+	accessToken = "aJdvugb8k1kwnOovm2qX6LXTctJksYvdzcoXPrRDi-nL1phQhcKRN-bjcflq7CUDOmUCQv5OWuBSkPQr0peWhw"
+	mockConfig = buildMockConfig(mockConfig.ProfileName() ,mockConfig.Environment(), mockConfig.ClientID(), mockConfig.ClientSecret(), oauthData.String())
+	oauthData, err = Login(mockConfig)
+	if err != nil {
+		t.Fatalf("err should be nil, got: %s", err)
+	}
+	if oauthData.AccessToken != accessToken {
+		t.Errorf("OAuth Access Token incorrect, got: %s, want: %s.", oauthData.AccessToken, accessToken)
+	}
+}
+
+func TestLowLevelRestClient(t *testing.T) {
+	tests := buildTestCaseTable()
+
+	for _, tc := range tests {
+		restClient := &RESTClient{
+			environment: tc.targetEnv,
+			token:       tc.oAuthToken,
+		}
+
+		Client = buildRestClientDoMock(t, tc)
+
+		//First checking the low level API call
+		results, err := restClient.callAPI(tc.targetVerb, tc.targetPath, "")
+
+		//Testing to see if we got an http status code error.  If we got an http status code error we should get an HttpStatusError struct and the status code should match the status code on the response
+		//Later on checks like this will be important when we add
+		if err != nil {
+			//Check to see if its an HTTP error and if its check to see if its what we are expecting
+			if e, ok := err.(*HttpStatusError); ok && e.StatusCode != tc.expectedStatusCode {
+				t.Errorf("Did not get the right HttpStatus Code for the error expected, got: %d, want: %d.", e.StatusCode, tc.expectedStatusCode)
+			}
+		} else {
+			if tc.expectedResponse != results {
+				t.Errorf("Retrieved the incorrect response calling the RestClient.Get, got: %s, want: %s.", results, tc.expectedResponse)
+			}
+		}
+	}
+}
+
+func TestHighLevelRestClient(t *testing.T) {
+	tests := buildTestCaseTable()
+
+	for _, tc := range tests {
+		restClient := &RESTClient{
+			environment: tc.targetEnv,
+			token:       tc.oAuthToken,
+		}
+
+		Client = buildRestClientDoMock(t, tc)
+		var results string
+		var err error
+
+		//Calling the higher levl API functions
+		switch tc.targetVerb {
+		case http.MethodGet:
+			results, err = restClient.Get(tc.targetPath)
+		case http.MethodPost:
+			results, err = restClient.Post(tc.targetPath, tc.targetBody)
+		case http.MethodPut:
+			results, err = restClient.Put(tc.targetPath, tc.targetBody)
+		case http.MethodPatch:
+			results, err = restClient.Patch(tc.targetPath, tc.targetBody)
+		case http.MethodDelete:
+			results, err = restClient.Delete(tc.targetPath)
+		}
+
+		//Rechecking the error codes for the higher level RestClient functions
+		if err != nil {
+			//Check to see if its an HTTP error and if its check to see if its what we are expecting
+			if e, ok := err.(*HttpStatusError); ok && e.StatusCode != tc.expectedStatusCode {
+				t.Errorf("Did not get the right HttpStatus Code for the error expected, got: %d, want: %d.", e.StatusCode, tc.expectedStatusCode)
+			}
+		} else {
+			if tc.expectedResponse != results {
+				t.Errorf("Retrieved the incorrect response calling the RestClient.Get, got: %s, want: %s.", results, tc.expectedResponse)
+			}
+		}
+	}
+}
+
+func buildMockConfig(profileName string, environment string, clientID string, clientSecret string, oauthTokenData string) *mocks.MockClientConfig {
 	mockConfig := &mocks.MockClientConfig{}
 
 	mockConfig.ProfileNameFunc = func() string {
@@ -45,17 +154,15 @@ func buildMockConfig(profileName string, environment string, clientID string, cl
 		return clientSecret
 	}
 
-	
+	mockConfig.OAuthTokenDataFunc = func() string {
+		return oauthTokenData
+	}
 
 	return mockConfig
 }
-func TestLogin(t *testing.T) {
+
+func buildRestClientDoMockForLogin(t *testing.T, mockConfig mocks.MockClientConfig, accessToken string) *mocks.MockHttpClient {
 	mock := &mocks.MockHttpClient{}
-	mockConfig := buildMockConfig("DEFAULT", "mypurecloud.com", utils.GenerateGuid(), utils.GenerateGuid())
-
-	accessToken := "aJdvugb8k1kwnOovm2qX6LXTctJksYvdzcoXPrRDi-nL1phQhcKRN-bjcflq7CUDOmUCQv5OWuBSkPQr0peWhw"
-	tokenType := "bearer"
-
 	mock.DoFunc = func(request *http.Request) (*http.Response, error) {
 		authHeaderString := fmt.Sprintf("%s:%s", mockConfig.ClientID(), mockConfig.ClientSecret())
 		expectedAuthHeader := fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(authHeaderString)))
@@ -83,11 +190,11 @@ func TestLogin(t *testing.T) {
 		responseString := fmt.Sprintf(`
 		  {
 				"access_token": "%s",
-				"token_type": "%s", 
-				"expires_in": "",
-				"Error":      ""
+				"token_type": "Bearer", 
+				"expires_in": 1234,
+				"error":      ""
 			}
-		`, accessToken, tokenType)
+		`, accessToken)
 
 		stringReader := strings.NewReader(responseString)
 		stringReadCloser := ioutil.NopCloser(stringReader)
@@ -99,12 +206,7 @@ func TestLogin(t *testing.T) {
 		return response, nil
 	}
 
-	Client = mock
-	oauth, _ := Login(mockConfig)
-
-	if oauth.AccessToken != accessToken {
-		t.Errorf("OAuth Access Token incorrect, got: %s, want: %s.", oauth.AccessToken, accessToken)
-	}
+	return mock
 }
 
 //buildRestClientDoMock returns a mock Do object for the RestClient tests
@@ -165,74 +267,4 @@ func buildTestCaseTable() []apiClientTest {
 	}
 
 	return tests
-}
-
-func TestLowLevelRestClient(t *testing.T) {
-	tests := buildTestCaseTable()
-
-	for _, tc := range tests {
-		restClient := &RESTClient{
-			environment: tc.targetEnv,
-			token:       tc.oAuthToken,
-		}
-
-		Client = buildRestClientDoMock(t, tc)
-
-		//First checking the low level API call
-		results, err := restClient.callAPI(tc.targetVerb, tc.targetPath, "")
-
-		//Testing to see if we got an http status code error.  If we got an http status code error we should get an HttpStatusError struct and the status code should match the status code on the response
-		//Later on checks like this will be important when we add
-		if err != nil {
-			//Check to see if its an HTTP error and if its check to see if its what we are expecting
-			if e, ok := err.(*HttpStatusError); ok && e.StatusCode != tc.expectedStatusCode {
-				t.Errorf("Did not get the right HttpStatus Code for the error expected, got: %d, want: %d.", e.StatusCode, tc.expectedStatusCode)
-			}
-		} else {
-			if tc.expectedResponse != results {
-				t.Errorf("Retrieved the incorrect response calling the restClient.Get, got: %s, want: %s.", results, tc.expectedResponse)
-			}
-		}
-	}
-}
-
-func TestHighLevelRestClient(t *testing.T) {
-	tests := buildTestCaseTable()
-
-	for _, tc := range tests {
-		restClient := &RESTClient{
-			environment: tc.targetEnv,
-			token:       tc.oAuthToken,
-		}
-
-		Client = buildRestClientDoMock(t, tc)
-		var results string
-		var err error
-
-		//Calling the higher levl API functions
-		switch tc.targetVerb {
-		case http.MethodGet:
-			results, err = restClient.Get(tc.targetPath)
-		case http.MethodPost:
-			results, err = restClient.Post(tc.targetPath, tc.targetBody)
-		case http.MethodPut:
-			results, err = restClient.Put(tc.targetPath, tc.targetBody)
-		case http.MethodPatch:
-			results, err = restClient.Patch(tc.targetPath, tc.targetBody)
-		case http.MethodDelete:
-			results, err = restClient.Delete(tc.targetPath)
-		}
-
-		//Rechecking the error codes for the higher level RestClient functions
-		if err != nil {
-			//Check to see if its an HTTP error and if its check to see if its what we are expecting
-			if e, ok := err.(*HttpStatusError); ok && e.StatusCode != tc.expectedStatusCode {
-				t.Errorf("Did not get the right HttpStatus Code for the error expected, got: %d, want: %d.", e.StatusCode, tc.expectedStatusCode)
-			}
-		} else {
-			if tc.expectedResponse != results {
-				t.Errorf("Retrieved the incorrect response calling the restClient.Get, got: %s, want: %s.", results, tc.expectedResponse)
-			}
-		}
-	}
 }

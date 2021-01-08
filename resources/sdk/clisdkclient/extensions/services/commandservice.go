@@ -43,10 +43,12 @@ type retry struct {
 	RetryConfiguration
 }
 
-// The following functions are added as variables to allow reassignment to mock functions in unit tests
 var (
+	// The following functions are added as variables to allow reassignment to mock functions in unit tests
 	configGetConfig = config.GetConfig
 	restclientNewRESTClient = restclient.NewRESTClient
+	// This will be set if the application silently re-authenticates for a 401 error
+	hasReAuthenticated bool
 )
 
 //NewCommandService initializes a new command Service object
@@ -62,14 +64,17 @@ func (c *commandService) Get(uri string) (string, error) {
 	}
 
 	restClient := restclientNewRESTClient(config)
-
 	response, err := restClient.Get(uri)
+	if err == nil {
+		return response, nil
+	}
 
+	err = reAuthenticateIfNecessary(config, err)
 	if err != nil {
 		return "", err
 	}
 
-	return response, nil
+	return c.Get(uri)
 }
 
 func (c *commandService) List(uri string) (string, error) {
@@ -84,7 +89,11 @@ func (c *commandService) List(uri string) (string, error) {
 	//Looks up first page
 	data, err := restClient.Get(uri)
 	if err != nil {
-		return "", err
+		err = reAuthenticateIfNecessary(config, err)
+		if err != nil {
+			return "", err
+		}
+		return c.List(uri)
 	}
 
 	firstPage := &models.Entities{}
@@ -102,25 +111,13 @@ func (c *commandService) List(uri string) (string, error) {
 	if firstPage.PageCount > 1 {
 		pagedURI := uri
 		for x := 2; x <= firstPage.PageCount; x++ {
-			if strings.Contains(pagedURI,"pageNumber=") {
-				re := regexp.MustCompile("pageNumber=([0-9]+)")
-				result := re.FindStringSubmatch(pagedURI)
-				pageNumber, _ := strconv.Atoi(result[1])
-				pageNumber++
-				pagedURI = strings.Replace(pagedURI, result[0], fmt.Sprintf("pageNumber=%v", pageNumber), 1)
-			} else {
-				if strings.Contains(pagedURI, "?") {
-					pagedURI = fmt.Sprintf("%s&pageNumber=%d", pagedURI, x)
-				} else {
-					pagedURI = fmt.Sprintf("%s?pageNumber=%d", pagedURI, x)
-				}
-			}
-			pageData := &models.Entities{}
+			pagedURI = updatePageNumber(pagedURI, x)
 			data, err := restClient.Get(pagedURI)
 			if err != nil {
 				return "", err
 			}
 
+			pageData := &models.Entities{}
 			json.Unmarshal([]byte(data), pageData)
 
 			for _, val := range pageData.Entities {
@@ -132,6 +129,24 @@ func (c *commandService) List(uri string) (string, error) {
 	//Convert the data into one big string
 	finalJSONString := fmt.Sprintf("[%s]", strings.Join(totalResults, ","))
 	return finalJSONString, nil
+}
+
+func updatePageNumber(pagedURI string, index int) string {
+	if strings.Contains(pagedURI,"pageNumber=") {
+		re := regexp.MustCompile("pageNumber=([0-9]+)")
+		result := re.FindStringSubmatch(pagedURI)
+		pageNumber, _ := strconv.Atoi(result[1])
+		pageNumber++
+		pagedURI = strings.Replace(pagedURI, result[0], fmt.Sprintf("pageNumber=%v", pageNumber), 1)
+	} else {
+		if strings.Contains(pagedURI, "?") {
+			pagedURI = fmt.Sprintf("%s&pageNumber=%d", pagedURI, index)
+		} else {
+			pagedURI = fmt.Sprintf("%s?pageNumber=%d", pagedURI, index)
+		}
+	}
+
+	return pagedURI
 }
 
 func (c *commandService) Post(uri string, payload string) (string, error) {
@@ -174,7 +189,35 @@ func (c *commandService) upsert(method string, uri string, payload string) (stri
 		log.Fatal("Unable to resolve the http verb in the GeneralCreateUpdate function")
 	}
 
-	return response, err
+	if err == nil {
+		return response, nil
+	}
+
+	err = reAuthenticateIfNecessary(config, err)
+	if err != nil {
+		return "", err
+	}
+
+	return c.upsert(method, uri, payload)
+}
+
+func reAuthenticateIfNecessary(config config.Configuration, err error) error {
+	if hasReAuthenticated {
+		return err
+	}
+
+	if e, ok := err.(restclient.HttpStatusError); ok && e.StatusCode == http.StatusUnauthorized {
+		_, err = restclient.ReAuthenticate(config)
+		if err != nil {
+			return err
+		}
+	} else {
+		return err
+	}
+
+	hasReAuthenticated = true
+
+	return nil
 }
 
 func (c *commandService) DetermineAction(httpMethod string, operationId string, uri string) func(retryConfiguration *RetryConfiguration) (string, error) {
@@ -241,25 +284,21 @@ func (r *retry) shouldRetry(startTime time.Time, errorValue error) bool {
 	if errorValue == nil {
 		return false
 	}
-	e := errorValue.(restclient.HttpStatusError)
 
-	if time.Since(startTime) < secondsToNanoSeconds(r.MaxRetryTimeSec) && e.StatusCode == http.StatusTooManyRequests {
+	e, ok := errorValue.(restclient.HttpStatusError)
+	if !ok {
+		return false
+	}
+
+	if time.Since(startTime) < utils.SecondsToNanoSeconds(r.MaxRetryTimeSec) && e.StatusCode == http.StatusTooManyRequests {
 		r.retryAfterMs = getRetryAfterValue(e.Headers)
 		r.retryCountBeforeQuitting++
 		if r.retryCountBeforeQuitting < r.MaxRetriesBeforeQuitting {
-			time.Sleep(milliSecondsToNanoSeconds(r.retryAfterMs))
+			time.Sleep(utils.MilliSecondsToNanoSeconds(r.retryAfterMs))
 			return true
 		}
 	}
 	return false
-}
-
-func milliSecondsToNanoSeconds(milliSeconds int64) time.Duration {
-	return time.Duration(milliSeconds * 1000 * 1000)
-}
-
-func secondsToNanoSeconds(seconds int) time.Duration {
-	return milliSecondsToNanoSeconds(int64(seconds)) * 1000
 }
 
 func getRetryAfterValue(headers map[string][]string) int64 {

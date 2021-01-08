@@ -31,6 +31,11 @@ func constructConfig(profileName string, environment string, clientID string, cl
 	config.ClientSecretFunc = func() string {
 		return clientSecret
 	}
+
+	config.OAuthTokenDataFunc = func() string {
+		return ""
+	}
+
 	return config
 }
 

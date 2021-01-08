@@ -11,6 +11,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -126,4 +127,12 @@ func GenerateGuid() string {
 	}
 
 	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
+}
+
+func MilliSecondsToNanoSeconds(milliSeconds int64) time.Duration {
+	return time.Duration(milliSeconds * 1000 * 1000)
+}
+
+func SecondsToNanoSeconds(seconds int) time.Duration {
+	return MilliSecondsToNanoSeconds(int64(seconds)) * 1000
 }

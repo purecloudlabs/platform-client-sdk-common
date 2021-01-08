@@ -11,8 +11,8 @@
     "logLevel": "debug",
     "extensionsDestination": "${SDK_REPO}/build/src/",
     "swagger": {
-      "oldSwaggerPath": "${SDK_REPO}/swagger.json",
-      "newSwaggerPath": "https://api.mypurecloud.com/api/v2/docs/swagger",
+      "oldSwaggerPath": "/Users/ronanwatkins/genesys_src/repos/platform-client-sdk-common/swagger.json",
+      "newSwaggerPath": "/Users/ronanwatkins/genesys_src/repos/platform-client-sdk-common/swagger.json",
       "saveNewSwaggerPath": "${SDK_REPO}/swagger.json"
     },
     "swaggerCodegen": {
