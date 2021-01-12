@@ -1,13 +1,20 @@
 package mocks
 
-import "fmt"
+import (
+	"fmt"
+	"gc/config"
+	"gc/models"
+)
 
 type MockClientConfig struct {
-	ProfileNameFunc  func() string
-	EnvironmentFunc  func() string
-	ClientIDFunc     func() string
-	ClientSecretFunc func() string
+	ProfileNameFunc    func() string
+	EnvironmentFunc    func() string
+	ClientIDFunc       func() string
+	ClientSecretFunc   func() string
+	OAuthTokenDataFunc func() string
 }
+
+var UpdatedAccessToken string
 
 func (m *MockClientConfig) ProfileName() string {
 	return m.ProfileNameFunc()
@@ -25,6 +32,15 @@ func (m *MockClientConfig) ClientSecret() string {
 	return m.ClientSecretFunc()
 }
 
+func (m *MockClientConfig) OAuthTokenData() string {
+	return m.OAuthTokenDataFunc()
+}
+
 func (m *MockClientConfig) String() string {
 	return fmt.Sprintf("\n-------------\nProfile Name: %s\nEnvironment: %s\nClient ID: %s\nClient Secret: %s\n--------------\n", m.ProfileName(), m.Environment(), m.ClientID(), m.ClientSecret())
+}
+
+func UpdateOAuthToken(_ config.Configuration, oauthTokenData *models.OAuthTokenData) error {
+	UpdatedAccessToken = oauthTokenData.AccessToken
+	return nil
 }

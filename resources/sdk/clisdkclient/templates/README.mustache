@@ -3,12 +3,12 @@ title: Platform API CLI SDK
 ispreview: true
 ---
 
-This project repository is a proof-of-concept command-line tool for Genesys cloud.  It is is intended for beta purposes.  This cli focuses mainly on exposing the following operation:
+This CLI focuses mainly on exposing the following operations:
 
-- **get** - Get a defined object by Genesys cloud id 
+- **get** - Get a defined object by ID
 - **list** - Get a list of all the Genesys Cloud objects of a particular type for an organization
 - **create** - Create a Genesys Cloud object via data passed in via stdin or via file.
-- **update** Update a Genesys Cloud object via data passed in via stdin or via file.
+- **update** - Update a Genesys Cloud object via data passed in via stdin or via file.
 - **delete** - Delete a Genesys Cloud object via data passed in via stdin or via file.
 
 The following objects are currently supported by the CLI:
@@ -22,7 +22,8 @@ The following objects are currently supported by the CLI:
 - queues
 - sites
 - skills
-- stations 
+- stations
+- usage
 - users
 
 In addition, a few objects provide additional capabilities, including:
@@ -36,32 +37,32 @@ In addition, a few objects provide additional capabilities, including:
 # Setup and Configuration
 All access to Genesys Cloud is provided via OAuth client credentials.  Security is enforced via the OAuth client credentials.
 
-To setup and configure your gc cli run `gc profiles new` command and answer the questions.  If everything works correctly you should have a file created in your home directory called .gc/config.toml.  If for some reason you have problems with the `gc profiles new` command, you can manually create the config file by following the steps below.
+To setup and configure your gc CLI run `gc profiles new` command and answer the questions.  If everything works correctly you should have a file created in your home directory called .gc/config.toml.  If for some reason you have problems with the `gc profiles new` command, you can manually create the config file by following the steps below.
 
 -  Create .gc directory in your home directory
 -  Create a config.toml file in this directory.
 
 ```
 [DEFAULT]
-environment: "mypurecloud.com" 
+environment="mypurecloud.com" 
 client_credentials="OAUTH CLIENT CREDENTIAL GRANT"
 client_secret="OAUTH CLIENT SECRET"
 
 [hollywoo]
-environment: "mypurecloud.com"
+environment="mypurecloud.com"
 client_credentials="OAUTH CLIENT CREDENTIAL GRANT"
 client_secret="OAUTH CLIENT SECRET"
 ```
 
-**Note:** You can setup up multiple profiles.  The default profile is what will be used by the cli by default.  You can use a different profile by passing in a `-p `on the cli.
+**Note:** You can setup up multiple profiles.  The default profile is what will be used by the CLI by default.  You can use a different profile by passing in a `-p` on the CLI.
 
-# Using the cli
+# Using the CLI
 The CLI follows standard POSIX command name and command flag parameter styles.  To see all of the available objects you can issue a `gc` command.  To see all the sub-commands under a particular entity (eg. users) type `gc <<subcommand>>`.  For example to see all of the users in the org you can type `gc users list`.
 
 # Additional Tools
-Since this is a cli, the output from the tool can be passed to other command tools and scripts.  Two of the most common helpful tools are:
+Since this is a CLI, the output from the tool can be passed to other command tools and scripts.  Two of the most common helpful tools are:
 
-[jq](https://stedolan.github.io/jq/):  A JSON query, filter and transformation tools.  This tool can do just about anything with JSON.  For instance to retrieve all of the members of a specific queues, lookup their id and names and transform the output into CSV you issue the following CSV you can issue the following `gc` and `jq` commands:
+[jq](https://stedolan.github.io/jq/):  A JSON query, filter and transformation tools.  This tool can do just about anything with JSON.  For instance to retrieve all of the members of a specific queues, lookup their CLI and names and transform the output into CSV you issue the following CSV you can issue the following `gc` and `jq` commands:
 
 ```
 gc queues list|  jq -c '.[] | select( .name | contains("Chat2"))' | jq -r '. | .id' | xargs -I{} gc queues users {} | jq -r '.[] | [.id,.name] | @csv'> output.csv
@@ -100,9 +101,9 @@ gc users delete {{genesys cloud id of the user being deleted}}
 This command:
 - retrieves a list of all the queues
 - filters out the queue named Chat2 
-- parses out its id
-- uses xargs to pipe the id over to the `gc queue users` command
-- parses out the id and name field for each record
+- parses out its CLI
+- uses xargs to pipe the CLI over to the `gc queue users` command
+- parses out the CLI and name field for each record
 - formats results into a csv format 
 - redirects the output to a file call output.csv
 

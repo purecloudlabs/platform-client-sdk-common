@@ -35,6 +35,8 @@ type commandService struct {
 var (
 	configGetConfig         = config.GetConfig
 	restclientNewRESTClient = restclient.NewRESTClient
+	// This will be set if the application silently re-authenticates for a 401 error
+	hasReAuthenticated bool
 )
 
 //NewCommandService initializes a new command Service object
@@ -50,14 +52,17 @@ func (c *commandService) Get(uri string) (string, error) {
 	}
 
 	restClient := restclientNewRESTClient(config)
-
 	response, err := restClient.Get(uri)
+	if err == nil {
+		return response, nil
+	}
 
+	err = reAuthenticateIfNecessary(config, err)
 	if err != nil {
 		return "", err
 	}
 
-	return response, nil
+	return c.Get(uri)
 }
 
 func (c *commandService) List(uri string) (string, error) {
@@ -72,7 +77,11 @@ func (c *commandService) List(uri string) (string, error) {
 	//Looks up first page
 	data, err := restClient.Get(uri)
 	if err != nil {
-		return "", err
+		err = reAuthenticateIfNecessary(config, err)
+		if err != nil {
+			return "", err
+		}
+		return c.List(uri)
 	}
 
 	firstPage := &models.Entities{}
@@ -90,25 +99,13 @@ func (c *commandService) List(uri string) (string, error) {
 	if firstPage.PageCount > 1 {
 		pagedURI := uri
 		for x := 2; x <= firstPage.PageCount; x++ {
-			if strings.Contains(pagedURI,"pageNumber=") {
-				re := regexp.MustCompile("pageNumber=([0-9]+)")
-				result := re.FindStringSubmatch(pagedURI)
-				pageNumber, _ := strconv.Atoi(result[1])
-				pageNumber++
-				pagedURI = strings.Replace(pagedURI, result[0], fmt.Sprintf("pageNumber=%v", pageNumber), 1)
-			} else {
-				if strings.Contains(pagedURI, "?") {
-					pagedURI = fmt.Sprintf("%s&pageNumber=%d", pagedURI, x)
-				} else {
-					pagedURI = fmt.Sprintf("%s?pageNumber=%d", pagedURI, x)
-				}
-			}
-			pageData := &models.Entities{}
+			pagedURI = updatePageNumber(pagedURI, x)
 			data, err := restClient.Get(pagedURI)
 			if err != nil {
 				return "", err
 			}
 
+			pageData := &models.Entities{}
 			json.Unmarshal([]byte(data), pageData)
 
 			for _, val := range pageData.Entities {
@@ -120,6 +117,24 @@ func (c *commandService) List(uri string) (string, error) {
 	//Convert the data into one big string
 	finalJSONString := fmt.Sprintf("[%s]", strings.Join(totalResults, ","))
 	return finalJSONString, nil
+}
+
+func updatePageNumber(pagedURI string, index int) string {
+	if strings.Contains(pagedURI,"pageNumber=") {
+		re := regexp.MustCompile("pageNumber=([0-9]+)")
+		result := re.FindStringSubmatch(pagedURI)
+		pageNumber, _ := strconv.Atoi(result[1])
+		pageNumber++
+		pagedURI = strings.Replace(pagedURI, result[0], fmt.Sprintf("pageNumber=%v", pageNumber), 1)
+	} else {
+		if strings.Contains(pagedURI, "?") {
+			pagedURI = fmt.Sprintf("%s&pageNumber=%d", pagedURI, index)
+		} else {
+			pagedURI = fmt.Sprintf("%s?pageNumber=%d", pagedURI, index)
+		}
+	}
+
+	return pagedURI
 }
 
 func (c *commandService) Post(uri string, payload string) (string, error) {
@@ -162,7 +177,35 @@ func (c *commandService) upsert(method string, uri string, payload string) (stri
 		log.Fatal("Unable to resolve the http verb in the GeneralCreateUpdate function")
 	}
 
-	return response, err
+	if err == nil {
+		return response, nil
+	}
+
+	err = reAuthenticateIfNecessary(config, err)
+	if err != nil {
+		return "", err
+	}
+
+	return c.upsert(method, uri, payload)
+}
+
+func reAuthenticateIfNecessary(config config.Configuration, err error) error {
+	if hasReAuthenticated {
+		return err
+	}
+
+	if e, ok := err.(models.HttpStatusError); ok && e.StatusCode == http.StatusUnauthorized {
+		_, err = restclient.ReAuthenticate(config)
+		if err != nil {
+			return err
+		}
+	} else {
+		return err
+	}
+
+	hasReAuthenticated = true
+
+	return nil
 }
 
 func (c *commandService) DetermineAction(httpMethod string, operationId string, uri string) func(retryConfiguration *retry.RetryConfiguration) (string, error) {

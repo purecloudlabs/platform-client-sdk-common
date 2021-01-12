@@ -9,6 +9,7 @@ type Parameters struct {
 	Required    bool   `json:"required,omitempty"`
 	Type        string `json:"type,omitempty"`
 }
+
 type Method struct {
 	Summary     string       `json:"summary,omitempty"`
 	Description string       `json:"description,omitempty"`

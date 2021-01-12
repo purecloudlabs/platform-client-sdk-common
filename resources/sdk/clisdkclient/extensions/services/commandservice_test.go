@@ -21,11 +21,13 @@ type apiClientTest struct {
 	targetHeaders       map[string][]string
 	expectedResponse    string
 	expectedStatusCode  int
+	expectedAccessToken string
 }
 
 func TestRetryWithData(t *testing.T) {
 	restclientNewRESTClient = mockNewRESTClient
-	configGetConfig = mockGetConfig
+	configGetConfig = mockGetConfigRetry
+	restclient.UpdateOAuthToken = mocks.UpdateOAuthToken
 
 	c := commandService{
 		cmd: &cobra.Command{},
@@ -41,7 +43,7 @@ func TestRetryWithData(t *testing.T) {
 		targetStatusCode: http.StatusTooManyRequests,
 		expectedResponse: fmt.Sprintf(`{"numRetries":"%v"}`, maxRetriesBeforeQuitting),
 		expectedStatusCode: http.StatusTooManyRequests}
-	restclient.Client = buildRestClientDoMock(tc, 10)
+	restclient.Client = buildRestClientDoMockForRetry(tc, 10)
 
 	retryFunc := retry.RetryWithData(tc.targetPath, "", c.Patch)
 	retryConfig := &retry.RetryConfiguration{
@@ -67,7 +69,7 @@ func TestRetryWithData(t *testing.T) {
 	expectedNumCalls := 2
 
 	tc.expectedResponse = fmt.Sprintf(`{"numRetries":"%v"}`, expectedNumCalls)
-	restclient.Client = buildRestClientDoMock(tc, 10)
+	restclient.Client = buildRestClientDoMockForRetry(tc, 10)
 
 	retryFunc = retry.RetryWithData(tc.targetPath, "", c.Patch)
 	retryConfig.MaxRetryTimeSec = maxRetryTimeSec
@@ -90,7 +92,7 @@ func TestRetryWithData(t *testing.T) {
 	expectedNumCalls = 4
 
 	tc.expectedResponse = fmt.Sprintf(`{"numRetries":"%v"}`, expectedNumCalls)
-	restclient.Client = buildRestClientDoMock(tc, 3)
+	restclient.Client = buildRestClientDoMockForRetry(tc, 3)
 
 	retryFunc = retry.RetryWithData(tc.targetPath, "", c.Patch)
 	retryConfig.MaxRetryTimeSec = maxRetryTimeSec
@@ -105,30 +107,37 @@ func TestRetryWithData(t *testing.T) {
 	}
 }
 
-func mockGetConfig(profileName string) (config.Configuration, error) {
-	mockConfig := &mocks.MockClientConfig{}
+func TestReAuthentication(t *testing.T) {
+	restclientNewRESTClient = mockNewRESTClient
+	restclient.UpdateOAuthToken = mocks.UpdateOAuthToken
+	configGetConfig = mockGetConfigReAuthenticate
 
-	mockConfig.ProfileNameFunc = func() string {
-		return profileName
+	c := commandService{
+		cmd: &cobra.Command{},
 	}
 
-	mockConfig.EnvironmentFunc = func() string {
-		return "mypurecloud.com"
+	tc := apiClientTest{
+		targetStatusCode: http.StatusUnauthorized,
+		expectedStatusCode: http.StatusUnauthorized,
+		expectedResponse: `{"numCalls": 2}`,
+		expectedAccessToken: "c-Iyx66JoLCLVTkmQMXx-luHI3wpm-MQI1THRftzXEhgS4pNtBOaxfCzDSFw25LhcFZ3UjiczIlXVcwfoYvxfw",
 	}
+	restclient.Client = buildRestClientDoMockForReAuthenticate(tc)
 
-	mockConfig.ClientIDFunc = func() string {
-		return utils.GenerateGuid()
+	value, err := c.Get("")
+	if err != nil {
+		t.Fatalf("err should be nil, got: %s", err)
 	}
-
-	mockConfig.ClientSecretFunc = func() string {
-		return utils.GenerateGuid()
+	if value != tc.expectedResponse {
+		t.Errorf("Did not get the right value, got: %s, want: %s.", value, tc.expectedResponse)
 	}
-
-	return mockConfig, nil
+	if mocks.UpdatedAccessToken != tc.expectedAccessToken {
+		t.Errorf("The access token was not updated as expected, got: %s, want: %s.", mocks.UpdatedAccessToken, tc.expectedAccessToken)
+	}
 }
 
-//buildRestClientDoMock returns a mock Do object for the RestClient tests
-func buildRestClientDoMock(tc apiClientTest, numberOfFailedCalls int) *mocks.MockHttpClient {
+//buildRestClientDoMockForRetry returns a mock HttpClient object for the commandservice Retry test
+func buildRestClientDoMockForRetry(tc apiClientTest, numberOfFailedCalls int) *mocks.MockHttpClient {
 	mock := &mocks.MockHttpClient{}
 	numCalls := 0
 
@@ -154,6 +163,112 @@ func buildRestClientDoMock(tc apiClientTest, numberOfFailedCalls int) *mocks.Moc
 	return mock
 }
 
+//buildRestClientDoMockForReAuthenticate returns a mock HttpClient object for the commandservice ReAuthenticate test
+func buildRestClientDoMockForReAuthenticate(tc apiClientTest) *mocks.MockHttpClient {
+	mock := &mocks.MockHttpClient{}
+	numCalls := 0
+
+	//Building a Mock HTTP Functions
+	mock.DoFunc = func(request *http.Request) (*http.Response, error) {
+		//Setting up the response body
+		responseString := ""
+		statusCode := 0
+
+		switch numCalls {
+		case 0:
+			// First call will return unauthorized for a GET request
+			statusCode = tc.targetStatusCode
+			responseString = ""
+		case 1:
+			// Second call will return a new access token for a login POST request
+			statusCode = http.StatusOK
+			responseString = fmt.Sprintf(`
+				{
+					"access_token": "%s",
+					"token_type": "%s", 
+					"expires_in": %d,
+					"error":      ""
+				}
+				`, tc.expectedAccessToken, "Bearer", 1234)
+		case 2:
+			// Third call will return OK for the recursively called GET request following re-authentication
+			statusCode = http.StatusOK
+			responseString = fmt.Sprintf(`{"numCalls": %v}`, numCalls)
+		}
+
+		stringReader := strings.NewReader(responseString)
+		stringReadCloser := ioutil.NopCloser(stringReader)
+
+		response := &http.Response{
+			Header:     tc.targetHeaders,
+			StatusCode: statusCode,
+			Body:       stringReadCloser,
+		}
+
+		numCalls++
+
+		return response, nil
+	}
+
+	return mock
+}
+
+//mockNewRESTClient returns a mock RESTClient object for the commandservice tests and sets the object in the restclient package
 func mockNewRESTClient(_ config.Configuration) *restclient.RESTClient {
-	return &restclient.RESTClient{}
+	restclient.RestClient = &restclient.RESTClient{}
+	return restclient.RestClient
+}
+
+//mockGetConfigRetry returns a mock MockClientConfig object for the commandservice Retry test
+func mockGetConfigRetry(profileName string) (config.Configuration, error) {
+	mockConfig := &mocks.MockClientConfig{}
+
+	mockConfig.ProfileNameFunc = func() string {
+		return profileName
+	}
+
+	mockConfig.EnvironmentFunc = func() string {
+		return "mypurecloud.com"
+	}
+
+	mockConfig.ClientIDFunc = func() string {
+		return utils.GenerateGuid()
+	}
+
+	mockConfig.ClientSecretFunc = func() string {
+		return utils.GenerateGuid()
+	}
+
+	mockConfig.OAuthTokenDataFunc = func() string {
+		return ""
+	}
+
+	return mockConfig, nil
+}
+
+//mockGetConfigReAuthenticate returns a mock MockClientConfig object for the commandservice ReAuthenticate test
+func mockGetConfigReAuthenticate(profileName string) (config.Configuration, error) {
+	mockConfig := &mocks.MockClientConfig{}
+
+	mockConfig.ProfileNameFunc = func() string {
+		return profileName
+	}
+
+	mockConfig.EnvironmentFunc = func() string {
+		return "mypurecloud.com"
+	}
+
+	mockConfig.ClientIDFunc = func() string {
+		return utils.GenerateGuid()
+	}
+
+	mockConfig.ClientSecretFunc = func() string {
+		return utils.GenerateGuid()
+	}
+
+	mockConfig.OAuthTokenDataFunc = func() string {
+		return ""
+	}
+
+	return mockConfig, nil
 }

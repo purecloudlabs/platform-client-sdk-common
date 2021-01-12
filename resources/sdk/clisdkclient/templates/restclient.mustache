@@ -1,14 +1,16 @@
 package restclient
 
 import (
+	"gc/models"
+	"gc/utils"
 	"net/http"
+	"time"
 
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"gc/config"
-	"gc/models"
 	"io/ioutil"
 	"log"
 	"net/url"
@@ -18,7 +20,9 @@ import (
 )
 
 var (
-	Client HTTPClient
+	Client           HTTPClient
+	RestClient       *RESTClient
+	UpdateOAuthToken = config.UpdateOAuthToken
 )
 
 // HTTPClient interface
@@ -29,13 +33,6 @@ type HTTPClient interface {
 type RESTClient struct {
 	environment string
 	token       string
-}
-
-type oAuthToken struct {
-	AccessToken string `json:"access_token"`
-	TokenType   string `json:"token_type"`
-	ExpiresIn   string `json:"expires_in"`
-	Error       string `json:"error"`
 }
 
 //Get executes an HTTP Get
@@ -77,7 +74,7 @@ func (r *RESTClient) callAPI(method string, uri string, data string) (string, er
 	request := &http.Request{
 		URL:    apiURI,
 		Close:  true,
-		Method: strings.ToUpper((method)),
+		Method: strings.ToUpper(method),
 		Header: make(map[string][]string),
 	}
 
@@ -118,12 +115,38 @@ func (r *RESTClient) callAPI(method string, uri string, data string) (string, er
 }
 
 //Authorize authenticates the user using the client credentials in their profile.
-func Authorize(config config.Configuration) (oAuthToken, error) {
-	if strings.Contains(config.Environment(), "localhost") {
-		return oAuthToken{}, nil
+func Authorize(c config.Configuration) (models.OAuthTokenData, error) {
+	if strings.Contains(c.Environment(), "localhost") {
+		return models.OAuthTokenData{}, nil
 	}
-	loginURI, _ := url.Parse(fmt.Sprintf("https://login.%s/oauth/token", config.Environment()))
-	oAuthTokenResponse := &oAuthToken{}
+
+	oAuthTokenData := &models.OAuthTokenData{}
+	if c.OAuthTokenData() != "" {
+		err := json.Unmarshal([]byte(c.OAuthTokenData()), oAuthTokenData)
+		if err != nil {
+			return models.OAuthTokenData{}, err
+		}
+		oauthTokenExpiry, _ := time.Parse(time.RFC3339, oAuthTokenData.OAuthTokenExpiry)
+		if oauthTokenExpiry.After(time.Now()) {
+			return *oAuthTokenData, nil
+		}
+	}
+
+	return authorize(c)
+}
+
+//ReAuthenticate re-authenticates the user using the client credentials in their profile.
+func ReAuthenticate(c config.Configuration) (models.OAuthTokenData, error) {
+	oAuthToken, err := authorize(c)
+	if err == nil {
+		RestClient.token = oAuthToken.AccessToken
+	}
+
+	return oAuthToken, err
+}
+
+func authorize(c config.Configuration) (models.OAuthTokenData, error) {
+	loginURI, _ := url.Parse(fmt.Sprintf("https://login.%s/oauth/token", c.Environment()))
 
 	request := &http.Request{
 		URL:    loginURI,
@@ -133,7 +156,7 @@ func Authorize(config config.Configuration) (oAuthToken, error) {
 	}
 
 	//Setting up the basic auth headers for the call
-	authHeaderString := fmt.Sprintf("%s:%s", config.ClientID(), config.ClientSecret())
+	authHeaderString := fmt.Sprintf("%s:%s", c.ClientID(), c.ClientSecret())
 	authHeader := base64.StdEncoding.EncodeToString([]byte(authHeaderString))
 	request.Header.Set("Authorization", fmt.Sprintf("Basic %s", authHeader))
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -155,6 +178,7 @@ func Authorize(config config.Configuration) (oAuthToken, error) {
 
 	defer resp.Body.Close()
 
+	oAuthTokenResponse := &models.OAuthTokenData{}
 	// Read Response Body
 	responseData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -166,19 +190,37 @@ func Authorize(config config.Configuration) (oAuthToken, error) {
 		return *oAuthTokenResponse, httpError
 	}
 
-	json.Unmarshal(responseData, &oAuthTokenResponse)
+	oAuthToken := &models.OAuthToken{}
+	err = json.Unmarshal(responseData, &oAuthToken)
+	if err != nil {
+		return *oAuthTokenResponse, err
+	}
+	oAuthTokenExpiry := time.Now().Add(utils.SecondsToNanoSeconds(oAuthToken.ExpiresIn))
+	oAuthTokenResponse = &models.OAuthTokenData{
+		OAuthToken:       *oAuthToken,
+		OAuthTokenExpiry: oAuthTokenExpiry.Format(time.RFC3339),
+	}
+
+	err = UpdateOAuthToken(c, oAuthTokenResponse)
+	if err != nil {
+		return *oAuthTokenResponse, err
+	}
 
 	return *oAuthTokenResponse, nil
 }
 
 //NewRESTClient is a constructor function to build an APIClient
 func NewRESTClient(config config.Configuration) *RESTClient {
-	oAuthToken, err := Authorize(config)
-	if err != nil {
-		log.Fatal(err)
+	if RestClient == nil {
+		oAuthToken, err := Authorize(config)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		RestClient = &RESTClient{environment: config.Environment(), token: oAuthToken.AccessToken}
 	}
 
-	return &RESTClient{environment: config.Environment(), token: oAuthToken.AccessToken}
+	return RestClient
 }
 
 func init() {

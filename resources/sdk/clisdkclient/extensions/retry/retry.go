@@ -2,6 +2,7 @@ package retry
 
 import (
 	"gc/models"
+	"gc/utils"
 	"net/http"
 	"strconv"
 	"time"
@@ -62,25 +63,21 @@ func (r *retry) shouldRetry(startTime time.Time, errorValue error) bool {
 	if errorValue == nil {
 		return false
 	}
-	e := errorValue.(models.HttpStatusError)
 
-	if time.Since(startTime) < secondsToNanoSeconds(r.MaxRetryTimeSec) && e.StatusCode == http.StatusTooManyRequests {
+	e, ok := errorValue.(models.HttpStatusError)
+	if !ok {
+		return false
+	}
+
+	if time.Since(startTime) < utils.SecondsToNanoSeconds(r.MaxRetryTimeSec) && e.StatusCode == http.StatusTooManyRequests {
 		r.retryAfterMs = getRetryAfterValue(e.Headers)
 		r.retryCountBeforeQuitting++
 		if r.retryCountBeforeQuitting < r.MaxRetriesBeforeQuitting {
-			time.Sleep(milliSecondsToNanoSeconds(r.retryAfterMs))
+			time.Sleep(utils.MilliSecondsToNanoSeconds(r.retryAfterMs))
 			return true
 		}
 	}
 	return false
-}
-
-func milliSecondsToNanoSeconds(milliSeconds int64) time.Duration {
-	return time.Duration(milliSeconds * 1000 * 1000)
-}
-
-func secondsToNanoSeconds(seconds int) time.Duration {
-	return milliSecondsToNanoSeconds(int64(seconds)) * 1000
 }
 
 func getRetryAfterValue(headers map[string][]string) int64 {
