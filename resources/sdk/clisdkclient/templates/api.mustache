@@ -1,0 +1,74 @@
+package {{classVarName}}
+{{#operations}}
+import (
+	"fmt"
+	"gc/retry"
+	"gc/utils"
+	"gc/services"
+	"github.com/spf13/cobra"
+	"log"
+	"net/url"
+	"strings"
+)
+
+var {{classVarName}}Cmd = &cobra.Command{
+	Use:   "{{classVarName}}",
+	Short: "Manages Genesys Cloud {{classVarName}}",
+	Long:  `Manages Genesys Cloud {{classVarName}}`,
+}
+var CommandService services.CommandService
+
+func init() {
+	CommandService = services.NewCommandService({{classVarName}}Cmd)
+}
+
+func Cmd{{classVarName}}() *cobra.Command { {{#operation}}
+	{{#queryParams}}utils.AddFlag({{operationId}}Cmd.Flags(), "{{{dataType}}}", "{{paramName}}", "{{#defaultValue}}{{{.}}}{{/defaultValue}}{{^defaultValue}}{{/defaultValue}}", "{{description}}{{#required}} - REQUIRED{{/required}}")
+	{{#hasMore}}{{/hasMore}}{{/queryParams}}utils.AddFileFlagIfUpsert({{operationId}}Cmd.Flags(), "{{httpMethod}}")
+	{{classVarName}}Cmd.AddCommand({{operationId}}Cmd)
+	{{/operation}}
+	return {{classVarName}}Cmd
+}
+
+{{#operation}}
+var {{operationId}}Cmd = &cobra.Command{
+	Use:   "{{operationId}}{{#pathParams}} [{{paramName}}{{#hasMore}}{{/hasMore}}]{{/pathParams}}",
+	Short: "{{#summary}}{{summary}}{{/summary}}",
+	Long:  `{{#summary}}{{summary}}{{/summary}}`,
+	Args:  utils.DetermineArgs([]string{ {{#pathParams}}"{{paramName}}", {{#hasMore}}{{/hasMore}}{{/pathParams}}}),
+
+	Run: func(cmd *cobra.Command, args []string) {
+		queryParams := make(map[string]string)
+
+		path := "{{path}}"{{#pathParams}}
+		{{paramName}}, args := args[0], args[1:]
+		path = strings.Replace(path, "{{=[[ ]]=}}{[[baseName]]}[[={{ }}=]]", fmt.Sprintf("%v", {{paramName}}), -1){{/pathParams}}
+
+		{{#hasQueryParams}}{{#queryParams}}{{paramName}} := utils.GetFlag(cmd.Flags(), "{{{dataType}}}", "{{paramName}}")
+		if {{paramName}} != "" {
+			queryParams["{{paramName}}"] = {{paramName}}
+		}
+		{{/queryParams}}{{/hasQueryParams}}urlString := path
+		if len(queryParams) > 0 {
+			urlString = fmt.Sprintf("%v?", path)
+			for k, v := range queryParams {
+				urlString += fmt.Sprintf("%v=%v&", url.QueryEscape(strings.TrimSpace(k)), url.QueryEscape(strings.TrimSpace(v)))
+			}
+			urlString = strings.TrimSuffix(urlString, "&")
+		}
+
+		retryFunc := CommandService.DetermineAction("{{httpMethod}}", "{{operationId}}", urlString)
+		// TODO read from config file
+		retryConfig := &retry.RetryConfiguration{
+			MaxRetriesBeforeQuitting: 3,
+			MaxRetryTimeSec: 10,
+		}
+		results, err := retryFunc(retryConfig)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		utils.Render(results)
+	},
+}
+{{/operation}}{{/operations}}
