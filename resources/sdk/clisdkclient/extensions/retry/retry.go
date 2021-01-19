@@ -30,7 +30,9 @@ func RetryWithData(uri string, data string, httpCall func(uri string, data strin
 		retry := retry{
 			RetryConfiguration: *retryConfiguration,
 		}
-		response, err := httpCall(uri, data)
+
+		response := ""
+		var err error
 		now := time.Now()
 		for ok := true; ok; ok = retry.shouldRetry(now, err) {
 			response, err = httpCall(uri, data)
@@ -50,7 +52,9 @@ func Retry(uri string, httpCall func(uri string) (string, error)) func(retryConf
 		retry := retry{
 			RetryConfiguration: *retryConfiguration,
 		}
-		response, err := httpCall(uri)
+
+		response := ""
+		var err error
 		now := time.Now()
 		for ok := true; ok; ok = retry.shouldRetry(now, err) {
 			response, err = httpCall(uri)
