@@ -7,6 +7,7 @@ import (
 	"gc/utils"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -44,7 +45,8 @@ var queryUsageCmd = &cobra.Command{
 		retryFunc := CommandService.DetermineAction(usageQueryCommand.Method, "", usageQueryCommand.Path)
 		results, err := retryFunc(nil)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
+			os.Exit(1)
 		}
 
 		usageSubmitResponse := &models.UsageSubmitResponse{}
@@ -63,7 +65,8 @@ var queryUsageCmd = &cobra.Command{
 				retryFunc := CommandService.DetermineAction(usageQueryResultsCommand.Method, "", targetURI)
 				rawData, commandErr := retryFunc(nil)
 				if commandErr != nil {
-					log.Fatal(commandErr)
+					fmt.Println(commandErr)
+					os.Exit(1)
 				}
 
 				if err = json.Unmarshal([]byte(rawData), usageQueryResponse); err != nil {

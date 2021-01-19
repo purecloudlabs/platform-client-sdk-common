@@ -41,7 +41,7 @@ func TestRetryWithData(t *testing.T) {
 	tc := apiClientTest{
 		targetHeaders: headers,
 		targetStatusCode: http.StatusTooManyRequests,
-		expectedResponse: fmt.Sprintf(`{"numRetries":"%v"}`, maxRetriesBeforeQuitting),
+		expectedResponse: fmt.Sprintf(`{"numRetries":"%v"}`, maxRetriesBeforeQuitting - 1),
 		expectedStatusCode: http.StatusTooManyRequests}
 	restclient.Client = buildRestClientDoMockForRetry(tc, 10)
 
@@ -63,10 +63,10 @@ func TestRetryWithData(t *testing.T) {
 		}
 	}
 
-	// Check that RESTClient DoFunc is called 2 times when the retry-after value is increased and MaxRetryTimeSec is reduced below it
+	// Check that RESTClient DoFunc is called 1 time when the retry-after value is increased and MaxRetryTimeSec is reduced below it
 	maxRetryTimeSec := 1
 	headers["Retry-After"] = []string{"2000"}
-	expectedNumCalls := 2
+	expectedNumCalls := 1
 
 	tc.expectedResponse = fmt.Sprintf(`{"numRetries":"%v"}`, expectedNumCalls)
 	restclient.Client = buildRestClientDoMockForRetry(tc, 10)
