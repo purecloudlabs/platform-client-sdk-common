@@ -6,8 +6,8 @@ import (
 	"gc/utils"
 	"gc/services"
 	"github.com/spf13/cobra"
-	"log"
 	"net/url"
+	"os"
 	"strings"
 )
 
@@ -65,7 +65,8 @@ var {{operationId}}Cmd = &cobra.Command{
 		}
 		results, err := retryFunc(retryConfig)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
+			os.Exit(1)
 		}
 
 		utils.Render(results)
