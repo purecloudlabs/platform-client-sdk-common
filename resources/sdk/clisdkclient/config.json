@@ -4,7 +4,8 @@
   },
   "settings": {
     "sdkRepo": {
-      "repo": "https://github.com/MyPureCloud/platform-client-sdk-cli"
+      "repo": "https://github.com/MyPureCloud/platform-client-sdk-cli",
+      "branch": "main"
     },
     "versionFile": "${SDK_REPO}/version.json",
     "logLevel": "debug",
