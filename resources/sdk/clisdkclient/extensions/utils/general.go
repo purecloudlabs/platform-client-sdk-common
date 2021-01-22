@@ -22,6 +22,9 @@ func AddFlag(flags *pflag.FlagSet, paramType string, name string, value string, 
 	case "[]string":
 		flags.StringSlice(name, []string{}, usage)
 		break
+	case "bool":
+		usage = fmt.Sprintf("%v %v", usage, "Valid values: true, false")
+		fallthrough
 	case "string":
 		flags.String(name, "", usage)
 		break
@@ -29,9 +32,6 @@ func AddFlag(flags *pflag.FlagSet, paramType string, name string, value string, 
 		intValue, _ := strconv.Atoi(value)
 		flags.Int(name, intValue, usage)
 		break
-	case "bool":
-		boolValue, _ := strconv.ParseBool(value)
-		flags.Bool(name, boolValue, usage)
 	}
 }
 
@@ -53,6 +53,8 @@ func GetFlag(flags *pflag.FlagSet, paramType string, name string) string {
 		flags, _ := flags.GetStringSlice(name)
 		flag = strings.Join(flags, ",")
 		break
+	case "bool":
+		fallthrough
 	case "string":
 		flag, _ = flags.GetString(name)
 		break
@@ -60,9 +62,6 @@ func GetFlag(flags *pflag.FlagSet, paramType string, name string) string {
 		flagInt, _ := flags.GetInt(name)
 		flag = strconv.Itoa(flagInt)
 		break
-	case "bool":
-		flagBool, _ := flags.GetBool(name)
-		flag = strconv.FormatBool(flagBool)
 	}
 	return flag
 }
@@ -123,6 +122,7 @@ func ResolveInputData(cmd *cobra.Command) string {
 
 	return ConvertStdInString()
 }
+
 func GenerateGuid() string {
 	b := make([]byte, 16)
 	_, err := rand.Read(b)

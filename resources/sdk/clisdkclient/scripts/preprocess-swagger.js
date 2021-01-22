@@ -58,8 +58,18 @@ const inclusionList = {
 		}
 	},
 	"/api/v2/routing/queues/{queueId}/users": {
+		tags: ["User"],
 		"get": {
-			operationId: "users"
+			operationId: "get"
+		},
+		"post": {
+			operationId: "join"
+		},
+	},
+	"/api/v2/routing/queues/{queueId}/users/{memberId}": {
+		tags: ["User"],
+		"delete": {
+			operationId: "remove",
 		}
 	},
 	"/api/v2/telephony/providers/edges/sites": {

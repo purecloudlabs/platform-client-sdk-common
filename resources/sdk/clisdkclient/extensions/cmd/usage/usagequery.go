@@ -42,7 +42,7 @@ var queryUsageCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		timeout, _ := cmd.Flags().GetInt("timeout")
 
-		retryFunc := CommandService.DetermineAction(usageQueryCommand.Method, "", usageQueryCommand.Path)
+		retryFunc := CommandService.DetermineAction(usageQueryCommand.Method, "", usageQueryCommand.Path, "")
 		results, err := retryFunc(nil)
 		if err != nil {
 			fmt.Println(err)
@@ -62,7 +62,7 @@ var queryUsageCmd = &cobra.Command{
 			for true {
 				path := usageQueryResultsCommand.Path
 				targetURI := strings.Replace(path, "{executionId}", fmt.Sprintf("%v", usageSubmitResponse.ExecutionID), -1)
-				retryFunc := CommandService.DetermineAction(usageQueryResultsCommand.Method, "", targetURI)
+				retryFunc := CommandService.DetermineAction(usageQueryResultsCommand.Method, "", targetURI, "")
 				rawData, commandErr := retryFunc(nil)
 				if commandErr != nil {
 					fmt.Println(commandErr)
