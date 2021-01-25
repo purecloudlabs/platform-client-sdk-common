@@ -24,7 +24,7 @@ type CommandService interface {
 	Patch(uri string, payload string) (string, error)
 	Put(uri string, payload string) (string, error)
 	Delete(uri string) (string, error)
-	DetermineAction(httpMethod string, operationId string, uri string) func(retryConfiguration *retry.RetryConfiguration) (string, error)
+	DetermineAction(httpMethod string, operationId string, uri string, originalURI string) func(retryConfiguration *retry.RetryConfiguration) (string, error)
 }
 
 type commandService struct {
@@ -208,14 +208,14 @@ func reAuthenticateIfNecessary(config config.Configuration, err error) error {
 	return nil
 }
 
-func (c *commandService) DetermineAction(httpMethod string, operationId string, uri string) func(retryConfiguration *retry.RetryConfiguration) (string, error) {
+func (c *commandService) DetermineAction(httpMethod string, operationId string, uri string, originalURI string) func(retryConfiguration *retry.RetryConfiguration) (string, error) {
 	switch httpMethod {
 	case http.MethodGet:
 		listOverrides := make(map[string]int)
 		// Add overrides here for resources with custom operationIds requiring pagination
-		listOverrides["users"] = 1
+		listOverrides["/api/v2/routing/queues/{queueId}/users"] = 1
 
-		_, ok := listOverrides[operationId]
+		_, ok := listOverrides[originalURI]
 		if operationId == "list" || ok {
 			return retry.Retry(uri, c.List)
 		} else {

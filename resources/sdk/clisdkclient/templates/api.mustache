@@ -23,7 +23,7 @@ func init() {
 }
 
 func Cmd{{classVarName}}() *cobra.Command { {{#operation}}
-	{{#queryParams}}utils.AddFlag({{operationId}}Cmd.Flags(), "{{{dataType}}}", "{{paramName}}", "{{#defaultValue}}{{{.}}}{{/defaultValue}}{{^defaultValue}}{{/defaultValue}}", "{{description}}{{#required}} - REQUIRED{{/required}}")
+	{{#queryParams}}utils.AddFlag({{operationId}}Cmd.Flags(), "{{{dataType}}}", "{{paramName}}", "{{#defaultValue}}{{{.}}}{{/defaultValue}}{{^defaultValue}}{{/defaultValue}}", "{{description}}{{#required}} - REQUIRED{{/required}}{{#allowableValues}} Valid values: {{#values}}{{.}}{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}}")
 	{{#hasMore}}{{/hasMore}}{{/queryParams}}utils.AddFileFlagIfUpsert({{operationId}}Cmd.Flags(), "{{httpMethod}}")
 	{{classVarName}}Cmd.AddCommand({{operationId}}Cmd)
 	{{/operation}}
@@ -57,7 +57,7 @@ var {{operationId}}Cmd = &cobra.Command{
 			urlString = strings.TrimSuffix(urlString, "&")
 		}
 
-		retryFunc := CommandService.DetermineAction("{{httpMethod}}", "{{operationId}}", urlString)
+		retryFunc := CommandService.DetermineAction("{{httpMethod}}", "{{operationId}}", urlString, "{{path}}")
 		// TODO read from config file
 		retryConfig := &retry.RetryConfiguration{
 			MaxRetriesBeforeQuitting: 3,

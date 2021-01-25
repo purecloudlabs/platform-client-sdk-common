@@ -15,6 +15,7 @@ try {
 		"channels",
 		"subscriptions",
 		"topics",
+		"user",
 		"root.go"
 	]
 	let addCommands = ""
