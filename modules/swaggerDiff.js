@@ -125,23 +125,18 @@ function copyPropertiesToImpl() {
 	swaggerDiffImpl.newSwagger = self.newSwagger;
 }
 
-function downloadFile(url) {
-	var i = 0;
-	while (i < 10) {
-		i++;
-		log.info(`Downloading file: ${url}`);
-		// Source: https://www.npmjs.com/package/download-file-sync
-		var file = childProcess.execFileSync('curl', ['--silent', '-L', url], { encoding: 'utf8', maxBuffer: 1024 * 1024 * 12 });
-		if (!file || file === '') {
-			log.info(`File was empty! sleeping for 5 seconds. Retries left: ${10 - i}`);
-			childProcess.execFileSync('curl', ['--silent', 'https://httpbin.org/delay/10'], { encoding: 'utf8' });
-		} else {
-			return file;
-		}
-	}
-	log.warn('Failed to get contents for file!');
-	return null;
-}
+var downloadFile = function(url, dest, cb) {
+	var file = fs.createWriteStream(dest);
+	http.get(url, function(response) {
+	  	response.pipe(file);
+	  	file.on('finish', function() {
+			file.close(cb);
+	  	});
+	}).on('error', function(err) {
+	  	fs.unlink(dest);
+	  	if (cb) cb(err.message);
+	});
+};
 
 function getEnv(varname, defaultValue, isDefaultValue) {
 	varname = varname.trim();
