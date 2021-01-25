@@ -66,6 +66,14 @@ func GetFlag(flags *pflag.FlagSet, paramType string, name string) string {
 	return flag
 }
 
+func FormatUsageDescription(message string) string {
+	if !strings.HasSuffix(message, "s") {
+		return fmt.Sprintf("%v%v", message, "s")
+	}
+	
+	return message
+}
+
 func DetermineArgs(args []string) cobra.PositionalArgs {
 	validArgs := 0
 	for _, arg := range args {

@@ -63,14 +63,18 @@ const inclusionList = {
 			operationId: "get"
 		},
 		"post": {
-			operationId: "join"
+			operationId: "move"
 		},
+		"patch": {
+			operationId: "activate"
+		}
 	},
 	"/api/v2/routing/queues/{queueId}/users/{memberId}": {
 		tags: ["User"],
 		"delete": {
 			operationId: "remove",
-		}
+		},
+		"patch": {}
 	},
 	"/api/v2/telephony/providers/edges/sites": {
 		tags: ["Sites"]
@@ -88,6 +92,21 @@ const inclusionList = {
 	"/api/v2/stations/{stationId}": {},
 	"/api/v2/users": {},
 	"/api/v2/users/{userId}": {},
+	"/api/v2/users/{userId}/queues": {
+		tags: ["Queue"],
+		"get": {
+			operationId: "get"
+		},
+		"patch": {
+			operationId: "joinset"
+		}
+	},
+	"/api/v2/users/{userId}/queues/{queueId}": {
+		tags: ["Queue"],
+		"patch": {
+			operationId: "join"
+		}
+	},
 	"/api/v2/notifications/availabletopics": {
 		tags: ["Topics"],
 		"get": {
