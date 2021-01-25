@@ -100,7 +100,8 @@ func (c *commandService) List(uri string) (string, error) {
 		pagedURI := uri
 		for x := 2; x <= firstPage.PageCount; x++ {
 			pagedURI = updatePageNumber(pagedURI, x)
-			data, err := restClient.Get(pagedURI)
+			retryFunc := retry.Retry(pagedURI, restClient.Get)
+			data, err = retryFunc(nil)
 			if err != nil {
 				return "", err
 			}
