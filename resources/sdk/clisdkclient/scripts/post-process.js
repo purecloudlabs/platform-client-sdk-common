@@ -16,6 +16,7 @@ try {
 		"subscriptions",
 		"topics",
 		"user",
+		"queue",
 		"root.go"
 	]
 	let addCommands = ""
