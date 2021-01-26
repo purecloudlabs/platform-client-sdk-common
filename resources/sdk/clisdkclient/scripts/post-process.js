@@ -17,6 +17,7 @@ try {
 		"topics",
 		"user",
 		"queue",
+		"skill",
 		"root.go"
 	]
 	let addCommands = ""

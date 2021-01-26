@@ -71,9 +71,7 @@ const inclusionList = {
 	},
 	"/api/v2/routing/queues/{queueId}/users/{memberId}": {
 		tags: ["User"],
-		"delete": {
-			operationId: "remove",
-		},
+		"delete": {},
 		"patch": {}
 	},
 	"/api/v2/telephony/providers/edges/sites": {
@@ -105,6 +103,21 @@ const inclusionList = {
 		tags: ["Queue"],
 		"patch": {
 			operationId: "join"
+		}
+	},
+	"/api/v2/users/{userId}/routingskills": {
+		tags: ["Skill"]
+	},
+	"/api/v2/users/{userId}/routingskills/{skillId}": {
+		tags: ["Skill"]
+	},
+	"/api/v2/users/{userId}/routingskills/bulk": {
+		tags: ["Skill"],
+		"put": {
+			operationId: "bulkupdate"
+		},
+		"patch": {
+			operationId: "bulkremove"
 		}
 	},
 	"/api/v2/notifications/availabletopics": {
