@@ -67,7 +67,7 @@ func GetFlag(flags *pflag.FlagSet, paramType string, name string) string {
 }
 
 func FormatUsageDescription(message string) string {
-	if !strings.HasSuffix(message, "s") {
+	if !strings.HasSuffix(message, "s") && !strings.HasSuffix(message, "usage") {
 		return fmt.Sprintf("%v%v", message, "s")
 	}
 	
