@@ -101,7 +101,10 @@ func (c *commandService) List(uri string) (string, error) {
 		for x := 2; x <= firstPage.PageCount; x++ {
 			pagedURI = updatePageNumber(pagedURI, x)
 			retryFunc := retry.Retry(pagedURI, restClient.Get)
-			data, err = retryFunc(nil)
+			data, err = retryFunc(&retry.RetryConfiguration{
+				MaxRetryTimeSec: 20,
+				MaxRetriesBeforeQuitting: 10,
+			})
 			if err != nil {
 				return "", err
 			}
