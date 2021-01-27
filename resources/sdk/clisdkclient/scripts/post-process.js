@@ -18,6 +18,7 @@ try {
 		"user",
 		"queue",
 		"skill",
+		"members",
 		"root.go"
 	]
 	let addCommands = ""
