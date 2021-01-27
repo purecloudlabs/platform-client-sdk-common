@@ -36,6 +36,18 @@ const inclusionList = {
 	},
 	"/api/v2/groups": {},
 	"/api/v2/groups/{groupId}": {},
+	"/api/v2/groups/{groupId}/members": {
+		tags: ["Members"],
+		"get": {
+			operationId: "get"
+		},
+		"post": {
+			operationId: "add"
+		},
+		"delete": {
+			operationId: "remove"
+		}
+	},
 	"/api/v2/locations": {},
 	"/api/v2/locations/{locationId}": {},
 	"/api/v2/telephony/providers/edges/phones": {
