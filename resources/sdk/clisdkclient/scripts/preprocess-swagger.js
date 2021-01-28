@@ -27,6 +27,35 @@ const inclusionList = {
 	"/api/v2/authorization/divisions/{divisionId}": {
 		tags: ["Authorization"]
 	},
+	"/api/v2/authorization/roles": {
+		tags: ["Roles"]
+	},
+	"/api/v2/authorization/roles/{roleId}": {
+		tags: ["Roles"],
+		"delete":{
+			operationId: "remove"
+		},
+		"get": {},
+		"put": {}
+	},
+	"/api/v2/authorization/roles/{roleId}/users": {
+		tags: ["RoleUser"],
+		"get": {
+			operationId: "get"
+		}
+	},
+	"/api/v2/authorization/roles/{roleId}/users/add": {
+		tags: ["RoleUser"],
+		"put": {
+			operationId: "add"
+		}
+	},
+	"/api/v2/authorization/roles/{roleId}/users/remove": {
+		tags: ["RoleUser"],
+		"put": {
+			operationId: "delete"
+		}
+	},
 	"/api/v2/telephony/providers/edges": {},
 	"/api/v2/telephony/providers/edges/{edgeId}": {},
 	"/api/v2/telephony/providers/edges/{edgeId}/reboot": {
@@ -70,7 +99,7 @@ const inclusionList = {
 		}
 	},
 	"/api/v2/routing/queues/{queueId}/users": {
-		tags: ["User"],
+		tags: ["QueueUser"],
 		"get": {
 			operationId: "get"
 		},
@@ -82,7 +111,7 @@ const inclusionList = {
 		}
 	},
 	"/api/v2/routing/queues/{queueId}/users/{memberId}": {
-		tags: ["User"],
+		tags: ["QueueUser"],
 		"delete": {},
 		"patch": {}
 	},
