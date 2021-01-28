@@ -74,6 +74,19 @@ func FormatUsageDescription(message string) string {
 	return message
 }
 
+func FormatPermissions(permissions []string) string {
+	if len(permissions) == 0 {
+		return ""
+	}
+
+	permissionString := "\nPermissions:\n"
+	for _, permission := range permissions {
+		permissionString = fmt.Sprintf("%s  %s\n", permissionString, permission)
+	}
+	
+	return permissionString
+}
+
 func DetermineArgs(args []string) cobra.PositionalArgs {
 	validArgs := 0
 	for _, arg := range args {
