@@ -3,8 +3,8 @@ package usage
 import (
 	"encoding/json"
 	"fmt"
-	"gc/models"
-	"gc/utils"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
 	"log"
 	"net/http"
 	"os"

@@ -3,9 +3,9 @@ package restclient
 import (
 	"encoding/base64"
 	"fmt"
-	"gc/mocks"
-	"gc/models"
-	"gc/utils"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/mocks"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
 	"io/ioutil"
 	"net/http"
 	"strings"

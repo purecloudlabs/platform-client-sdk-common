@@ -1,6 +1,6 @@
 package queues
 
-import "gc/cmd/user"
+import "github.com/mypurecloud/platform-client-sdk-cli/build/gc/cmd/user"
 
 func init() {
 	queuesCmd.AddCommand(user.Cmduser())

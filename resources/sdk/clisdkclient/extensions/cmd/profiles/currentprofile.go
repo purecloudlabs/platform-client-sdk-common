@@ -1,8 +1,8 @@
 package profiles
 
 import (
-	"gc/config"
-	"gc/utils"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
 	"log"
 
 	"github.com/spf13/cobra"

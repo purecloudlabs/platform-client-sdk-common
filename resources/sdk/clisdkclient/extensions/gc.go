@@ -1,7 +1,7 @@
 package main
 
 import (
-	"gc/cmd"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/cmd"
 )
 
 func main() {

@@ -9,7 +9,7 @@
     },
     "versionFile": "${SDK_REPO}/version.json",
     "logLevel": "debug",
-    "extensionsDestination": "${SDK_REPO}/build/src/",
+    "extensionsDestination": "${SDK_REPO}/build/gc/",
     "swagger": {
       "oldSwaggerPath": "${SDK_REPO}/swagger.json",
       "newSwaggerPath": "https://api.mypurecloud.com/api/v2/docs/swagger",
@@ -68,7 +68,7 @@
           "type": "node",
           "path": "post-process.js",
           "args": [
-            "${SDK_REPO}/build/src/cmd/"
+            "${SDK_REPO}/build/gc/cmd/"
           ],
           "failOnError": true
         }

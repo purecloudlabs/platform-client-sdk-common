@@ -1,8 +1,8 @@
 package users
 
 import (
-	"gc/cmd/queue"
-	"gc/cmd/skill"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/cmd/queue"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/cmd/skill"
 )
 
 func init() {

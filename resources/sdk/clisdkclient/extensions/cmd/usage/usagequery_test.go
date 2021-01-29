@@ -1,7 +1,7 @@
 package usage
 
 import (
-	"gc/utils"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
 	"testing"
 )
 
