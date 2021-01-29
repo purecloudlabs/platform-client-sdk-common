@@ -98,8 +98,12 @@ func (r *RESTClient) callAPI(method string, uri string, data string) (string, er
 	if err != nil {
 		return "", err
 	}
-
 	defer resp.Body.Close()
+
+	correlationId := resp.Header["Inin-Correlation-Id"]
+	if correlationId != nil {
+		logger.Info("API response Correlation ID:", correlationId[0])
+	}
 
 	response, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -110,6 +114,7 @@ func (r *RESTClient) callAPI(method string, uri string, data string) (string, er
 
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
 		httpError := models.HttpStatusError{Verb: method, Path: uri, StatusCode: resp.StatusCode, Headers: resp.Header, Body: fmt.Sprintf("%s", pretty.Pretty([]byte(responseData)))}
+		logger.Warn("Error from API:", httpError.ErrorDescriptive())
 		return "", httpError
 	}
 

@@ -38,7 +38,7 @@ func InitLogger() {
 	}
 
 	// If the file doesn't exist, create it or append to the file
-	file, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY, 0666)
+	file, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
 	if err != nil {
 		return
 	}
