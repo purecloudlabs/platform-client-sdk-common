@@ -4,8 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
-	"log"
 	"os"
 	"os/signal"
 	"time"
@@ -24,7 +24,7 @@ func processWSMessage(c *websocket.Conn, done chan struct{}) {
 	for {
 		_, message, err := c.ReadMessage()
 		if err != nil {
-			log.Println("read:", err)
+			logger.Warn("Websocket read:", err)
 			return
 		}
 		utils.Render(string(message))
@@ -46,17 +46,17 @@ func waitForWSClose(c *websocket.Conn, done chan struct{}) {
 		case t := <-ticker.C:
 			err := c.WriteMessage(websocket.TextMessage, []byte(t.String()))
 			if err != nil {
-				log.Println("write:", err)
+				logger.Warn("Websocket write:", err)
 				return
 			}
 		case <-interrupt:
-			log.Println("interrupt")
+			logger.Warn("interrupt")
 
 			// Cleanly close the connection by sending a close message and then
 			// waiting (with timeout) for the server to close the connection.
 			err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 			if err != nil {
-				log.Println("write close:", err)
+				logger.Warn("Websocket write close:", err)
 				return
 			}
 			select {
@@ -79,17 +79,16 @@ var listenChannelCmd = &cobra.Command{
 		config, err := config.GetConfig(profileName)
 
 		if err != nil {
-			log.Fatal(err)
+			logger.Fatal(err)
 		}
 
 		flag.Parse()
-		log.SetFlags(0)
 
-		//Set up the websocket connetion
+		//Set up the websocket connection
 		targetURI := fmt.Sprintf("wss://streaming.%s/channels/%s", config.Environment(), args[0])
 		c, _, err := websocket.DefaultDialer.Dial(targetURI, nil)
 		if err != nil {
-			log.Fatal("Unable to connect to web socket:", err)
+			logger.Fatal("Unable to connect to web socket:", err)
 		}
 		defer c.Close()
 		done := make(chan struct{})

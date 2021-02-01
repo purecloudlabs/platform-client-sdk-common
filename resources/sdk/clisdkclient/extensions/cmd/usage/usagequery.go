@@ -3,11 +3,10 @@ package usage
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
-	"log"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -45,13 +44,12 @@ var queryUsageCmd = &cobra.Command{
 		retryFunc := CommandService.DetermineAction(usageQueryCommand.Method, "", usageQueryCommand.Path, "")
 		results, err := retryFunc(nil)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			logger.Fatal(err)
 		}
 
 		usageSubmitResponse := &models.UsageSubmitResponse{}
 		if err := json.Unmarshal([]byte(results), usageSubmitResponse); err != nil {
-			log.Fatal("Error occurred while unmarshalling data in usage query command (usageSubmitResponse)", err)
+			logger.Fatal("Error occurred while unmarshalling data in usage query command (usageSubmitResponse)", err)
 		}
 
 		if timeout > 0 {
@@ -65,12 +63,11 @@ var queryUsageCmd = &cobra.Command{
 				retryFunc := CommandService.DetermineAction(usageQueryResultsCommand.Method, "", targetURI, "")
 				rawData, commandErr := retryFunc(nil)
 				if commandErr != nil {
-					fmt.Println(commandErr)
-					os.Exit(1)
+					logger.Fatal(commandErr)
 				}
 
 				if err = json.Unmarshal([]byte(rawData), usageQueryResponse); err != nil {
-					log.Fatal("Error occurred while unmarshalling data from usage query command (usageQueryResponse)", err)
+					logger.Fatal("Error occurred while unmarshalling data from usage query command (usageQueryResponse)", err)
 				}
 
 				if usageQueryResponse.QueryStatus == "Complete" {
@@ -81,7 +78,7 @@ var queryUsageCmd = &cobra.Command{
 						time.Sleep(5 * time.Second)
 						currentIteration++
 					} else {
-						log.Fatalf("Waited for %d minutes to retrieve API Usage results.  Giving up", timeout)
+						logger.Fatalf("Waited for %d minutes to retrieve API Usage results.  Giving up", timeout)
 					}
 				}
 			}

@@ -2,12 +2,12 @@ package {{classVarName}}
 {{#operations}}
 import (
 	"fmt"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/retry"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/services"
 	"github.com/spf13/cobra"
 	"net/url"
-	"os"
 	"strings"
 )
 
@@ -66,8 +66,7 @@ var {{operationId}}Cmd = &cobra.Command{
 		}
 		results, err := retryFunc(retryConfig)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			logger.Fatal(err)
 		}
 
 		utils.Render(results)

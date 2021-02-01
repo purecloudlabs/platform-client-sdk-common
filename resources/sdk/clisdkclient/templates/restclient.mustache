@@ -3,6 +3,7 @@ package restclient
 import (
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
 	"net/http"
 	"time"
 
@@ -12,7 +13,6 @@ import (
 	"fmt"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
 	"io/ioutil"
-	"log"
 	"net/url"
 	"strings"
 
@@ -71,6 +71,8 @@ func (r *RESTClient) callAPI(method string, uri string, data string) (string, er
 		apiURI, _ = url.Parse(fmt.Sprintf("http://%s%s", r.environment, uri))
 	}
 
+	logger.Infof("Calling API with method: %v, URI: %v, data: %v", method, uri, data)
+
 	request := &http.Request{
 		URL:    apiURI,
 		Close:  true,
@@ -96,8 +98,12 @@ func (r *RESTClient) callAPI(method string, uri string, data string) (string, er
 	if err != nil {
 		return "", err
 	}
-
 	defer resp.Body.Close()
+
+	correlationId := resp.Header["Inin-Correlation-Id"]
+	if correlationId != nil {
+		logger.Info("API response Correlation ID:", correlationId[0])
+	}
 
 	response, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -108,6 +114,7 @@ func (r *RESTClient) callAPI(method string, uri string, data string) (string, er
 
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
 		httpError := models.HttpStatusError{Verb: method, Path: uri, StatusCode: resp.StatusCode, Headers: resp.Header, Body: fmt.Sprintf("%s", pretty.Pretty([]byte(responseData)))}
+		logger.Warn("Error from API:", httpError.ErrorDescriptive())
 		return "", httpError
 	}
 
@@ -130,6 +137,7 @@ func Authorize(c config.Configuration) (models.OAuthTokenData, error) {
 		if oauthTokenExpiry.After(time.Now()) {
 			return *oAuthTokenData, nil
 		}
+		logger.Info("Authorizing because token has expired")
 	}
 
 	return authorize(c)
@@ -173,7 +181,7 @@ func authorize(c config.Configuration) (models.OAuthTokenData, error) {
 	//Executing the request
 	resp, err := Client.Do(request)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
 	defer resp.Body.Close()
@@ -214,7 +222,7 @@ func NewRESTClient(config config.Configuration) *RESTClient {
 	if RestClient == nil {
 		oAuthToken, err := Authorize(config)
 		if err != nil {
-			log.Fatal(err)
+			logger.Fatal(err)
 		}
 
 		RestClient = &RESTClient{environment: config.Environment(), token: oAuthToken.AccessToken}
