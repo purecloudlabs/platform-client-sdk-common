@@ -15,10 +15,11 @@ try {
 		"channels",
 		"subscriptions",
 		"topics",
-		"user",
+		"queueuser",
 		"queue",
 		"skill",
 		"members",
+		"roleuser",
 		"root.go"
 	]
 	let addCommands = ""

@@ -67,6 +67,10 @@ func GetFlag(flags *pflag.FlagSet, paramType string, name string) string {
 }
 
 func FormatUsageDescription(message string) string {
+	if strings.Contains(message, "user") {
+		message = strings.ReplaceAll(message, "role", "")
+		message = strings.ReplaceAll(message, "queue", "")
+	}
 	if !strings.HasSuffix(message, "s") && !strings.HasSuffix(message, "usage") {
 		return fmt.Sprintf("%v%v", message, "s")
 	}
