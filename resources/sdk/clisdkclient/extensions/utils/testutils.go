@@ -3,7 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"gc/models"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
 	"github.com/tidwall/pretty"
 	"io/ioutil"
 	"net/http"

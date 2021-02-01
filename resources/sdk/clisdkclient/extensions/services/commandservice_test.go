@@ -2,12 +2,12 @@ package services
 
 import (
 	"fmt"
-	"gc/config"
-	"gc/mocks"
-	"gc/models"
-	"gc/restclient"
-	"gc/retry"
-	"gc/utils"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/mocks"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/restclient"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/retry"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
 	"github.com/spf13/cobra"
 	"io/ioutil"
 	"net/http"

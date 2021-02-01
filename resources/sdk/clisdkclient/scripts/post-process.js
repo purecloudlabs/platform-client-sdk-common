@@ -28,7 +28,7 @@ try {
 	while ((dirent = dir.readSync()) !== null) {
 		if (exclusionList.includes(dirent.name)) continue
 		// imports for packages under cmd
-		addImports += `"gc/cmd/${dirent.name}"\n\t`
+		addImports += `"github.com/mypurecloud/platform-client-sdk-cli/build/gc/cmd/${dirent.name}"\n\t`
 		let packageName = `${dirent.name}`;
 		// adding each command to the rootCmd
 		addCommands += `rootCmd.AddCommand(${packageName}.Cmd${packageName}())\n\t`

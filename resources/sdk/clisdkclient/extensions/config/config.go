@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	"gc/models"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
 	"os"
 
 	"github.com/spf13/viper"

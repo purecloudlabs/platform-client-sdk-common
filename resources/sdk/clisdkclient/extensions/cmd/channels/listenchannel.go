@@ -3,8 +3,8 @@ package channels
 import (
 	"flag"
 	"fmt"
-	"gc/config"
-	"gc/utils"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
 	"log"
 	"os"
 	"os/signal"

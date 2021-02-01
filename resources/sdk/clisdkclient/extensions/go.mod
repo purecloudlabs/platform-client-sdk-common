@@ -1,4 +1,4 @@
-module gc
+module github.com/mypurecloud/platform-client-sdk-cli/build/gc
 
 go 1.15
 

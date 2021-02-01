@@ -1,8 +1,8 @@
 package retry
 
 import (
-	"gc/models"
-	"gc/utils"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
 	"net/http"
 	"strconv"
 	"time"

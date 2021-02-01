@@ -2,10 +2,10 @@ package profiles
 
 import (
 	"fmt"
-	"gc/config"
-	"gc/mocks"
-	"gc/restclient"
-	"gc/models"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/mocks"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/restclient"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
 	"log"
 	"os"
 	"strings"

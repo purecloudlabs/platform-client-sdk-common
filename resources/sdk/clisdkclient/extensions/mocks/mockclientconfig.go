@@ -2,8 +2,8 @@ package mocks
 
 import (
 	"fmt"
-	"gc/config"
-	"gc/models"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
 )
 
 type MockClientConfig struct {

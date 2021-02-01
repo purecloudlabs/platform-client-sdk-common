@@ -1,9 +1,9 @@
 package notifications
 
 import (
-	"gc/cmd/channels"
-	"gc/cmd/topics"
-	"gc/cmd/subscriptions"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/cmd/channels"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/cmd/topics"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/cmd/subscriptions"
 
 	"github.com/spf13/cobra"
 )
