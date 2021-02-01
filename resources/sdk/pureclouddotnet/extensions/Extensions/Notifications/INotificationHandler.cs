@@ -6,7 +6,7 @@ using WebSocketSharp;
 namespace {{=it.packageName}}.Extensions.Notifications
 {
     /// <summary>
-    /// A helper class for handling PureCloud notifications
+    /// A helper class for handling Genesys Cloud notifications
     /// </summary>
     public interface INotificationHandler: IDisposable
     {

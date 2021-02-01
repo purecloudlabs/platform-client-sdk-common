@@ -27,18 +27,18 @@ echo '<?xml version="1.0" encoding="utf-8"?>'\
 '<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">'\
 '	<metadata>'\
 "		<id>$NAMESPACE</id>"\
-'		<title>PureCloud Platform Client</title>'\
-'		<summary>A .NET library to interface with the PureCloud Public API</summary>'\
+'		<title>Genesys Cloud Platform Client</title>'\
+'		<summary>A .NET library to interface with the Genesys Cloud Public API</summary>'\
 '		<projectUrl>https://github.com/MyPureCloud/platform-client-sdk-dotnet</projectUrl>'\
 '		<copyright>Copyright © Genesys 2017</copyright>'\
 '		<licenseUrl>https://github.com/MyPureCloud/platform-client-sdk-dotnet/blob/master/LICENSE</licenseUrl>'\
 '		<iconUrl>https://raw.githubusercontent.com/MyPureCloud/platform-client-sdk-dotnet/master/ininlogo64.png</iconUrl>'\
-'		<tags>genesys purecloud pure cloud public platform api sdk</tags>'\
+'		<tags>genesys cloud public platform api sdk</tags>'\
 '		<language>en-us</language>'\
 "		<version>$VERSION</version>"\
 '		<authors>Genesys Developer Evangelists</authors>'\
 '		<requireLicenseAcceptance>false</requireLicenseAcceptance>'\
-'		<description>A .NET library to interface with the PureCloud Public API</description>'\
+'		<description>A .NET library to interface with the Genesys Cloud Public API</description>'\
 '		<dependencies>'\
 '			<dependency id="Newtonsoft.Json" version="11.0.2" />'\
 '			<dependency id="RestSharp" version="106.3.1" />'\
