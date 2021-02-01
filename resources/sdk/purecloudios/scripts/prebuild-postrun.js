@@ -8,9 +8,9 @@ try {
 
 	var config = {
 		projectName: packageName || 'PureCloudPlatformApiSdk',
-		projectDescription: 'An iOS library to interface with the PureCloud Platform API',
-		podSummary: 'An iOS library to interface with the PureCloud Platform API',
-		podDescription: 'An iOS library to interface with the PureCloud Platform API',
+		projectDescription: 'An iOS library to interface with the Genesys Cloud Platform API',
+		podSummary: 'An iOS library to interface with the Genesys Cloud Platform API',
+		podDescription: 'An iOS library to interface with the Genesys Cloud Platform API',
 		podSource: `{ :git => 'git@github.com:MyPureCloud/platform-client-sdk-ios.git', :tag => '${version.displayFull}' }`,
 		podAuthors: 'Genesys Developer Evangelists',
 		podSocialMediaURL: 'https://twitter.com/PureCloud_Dev',
