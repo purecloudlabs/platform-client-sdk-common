@@ -19,6 +19,7 @@ else
     GC="gc_linux_amd64"
 fi
 
+rm -rf $TMP_LOGS
 bin/$GC &> /dev/null
 sleep 1
 

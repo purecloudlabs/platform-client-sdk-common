@@ -1,6 +1,7 @@
 package retry
 
 import (
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
 	"net/http"
@@ -77,8 +78,11 @@ func (r *retry) shouldRetry(startTime time.Time, errorValue error) bool {
 		r.retryAfterMs = getRetryAfterValue(e.Headers)
 		r.retryCountBeforeQuitting++
 		if r.retryCountBeforeQuitting < r.MaxRetriesBeforeQuitting {
+			logger.Warnf("Got rate-limited. Sleeping for %v milliseconds before retrying", r.retryAfterMs)
 			time.Sleep(utils.MilliSecondsToNanoSeconds(r.retryAfterMs))
 			return true
+		} else {
+			logger.Warnf("Exceeded maximum rate-limit retries (%v). Will not retry again", r.MaxRetriesBeforeQuitting)
 		}
 	}
 	return false

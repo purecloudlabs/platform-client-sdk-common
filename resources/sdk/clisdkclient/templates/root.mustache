@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
@@ -8,7 +9,6 @@ import (
 	"flag"
 	"fmt"
 	{{addImports}}
-	"log"
 	"os"
 )
 
@@ -36,8 +36,7 @@ var versionCmd = &cobra.Command{
 func Execute() {
 	flag.CommandLine.Parse(nil)
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		logger.Fatal(err)
 	}
 }
 
@@ -53,6 +52,7 @@ func initViperConfig() {
 }
 
 func init() {
+	logger.InitLogger()
 	cobra.OnInitialize()
 	initViperConfig()
 
@@ -65,11 +65,11 @@ func init() {
 		if _, err := os.Stat("/tmp/gc_docs"); os.IsNotExist(err) {
 			err = os.Mkdir("/tmp/gc_docs", 0755)
 			if err != nil {
-				log.Fatal(err)
+				logger.Fatal(err)
 			}
 			err = doc.GenMarkdownTree(rootCmd, "/tmp/gc_docs")
 			if err != nil {
-				log.Fatal(err)
+				logger.Fatal(err)
 			}
 		}
 	}

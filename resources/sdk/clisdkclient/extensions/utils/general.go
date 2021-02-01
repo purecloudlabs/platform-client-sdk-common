@@ -5,9 +5,9 @@ import (
 	"bytes"
 	"crypto/rand"
 	"fmt"
-	"net/http"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
 	"io/ioutil"
-	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -118,7 +118,7 @@ func ConvertFileJSON(fileName string) string {
 	jsonFile, err := os.Open(fileName)
 
 	if err != nil {
-		log.Fatal(fmt.Sprintf("Unable to open file %s.", fileName), err)
+		logger.Fatal(fmt.Sprintf("Unable to open file %s.", fileName), err)
 	}
 
 	// defer the closing of our jsonFile so that we can parse it later on
@@ -148,7 +148,7 @@ func GenerateGuid() string {
 	b := make([]byte, 16)
 	_, err := rand.Read(b)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
 	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])

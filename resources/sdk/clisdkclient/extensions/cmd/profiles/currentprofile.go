@@ -2,8 +2,8 @@ package profiles
 
 import (
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
-	"log"
 
 	"github.com/spf13/cobra"
 )
@@ -25,7 +25,7 @@ var currentProfileCmd = &cobra.Command{
 		config, err := config.GetConfig(profileName)
 
 		if err != nil {
-			log.Fatal(err)
+			logger.Fatal(err)
 		}
 
 		utils.Render(config.String())

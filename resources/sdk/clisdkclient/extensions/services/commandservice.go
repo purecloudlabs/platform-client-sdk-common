@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/restclient"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/retry"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
 	"github.com/spf13/cobra"
-	"log"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -100,6 +100,7 @@ func (c *commandService) List(uri string) (string, error) {
 		pagedURI := uri
 		for x := 2; x <= firstPage.PageCount; x++ {
 			pagedURI = updatePageNumber(pagedURI, x)
+			logger.Info("Paginating with URI: ", pagedURI)
 			retryFunc := retry.Retry(pagedURI, restClient.Get)
 			data, err = retryFunc(&retry.RetryConfiguration{
 				MaxRetryTimeSec: 20,
@@ -178,7 +179,7 @@ func (c *commandService) upsert(method string, uri string, payload string) (stri
 	case http.MethodDelete:
 		response, err = restClient.Delete(uri)
 	default:
-		log.Fatal("Unable to resolve the http verb in the GeneralCreateUpdate function")
+		logger.Fatalf("Unable to resolve the http verb: %v", method)
 	}
 
 	if err == nil {
@@ -195,10 +196,12 @@ func (c *commandService) upsert(method string, uri string, payload string) (stri
 
 func reAuthenticateIfNecessary(config config.Configuration, err error) error {
 	if hasReAuthenticated {
+		logger.Warn("Have already re-authenticated. Will not authenticate again")
 		return err
 	}
 
 	if e, ok := err.(models.HttpStatusError); ok && e.StatusCode == http.StatusUnauthorized {
+		logger.Info("Received HTTP 401 error, re-authenticating")
 		_, err = restclient.ReAuthenticate(config)
 		if err != nil {
 			return err

@@ -3,11 +3,10 @@ package profiles
 import (
 	"fmt"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/mocks"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/restclient"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
-	"log"
-	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -114,7 +113,7 @@ func validateCredentials(config config.Configuration) bool {
 		if _, ok := err.(*models.HttpStatusError); ok {
 			return false
 		}
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
 	return true
@@ -130,18 +129,15 @@ var createProfilesCmd = &cobra.Command{
 		newConfig := requestUserInput()
 
 		if overrideConfig(newConfig.ProfileName()) == false {
-			fmt.Println("Exiting profile creation process")
-			os.Exit(1)
+			logger.Fatal("Exiting profile creation process")
 		}
 
 		if validateCredentials(newConfig) == false {
-			fmt.Println("The credentials provided are not valid.")
-			os.Exit(1)
+			logger.Fatal("The credentials provided are not valid.")
 		}
 
 		if err := config.SaveConfig(newConfig); err != nil {
-			fmt.Print(err)
-			os.Exit(1)
+			logger.Fatal(err)
 		}
 
 		fmt.Printf("Profile %s saved.\n", newConfig.ProfileName())
