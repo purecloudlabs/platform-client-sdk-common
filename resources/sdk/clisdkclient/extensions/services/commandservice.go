@@ -88,7 +88,7 @@ func (c *commandService) List(uri string) (string, error) {
 	json.Unmarshal([]byte(data), firstPage)
 
 	//Allocate the total results based on the page count
-	totalResults := make([]string, len(firstPage.Entities))
+	totalResults := make([]string, 0)
 
 	//Appends the individual records from Entities into the array
 	for _, val := range firstPage.Entities {
@@ -120,7 +120,13 @@ func (c *commandService) List(uri string) (string, error) {
 	}
 
 	//Convert the data into one big string
-	finalJSONString := fmt.Sprintf("[%s]", strings.Join(totalResults, ","))
+	var finalJSONString string
+	if len(totalResults) > 1 {
+		finalJSONString = fmt.Sprintf("[%s]", strings.Join(totalResults, ","))
+	} else {
+		finalJSONString = fmt.Sprintf("[%s]", totalResults[0])
+	}
+	
 	return finalJSONString, nil
 }
 

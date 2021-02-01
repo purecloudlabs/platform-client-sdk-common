@@ -70,9 +70,6 @@ const inclusionList = {
 		"get": {
 			operationId: "get"
 		},
-		"post": {
-			operationId: "add"
-		},
 		"delete": {
 			operationId: "remove"
 		}
