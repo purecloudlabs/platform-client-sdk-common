@@ -14,7 +14,7 @@ This repository contains scripts, templates, and configuration files that are us
 
 # Generating the SDK locally
 
-For additional information and documentation, see the [wiki](https://github.com/MyPureCloud/purecloud_api_sdk_common/wiki).
+For additional information and documentation, see [Building Locally](https://github.com/purecloudlabs/platform-client-sdk-common/wiki/Building-Locally) in the [wiki](https://github.com/MyPureCloud/platform-client-sdk-common/wiki).
 
 ## Dependencies
 
@@ -27,7 +27,7 @@ Each SDK configuration has a config file located at `./resources/sdk/<language>/
 
 A local config file is typically desired to store sensitive information (like a PureCloud client ID and secret) or to override settings in the standard config file.
 
-For full documentation, see [Config Files](https://github.com/MyPureCloud/purecloud_api_sdk_common/wiki/Config-Files) on the wiki.
+For full documentation, see [Config Files](https://github.com/MyPureCloud/platform-client-sdk-common/wiki/Config-Files) on the wiki.
 
 ## Generate
 
