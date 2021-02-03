@@ -36,7 +36,7 @@ var versionCmd = &cobra.Command{
 func Execute() {
 	flag.CommandLine.Parse(nil)
 	if err := rootCmd.Execute(); err != nil {
-		logger.Fatal(err)
+		logger.Fatal(fmt.Sprintf("%v\n", err.Error()))
 	}
 }
 
