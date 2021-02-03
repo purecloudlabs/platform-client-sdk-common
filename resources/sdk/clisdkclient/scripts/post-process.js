@@ -20,6 +20,8 @@ try {
 		"skill",
 		"members",
 		"roleuser",
+		"didpools",
+		"dids",
 		"root.go"
 	]
 	let addCommands = ""
