@@ -63,6 +63,18 @@ const inclusionList = {
 			operationId: "reboot"
 		}
 	},
+	"/api/v2/telephony/providers/edges/didpools": {
+		tags: ["didpools"],
+	},
+	"/api/v2/telephony/providers/edges/didpools/{didPoolId}":{
+		tags: ["didpools"],
+	},
+	"/api/v2/telephony/providers/edges/dids/{didId}":{
+		tags: ["dids"],
+	},
+	"/api/v2/telephony/providers/edges/dids":{
+     tags: ["dids"]
+	},
 	"/api/v2/groups": {},
 	"/api/v2/groups/{groupId}": {},
 	"/api/v2/groups/{groupId}/members": {
