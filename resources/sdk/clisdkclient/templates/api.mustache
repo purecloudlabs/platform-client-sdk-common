@@ -24,7 +24,7 @@ func init() {
 
 func Cmd{{classVarName}}() *cobra.Command { {{#operation}}
 	{{#queryParams}}utils.AddFlag({{operationId}}Cmd.Flags(), "{{{dataType}}}", "{{paramName}}", "{{#defaultValue}}{{{.}}}{{/defaultValue}}{{^defaultValue}}{{/defaultValue}}", "{{description}}{{#required}} - REQUIRED{{/required}}{{#allowableValues}} Valid values: {{#values}}{{.}}{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}}")
-	{{#hasMore}}{{/hasMore}}{{/queryParams}}{{operationId}}Cmd.SetHelpTemplate(fmt.Sprintf("%s\nOperation:\n  %s %s\n%s", {{operationId}}Cmd.UsageTemplate(), "{{httpMethod}}", "{{path}}", utils.FormatPermissions([]string{ {{#permissions}}"{{.}}", {{/permissions}} })))
+	{{#hasMore}}{{/hasMore}}{{/queryParams}}{{operationId}}Cmd.SetUsageTemplate(fmt.Sprintf("%s\nOperation:\n  %s %s\n%s", {{operationId}}Cmd.UsageTemplate(), "{{httpMethod}}", "{{path}}", utils.FormatPermissions([]string{ {{#permissions}}"{{.}}", {{/permissions}} })))
 	utils.AddFileFlagIfUpsert({{operationId}}Cmd.Flags(), "{{httpMethod}}")
 	{{classVarName}}Cmd.AddCommand({{operationId}}Cmd)
 	{{/operation}}
