@@ -19,19 +19,23 @@ if (fs.existsSync(newSwaggerPath)) {
 
 let paths = {}
 const inclusionList = {
-	"/api/v2/outbound/campaigns": {},
-	"/api/v2/outbound/campaigns/{campaignId}": {},
+	"/api/v2/outbound/campaigns": {
+		tags: ["campaigns"]
+	},
+	"/api/v2/outbound/campaigns/{campaignId}": {
+		tags: ["campaigns"]
+	},
 	"/api/v2/authorization/divisions": {
-		tags: ["Authorization"]
+		tags: ["divisions"]
 	},
 	"/api/v2/authorization/divisions/{divisionId}": {
-		tags: ["Authorization"]
+		tags: ["divisions"]
 	},
 	"/api/v2/authorization/roles": {
-		tags: ["Roles"]
+		tags: ["roles"]
 	},
 	"/api/v2/authorization/roles/{roleId}": {
-		tags: ["Roles"],
+		tags: ["roles"],
 		"delete":{
 			operationId: "remove"
 		},
@@ -39,26 +43,31 @@ const inclusionList = {
 		"put": {}
 	},
 	"/api/v2/authorization/roles/{roleId}/users": {
-		tags: ["RoleUser"],
+		tags: ["roleuser"],
 		"get": {
 			operationId: "get"
 		}
 	},
 	"/api/v2/authorization/roles/{roleId}/users/add": {
-		tags: ["RoleUser"],
+		tags: ["roleuser"],
 		"put": {
 			operationId: "add"
 		}
 	},
 	"/api/v2/authorization/roles/{roleId}/users/remove": {
-		tags: ["RoleUser"],
+		tags: ["roleuser"],
 		"put": {
 			operationId: "delete"
 		}
 	},
-	"/api/v2/telephony/providers/edges": {},
-	"/api/v2/telephony/providers/edges/{edgeId}": {},
+	"/api/v2/telephony/providers/edges": {
+		tags: ["edges"]
+	},
+	"/api/v2/telephony/providers/edges/{edgeId}": {
+		tags: ["edges"]
+	},
 	"/api/v2/telephony/providers/edges/{edgeId}/reboot": {
+		tags: ["edges"],
 		"post": {
 			operationId: "reboot"
 		}
@@ -73,12 +82,12 @@ const inclusionList = {
 		tags: ["dids"],
 	},
 	"/api/v2/telephony/providers/edges/dids":{
-     tags: ["dids"]
+    	tags: ["dids"]
 	},
 	"/api/v2/groups": {},
 	"/api/v2/groups/{groupId}": {},
 	"/api/v2/groups/{groupId}/members": {
-		tags: ["Members"],
+		tags: ["members"],
 		"get": {
 			operationId: "get"
 		},
@@ -89,26 +98,31 @@ const inclusionList = {
 	"/api/v2/locations": {},
 	"/api/v2/locations/{locationId}": {},
 	"/api/v2/telephony/providers/edges/phones": {
-		tags: ["Phones"]
+		tags: ["phones"]
 	},
 	"/api/v2/telephony/providers/edges/phones/{phoneId}": {
-		tags: ["Phones"]
+		tags: ["phones"]
 	},
 	"/api/v2/telephony/providers/edges/phones/{phoneId}/reboot": {
-		tags: ["Phones"],
+		tags: ["phones"],
 		"post": {
 			operationId: "reboot"
 		}
 	},
-	"/api/v2/routing/queues": {},
-	"/api/v2/routing/queues/{queueId}": {},
+	"/api/v2/routing/queues": {
+		tags: ["queues"]
+	},
+	"/api/v2/routing/queues/{queueId}": {
+		tags: ["queues"]
+	},
 	"/api/v2/routing/queues/{queueId}/estimatedwaittime": {
+		tags: ["queues"],
 		"get": {
 			operationId: "estimatedwait"
 		}
 	},
 	"/api/v2/routing/queues/{queueId}/users": {
-		tags: ["QueueUser"],
+		tags: ["queueuser"],
 		"get": {
 			operationId: "get"
 		},
@@ -120,28 +134,28 @@ const inclusionList = {
 		}
 	},
 	"/api/v2/routing/queues/{queueId}/users/{memberId}": {
-		tags: ["QueueUser"],
+		tags: ["queueuser"],
 		"delete": {},
 		"patch": {}
 	},
 	"/api/v2/telephony/providers/edges/sites": {
-		tags: ["Sites"]
+		tags: ["sites"]
 	},
 	"/api/v2/telephony/providers/edges/sites/{siteId}": {
-		tags: ["Sites"]
+		tags: ["sites"]
 	},
 	"/api/v2/routing/skills": {
-		tags: ["Skills"]
+		tags: ["skills"]
 	},
 	"/api/v2/routing/skills/{skillId}": {
-		tags: ["Skills"]
+		tags: ["skills"]
 	},
 	"/api/v2/stations": {},
 	"/api/v2/stations/{stationId}": {},
 	"/api/v2/users": {},
 	"/api/v2/users/{userId}": {},
 	"/api/v2/users/{userId}/queues": {
-		tags: ["Queue"],
+		tags: ["queue"],
 		"get": {
 			operationId: "get"
 		},
@@ -150,19 +164,19 @@ const inclusionList = {
 		}
 	},
 	"/api/v2/users/{userId}/queues/{queueId}": {
-		tags: ["Queue"],
+		tags: ["queue"],
 		"patch": {
 			operationId: "join"
 		}
 	},
 	"/api/v2/users/{userId}/routingskills": {
-		tags: ["Skill"]
+		tags: ["skill"]
 	},
 	"/api/v2/users/{userId}/routingskills/{skillId}": {
-		tags: ["Skill"]
+		tags: ["skill"]
 	},
 	"/api/v2/users/{userId}/routingskills/bulk": {
-		tags: ["Skill"],
+		tags: ["skill"],
 		"put": {
 			operationId: "bulkupdate"
 		},
@@ -171,16 +185,16 @@ const inclusionList = {
 		}
 	},
 	"/api/v2/notifications/availabletopics": {
-		tags: ["Topics"],
+		tags: ["topics"],
 		"get": {
 			operationId: "list"
 		}
 	},
 	"/api/v2/notifications/channels": {
-		tags: ["Channels"]
+		tags: ["channels"]
 	},
 	"/api/v2/notifications/channels/{channelId}/subscriptions": {
-		tags: ["Subscriptions"],
+		tags: ["subscriptions"],
 		"get": {},
 		"post": {
 			operationId: "subscribe"
