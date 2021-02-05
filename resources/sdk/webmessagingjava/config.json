@@ -26,7 +26,7 @@
 		"releaseNoteSummaryTemplatePath": "${COMMON_ROOT}/resources/templates/githubSdkReleaseNoteSummary.md",
 		"debugConfig": false,
 		"enableLoggerColor": false,
-		"mavenSettingsFilePath": "/var/build/settings.xml",
+		"mavenSettingsFilePath": "/Users/julienmoreau/.m2/settings.xml",
 		"mavenTarget": "package",
 		"apiHealthCheckUrl": "https://api.mypurecloud.com/api/v2/health/check"
 	},
