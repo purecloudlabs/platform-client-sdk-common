@@ -1,0 +1,212 @@
+{
+	"/api/v2/outbound/campaigns": {
+		"tag": "campaigns"
+	},
+	"/api/v2/outbound/campaigns/{campaignId}": {
+		"tag": "campaigns"
+	},
+	"/api/v2/authorization/divisions": {
+		"tag": "divisions"
+	},
+	"/api/v2/authorization/divisions/{divisionId}": {
+		"tag": "divisions"
+	},
+	"/api/v2/authorization/roles": {
+		"tag": "roles"
+	},
+	"/api/v2/authorization/roles/{roleId}": {
+		"tag": "roles",
+		"delete":{
+			"operationId": "remove"
+		},
+		"get": {},
+		"put": {}
+	},
+	"/api/v2/authorization/roles/{roleId}/users": {
+		"tag": "roleuser",
+		"supercommand": "roles",
+		"get": {
+			"operationId": "get"
+		}
+	},
+	"/api/v2/authorization/roles/{roleId}/users/add": {
+		"tag": "roleuser",
+		"supercommand": "roles",
+		"put": {
+			"operationId": "add"
+		}
+	},
+	"/api/v2/authorization/roles/{roleId}/users/remove": {
+		"tag": "roleuser",
+		"supercommand": "roles",
+		"put": {
+			"operationId": "delete"
+		}
+	},
+	"/api/v2/telephony/providers/edges": {
+		"tag": "edges"
+	},
+	"/api/v2/telephony/providers/edges/{edgeId}": {
+		"tag": "edges"
+	},
+	"/api/v2/telephony/providers/edges/{edgeId}/reboot": {
+		"tag": "edges",
+		"post": {
+			"operationId": "reboot"
+		}
+	},
+	"/api/v2/telephony/providers/edges/didpools": {
+		"tag": "didpools",
+		"supercommand": "edges"
+	},
+	"/api/v2/telephony/providers/edges/didpools/{didPoolId}": {
+		"tag": "didpools",
+		"supercommand": "edges"
+	},
+	"/api/v2/telephony/providers/edges/dids/{didId}": {
+		"tag": "dids",
+		"supercommand": "edges"
+	},
+	"/api/v2/telephony/providers/edges/dids": {
+		"tag": "dids",
+		"supercommand": "edges"
+	},
+	"/api/v2/groups": {},
+	"/api/v2/groups/{groupId}": {},
+	"/api/v2/groups/{groupId}/members": {
+		"tag": "members",
+		"supercommand": "groups",
+		"entityListing": true,
+		"get": {
+			"operationId": "get"
+		},
+		"delete": {
+			"operationId": "remove"
+		}
+	},
+	"/api/v2/locations": {},
+	"/api/v2/locations/{locationId}": {},
+	"/api/v2/telephony/providers/edges/phones": {
+		"tag": "phones"
+	},
+	"/api/v2/telephony/providers/edges/phones/{phoneId}": {
+		"tag": "phones"
+	},
+	"/api/v2/telephony/providers/edges/phones/{phoneId}/reboot": {
+		"tag": "phones",
+		"post": {
+			"operationId": "reboot"
+		}
+	},
+	"/api/v2/routing/queues": {
+		"tag": "queues"
+	},
+	"/api/v2/routing/queues/{queueId}": {
+		"tag": "queues"
+	},
+	"/api/v2/routing/queues/{queueId}/estimatedwaittime": {
+		"tag": "queues",
+		"get": {
+			"operationId": "estimatedwait"
+		}
+	},
+	"/api/v2/routing/queues/{queueId}/users": {
+		"tag": "queueuser",
+		"supercommand": "queues",
+		"entityListing": true,
+		"get": {
+			"operationId": "get"
+		},
+		"post": {
+			"operationId": "move"
+		},
+		"patch": {
+			"operationId": "activate"
+		}
+	},
+	"/api/v2/routing/queues/{queueId}/users/{memberId}": {
+		"tag": "queueuser",
+		"supercommand": "queues",
+		"delete": {},
+		"patch": {}
+	},
+	"/api/v2/telephony/providers/edges/sites": {
+		"tag": "sites"
+	},
+	"/api/v2/telephony/providers/edges/sites/{siteId}": {
+		"tag": "sites"
+	},
+	"/api/v2/routing/skills": {
+		"tag": "skills"
+	},
+	"/api/v2/routing/skills/{skillId}": {
+		"tag": "skills"
+	},
+	"/api/v2/stations": {},
+	"/api/v2/stations/{stationId}": {},
+	"/api/v2/users": {},
+	"/api/v2/users/{userId}": {},
+	"/api/v2/users/{userId}/queues": {
+		"tag": "queue",
+		"supercommand": "users",
+		"entityListing": true,
+		"get": {
+			"operationId": "get"
+		},
+		"patch": {
+			"operationId": "joinset"
+		}
+	},
+	"/api/v2/users/{userId}/queues/{queueId}": {
+		"tag": "queue",
+		"supercommand": "users",
+		"patch": {
+			"operationId": "join"
+		}
+	},
+	"/api/v2/users/{userId}/routingskills": {
+		"tag": "skill",
+		"supercommand": "users"
+	},
+	"/api/v2/users/{userId}/routingskills/{skillId}": {
+		"tag": "skill",
+		"supercommand": "users"
+	},
+	"/api/v2/users/{userId}/routingskills/bulk": {
+		"tag": "skill",
+		"supercommand": "users",
+		"put": {
+			"operationId": "bulkupdate"
+		},
+		"patch": {
+			"operationId": "bulkremove"
+		}
+	},
+	"/api/v2/notifications/availabletopics": {
+		"tag": "topics",
+		"supercommand": "notifications",
+		"get": {
+			"operationId": "list"
+		}
+	},
+	"/api/v2/notifications/channels": {
+		"tag": "channels",
+		"supercommand": "notifications"
+	},
+	"/api/v2/notifications/channels/{channelId}/subscriptions": {
+		"tag": "subscriptions",
+		"supercommand": "notifications",
+		"get": {},
+		"post": {
+			"operationId": "subscribe"
+		},
+		"delete": {}
+	},
+	"/api/v2/usage/query/{executionId}/results": {
+		"tag": "usage",
+		"doNotPluralize": true,
+		"get": {
+			"operationId": "results"
+		}
+	}
+}

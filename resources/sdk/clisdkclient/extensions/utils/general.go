@@ -72,7 +72,8 @@ func FormatUsageDescription(message string) string {
 		message = strings.ReplaceAll(message, "queue", "")
 	}
 
-	notPluralCommands := []string{"usage"}
+	notPluralCommands := make([]string, 0)
+	{{=it.notPluralCommands}}
 	for _, command := range notPluralCommands {
 		if strings.HasSuffix(message, command) {
 			return message
