@@ -84,20 +84,28 @@ public class WebMessagingClient {
     public void joinConversation(String deploymentId, GuestInformation guestInformation, String token, String initialMessage, String origin) {
         SessionListener listener = new SessionListener() {
             @Override
-            public void sessionResponseReceived(SessionResponse response, String rawResponse) {
+            public void sessionResponse(SessionResponse response, String rawResponse) {
                 // TODO send initial message
             }
 
             @Override
-            public void structuredMessageReceived(StructuredMessage message, String rawResponse) {
+            public void structuredMessage(StructuredMessage message, String rawResponse) {
             }
 
             @Override
-            public void unknownMessageReceived(BaseMessage message, String rawResponse) {
+            public void unexpectedMessage(String rawResponse) {
             }
 
             @Override
-            public void rawMessageReceived(String rawResponse) {
+            public void presignedUrlResponse(PresignedUrlResponse presignedUrl, String rawResponse) {
+            }
+
+            @Override
+            public void uploadSuccessEvent(UploadSuccessEvent uploadSuccessEvent, String rawMessage) {
+            }
+
+            @Override
+            public void uploadFailureEvent(UploadFailureEvent uploadFailureEvent, String rawMessage) {
             }
 
             @Override
@@ -286,62 +294,15 @@ public class WebMessagingClient {
      * @param rawResponse The raw message payload JSON as a string
      * @param event       The deserialized event object
      */
-    private void onSessionEvent(String rawResponse, BaseMessage event) {
-        // TODO handlers for PresignedUrlResponse and UploadSuccessEvent
-        // Invoke method based on event type
-        switch (event.getType()) {
-            case MESSAGE: {
-                handleMessageReceived(rawResponse, event);
-                break;
-            }
-            case RESPONSE: {
-                handleResponseReceived(rawResponse, event);
-                break;
-            }
-            default: {
-                handleUnknownMessageReceived(rawResponse, event);
-            }
-        }
-    }
-
-    /**
-     * Invokes registered listeners for incoming WebSocket messages
-     *
-     * @param rawResponse The raw message payload JSON as a string
-     * @param event       The deserialized event object
-     */
-    private void handleMessageReceived(String rawResponse, BaseMessage event) {
-        Class<?> messageClass;
-        try {
-            messageClass = Class.forName(getClass().getPackageName() + ".model." + event.getClassProperty().toString());
-        } catch (ClassNotFoundException e) {
-            handleUnknownMessageReceived(rawResponse, event);
-            return;
-        }
-        StructuredMessage structuredMessage = (StructuredMessage) objectMapper.convertValue(event.getBody(), messageClass);
-
-        // Invoke each listener
-        for (SessionListener sessionListener : sessionListeners) {
-            // Send raw message text
-            sessionListener.rawMessageReceived(rawResponse);
-            // Invoke message received callback
-            sessionListener.structuredMessageReceived(structuredMessage, rawResponse);
-        }
-    }
-
-    /**
-     * Invokes registered listeners for incoming WebSocket responses
-     *
-     * @param rawResponse The raw message payload JSON as a string
-     * @param event       The deserialized event object
-     */
-    private void handleResponseReceived(String rawResponse, BaseMessage event) {
+    private void onSessionEvent(String rawMessage, BaseMessage event) {
         String className = event.getClassProperty().toString();
         Class<?> messageClass;
         try {
             messageClass = Class.forName(getClass().getPackageName() + ".model." + className);
         } catch (ClassNotFoundException e) {
-            handleUnknownMessageReceived(rawResponse, event);
+            for (SessionListener sessionListener : sessionListeners) {
+                sessionListener.unexpectedMessage(rawMessage);
+            }
             return;
         }
 
@@ -351,33 +312,34 @@ public class WebMessagingClient {
                 sessionId = ((SessionResponse) response).getSessionId();
                 // Invoke each listener
                 for (SessionListener sessionListener : sessionListeners) {
-                    sessionListener.sessionResponseReceived((SessionResponse) response, rawResponse);
+                    sessionListener.sessionResponse((SessionResponse) response, rawMessage);
                 }
                 break;
             case "StructuredMessage":
                 for (SessionListener sessionListener : sessionListeners) {
-                    sessionListener.structuredMessageReceived((StructuredMessage) response, rawResponse);
+                    sessionListener.structuredMessage((StructuredMessage) response, rawMessage);
+                }
+                break;
+            case "PresignedUrlResponse":
+                for (SessionListener sessionListener : sessionListeners) {
+                    sessionListener.presignedUrlResponse((PresignedUrlResponse) response, rawMessage);
+                }
+                break;
+            case "UploadSuccessEvent":
+                for (SessionListener sessionListener : sessionListeners) {
+                    sessionListener.uploadSuccessEvent((UploadSuccessEvent) response, rawMessage);
+                }
+                break;
+            case "UploadFailureEvent":
+                for (SessionListener sessionListener : sessionListeners) {
+                    sessionListener.uploadFailureEvent((UploadFailureEvent) response, rawMessage);
                 }
                 break;
             default:
-                return;
-        }
-    }
-
-
-    /**
-     * Invokes registered listeners for incoming WebSocket messages of unknown type
-     *
-     * @param rawResponse The raw message payload JSON as a string
-     * @param event       The deserialized event object
-     */
-    private void handleUnknownMessageReceived(String rawResponse, BaseMessage event) {
-        // Invoke each listener
-        for (SessionListener sessionListener : sessionListeners) {
-            // Send raw message text
-            sessionListener.rawMessageReceived(rawResponse);
-            // Invoke message received callback
-            sessionListener.unknownMessageReceived(event, rawResponse);
+                for (SessionListener sessionListener : sessionListeners) {
+                    sessionListener.unexpectedMessage(rawMessage);
+                }
+                break;
         }
     }
 
@@ -485,32 +447,48 @@ public class WebMessagingClient {
          * Raised for responses to session requests (type == BaseResponseType.RESPONSE, class = SessionResponse)
          *
          * @param response    The deserialized event object
-         * @param rawResponse The raw message payload JSON as a string
+         * @param rawMessage  The raw message payload JSON as a string
          */
-        void sessionResponseReceived(SessionResponse response, String rawResponse);
+        void sessionResponse(SessionResponse response, String rawMessage);
 
         /**
          * Raised for incoming messages (type == RESPONSE OR MESSAGE), class = StructuredMessage`
          *
          * @param message     The deserialized event object
-         * @param rawResponse The raw message payload JSON as a string
+         * @param rawMessage  The raw message payload JSON as a string
          */
-        void structuredMessageReceived(StructuredMessage message, String rawResponse);
+        void structuredMessage(StructuredMessage message, String rawMessage);
+
+        /**
+        * Raised for responses to url requests (type == BaseResponseType.RESPONSE, class = PresignedUrlResponse)
+        *
+        * @param response    The deserialized event object
+        * @param rawMessage  The raw message payload JSON as a string
+        */
+        void presignedUrlResponse(PresignedUrlResponse response, String rawMessage);
+
+        /**
+         * Raised for responses to url requests (type == BaseResponseType.RESPONSE, class = PresignedUrlResponse)
+         *
+         * @param response    The deserialized event object
+         * @param rawMessage  The raw message payload JSON as a string
+         */
+        public void uploadSuccessEvent(UploadSuccessEvent uploadSuccessEvent, String rawMessage);
+
+        /**
+         * Raised for responses to url requests (type == BaseResponseType.RESPONSE, class = PresignedUrlResponse)
+         *
+         * @param response    The deserialized event object
+         * @param rawMessage  The raw message payload JSON as a string
+         */
+        public void uploadFailureEvent(UploadFailureEvent uploadFailureEvent, String rawMessage);
 
         /**
          * Raised for unmatched BaseResponseType
          *
-         * @param message     The deserialized event object
-         * @param rawResponse The raw message payload JSON as a string
+         * @param rawMessage  The raw message payload JSON as a string
          */
-        void unknownMessageReceived(BaseMessage message, String rawResponse);
-
-        /**
-         * Raised for all messages. Use this instead of the other methods when implementing fully custom payload deserialization.
-         *
-         * @param rawResponse The raw message payload JSON as a string
-         */
-        void rawMessageReceived(String rawResponse);
+        void unexpectedMessage(String rawMessage);
 
         /**
          * Raised when the connection to the remote server has been established
