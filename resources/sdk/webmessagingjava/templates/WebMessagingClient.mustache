@@ -263,7 +263,6 @@ public class WebMessagingClient {
               .token(this.token)
 							.action(RequestTypeGenerateUploadUrl.ONATTACHMENT)
               .fileName(fileName)
-              .fileSize(fileSize)
               .fileType(fileType);
 
             String payload = objectMapper.writeValueAsString(generateUploadUrlRequest);
