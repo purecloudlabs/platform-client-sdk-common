@@ -12,8 +12,10 @@ import (
 	"os"
 )
 
-var profileName string
-var output string
+var (
+	profileName string
+	output string
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -57,6 +59,7 @@ func init() {
 	initViperConfig()
 
 	rootCmd.PersistentFlags().StringVarP(&profileName, "profile", "p", "DEFAULT", "Name of the profile to use for configuring the cli")
+	rootCmd.PersistentFlags().BoolP("indicateprogress", "i", false, "Trace progress indicators to stderr")
 
 	rootCmd.AddCommand(versionCmd)
 	{{addCommands}}
