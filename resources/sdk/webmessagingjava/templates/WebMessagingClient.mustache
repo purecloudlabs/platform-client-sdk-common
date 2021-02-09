@@ -261,7 +261,7 @@ public class WebMessagingClient {
         try {
             GenerateUploadUrlRequest generateUploadUrlRequest = new GenerateUploadUrlRequest()
               .token(this.token)
-              .action(RequestTypeGenerateUploadUrl.ONGENERATEUPLOADURL)
+							.action(RequestTypeGenerateUploadUrl.ONATTACHMENT)
               .fileName(fileName)
               .fileSize(fileSize)
               .fileType(fileType);
