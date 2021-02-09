@@ -93,7 +93,7 @@ public class WebMessagingClient {
             }
 
             @Override
-            public void unexpectedMessage(String rawResponse) {
+            public void unexpectedMessage(BaseMessage baseMessage, String rawResponse) {
             }
 
             @Override
@@ -257,16 +257,44 @@ public class WebMessagingClient {
         }
     }
 
-    public void attachment(String fileName, double fileSize, String fileType, File file) {
+    public void attachment(String fileName, int fileSize, String fileType) {
         try {
             GenerateUploadUrlRequest generateUploadUrlRequest = new GenerateUploadUrlRequest()
               .token(this.token)
-              .action(RequestTypeGenerateUploadUrl.ONGENERATEUPLOADURL)
+              .action(RequestTypeGenerateUploadUrl.ONATTACHMENT)
               .fileName(fileName)
               .fileSize(fileSize)
               .fileType(fileType);
 
             String payload = objectMapper.writeValueAsString(generateUploadUrlRequest);
+            webSocket.sendText(payload, true);
+        } catch (JsonProcessingException e) {
+            // no-op
+        }
+    }
+
+    public void getAttachment(String attachmentId) {
+        try {
+            GenerateDownloadUrlRequest generateDownloadUrlRequest = new GenerateDownloadUrlRequest()
+              .token(this.token)
+              .action(RequestTypeGenerateDownloadUrl.GETATTACHMENT)
+              .attachmentId(attachmentId);
+
+            String payload = objectMapper.writeValueAsString(generateDownloadUrlRequest);
+            webSocket.sendText(payload, true);
+        } catch (JsonProcessingException e) {
+            // no-op
+        }
+    }
+
+    public void deleteAttachment(String attachmentId) {
+        try {
+            DeleteAttachmentRequest deleteAttachmentRequest = new DeleteAttachmentRequest()
+              .token(this.token)
+              .action(RequestTypeDeleteAttachment.DELETEATTACHMENT)
+              .attachmentId(attachmentId);
+
+            String payload = objectMapper.writeValueAsString(deleteAttachmentRequest);
             webSocket.sendText(payload, true);
         } catch (JsonProcessingException e) {
             // no-op
@@ -294,19 +322,19 @@ public class WebMessagingClient {
      * @param rawResponse The raw message payload JSON as a string
      * @param event       The deserialized event object
      */
-    private void onSessionEvent(String rawMessage, BaseMessage event) {
-        String className = event.getClassProperty().toString();
+    private void onSessionEvent(String rawMessage, BaseMessage baseMessage) {
+        String className = baseMessage.getClassProperty().toString();
         Class<?> messageClass;
         try {
             messageClass = Class.forName(getClass().getPackageName() + ".model." + className);
         } catch (ClassNotFoundException e) {
             for (SessionListener sessionListener : sessionListeners) {
-                sessionListener.unexpectedMessage(rawMessage);
+                sessionListener.unexpectedMessage(baseMessage, rawMessage);
             }
             return;
         }
 
-        Object response = objectMapper.convertValue(event.getBody(), messageClass);
+        Object response = objectMapper.convertValue(baseMessage.getBody(), messageClass);
         switch (className) {
             case "SessionResponse":
                 sessionId = ((SessionResponse) response).getSessionId();
@@ -337,7 +365,7 @@ public class WebMessagingClient {
                 break;
             default:
                 for (SessionListener sessionListener : sessionListeners) {
-                    sessionListener.unexpectedMessage(rawMessage);
+                    sessionListener.unexpectedMessage(baseMessage, rawMessage);
                 }
                 break;
         }
@@ -470,7 +498,7 @@ public class WebMessagingClient {
         /**
          * Raised for responses to url requests (type == BaseResponseType.RESPONSE, class = PresignedUrlResponse)
          *
-         * @param response    The deserialized event object
+         * @param uploadSuccessEvent    The deserialized event
          * @param rawMessage  The raw message payload JSON as a string
          */
         public void uploadSuccessEvent(UploadSuccessEvent uploadSuccessEvent, String rawMessage);
@@ -478,7 +506,7 @@ public class WebMessagingClient {
         /**
          * Raised for responses to url requests (type == BaseResponseType.RESPONSE, class = PresignedUrlResponse)
          *
-         * @param response    The deserialized event object
+         * @param uploadFailureEvent    The deserialized event
          * @param rawMessage  The raw message payload JSON as a string
          */
         public void uploadFailureEvent(UploadFailureEvent uploadFailureEvent, String rawMessage);
@@ -486,9 +514,10 @@ public class WebMessagingClient {
         /**
          * Raised for unmatched BaseResponseType
          *
+         * @param baseMessage    The deserialized event
          * @param rawMessage  The raw message payload JSON as a string
          */
-        void unexpectedMessage(String rawMessage);
+        void unexpectedMessage(BaseMessage baseMessage, String rawMessage);
 
         /**
          * Raised when the connection to the remote server has been established
