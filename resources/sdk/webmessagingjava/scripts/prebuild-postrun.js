@@ -9,7 +9,6 @@ try {
 	var config = {
 		artifactId: artifactId || 'platform-client',
 		artifactVersion: version.displayFull,
-		artifactVersion: "0.0.0",
 		apiPackage: 'cloud.genesys.webmessaging.sdk.api',
 		httpUserAgent: 'PureCloud SDK',
 		modelPackage: 'cloud.genesys.webmessaging.sdk.model',
