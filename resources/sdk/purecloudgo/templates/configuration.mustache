@@ -34,6 +34,19 @@ type Configuration struct {
 	APIClient                 APIClient         `json:"APIClient,omitempty"`
 }
 
+const (
+	USEast1      = "https://api.mypurecloud.com"
+	EUWest1      = "https://api.mypurecloud.ie"
+	APSoutheast2 = "https://api.mypurecloud.com.au"
+	APNortheast1 = "https://api.mypurecloud.jp"
+	EUCentral1   = "https://api.mypurecloud.de"
+	USWest2      = "https://api.usw2.pure.cloud"
+	CACentral1   = "https://api.cac1.pure.cloud"
+	APNortheast2 = "https://api.apne2.pure.cloud"
+	EUWest2      = "https://api.euw2.pure.cloud"
+	APSouth1     = "https://api.aps1.pure.cloud"
+)
+
 // AuthResponse contains the access token to use in future requests
 type AuthResponse struct {
 	AccessToken  string `json:"access_token,omitempty"`
