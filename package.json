@@ -11,7 +11,8 @@
   "scripts": {
     "test": "jasmine",
     "browserify": "browserify modules/swaggerDiffImpl.js -o docs/swaggerDiffImpl.js",
-    "ios": "node sdkBuilder.js --sdk purecloudswift4"
+    "ios": "node sdkBuilder.js --sdk purecloudswift4",
+    "webmessaging": "node sdkBuilder.js --sdk webmessagingjava"
   },
   "repository": {
     "type": "git",
