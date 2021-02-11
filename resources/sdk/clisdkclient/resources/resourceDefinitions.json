@@ -208,5 +208,50 @@
 		"get": {
 			"operationId": "results"
 		}
+	},
+	"/api/v2/externalcontacts/contacts": {
+		"tag": "contact",
+		"doNotPluralize": true,
+		"supercommand": "externalcontacts",
+		"entityListing": "true",
+		"get": {
+			"operationId": "search"
+		},
+		"post": {}
+	},
+	"/api/v2/externalcontacts/contacts/{contactId}": {
+		"tag": "contact",
+		"doNotPluralize": true,
+		"supercommand": "externalcontacts"
+	},
+	"/api/v2/externalcontacts/organizations": {
+		"tag": "organization",
+		"doNotPluralize": true,
+		"supercommand": "externalcontacts"
+	},
+	"/api/v2/externalcontacts/organizations/{externalOrganizationId}": {
+		"tag": "organization",
+		"doNotPluralize": true,
+		"supercommand": "externalcontacts"
+	},
+	"/api/v2/externalcontacts/contacts/{contactId}/notes": {
+		"tag": "note",
+		"doNotPluralize": true,
+		"supercommand": "externalcontacts"
+	},
+	"/api/v2/externalcontacts/contacts/{contactId}/notes/{noteId}": {
+		"tag": "note",
+		"doNotPluralize": true,
+		"supercommand": "externalcontacts"
+	},
+	"/api/v2/externalcontacts/relationships": {
+		"tag": "relationship",
+		"doNotPluralize": true,
+		"supercommand": "externalcontacts"
+	},
+	"/api/v2/externalcontacts/relationships/{relationshipId}": {
+		"tag": "relationship",
+		"doNotPluralize": true,
+		"supercommand": "externalcontacts"
 	}
 }
