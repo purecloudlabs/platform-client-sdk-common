@@ -222,6 +222,13 @@
 			"operationId": "search"
 		}
 	},
+	"/api/v2/externalcontacts/contacts/{contactId}" : {
+		"tag": "contacts",
+		"supercommand": "externalcontacts",
+		"get": {},
+		"put": {},
+		"delete": {}
+	},
 	"/api/v2/externalcontacts/organizations": {
 		"tag": "organizations",
 		"supercommand": "externalcontacts",
@@ -229,5 +236,12 @@
 		"get": {
 			"operationId": "search"
 		}
+	},
+	"/api/v2/externalcontacts/organizations/{externalOrganizationId}" : {
+		"tag": "organizations",
+		"supercommand": "externalcontacts",
+		"get": {},
+		"put": {},
+		"delete": {}
 	}
 }
