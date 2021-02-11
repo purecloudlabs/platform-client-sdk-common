@@ -243,5 +243,19 @@
 		"get": {},
 		"put": {},
 		"delete": {}
+	},
+	"/api/v2/externalcontacts/scan/contacts" : {
+		"tag": "contacts",
+		"supercommand": "externalcontacts",
+		"get": {
+			"operationId": "scan"
+		}
+	},
+	"/api/v2/externalcontacts/scan/organizations" : {
+		"tag": "organizations",
+		"supercommand": "externalcontacts",
+		"get": {
+			"operationId": "scan"
+		}
 	}
 }
