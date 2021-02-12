@@ -1,0 +1,173 @@
+package {{package}};
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import {{invokerPackage}}.WebMessagingException;
+import {{invokerPackage}}.ApiClient;
+import {{invokerPackage}}.ApiRequest;
+import {{invokerPackage}}.ApiRequestBuilder;
+import {{invokerPackage}}.ApiResponse;
+import {{invokerPackage}}.Configuration;
+import {{modelPackage}}.*;
+import {{invokerPackage}}.Pair;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Pattern;
+
+{{#imports}}import {{import}};
+{{/imports}}
+
+{{#operation}}
+public class {{requestClassname}} {
+    {{#allParams}}
+	private {{{dataType}}} {{paramName}};
+	public {{{dataType}}} get{{paramTitle}}() {
+		return this.{{paramName}};
+	}
+
+	public void set{{paramTitle}}({{{dataType}}} {{paramName}}) {
+		this.{{paramName}} = {{paramName}};
+	}
+
+	public {{requestClassname}} with{{paramTitle}}({{{dataType}}} {{paramName}}) {
+	    this.set{{paramTitle}}({{paramName}});
+	    return this;
+	} {{#allowableValuesForEnum}}
+
+	public enum {{paramName}}Values { {{#values}}
+		{{Item1}}("{{Item2}}"){{^-last}}, {{/-last}}{{/values}};
+
+		private {{#baseType}}{{.}}{{/baseType}}{{^baseType}}{{dataType}}{{/baseType}} value;
+
+		{{paramName}}Values({{#baseType}}{{.}}{{/baseType}}{{^baseType}}{{dataType}}{{/baseType}} value) {
+		  this.value = value;
+		}
+
+		@JsonCreator
+		public static {{paramName}}Values fromString(String key) {
+			if (key == null) return null;
+
+			for ({{paramName}}Values value : {{paramName}}Values.values()) {
+				if (key.equalsIgnoreCase(value.toString())) {
+					return value;
+				}
+			}
+
+			return {{paramName}}Values.values()[0];
+		}
+
+		@Override
+		@JsonValue
+		public String toString() {
+			return String.valueOf(value);
+		}
+	}{{/allowableValuesForEnum}}
+	{{/allParams}}
+	private final Map<String, String> customHeaders = new HashMap<>();
+    public Map<String, String> getCustomHeaders() {
+        return this.customHeaders;
+    }
+
+    public void setCustomHeaders(Map<String, String> customHeaders) {
+        this.customHeaders.clear();
+        this.customHeaders.putAll(customHeaders);
+    }
+
+    public void addCustomHeader(String name, String value) {
+        this.customHeaders.put(name, value);
+    }
+
+    public {{requestClassname}} withCustomHeader(String name, String value) {
+        this.addCustomHeader(name, value);
+        return this;
+    }
+
+    public ApiRequest<{{#bodyParam}}{{{dataType}}}{{/bodyParam}}{{^bodyParam}}Void{{/bodyParam}}> withHttpInfo() {
+        {{#allParams}}{{#required}}
+        // verify the required parameter '{{paramName}}' is set
+        if (this.{{paramName}} == null) {
+            throw new IllegalStateException("Missing the required parameter '{{paramName}}' when building request for {{classname}}.");
+        }
+        {{/required}}{{/allParams}}
+
+        return ApiRequestBuilder.create("{{httpMethod}}", "{{path}}"){{#pathParams}}
+                .withPathParameter("{{{baseName}}}", {{paramName}})
+        {{/pathParams}}{{#queryParams}}
+                .withQueryParameters("{{{baseName}}}", "{{#collectionFormat}}{{{collectionFormat}}}{{/collectionFormat}}", {{paramName}})
+        {{/queryParams}}{{#formParams}}
+                .withFormParameter("{{{baseName}}}", {{paramName}})
+        {{/formParams}}{{#headerParams}}
+                .withHeaderParameter("{{{baseName}}}", {{paramName}})
+        {{/headerParams}}{{#bodyParam}}
+                .withBody({{paramName}})
+        {{/bodyParam}}
+                .withCustomHeaders(customHeaders)
+                .withContentTypes({{#consumes}}"{{mediaType}}"{{#hasMore}}, {{/hasMore}}{{/consumes}})
+                .withAccepts({{#produces}}"{{mediaType}}"{{#hasMore}}, {{/hasMore}}{{/produces}})
+                .withAuthNames({{#authMethods}}"{{name}}"{{#hasMore}}, {{/hasMore}}{{/authMethods}})
+                .build();
+    }
+
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	{{#hasRequiredParams}}
+	public static Builder builder({{#requiredParams}}{{^-first}}, {{/-first}}{{{dataType}}} {{paramName}}{{/requiredParams}}) {
+	    return new Builder()
+	            .withRequiredParams({{#requiredParams}}{{^-first}}, {{/-first}}{{paramName}}{{/requiredParams}});
+	}
+	{{/hasRequiredParams}}
+
+	public static class Builder {
+		private final {{requestClassname}} request;
+
+		private Builder() {
+			request = new {{requestClassname}}();
+		}
+
+		{{#allParams}}
+		public Builder with{{paramTitle}}({{{dataType}}} {{paramName}}) {
+			request.set{{paramTitle}}({{paramName}});
+			return this;
+		}{{#allowableValuesForEnum}}
+
+		{{#isContainer}}public Builder with{{paramTitle}}EnumValues(List<{{paramName}}Values> {{paramName}}) {
+		    List<String> stringList = new ArrayList<>();
+	      for ({{paramName}}Values e : {{paramName}}) {
+	        stringList.add(e.toString());
+	      }
+	      request.set{{paramTitle}}(stringList);
+		    return this;
+		}{{/isContainer}}{{^isContainer}}public Builder with{{paramTitle}}({{paramName}}Values {{paramName}}) {
+		    request.set{{paramTitle}}({{paramName}}.toString());
+		    return this;
+		}{{/isContainer}}{{/allowableValuesForEnum}}
+		{{/allParams}}
+
+		{{#hasRequiredParams}}
+		public Builder withRequiredParams({{#requiredParams}}{{^-first}}, {{/-first}}{{{dataType}}} {{paramName}}{{/requiredParams}}) {
+{{#requiredParams}}			request.set{{paramTitle}}({{paramName}});
+			{{/requiredParams}}
+			return this;
+		}
+		{{/hasRequiredParams}}
+
+		public {{requestClassname}} build() {
+            {{#allParams}}{{#required}}
+            // verify the required parameter '{{paramName}}' is set
+            if (request.{{paramName}} == null) {
+                throw new IllegalStateException("Missing the required parameter '{{paramName}}' when building request for {{classname}}.");
+            }
+            {{/required}}{{/allParams}}
+			return request;
+		}
+	}
+}
+{{/operation}}
