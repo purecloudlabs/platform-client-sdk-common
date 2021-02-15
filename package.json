@@ -12,7 +12,8 @@
     "test": "jasmine",
     "browserify": "browserify modules/swaggerDiffImpl.js -o docs/swaggerDiffImpl.js",
     "ios": "node sdkBuilder.js --sdk purecloudswift4",
-    "webmessaging": "node sdkBuilder.js --sdk webmessagingjava"
+    "webmessaging": "node sdkBuilder.js --sdk webmessagingjava",
+    "webmessaging.local": "node sdkBuilder.js --config $WORKSPACE/platform-client-sdk-common-gart/resources/sdk/webmessagingjava/config.json --localconfig $WORKSPACE/platform-client-sdk-internal-config/dev/webmessagingjava/dcaConfig.yml"
   },
   "repository": {
     "type": "git",
