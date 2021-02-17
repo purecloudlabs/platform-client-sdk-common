@@ -4,6 +4,7 @@ const childProcess = require('child_process')
 
 const newSwaggerPath = process.argv[2]
 const saveNewSwaggerPath = process.argv[3]
+const saveDuplicateMappingsPath = process.argv[4]
 
 let newSwagger
 // Retrieve new swagger
@@ -22,12 +23,48 @@ const httpMethods = ["get", "delete", "put", "patch", "post"]
 const definitionsPath = path.join(path.dirname(require.main.filename), "../resources/resourceDefinitions.json")
 const inclusionList = JSON.parse(fs.readFileSync(definitionsPath, 'utf8'))
 
+let duplicateCommandMappings = new Map()
+for (const path of Object.keys(newSwagger["paths"])) {
+	if (Object.keys(inclusionList).includes(path)) {
+		for (let value of Object.values(newSwagger["paths"][path])) {
+			let commandName = inclusionList[path].tag || value.tags[0]
+			commandName = commandName.toLowerCase()
+
+			const supercommand = inclusionList[path].supercommand
+			// Only need to work on duplicate subcommands, no one would try to create 2 `gc users` commands for example
+			if (supercommand) {
+				const existingCommandName = duplicateCommandMappings.get(commandName)
+				// Duplicate found
+				if (existingCommandName && existingCommandName !== supercommand) {
+					duplicateCommandMappings.set(`${commandName}_${existingCommandName}`, existingCommandName)
+					commandName = `${commandName}_${supercommand}`
+				} 
+				duplicateCommandMappings.set(commandName, supercommand)
+			}
+		}
+	}
+}
+
+// Remove all non-duplicates from the mappings now
+duplicateCommandMappings.forEach((values, keys)=> {
+	if (!keys.includes("_"))
+		duplicateCommandMappings.delete(keys)
+})
+
 let paths = {}
 for (const path of Object.keys(newSwagger["paths"])) {
 	if (Object.keys(inclusionList).includes(path)) {
 		// Override tags if possible
 		for (let value of Object.values(newSwagger["paths"][path])) {
-			value.tags = inclusionList[path].tag !== undefined ? [inclusionList[path].tag] : [value.tags[0]]
+			let commandName = inclusionList[path].tag || value.tags[0]
+			const supercommand = inclusionList[path].supercommand
+			if (supercommand) {
+				// Custom commandName if it's a duplicate
+				if (duplicateCommandMappings.get(`${commandName}_${supercommand}`)) {
+					commandName = `${commandName}_${supercommand}`
+				}
+			}
+			value.tags = [commandName]
 		}
 
 		// Override operationId if possible
@@ -60,6 +97,18 @@ newSwagger["paths"] = paths
 if (saveNewSwaggerPath) {
     console.log(`Writing new swagger to ${saveNewSwaggerPath}`)
     fs.writeFileSync(saveNewSwaggerPath, JSON.stringify(newSwagger))
+}
+
+if (saveDuplicateMappingsPath) {
+	console.log(`Writing duplicate mappings to ${saveDuplicateMappingsPath}`)
+	// from https://stackoverflow.com/questions/29085197/how-do-you-json-stringify-an-es6-map
+	const mapToObj = m => {
+		return Array.from(m).reduce((obj, [key, value]) => {
+		  obj[key] = value
+		  return obj
+		}, {})
+	  }
+	fs.writeFileSync(saveDuplicateMappingsPath, JSON.stringify(mapToObj(duplicateCommandMappings)))
 }
 
 function downloadFile(url) {

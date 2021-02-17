@@ -1,6 +1,7 @@
 {
   "name": "GO CLI SDK",
   "envVars": {
+  	"EXCLUDE_NOTIFICATIONS": true
   },
   "settings": {
     "sdkRepo": {
@@ -54,7 +55,8 @@
             {
               "$ref": "#/settings/swagger/newSwaggerPath"
             },
-            "${SDK_TEMP}/newSwagger.json"
+            "${SDK_TEMP}/newSwagger.json",
+            "${SDK_TEMP}/duplicateMappings.json"
           ],
           "failOnError": true
         }
@@ -70,7 +72,8 @@
           "args": [
             "${SDK_REPO}/build/gc/cmd/root.go",
             "${SDK_REPO}/build/gc/services/commandservice.go",
-            "${SDK_REPO}/build/gc/utils/general.go"
+            "${SDK_REPO}/build/gc/utils/general.go",
+            "${SDK_TEMP}/duplicateMappings.json"
           ],
           "failOnError": true
         }
