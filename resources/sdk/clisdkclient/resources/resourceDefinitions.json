@@ -209,11 +209,6 @@
 			"operationId": "results"
 		}
 	},
-	"/api/v2/groups/search": {
-		"tag": "search",
-		"supercommand": "groups",
-		"doNotPluralize": true
-	},
 	"/api/v2/externalcontacts/contacts": {
 		"tag": "contacts",
 		"supercommand": "externalcontacts",
