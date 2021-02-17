@@ -23,21 +23,21 @@
 		"put": {}
 	},
 	"/api/v2/authorization/roles/{roleId}/users": {
-		"tag": "roleuser",
+		"tag": "users",
 		"supercommand": "roles",
 		"get": {
 			"operationId": "get"
 		}
 	},
 	"/api/v2/authorization/roles/{roleId}/users/add": {
-		"tag": "roleuser",
+		"tag": "users",
 		"supercommand": "roles",
 		"put": {
 			"operationId": "add"
 		}
 	},
 	"/api/v2/authorization/roles/{roleId}/users/remove": {
-		"tag": "roleuser",
+		"tag": "users",
 		"supercommand": "roles",
 		"put": {
 			"operationId": "delete"
@@ -111,7 +111,7 @@
 		}
 	},
 	"/api/v2/routing/queues/{queueId}/users": {
-		"tag": "queueuser",
+		"tag": "users",
 		"supercommand": "queues",
 		"entityListing": true,
 		"get": {
@@ -125,7 +125,7 @@
 		}
 	},
 	"/api/v2/routing/queues/{queueId}/users/{memberId}": {
-		"tag": "queueuser",
+		"tag": "users",
 		"supercommand": "queues",
 		"delete": {},
 		"patch": {}
