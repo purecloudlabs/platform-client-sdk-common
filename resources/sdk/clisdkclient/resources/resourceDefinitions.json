@@ -76,7 +76,6 @@
 	"/api/v2/groups/{groupId}/members": {
 		"tag": "members",
 		"supercommand": "groups",
-		"entityListing": true,
 		"get": {
 			"operationId": "get"
 		},
@@ -113,7 +112,6 @@
 	"/api/v2/routing/queues/{queueId}/users": {
 		"tag": "user",
 		"supercommand": "queues",
-		"entityListing": true,
 		"get": {
 			"operationId": "get"
 		},
@@ -149,7 +147,6 @@
 	"/api/v2/users/{userId}/queues": {
 		"tag": "queue",
 		"supercommand": "users",
-		"entityListing": true,
 		"get": {
 			"operationId": "get"
 		},

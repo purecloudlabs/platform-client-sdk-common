@@ -103,7 +103,9 @@ func (r *RESTClient) callAPI(method string, uri string, data string) (string, er
 		Client.RetryMax = retryConfiguration.RetryMax
 		if retryConfiguration.RequestLogHook == nil {
 			Client.RequestLogHook = func(_ retryablehttp.Logger, req *http.Request, retryNumber int) {
-				logger.Warnf("%v %v request failed. Retry count: %v\n", req.Method, req.URL, retryNumber)
+				if retryNumber > 1 {
+					logger.Warnf("%v %v request failed. Retry count: %v\n", req.Method, req.URL, retryNumber)
+				}
 			}
 		} else {
 			Client.RequestLogHook = func(_ retryablehttp.Logger, req *http.Request, retryNumber int) {

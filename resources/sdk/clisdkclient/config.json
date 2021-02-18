@@ -71,7 +71,6 @@
           "path": "post-process.js",
           "args": [
             "${SDK_REPO}/build/gc/cmd/root.go",
-            "${SDK_REPO}/build/gc/services/commandservice.go",
             "${SDK_REPO}/build/gc/utils/general.go",
             "${SDK_TEMP}/duplicateMappings.json"
           ],
