@@ -37,6 +37,19 @@ type Configuration struct {
 	RetryConfiguration        *RetryConfiguration `json:"retryConfiguration,omitempty"`
 }
 
+const (
+	USEast1      = "https://api.mypurecloud.com"
+	EUWest1      = "https://api.mypurecloud.ie"
+	APSoutheast2 = "https://api.mypurecloud.com.au"
+	APNortheast1 = "https://api.mypurecloud.jp"
+	EUCentral1   = "https://api.mypurecloud.de"
+	USWest2      = "https://api.usw2.pure.cloud"
+	CACentral1   = "https://api.cac1.pure.cloud"
+	APNortheast2 = "https://api.apne2.pure.cloud"
+	EUWest2      = "https://api.euw2.pure.cloud"
+	APSouth1     = "https://api.aps1.pure.cloud"
+)
+
 type RetryConfiguration struct {
 	RetryWaitMin    time.Duration                `json:"retry_wait_min,omitempty"`
 	RetryWaitMax    time.Duration                `json:"retry_wait_max,omitempty"`

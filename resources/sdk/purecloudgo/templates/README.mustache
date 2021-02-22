@@ -86,6 +86,12 @@ To connect to regional Genesys Cloud instances, provide the Platform API's base 
 config.BasePath = "https://api.mypurecloud.jp"
 ```
 
+Alternatively, use the enum mapping for Genesys Cloud regions to API base paths:
+
+```go
+config.BasePath = platformclientv2.APNortheast1
+```
+
 #### Setting the access token
 
 If using a grant other than client credentials and code authorization, the access token can be set manually:
