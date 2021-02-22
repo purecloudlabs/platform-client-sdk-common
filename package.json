@@ -11,7 +11,8 @@
   "scripts": {
     "test": "jasmine",
     "browserify": "browserify modules/swaggerDiffImpl.js -o docs/swaggerDiffImpl.js",
-    "ios": "node sdkBuilder.js --sdk purecloudswift4"
+    "ios": "node sdkBuilder.js --sdk purecloudswift4",
+    "webmessaging": "node sdkBuilder.js --sdk webmessagingjava"
   },
   "repository": {
     "type": "git",
@@ -37,6 +38,7 @@
     "klaw-sync": "^3.0.2",
     "lodash": "^4.17.19",
     "lognext": "0.0.4",
+    "mdjavadoc-api": "^1.0.4",
     "moment-timezone": "^0.5.11",
     "mustache": "^2.3.0",
     "pluralize": "^3.1.0",

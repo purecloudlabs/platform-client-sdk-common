@@ -1,0 +1,32 @@
+/**
+ * {{^description}}Gets or Sets {{{name}}}{{/description}}{{#description}}{{{description}}}{{/description}}
+ */
+public enum {{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}} {
+  {{#allowableValues}}{{#enumVars}}{{{name}}}({{{value}}}){{^-last}},
+  {{/-last}}{{#-last}};{{/-last}}{{/enumVars}}{{/allowableValues}}
+
+  private {{dataType}} value;
+
+  {{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}({{dataType}} value) {
+    this.value = value;
+  }
+
+  @JsonCreator
+  public static {{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}} fromString(String key) {
+    if (key == null) return null;
+
+    for ({{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}} value : {{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}.values()) {
+      if (key.equalsIgnoreCase(value.toString())) {
+        return value;
+      }
+    }
+
+    return {{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}.values()[0];
+  }
+
+  @Override
+  @JsonValue
+  public String toString() {
+    return String.valueOf(value);
+  }
+}

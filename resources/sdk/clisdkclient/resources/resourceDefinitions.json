@@ -23,21 +23,21 @@
 		"put": {}
 	},
 	"/api/v2/authorization/roles/{roleId}/users": {
-		"tag": "roleuser",
+		"tag": "user",
 		"supercommand": "roles",
 		"get": {
 			"operationId": "get"
 		}
 	},
 	"/api/v2/authorization/roles/{roleId}/users/add": {
-		"tag": "roleuser",
+		"tag": "user",
 		"supercommand": "roles",
 		"put": {
 			"operationId": "add"
 		}
 	},
 	"/api/v2/authorization/roles/{roleId}/users/remove": {
-		"tag": "roleuser",
+		"tag": "user",
 		"supercommand": "roles",
 		"put": {
 			"operationId": "delete"
@@ -111,7 +111,7 @@
 		}
 	},
 	"/api/v2/routing/queues/{queueId}/users": {
-		"tag": "queueuser",
+		"tag": "user",
 		"supercommand": "queues",
 		"entityListing": true,
 		"get": {
@@ -125,7 +125,7 @@
 		}
 	},
 	"/api/v2/routing/queues/{queueId}/users/{memberId}": {
-		"tag": "queueuser",
+		"tag": "user",
 		"supercommand": "queues",
 		"delete": {},
 		"patch": {}
@@ -207,6 +207,50 @@
 		"doNotPluralize": true,
 		"get": {
 			"operationId": "results"
+		}
+	},
+	"/api/v2/externalcontacts/contacts": {
+		"tag": "contacts",
+		"supercommand": "externalcontacts",
+		"post": {},
+		"get": {
+			"operationId": "search"
+		}
+	},
+	"/api/v2/externalcontacts/contacts/{contactId}": {
+		"tag": "contacts",
+		"supercommand": "externalcontacts",
+		"get": {},
+		"put": {},
+		"delete": {}
+	},
+	"/api/v2/externalcontacts/organizations": {
+		"tag": "organizations",
+		"supercommand": "externalcontacts",
+		"post": {},
+		"get": {
+			"operationId": "search"
+		}
+	},
+	"/api/v2/externalcontacts/organizations/{externalOrganizationId}": {
+		"tag": "organizations",
+		"supercommand": "externalcontacts",
+		"get": {},
+		"put": {},
+		"delete": {}
+	},
+	"/api/v2/externalcontacts/scan/contacts": {
+		"tag": "contacts",
+		"supercommand": "externalcontacts",
+		"get": {
+			"operationId": "scan"
+		}
+	},
+	"/api/v2/externalcontacts/scan/organizations": {
+		"tag": "organizations",
+		"supercommand": "externalcontacts",
+		"get": {
+			"operationId": "scan"
 		}
 	}
 }

@@ -3,6 +3,12 @@ package services
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
@@ -10,10 +16,6 @@ import (
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/retry"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
 	"github.com/spf13/cobra"
-	"net/http"
-	"regexp"
-	"strconv"
-	"strings"
 )
 
 //CommandService holds the method signatures for all common Command object invocations
@@ -28,7 +30,8 @@ type CommandService interface {
 }
 
 type commandService struct {
-	cmd *cobra.Command
+	cmd       *cobra.Command
+	startTime time.Time
 }
 
 // The following functions are added as variables to allow reassignment to mock functions in unit tests
@@ -46,14 +49,17 @@ func NewCommandService(cmd *cobra.Command) *commandService {
 
 func (c *commandService) Get(uri string) (string, error) {
 	profileName, _ := c.cmd.Root().Flags().GetString("profile")
+
 	config, err := configGetConfig(profileName)
 	if err != nil {
 		return "", err
 	}
 
 	restClient := restclientNewRESTClient(config)
+	c.traceStart(http.MethodGet, uri, "")
 	response, err := restClient.Get(uri)
 	if err == nil {
+		c.traceEnd()
 		return response, nil
 	}
 
@@ -75,6 +81,7 @@ func (c *commandService) List(uri string) (string, error) {
 	restClient := restclientNewRESTClient(config)
 
 	//Looks up first page
+	c.traceStart(http.MethodGet, uri, "")
 	data, err := restClient.Get(uri)
 	if err != nil {
 		err = reAuthenticateIfNecessary(config, err)
@@ -95,16 +102,18 @@ func (c *commandService) List(uri string) (string, error) {
 		totalResults = append(totalResults, string(val))
 	}
 
-    //Looks up the rest of the pages
+	//Looks up the rest of the pages
 	if firstPage.PageCount > 1 {
 		pagedURI := uri
 		for x := 2; x <= firstPage.PageCount; x++ {
 			pagedURI = updatePageNumber(pagedURI, x)
 			logger.Info("Paginating with URI: ", pagedURI)
+			c.traceProgress(pagedURI)
 			retryFunc := retry.Retry(pagedURI, restClient.Get)
 			data, err = retryFunc(&retry.RetryConfiguration{
-				MaxRetryTimeSec: 20,
-				MaxRetriesBeforeQuitting: 10,
+				RetryWaitMax: 1000 * time.Second,
+				RetryWaitMin: 1000 * time.Second,
+				RetryMax:     100,
 			})
 			if err != nil {
 				return "", err
@@ -130,11 +139,13 @@ func (c *commandService) List(uri string) (string, error) {
 		finalJSONString = fmt.Sprintf("[%s]", strings.Join(totalResults, ","))
 	}
 
+	c.traceEnd()
+
 	return finalJSONString, nil
 }
 
 func updatePageNumber(pagedURI string, index int) string {
-	if strings.Contains(pagedURI,"pageNumber=") {
+	if strings.Contains(pagedURI, "pageNumber=") {
 		re := regexp.MustCompile("pageNumber=([0-9]+)")
 		result := re.FindStringSubmatch(pagedURI)
 		pageNumber, _ := strconv.Atoi(result[1])
@@ -178,6 +189,7 @@ func (c *commandService) upsert(method string, uri string, payload string) (stri
 
 	var response string
 
+	c.traceStart(method, uri, payload)
 	switch method {
 	case http.MethodPost:
 		response, err = restClient.Post(uri, payload)
@@ -192,6 +204,7 @@ func (c *commandService) upsert(method string, uri string, payload string) (stri
 	}
 
 	if err == nil {
+		c.traceEnd()
 		return response, nil
 	}
 
@@ -236,7 +249,7 @@ func (c *commandService) DetermineAction(httpMethod string, operationId string, 
 			return retry.Retry(uri, c.List)
 		} else {
 			return retry.Retry(uri, c.Get)
-		} 
+		}
 	case http.MethodPatch:
 		return retry.RetryWithData(uri, utils.ResolveInputData(c.cmd), c.Patch)
 	case http.MethodPost:
@@ -247,4 +260,31 @@ func (c *commandService) DetermineAction(httpMethod string, operationId string, 
 		return retry.Retry(uri, c.Delete)
 	}
 	return nil
+}
+
+func (c *commandService) traceStart(method, uri, data string) {
+	traceProgress, _ := c.cmd.Root().Flags().GetBool("indicateprogress")
+	if traceProgress {
+		c.startTime = time.Now()
+		if data != "" {
+			logger.Tracef("Command started at: %v. Method: %v, Path: %v, Data: %v\n", c.startTime.Format(time.RFC3339Nano), method, uri, data)
+		} else {
+			logger.Tracef("Command started at: %v. Method: %v, Path: %v\n", c.startTime.Format(time.RFC3339Nano), method, uri)
+		}
+	}
+}
+
+func (c *commandService) traceProgress(pagedURI string) {
+	traceProgress, _ := c.cmd.Root().Flags().GetBool("indicateprogress")
+	if traceProgress {
+		logger.Tracef("Paginating with path: %v\n", pagedURI)
+	}
+}
+
+func (c *commandService) traceEnd() {
+	traceProgress, _ := c.cmd.Root().Flags().GetBool("indicateprogress")
+	if traceProgress {
+		endTime := time.Now()
+		logger.Tracef("Command finished at: %v. Time taken: %v\n", endTime.Format(time.RFC3339Nano), endTime.Sub(c.startTime))
+	}
 }

@@ -8,19 +8,22 @@ try {
 	const rootPath = path.resolve(process.argv[2]);
 	const commandServicePath = path.resolve(process.argv[3]);
 	const generalPath = path.resolve(process.argv[4]);
+	const duplicateMappingsPath = path.resolve(process.argv[5]);
 
 	console.log(`rootPath=${rootPath}`);
 	console.log(`commandServicePath=${commandServicePath}`);
 	console.log(`generalPath=${generalPath}`);
+	console.log(`duplicateMappingsPath=${duplicateMappingsPath}`);
 
 	const definitionsPath = path.join(path.dirname(require.main.filename), "../resources/resourceDefinitions.json")
 	const resourceDefinitions = JSON.parse(fs.readFileSync(definitionsPath, 'utf8'))
+	const duplicateMappings = JSON.parse(fs.readFileSync(duplicateMappingsPath, 'utf8'))
 
 	const rootFileName = rootPath.split("/").pop()
 	const rootDir = rootPath.replace(rootFileName, "")
 
-	generateRootFiles(rootDir, resourceDefinitions)
-	processRoot(rootDir, rootFileName, resourceDefinitions)
+	generateRootFiles(rootDir, resourceDefinitions, duplicateMappings)
+	processRoot(rootDir, rootFileName, resourceDefinitions, duplicateMappings)
 	processCommandService(commandServicePath, resourceDefinitions)
 	processGeneral(generalPath, resourceDefinitions)
 } catch (err) {
@@ -28,13 +31,15 @@ try {
 	console.log(err);
 }
 
-function generateRootFiles(rootDir, resourceDefinitions) {
+function generateRootFiles(rootDir, resourceDefinitions, duplicateMappings) {
 	let commandMappings = new Map()
 	for (const path of Object.keys(resourceDefinitions)) {
 		const supercommand = resourceDefinitions[path].supercommand
 		if (supercommand !== undefined) {
 			let entry = commandMappings.get(supercommand) || new Set()
-			entry.add(resourceDefinitions[path].tag)
+			const key = `${resourceDefinitions[path].tag}_${supercommand}`
+			const value = duplicateMappings[key]
+			entry.add(value ? key : resourceDefinitions[path].tag)
 			commandMappings.set(supercommand, entry)
 		}
 	}
@@ -66,13 +71,16 @@ func init() {
   	}
 }
 
-function processRoot(rootDir, rootFileName, resourceDefinitions) {
+function processRoot(rootDir, rootFileName, resourceDefinitions, duplicateMappings) {
 	let exclusionList = new Set()
 	exclusionList = exclusionList.add(rootFileName)
 	for (const resourceDefinition of Object.values(resourceDefinitions)) {
 		if (resourceDefinition.supercommand !== undefined) {
 			exclusionList = exclusionList.add(resourceDefinition.tag)
 		}
+	}
+	for (const duplicateCommand of Object.keys(duplicateMappings)) {
+		exclusionList = exclusionList.add(duplicateCommand)
 	}
 
 	let addCommands = []
