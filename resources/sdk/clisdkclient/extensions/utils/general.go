@@ -77,17 +77,6 @@ func GetFlag(flags *pflag.FlagSet, paramType string, name string) string {
 func FormatUsageDescription(message string) string {
 	message = strings.Split(message, "_")[0]
 
-	notPluralCommands := make([]string, 0)
-	{{=it.notPluralCommands}}
-	for _, command := range notPluralCommands {
-		if strings.HasSuffix(message, command) {
-			return message
-		}
-	}
-	if !strings.HasSuffix(message, "s") {
-		return fmt.Sprintf("%v%v", message, "s")
-	}
-
 	return message
 }
 
