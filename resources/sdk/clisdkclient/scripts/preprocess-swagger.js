@@ -48,7 +48,7 @@ function processDefinitions(duplicateCommandMappings, includedSwaggerPathObjects
 		// Override tags if possible
 		for (let value of Object.values(includedSwaggerPathObjects[path])) {
 			let commandName = resourceDefinitions[path].name || value.tags[0]
-			commandName = commandName.toLowerCase()
+			commandName = commandName.toLowerCase().replace(" ", "")
 
 			const supercommand = resourceDefinitions[path].supercommand
 			if (supercommand) {
@@ -94,7 +94,7 @@ function findDuplicateCommandMappings(superCommands, includedSwaggerPathObjects,
 	for (const path of Object.keys(includedSwaggerPathObjects)) {
 		for (let value of Object.values(includedSwaggerPathObjects[path])) {
 			let commandName = resourceDefinitions[path].name || value.tags[0]
-			commandName = commandName.toLowerCase()
+			commandName = commandName.toLowerCase().replace(" ", "")
 
 			const supercommand = resourceDefinitions[path].supercommand
 			// Only need to work on duplicate subcommands, no one would try to create 2 `gc users` commands for example
@@ -128,10 +128,10 @@ function initialProcessOfDefinitions(newSwagger, resourceDefinitions) {
 
 			for (let value of Object.values(includedSwaggerPathObjects[path])) {
 				let commandName = resourceDefinitions[path].name || value.tags[0]
-				commandName = commandName.toLowerCase()
+				commandName = commandName.toLowerCase().replace(" ", "")
 				const supercommand = resourceDefinitions[path].supercommand
 				if (!supercommand)
-					superCommands.add(commandName.toLowerCase())
+					superCommands.add(commandName)
 				else
 					superCommands.add(supercommand.toLowerCase())
 			}
