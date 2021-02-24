@@ -252,5 +252,28 @@
 		"get": {
 			"operationId": "scan"
 		}
+	},
+	"/api/v2/responsemanagement/libraries": {
+		"tag": "libraries",
+		"supercommand": "responsemgt"
+	},
+	"/api/v2/responsemanagement/libraries/{libraryId}": {
+		"tag": "libraries",
+		"supercommand": "responsemgt"
+	},
+	"/api/v2/responsemanagement/responses": {
+		"tag": "responses",
+		"supercommand": "responsemgt"
+	},
+	"/api/v2/responsemanagement/responses/{responseId}": {
+		"tag": "responses",
+		"supercommand": "responsemgt"
+	},
+	"/api/v2/responsemanagement/responses/query": {
+		"tag": "responses",
+		"supercommand": "responsemgt",
+		"post": {
+			"operationId": "search"
+		}
 	}
 }
