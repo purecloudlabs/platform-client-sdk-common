@@ -6,37 +6,68 @@ try {
 	dot.templateSettings.strip = false;
 
 	const rootPath = path.resolve(process.argv[2]);
-	const generalPath = path.resolve(process.argv[3]);
-	const duplicateMappingsPath = path.resolve(process.argv[4]);
+	const duplicateMappingsPath = path.resolve(process.argv[3]);
+	const topLevelCommandsPath = path.resolve(process.argv[4]);
+	const resourceDefinitionsPath = path.join(path.dirname(require.main.filename), "../resources/resourceDefinitions.json")
 
 	console.log(`rootPath=${rootPath}`);
-	console.log(`generalPath=${generalPath}`);
 	console.log(`duplicateMappingsPath=${duplicateMappingsPath}`);
+	console.log(`topLevelCommandsPath=${topLevelCommandsPath}`);
 
-	const definitionsPath = path.join(path.dirname(require.main.filename), "../resources/resourceDefinitions.json")
-	const resourceDefinitions = JSON.parse(fs.readFileSync(definitionsPath, 'utf8'))
+	const resourceDefinitions = JSON.parse(fs.readFileSync(resourceDefinitionsPath, 'utf8'))
 	const duplicateMappings = JSON.parse(fs.readFileSync(duplicateMappingsPath, 'utf8'))
+	const topLevelCommands = JSON.parse(fs.readFileSync(topLevelCommandsPath, 'utf8'))
 
 	const rootFileName = rootPath.split("/").pop()
 	const rootDir = rootPath.replace(rootFileName, "")
 
+	generateSuperCommandFiles(rootDir, topLevelCommands)
 	generateRootFiles(rootDir, resourceDefinitions, duplicateMappings)
-	processRoot(rootDir, rootFileName, resourceDefinitions, duplicateMappings)
-	processGeneral(generalPath, resourceDefinitions)
+	processRoot(rootDir, rootFileName, resourceDefinitions, duplicateMappings, topLevelCommands)
 } catch (err) {
 	process.exitCode = 1;
 	console.log(err);
 }
 
+// Creates command root files if they don't already exist
+function generateSuperCommandFiles(rootDir, topLevelCommands) {
+	const templateString = `
+package {{=it.supercommand}}
+
+import (
+	"github.com/spf13/cobra"
+)
+
+var {{=it.supercommand}}Cmd = &cobra.Command{
+	Use:   "{{=it.supercommand}}",
+	Short: "Manages Genesys Cloud {{=it.supercommand}}",
+	Long:  \`Manages Genesys Cloud {{=it.supercommand}}\`,
+}
+
+func Cmd{{=it.supercommand}}() *cobra.Command {
+	return {{=it.supercommand}}Cmd
+}
+`
+	for (const supercommand of topLevelCommands) {
+		const commandPath = path.join(rootDir, supercommand)
+		const commandFile = path.join(commandPath, `${supercommand}.go`)
+		if (!fs.existsSync(commandFile)) {
+			fs.mkdirSync(commandPath)
+			writeTemplate(templateString, { supercommand: supercommand }, commandFile)
+		}
+	}
+}
+
+// Generates root files to attach subcommands to supercommands
 function generateRootFiles(rootDir, resourceDefinitions, duplicateMappings) {
 	let commandMappings = new Map()
 	for (const path of Object.keys(resourceDefinitions)) {
 		const supercommand = resourceDefinitions[path].supercommand
 		if (supercommand !== undefined) {
 			let entry = commandMappings.get(supercommand) || new Set()
-			const key = `${resourceDefinitions[path].tag}_${supercommand}`
+			const key = `${resourceDefinitions[path].name}_${supercommand}`
 			const value = duplicateMappings[key]
-			entry.add(value ? key : resourceDefinitions[path].tag)
+			entry.add(value ? key : resourceDefinitions[path].name)
 			commandMappings.set(supercommand, entry)
 		}
 	}
@@ -68,16 +99,17 @@ func init() {
   	}
 }
 
-function processRoot(rootDir, rootFileName, resourceDefinitions, duplicateMappings) {
+// Adds imports for every command and attaches them to the root
+function processRoot(rootDir, rootFileName, resourceDefinitions, duplicateMappings, topLevelCommands) {
 	let exclusionList = new Set()
-	exclusionList = exclusionList.add(rootFileName)
+	exclusionList.add(rootFileName)
 	for (const resourceDefinition of Object.values(resourceDefinitions)) {
-		if (resourceDefinition.supercommand !== undefined) {
-			exclusionList = exclusionList.add(resourceDefinition.tag)
+		if (resourceDefinition.supercommand !== undefined && !topLevelCommands.includes(resourceDefinition.name)) {
+			exclusionList.add(resourceDefinition.name)
 		}
 	}
 	for (const duplicateCommand of Object.keys(duplicateMappings)) {
-		exclusionList = exclusionList.add(duplicateCommand)
+		exclusionList.add(duplicateCommand)
 	}
 
 	let addCommands = []
@@ -98,19 +130,6 @@ function processRoot(rootDir, rootFileName, resourceDefinitions, duplicateMappin
 	const rootPath = path.join(rootDir, rootFileName)
 	let templateString = fs.readFileSync(rootPath, 'utf8');
 	writeTemplate(templateString, { addImports: addImports.join("\n\t"), addCommands: addCommands.join("\n\t") }, rootPath)
-}
-
-function processGeneral(generalPath, resourceDefinitions) {
-	let commands = []
-	for (const resourceDefinition of Object.values(resourceDefinitions)) {
-		if (resourceDefinition.doNotPluralize == true) {
-			commands.push(`notPluralCommands = append(notPluralCommands, "${resourceDefinition.tag}")`)
-		}
-	}
-
-	const notPluralCommands = commands.join("\n\t\t")
-	let templateString = fs.readFileSync(generalPath, 'utf8');
-	writeTemplate(templateString, { notPluralCommands: notPluralCommands }, generalPath)
 }
 
 function writeTemplate(templateString, templateObj, filePath) {

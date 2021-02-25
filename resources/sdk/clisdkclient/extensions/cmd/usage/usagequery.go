@@ -23,11 +23,11 @@ func init() {
 }
 
 var (
-	usageQueryCommand = models.HandWrittenCommand{
+	usageQueryOperation = models.HandWrittenOperation{
 		Path:   "/api/v2/usage/query",
 		Method: http.MethodPost,
 	}
-	usageQueryResultsCommand = models.HandWrittenCommand{
+	usageQueryResultsOperation = models.HandWrittenOperation{
 		Path:   "/api/v2/usage/query/{executionId}/results",
 		Method: http.MethodGet,
 	}
@@ -42,7 +42,7 @@ var queryUsageCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		timeout, _ := cmd.Flags().GetInt("timeout")
 
-		retryFunc := CommandService.DetermineAction(usageQueryCommand.Method, usageQueryCommand.Path, nil)
+		retryFunc := CommandService.DetermineAction(usageQueryOperation.Method, usageQueryOperation.Path, nil)
 		results, err := retryFunc(nil)
 		if err != nil {
 			logger.Fatal(err)
@@ -59,9 +59,9 @@ var queryUsageCmd = &cobra.Command{
 			currentIteration := 1
 
 			for true {
-				path := usageQueryResultsCommand.Path
+				path := usageQueryResultsOperation.Path
 				targetURI := strings.Replace(path, "{executionId}", fmt.Sprintf("%v", usageSubmitResponse.ExecutionID), -1)
-				retryFunc := CommandService.DetermineAction(usageQueryResultsCommand.Method, targetURI, nil)
+				retryFunc := CommandService.DetermineAction(usageQueryResultsOperation.Method, targetURI, nil)
 				rawData, commandErr := retryFunc(nil)
 				if commandErr != nil {
 					logger.Fatal(commandErr)
