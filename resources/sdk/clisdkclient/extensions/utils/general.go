@@ -5,13 +5,14 @@ import (
 	"bytes"
 	"crypto/rand"
 	"fmt"
-	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -43,6 +44,13 @@ func AddFileFlagIfUpsert(flags *pflag.FlagSet, method string) {
 		fallthrough
 	case http.MethodPut:
 		flags.StringP("file", "f", "", "File name containing the JSON for creating a user object")
+	}
+}
+
+func AddPaginateFlagsIfListingResponse(flags *pflag.FlagSet, method, jsonSchema string) {
+	if method == http.MethodGet && strings.Contains(jsonSchema, "Listing") {
+		flags.BoolP("autopaginate", "a", false, "Automatically paginate through the results stripping page information")
+		flags.BoolP("stream", "s", false, "Paginate and stream data as it is being processed leaving page information intact")
 	}
 }
 
@@ -79,7 +87,7 @@ func FormatUsageDescription(message string) string {
 	if !strings.HasSuffix(message, "s") {
 		return fmt.Sprintf("%v%v", message, "s")
 	}
-	
+
 	return message
 }
 
@@ -92,7 +100,7 @@ func FormatPermissions(permissions []string) string {
 	for _, permission := range permissions {
 		permissionString = fmt.Sprintf("%s  %s\n", permissionString, permission)
 	}
-	
+
 	return permissionString
 }
 

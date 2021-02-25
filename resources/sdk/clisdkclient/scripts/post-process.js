@@ -6,12 +6,10 @@ try {
 	dot.templateSettings.strip = false;
 
 	const rootPath = path.resolve(process.argv[2]);
-	const commandServicePath = path.resolve(process.argv[3]);
-	const generalPath = path.resolve(process.argv[4]);
-	const duplicateMappingsPath = path.resolve(process.argv[5]);
+	const generalPath = path.resolve(process.argv[3]);
+	const duplicateMappingsPath = path.resolve(process.argv[4]);
 
 	console.log(`rootPath=${rootPath}`);
-	console.log(`commandServicePath=${commandServicePath}`);
 	console.log(`generalPath=${generalPath}`);
 	console.log(`duplicateMappingsPath=${duplicateMappingsPath}`);
 
@@ -24,7 +22,6 @@ try {
 
 	generateRootFiles(rootDir, resourceDefinitions, duplicateMappings)
 	processRoot(rootDir, rootFileName, resourceDefinitions, duplicateMappings)
-	processCommandService(commandServicePath, resourceDefinitions)
 	processGeneral(generalPath, resourceDefinitions)
 } catch (err) {
 	process.exitCode = 1;
@@ -101,19 +98,6 @@ function processRoot(rootDir, rootFileName, resourceDefinitions, duplicateMappin
 	const rootPath = path.join(rootDir, rootFileName)
 	let templateString = fs.readFileSync(rootPath, 'utf8');
 	writeTemplate(templateString, { addImports: addImports.join("\n\t"), addCommands: addCommands.join("\n\t") }, rootPath)
-}
-
-function processCommandService(commandServicePath, resourceDefinitions) {
-	let overridePaths = []
-	for (const path of Object.keys(resourceDefinitions)) {
-		if (resourceDefinitions[path].entityListing == true) {
-			overridePaths.push(`listOverrides["${path}"] = 1`)
-		}
-	}
-
-	const listOverrides = overridePaths.join("\n\t\t")
-	let templateString = fs.readFileSync(commandServicePath, 'utf8');
-	writeTemplate(templateString, { listOverrides: listOverrides }, commandServicePath)
 }
 
 function processGeneral(generalPath, resourceDefinitions) {

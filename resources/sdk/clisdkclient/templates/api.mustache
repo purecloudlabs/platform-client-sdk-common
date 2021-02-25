@@ -30,6 +30,7 @@ func Cmd{{classVarName}}() *cobra.Command { {{#operation}}
 	{{#queryParams}}utils.AddFlag({{operationId}}Cmd.Flags(), "{{{dataType}}}", "{{paramName}}", "{{#defaultValue}}{{{.}}}{{/defaultValue}}{{^defaultValue}}{{/defaultValue}}", "{{description}}{{#required}} - REQUIRED{{/required}}{{#allowableValues}} Valid values: {{#values}}{{.}}{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}}")
 	{{#hasMore}}{{/hasMore}}{{/queryParams}}{{operationId}}Cmd.SetUsageTemplate(fmt.Sprintf("%s\nOperation:\n  %s %s\n%s", {{operationId}}Cmd.UsageTemplate(), "{{httpMethod}}", "{{path}}", utils.FormatPermissions([]string{ {{#permissions}}"{{.}}", {{/permissions}} })))
 	utils.AddFileFlagIfUpsert({{operationId}}Cmd.Flags(), "{{httpMethod}}")
+	{{#responses}}{{#-first}}utils.AddPaginateFlagsIfListingResponse({{operationId}}Cmd.Flags(), "{{httpMethod}}", `{{jsonSchema}}`){{/-first}}{{/responses}}
 	{{classVarName}}Cmd.AddCommand({{operationId}}Cmd)
 	{{/operation}}
 	return {{classVarName}}Cmd
@@ -62,7 +63,7 @@ var {{operationId}}Cmd = &cobra.Command{
 			urlString = strings.TrimSuffix(urlString, "&")
 		}
 
-		retryFunc := CommandService.DetermineAction("{{httpMethod}}", "{{operationId}}", urlString, "{{path}}")
+		retryFunc := CommandService.DetermineAction("{{httpMethod}}", urlString, cmd.Flags())
 		// TODO read from config file
 		retryConfig := &retry.RetryConfiguration{
 			RetryWaitMin: 5 * time.Second,
