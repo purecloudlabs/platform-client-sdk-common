@@ -16,7 +16,7 @@
 	},
 	"/api/v2/authorization/roles/{roleId}": {
 		"name": "roles",
-		"delete":{
+		"delete": {
 			"name": "remove"
 		},
 		"get": {},
@@ -77,7 +77,7 @@
 		"name": "members",
 		"supercommand": "groups",
 		"get": {
-			"name": "get"
+			"name": "list"
 		},
 		"delete": {
 			"name": "remove"
