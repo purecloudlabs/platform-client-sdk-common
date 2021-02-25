@@ -507,11 +507,15 @@ function createRelease() {
 			githubApi.config.owner = repoOwner;
 			githubApi.config.token = getEnv('GITHUB_TOKEN');
 
+			const tagName = _this.config.settings.sdkRepo.tagFormat ?
+								_this.config.settings.sdkRepo.tagFormat.replace("{version}",  _this.version.displayFull) :
+								_this.version.displayFull;
+
 			var createReleaseOptions = {
-				tag_name: _this.version.displayFull,
+				tag_name: tagName,
 				target_commitish: _this.config.settings.sdkRepo.branch ? _this.config.settings.sdkRepo.branch : 'master',
-				name: _this.version.displayFull,
-				body: `Release notes for version ${_this.version.displayFull}\n${_this.releaseNoteSummary}`,
+				name: tagName,
+				body: `Release notes for version ${tagName}\n${_this.releaseNoteSummary}`,
 				draft: false,
 				prerelease: false
 			};

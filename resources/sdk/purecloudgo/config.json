@@ -5,7 +5,8 @@
   "settings": {
     "sdkRepo": {
       "repo": "https://github.com/MyPureCloud/platform-client-sdk-go.git",
-      "branch": "master"
+      "branch": "master",
+      "tagFormat": "v{version}"
     },
     "versionFile": "${SDK_REPO}/version.json",
     "logLevel": "debug",
