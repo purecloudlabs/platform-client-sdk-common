@@ -71,13 +71,6 @@
         },
         {
           "type": "command",
-          "command": "go",
-      		"cwd": "${SDK_REPO}",
-      		"args":[ "get", "github.com/google/uuid", "github.com/hashicorp/go-retryablehttp" ],
-          "failOnError": true
-        },
-        {
-          "type": "command",
           "command": "make",
       		"cwd": "${SDK_REPO}",
       		"args":[ "build", "test" ],

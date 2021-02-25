@@ -83,6 +83,7 @@ function Builder(configPath, localConfigPath) {
 		maybeInit(this.config.stageSettings, 'prebuild', {});
 		maybeInit(this.config.stageSettings, 'build', {});
 		maybeInit(this.config.stageSettings, 'postbuild', {});
+		maybeInit(this.config.settings.sdkRepo, 'tagFormat', '{version}');
 
 		// Check for required settings
 		checkAndThrow(this.config.settings.swagger, 'oldSwaggerPath');
@@ -507,10 +508,7 @@ function createRelease() {
 			githubApi.config.owner = repoOwner;
 			githubApi.config.token = getEnv('GITHUB_TOKEN');
 
-			const tagName = _this.config.settings.sdkRepo.tagFormat ?
-								_this.config.settings.sdkRepo.tagFormat.replace("{version}",  _this.version.displayFull) :
-								_this.version.displayFull;
-
+			const tagName = _this.config.settings.sdkRepo.tagFormat.replace("{version}",  _this.version.displayFull);
 			var createReleaseOptions = {
 				tag_name: tagName,
 				target_commitish: _this.config.settings.sdkRepo.branch ? _this.config.settings.sdkRepo.branch : 'master',
