@@ -305,23 +305,20 @@ func (c *commandService) DetermineAction(httpMethod string, uri string, flags *p
 		}
 		return retry.Retry(uri, c.List)
 	case http.MethodPatch:
-		needsFile := utils.CheckIfHasFileFlag(c.cmd)
-		if needsFile {
-			return retry.RetryWithData(uri, utils.ResolveInputData(c.cmd), c.Patch)
+		if flags.Lookup("file") == nil {
+			return retry.RetryWithData(uri, "", c.Patch)
 		}
-		return retry.RetryWithData(uri, "", c.Patch)
+		return retry.RetryWithData(uri, utils.ResolveInputData(c.cmd), c.Patch)
 	case http.MethodPost:
-		needsFile := utils.CheckIfHasFileFlag(c.cmd)
-		if needsFile {
-			return retry.RetryWithData(uri, utils.ResolveInputData(c.cmd), c.Post)
+		if flags.Lookup("file") == nil {
+			return retry.RetryWithData(uri, "", c.Post)
 		}
-		return retry.RetryWithData(uri, "", c.Post)
+		return retry.RetryWithData(uri, utils.ResolveInputData(c.cmd), c.Post)
 	case http.MethodPut:
-		needsFile := utils.CheckIfHasFileFlag(c.cmd)
-		if needsFile {
-			return retry.RetryWithData(uri, utils.ResolveInputData(c.cmd), c.Put)
+		if flags.Lookup("file") == nil {
+			return retry.RetryWithData(uri, "", c.Put)
 		}
-		return retry.RetryWithData(uri, "", c.Put)
+		return retry.RetryWithData(uri, utils.ResolveInputData(c.cmd), c.Put)
 	case http.MethodDelete:
 		return retry.Retry(uri, c.Delete)
 	}

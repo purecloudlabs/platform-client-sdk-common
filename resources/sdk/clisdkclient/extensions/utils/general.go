@@ -153,21 +153,6 @@ func ResolveInputData(cmd *cobra.Command) string {
 	return ConvertStdInString()
 }
 
-func CheckIfHasFileFlag(cmd *cobra.Command) bool {
-	hasFileFlag := cmd.Flags().Lookup("file")
-	if hasFileFlag != nil {
-		return true
-	}
-	for _, command := range cmd.Commands() {
-		hasFileFlag := command.Flags().Lookup("file")
-		if hasFileFlag != nil {
-			return true
-		}
-	}
-
-	return false
-}
-
 func GenerateGuid() string {
 	b := make([]byte, 16)
 	_, err := rand.Read(b)
