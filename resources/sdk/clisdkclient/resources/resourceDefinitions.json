@@ -1,279 +1,275 @@
 {
 	"/api/v2/outbound/campaigns": {
-		"tag": "campaigns"
+		"name": "campaigns"
 	},
 	"/api/v2/outbound/campaigns/{campaignId}": {
-		"tag": "campaigns"
+		"name": "campaigns"
 	},
 	"/api/v2/authorization/divisions": {
-		"tag": "divisions"
+		"name": "divisions"
 	},
 	"/api/v2/authorization/divisions/{divisionId}": {
-		"tag": "divisions"
+		"name": "divisions"
 	},
 	"/api/v2/authorization/roles": {
-		"tag": "roles"
+		"name": "roles"
 	},
 	"/api/v2/authorization/roles/{roleId}": {
-		"tag": "roles",
-		"delete":{
-			"operationId": "remove"
+		"name": "roles",
+		"delete": {
+			"name": "remove"
 		},
 		"get": {},
 		"put": {}
 	},
 	"/api/v2/authorization/roles/{roleId}/users": {
-		"tag": "user",
+		"name": "users",
 		"supercommand": "roles",
 		"get": {
-			"operationId": "get"
+			"name": "get"
 		}
 	},
 	"/api/v2/authorization/roles/{roleId}/users/add": {
-		"tag": "user",
+		"name": "users",
 		"supercommand": "roles",
 		"put": {
-			"operationId": "add"
+			"name": "add"
 		}
 	},
 	"/api/v2/authorization/roles/{roleId}/users/remove": {
-		"tag": "user",
+		"name": "users",
 		"supercommand": "roles",
 		"put": {
-			"operationId": "delete"
+			"name": "delete"
 		}
 	},
 	"/api/v2/telephony/providers/edges": {
-		"tag": "edges"
+		"name": "edges"
 	},
 	"/api/v2/telephony/providers/edges/{edgeId}": {
-		"tag": "edges"
+		"name": "edges"
 	},
 	"/api/v2/telephony/providers/edges/{edgeId}/reboot": {
-		"tag": "edges",
+		"name": "edges",
 		"post": {
-			"operationId": "reboot"
+			"name": "reboot"
 		}
 	},
 	"/api/v2/telephony/providers/edges/didpools": {
-		"tag": "didpools",
+		"name": "didpools",
 		"supercommand": "edges"
 	},
 	"/api/v2/telephony/providers/edges/didpools/{didPoolId}": {
-		"tag": "didpools",
+		"name": "didpools",
 		"supercommand": "edges"
 	},
 	"/api/v2/telephony/providers/edges/dids/{didId}": {
-		"tag": "dids",
+		"name": "dids",
 		"supercommand": "edges"
 	},
 	"/api/v2/telephony/providers/edges/dids": {
-		"tag": "dids",
+		"name": "dids",
 		"supercommand": "edges"
 	},
 	"/api/v2/groups": {},
 	"/api/v2/groups/{groupId}": {},
 	"/api/v2/groups/{groupId}/members": {
-		"tag": "members",
+		"name": "members",
 		"supercommand": "groups",
-		"entityListing": true,
 		"get": {
-			"operationId": "get"
+			"name": "list"
 		},
 		"delete": {
-			"operationId": "remove"
+			"name": "remove"
 		}
 	},
 	"/api/v2/locations": {},
 	"/api/v2/locations/{locationId}": {},
 	"/api/v2/telephony/providers/edges/phones": {
-		"tag": "phones"
+		"name": "phones"
 	},
 	"/api/v2/telephony/providers/edges/phones/{phoneId}": {
-		"tag": "phones"
+		"name": "phones"
 	},
 	"/api/v2/telephony/providers/edges/phones/{phoneId}/reboot": {
-		"tag": "phones",
+		"name": "phones",
 		"post": {
-			"operationId": "reboot"
+			"name": "reboot"
 		}
 	},
 	"/api/v2/routing/queues": {
-		"tag": "queues"
+		"name": "queues"
 	},
 	"/api/v2/routing/queues/{queueId}": {
-		"tag": "queues"
+		"name": "queues"
 	},
 	"/api/v2/routing/queues/{queueId}/estimatedwaittime": {
-		"tag": "queues",
+		"name": "queues",
 		"get": {
-			"operationId": "estimatedwait"
+			"name": "estimatedwait"
 		}
 	},
 	"/api/v2/routing/queues/{queueId}/users": {
-		"tag": "user",
+		"name": "users",
 		"supercommand": "queues",
-		"entityListing": true,
 		"get": {
-			"operationId": "get"
+			"name": "get"
 		},
 		"post": {
-			"operationId": "move"
+			"name": "move"
 		},
 		"patch": {
-			"operationId": "activate"
+			"name": "activate"
 		}
 	},
 	"/api/v2/routing/queues/{queueId}/users/{memberId}": {
-		"tag": "user",
+		"name": "users",
 		"supercommand": "queues",
 		"delete": {},
 		"patch": {}
 	},
 	"/api/v2/telephony/providers/edges/sites": {
-		"tag": "sites"
+		"name": "sites"
 	},
 	"/api/v2/telephony/providers/edges/sites/{siteId}": {
-		"tag": "sites"
+		"name": "sites"
 	},
 	"/api/v2/routing/skills": {
-		"tag": "skills"
+		"name": "skills"
 	},
 	"/api/v2/routing/skills/{skillId}": {
-		"tag": "skills"
+		"name": "skills"
 	},
 	"/api/v2/stations": {},
 	"/api/v2/stations/{stationId}": {},
 	"/api/v2/users": {},
 	"/api/v2/users/{userId}": {},
 	"/api/v2/users/{userId}/queues": {
-		"tag": "queue",
+		"name": "queues",
 		"supercommand": "users",
-		"entityListing": true,
 		"get": {
-			"operationId": "get"
+			"name": "get"
 		},
 		"patch": {
-			"operationId": "joinset"
+			"name": "joinset"
 		}
 	},
 	"/api/v2/users/{userId}/queues/{queueId}": {
-		"tag": "queue",
+		"name": "queues",
 		"supercommand": "users",
 		"patch": {
-			"operationId": "join"
+			"name": "join"
 		}
 	},
 	"/api/v2/users/{userId}/routingskills": {
-		"tag": "skill",
+		"name": "skills",
 		"supercommand": "users"
 	},
 	"/api/v2/users/{userId}/routingskills/{skillId}": {
-		"tag": "skill",
+		"name": "skills",
 		"supercommand": "users"
 	},
 	"/api/v2/users/{userId}/routingskills/bulk": {
-		"tag": "skill",
+		"name": "skills",
 		"supercommand": "users",
 		"put": {
-			"operationId": "bulkupdate"
+			"name": "bulkupdate"
 		},
 		"patch": {
-			"operationId": "bulkremove"
+			"name": "bulkremove"
 		}
 	},
 	"/api/v2/notifications/availabletopics": {
-		"tag": "topics",
+		"name": "topics",
 		"supercommand": "notifications",
 		"get": {
-			"operationId": "list"
+			"name": "list"
 		}
 	},
 	"/api/v2/notifications/channels": {
-		"tag": "channels",
+		"name": "channels",
 		"supercommand": "notifications"
 	},
 	"/api/v2/notifications/channels/{channelId}/subscriptions": {
-		"tag": "subscriptions",
+		"name": "subscriptions",
 		"supercommand": "notifications",
 		"get": {},
 		"post": {
-			"operationId": "subscribe"
+			"name": "subscribe"
 		},
 		"delete": {}
 	},
 	"/api/v2/usage/query/{executionId}/results": {
-		"tag": "usage",
-		"doNotPluralize": true,
+		"name": "usage",
 		"get": {
-			"operationId": "results"
+			"name": "results"
 		}
 	},
 	"/api/v2/externalcontacts/contacts": {
-		"tag": "contacts",
+		"name": "contacts",
 		"supercommand": "externalcontacts",
 		"post": {},
 		"get": {
-			"operationId": "search"
+			"name": "search"
 		}
 	},
 	"/api/v2/externalcontacts/contacts/{contactId}": {
-		"tag": "contacts",
+		"name": "contacts",
 		"supercommand": "externalcontacts",
 		"get": {},
 		"put": {},
 		"delete": {}
 	},
 	"/api/v2/externalcontacts/organizations": {
-		"tag": "organizations",
+		"name": "organizations",
 		"supercommand": "externalcontacts",
 		"post": {},
 		"get": {
-			"operationId": "search"
+			"name": "search"
 		}
 	},
 	"/api/v2/externalcontacts/organizations/{externalOrganizationId}": {
-		"tag": "organizations",
+		"name": "organizations",
 		"supercommand": "externalcontacts",
 		"get": {},
 		"put": {},
 		"delete": {}
 	},
 	"/api/v2/externalcontacts/scan/contacts": {
-		"tag": "contacts",
+		"name": "contacts",
 		"supercommand": "externalcontacts",
 		"get": {
-			"operationId": "scan"
+			"name": "scan"
 		}
 	},
 	"/api/v2/externalcontacts/scan/organizations": {
-		"tag": "organizations",
+		"name": "organizations",
 		"supercommand": "externalcontacts",
 		"get": {
-			"operationId": "scan"
+			"name": "scan"
 		}
 	},
 	"/api/v2/responsemanagement/libraries": {
-		"tag": "libraries",
+		"name": "libraries",
 		"supercommand": "responsemgt"
 	},
 	"/api/v2/responsemanagement/libraries/{libraryId}": {
-		"tag": "libraries",
+		"name": "libraries",
 		"supercommand": "responsemgt"
 	},
 	"/api/v2/responsemanagement/responses": {
-		"tag": "responses",
+		"name": "responses",
 		"supercommand": "responsemgt"
 	},
 	"/api/v2/responsemanagement/responses/{responseId}": {
-		"tag": "responses",
+		"name": "responses",
 		"supercommand": "responsemgt"
 	},
 	"/api/v2/responsemanagement/responses/query": {
-		"tag": "responses",
+		"name": "responses",
 		"supercommand": "responsemgt",
 		"post": {
-			"operationId": "search"
+			"name": "search"
 		}
 	}
 }
