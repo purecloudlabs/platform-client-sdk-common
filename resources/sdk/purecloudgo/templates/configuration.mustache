@@ -17,8 +17,6 @@ type Configuration struct {
 	Password                  string              `json:"password,omitempty"`
 	APIKeyPrefix              map[string]string   `json:"APIKeyPrefix,omitempty"`
 	APIKey                    map[string]string   `json:"APIKey,omitempty"`
-	debug                     bool                `json:"debug,omitempty"`
-	DebugFile                 string              `json:"debugFile,omitempty"`
 	OAuthToken                string              `json:"oAuthToken,omitempty"`
 	Timeout                   int                 `json:"timeout,omitempty"`
 	BasePath                  string              `json:"basePath,omitempty"`
@@ -35,6 +33,7 @@ type Configuration struct {
 	UserAgent                 string              `json:"userAgent,omitempty"`
 	APIClient                 APIClient           `json:"APIClient,omitempty"`
 	RetryConfiguration        *RetryConfiguration `json:"retryConfiguration,omitempty"`
+	LoggingConfiguration      *LoggingConfiguration `json:"loggingConfiguration,omitempty"`
 }
 
 const (
@@ -58,6 +57,13 @@ type RetryConfiguration struct {
 }
 
 type RequestLogHook func(*http.Request, int)
+
+type LoggingConfiguration struct {
+	LogLevel     LoggingLevel  `json:"logLevel,omitempty"`
+	LogFormat    LoggingFormat `json:"logFormat,omitempty"`
+	LogFilePath  string        `json:"logFilePath,omitempty"`
+	LogToConsole bool          `json:"logToConsole,omitempty"`
+}
 
 // AuthResponse contains the access token to use in future requests
 type AuthResponse struct {
@@ -90,7 +96,11 @@ func NewConfiguration() *Configuration {
 	c := &Configuration{
 		BasePath:                 "{{basePath}}",
 		UserName:                 "",
-		debug:                    false,
+		LoggingConfiguration:     &LoggingConfiguration{
+			LogLevel:     LNone,
+			LogFormat:    Text,
+			LogToConsole: true,
+		},
 		ShouldRefreshAccessToken: true,
 		RefreshTokenWaitTime:     10,
 		DefaultHeader:            make(map[string]string),
@@ -98,6 +108,7 @@ func NewConfiguration() *Configuration {
 		APIKeyPrefix:             make(map[string]string),
 		UserAgent:                "{{#httpUserAgent}}{{{.}}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen/{{{packageVersion}}}/go{{/httpUserAgent}}",
 	}
+	c.initLogging()
 	c.APIClient = NewAPIClient(c)
 	return c
 }
@@ -135,7 +146,7 @@ func (c *Configuration) AuthorizeClientCredentials(clientID string, clientSecret
 	if c.AccessToken == "" {
 		return fmt.Errorf("Auth Error: No access token found")
 	}
-	c.Debugf("Token exipres in %v seconds\n", authResponse.ExpiresIn)
+	
 	return nil
 }
 
@@ -181,7 +192,7 @@ func (c *Configuration) AuthorizeCodeGrant(clientID string, clientSecret string,
 	if c.RefreshToken == "" {
 		return nil, fmt.Errorf("Auth Error: No refresh token found")
 	}
-	c.Debugf("Token exipres in %v seconds\n", authResponse.ExpiresIn)
+	
 
 	return authResponse, nil
 }
@@ -225,7 +236,6 @@ func (c *Configuration) RefreshAuthorizationCodeGrant(clientID string, clientSec
 	if c.RefreshToken == "" {
 		return nil, fmt.Errorf("Auth Error: No refresh token found")
 	}
-	c.Debugf("Token exipres in %v seconds\n", authResponse.ExpiresIn)
 
 	return authResponse, nil
 }
@@ -242,30 +252,4 @@ func (c *Configuration) GetAPIKeyWithPrefix(APIKeyIdentifier string) string {
 	}
 
 	return c.APIKey[APIKeyIdentifier]
-}
-
-// SetDebug enables debug tracing for HTTP requests, and probably some other stuff
-func (c *Configuration) SetDebug(enable bool) {
-	c.debug = enable
-}
-
-// GetDebug tells you the value of the debug setting in case you forgot
-func (c *Configuration) GetDebug() bool {
-	return c.debug
-}
-
-// Debug prints the provided message using Println if debug tracing is enabled
-func (c *Configuration) Debug(msg interface{}) {
-	if !c.debug {
-		return
-	}
-	fmt.Println(msg)
-}
-
-// Debugf prints the provided formatted message using Printf if debug tracing is enabled
-func (c *Configuration) Debugf(msg string, params ...interface{}) {
-	if !c.debug {
-		return
-	}
-	fmt.Printf(msg, params...)
 }

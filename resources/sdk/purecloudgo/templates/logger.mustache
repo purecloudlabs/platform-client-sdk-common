@@ -1,0 +1,201 @@
+package {{packageName}}
+
+import (
+	"encoding/json"
+	"fmt"
+	"github.com/tidwall/pretty"
+	"io"
+	"log"
+	"net/http"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+)
+
+var (
+	traceLogger *log.Logger
+	debugLogger *log.Logger
+	errorLogger *log.Logger
+	logFilePath string
+)
+
+type LoggingLevel int
+
+const (
+	LTrace LoggingLevel = iota
+	LDebug
+	LError
+	LNone
+)
+
+type LoggingFormat int
+
+const (
+	JSON LoggingFormat = iota
+	Text
+)
+
+type LogStatement struct {
+	Date            *time.Time  `json:"date,omitempty"`
+	Method          string      `json:"method,omitempty"`
+	URL             string      `json:"url,omitempty"`
+	RequestHeaders  http.Header `json:"requestHeaders,omitempty"`
+	ResponseHeaders http.Header `json:"responseHeaders,omitempty"`
+	CorrelationId   string      `json:"correlationId,omitempty"`
+	StatusCode      int         `json:"statusCode,omitempty"`
+	RequestBody     string      `json:"requestBody,omitempty"`
+	ResponseBody    string      `json:"responseBody,omitempty"`
+}
+
+func (s *LogStatement) String(format LoggingFormat) string {
+	if len(s.RequestHeaders["Authorization"]) > 0 {
+		s.RequestHeaders["Authorization"] = []string{"[REDACTED]"}
+	}
+
+	if format == Text {
+		return fmt.Sprintf(`
+=== REQUEST ===
+URL: %v
+Method: %v
+Headers: %v
+Body: %v
+=== RESPONSE ===
+Status: %v
+Headers: %v
+CorrelationId: %v
+Body: %v`, s.URL, s.Method, formatHeaders(s.RequestHeaders), s.RequestBody, s.StatusCode, formatHeaders(s.ResponseHeaders), s.CorrelationId, s.ResponseBody)
+	}
+
+	j, _ := json.Marshal(s)
+	str, _ := strconv.Unquote(strings.Replace(strconv.Quote(string(j)), `\\u`, `\u`, -1))
+
+	return strings.TrimRight(string(pretty.Pretty([]byte(str))), "\n")
+}
+
+func init() {
+	flags := log.Ldate | log.Ltime
+
+	traceLogger = log.New(os.Stdout, "TRACE: ", flags)
+	debugLogger = log.New(os.Stdout, "DEBUG: ", flags)
+	errorLogger = log.New(os.Stderr, "ERROR: ", flags)
+}
+
+func (c *Configuration) initLogging() {
+	flags := log.Ldate | log.Ltime
+
+	var stdout *os.File
+	var stderr *os.File
+	if c.LoggingConfiguration.LogToConsole {
+		stdout = os.Stdout
+		stderr = os.Stderr
+	}
+	traceLogger = log.New(stdout, "TRACE: ", flags)
+	debugLogger = log.New(stdout, "DEBUG: ", flags)
+	errorLogger = log.New(stderr, "ERROR: ", flags)
+}
+
+func (c *Configuration) Trace(method, URL string, requestBody []byte, statusCode int, requestHeaders, responseHeaders http.Header) {
+	now := time.Now()
+	logStatement := &LogStatement{
+		Date:           &now,
+		Method:         method,
+		URL:            URL,
+		RequestBody:    string(requestBody),
+		StatusCode:     statusCode,
+		RequestHeaders: requestHeaders,
+		ResponseHeaders: responseHeaders,
+	}
+
+	c.log(traceLogger, LTrace, logStatement.String(c.LoggingConfiguration.LogFormat))
+}
+
+func (c *Configuration) Debug(method, URL string, requestBody []byte, statusCode int, requestHeaders http.Header) {
+	now := time.Now()
+	logStatement := &LogStatement{
+		Date:           &now,
+		Method:         method,
+		URL:            URL,
+		RequestBody:    string(requestBody),
+		StatusCode:     statusCode,
+		RequestHeaders: requestHeaders,
+	}
+
+	c.log(debugLogger, LDebug, logStatement.String(c.LoggingConfiguration.LogFormat))
+}
+
+func (c *Configuration) Error(method, URL string, requestBody, responseBody []byte, statusCode int, requestHeaders, responseHeaders http.Header) {
+	now := time.Now()
+	logStatement := &LogStatement{
+		&now,
+		method,
+		URL,
+		requestHeaders,
+		responseHeaders,
+		getCorrelationId(responseHeaders),
+		statusCode,
+		string(requestBody),
+		string(responseBody),
+	}
+
+	c.log(errorLogger, LError, logStatement.String(c.LoggingConfiguration.LogFormat))
+}
+
+func (c *Configuration) log(logger *log.Logger, logLevel LoggingLevel, v ...interface{}) {
+	c.setLogOutputs()
+	if logLevel >= c.LoggingConfiguration.LogLevel {
+		logger.Println(v...)
+	}
+}
+
+func (c *Configuration) setLogOutputs() {
+	if c.LoggingConfiguration.LogFilePath == "" || c.LoggingConfiguration.LogFilePath == logFilePath {
+		return
+	}
+	logFilePath = c.LoggingConfiguration.LogFilePath
+
+	f, err := os.OpenFile(logFilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		return
+	}
+
+	var stdout *os.File
+	var stderr *os.File
+	if c.LoggingConfiguration.LogToConsole {
+		stdout = os.Stdout
+		stderr = os.Stderr
+	}
+	wrt := io.MultiWriter(f, stdout)
+	traceLogger.SetOutput(wrt)
+	debugLogger.SetOutput(wrt)
+
+	wrt = io.MultiWriter(f, stderr)
+	errorLogger.SetOutput(wrt)
+}
+
+func getCorrelationId(headers http.Header) string {
+	for key, values := range headers {
+		if strings.ToLower(key) == "inin-correlation-id" {
+			for _, value := range values {
+				if value != "" {
+					return value
+				}
+			}
+		}
+	}
+
+	return ""
+}
+
+func formatHeaders(headers http.Header) string {
+	var result string
+	for key, values := range headers {
+		var valuesString string
+		for _, value := range values {
+			valuesString = fmt.Sprintf("%v, %v", valuesString, value)
+		}
+		valuesString = strings.TrimLeft(valuesString, ", ")
+		result = fmt.Sprintf("%v\n\t%v: %v", result, key, valuesString)
+	}
+	return result
+}

@@ -48,6 +48,13 @@
             "platformclientv2"
           ],
           "failOnError": true
+        },
+        {
+          "type": "command",
+          "command": "rm",
+      		"cwd": "${SDK_REPO}",
+      		"args":[ "-rf", "./platformclientv2" ],
+          "failOnError": true
         }
       ]
     },
