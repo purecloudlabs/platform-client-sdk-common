@@ -17,7 +17,7 @@ import (
 func init() {
 	note := "Note: The 'version' value from the command input will be ignored and the latest version value will be retrieved from the API instead"
 	addCmd.SetHelpTemplate(fmt.Sprintf("%s\nOperation:\n  %s %s\n\n%s\n", addCmd.UsageTemplate(), addMembersCommand.Method, addMembersCommand.Path, note))
-	utils.AddFileFlagIfUpsert(addCmd.Flags(), addMembersCommand.Method)
+	utils.AddFileFlagIfUpsert(addCmd.Flags(), addMembersCommand.Method, "")
 	membersCmd.AddCommand(addCmd)
 }
 

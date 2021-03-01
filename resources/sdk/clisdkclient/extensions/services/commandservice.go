@@ -251,11 +251,23 @@ func (c *commandService) DetermineAction(httpMethod string, operationId string, 
 			return retry.Retry(uri, c.Get)
 		}
 	case http.MethodPatch:
-		return retry.RetryWithData(uri, utils.ResolveInputData(c.cmd), c.Patch)
+		needsFile := utils.CheckIfHasFileFlag(c.cmd)
+		if needsFile {
+			return retry.RetryWithData(uri, utils.ResolveInputData(c.cmd), c.Patch)
+		}
+		return retry.RetryWithData(uri, "", c.Patch)
 	case http.MethodPost:
-		return retry.RetryWithData(uri, utils.ResolveInputData(c.cmd), c.Post)
+		needsFile := utils.CheckIfHasFileFlag(c.cmd)
+		if needsFile {
+			return retry.RetryWithData(uri, utils.ResolveInputData(c.cmd), c.Post)
+		}
+		return retry.RetryWithData(uri, "", c.Post)
 	case http.MethodPut:
-		return retry.RetryWithData(uri, utils.ResolveInputData(c.cmd), c.Put)
+		needsFile := utils.CheckIfHasFileFlag(c.cmd)
+		if needsFile {
+			return retry.RetryWithData(uri, utils.ResolveInputData(c.cmd), c.Put)
+		}
+		return retry.RetryWithData(uri, "", c.Put)
 	case http.MethodDelete:
 		return retry.Retry(uri, c.Delete)
 	}
