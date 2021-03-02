@@ -5,7 +5,8 @@
   "settings": {
     "sdkRepo": {
       "repo": "https://github.com/MyPureCloud/platform-client-sdk-go.git",
-      "branch": "master"
+      "branch": "master",
+      "tagFormat": "v{version}"
     },
     "versionFile": "${SDK_REPO}/version.json",
     "logLevel": "debug",
@@ -66,13 +67,6 @@
           "args": [
             "${SDK_REPO}"
           ],
-          "failOnError": true
-        },
-        {
-          "type": "command",
-          "command": "go",
-      		"cwd": "${SDK_REPO}",
-      		"args":[ "get", "github.com/google/uuid", "github.com/hashicorp/go-retryablehttp" ],
           "failOnError": true
         },
         {
