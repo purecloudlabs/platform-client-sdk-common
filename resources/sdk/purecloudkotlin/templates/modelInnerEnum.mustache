@@ -1,6 +1,14 @@
+  private class {{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}Deserializer : StdDeserializer<{{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}?>({{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}Deserializer::class.java) {
+      @Throws(IOException::class)
+      override fun deserialize(jsonParser: JsonParser, ctxt: DeserializationContext): {{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}? {
+          val node = jsonParser.codec.readTree<JsonNode>(jsonParser)
+          return {{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}.fromString(node.toString().replace("\"", ""))
+      }
+  }
   /**
    * {{^description}}Gets or Sets {{{name}}}{{/description}}{{#description}}{{{description}}}{{/description}}
    */
+   @JsonDeserialize(using = {{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}Deserializer.class)
    enum class {{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}(private val value: {{datatype}}) {
       {{#allowableValues}}{{#enumVars}}{{{name}}}({{{value}}}){{^-last}},
       {{/-last}}{{#-last}};{{/-last}}{{/enumVars}}{{/allowableValues}}
