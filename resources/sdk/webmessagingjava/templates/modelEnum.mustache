@@ -1,6 +1,19 @@
+class {{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}Deserializer extends StdDeserializer<{{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}> {
+  public {{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}Deserializer() {
+    super({{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}Deserializer.class);
+  }
+
+  @Override
+  public {{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}} deserialize(JsonParser jsonParser, DeserializationContext ctxt)
+          throws IOException {
+    JsonNode node = jsonParser.getCodec().readTree(jsonParser);
+    return {{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}.fromString(node.toString().replace("\"", ""));
+  }
+}
 /**
  * {{^description}}Gets or Sets {{{name}}}{{/description}}{{#description}}{{{description}}}{{/description}}
  */
+ @JsonDeserialize(using = {{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}Deserializer.class)
 public enum {{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}} {
   {{#allowableValues}}{{#enumVars}}{{{name}}}({{{value}}}){{^-last}},
   {{/-last}}{{#-last}};{{/-last}}{{/enumVars}}{{/allowableValues}}
