@@ -29,7 +29,7 @@
     "debugConfig": false,
     "enableLoggerColor": true,
     "mavenSettingsFilePath": "/var/build/settings.xml",
-    "mavenTarget": "verify",
+    "mavenTarget": "deploy",
     "apiHealthCheckUrl": "https://api.mypurecloud.com/api/v2/health/check"
   },
   "stageSettings": {
