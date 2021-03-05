@@ -10,6 +10,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
@@ -18,30 +20,30 @@ import (
 
 // Configuration has settings to configure the SDK
 type Configuration struct {
-	UserName                  string              `json:"userName,omitempty"`
-	Password                  string              `json:"password,omitempty"`
-	APIKeyPrefix              map[string]string   `json:"APIKeyPrefix,omitempty"`
-	APIKey                    map[string]string   `json:"APIKey,omitempty"`
-	OAuthToken                string              `json:"oAuthToken,omitempty"`
-	Timeout                   int                 `json:"timeout,omitempty"`
-	BasePath                  string              `json:"basePath,omitempty"`
-	Host                      string              `json:"host,omitempty"`
-	Scheme                    string              `json:"scheme,omitempty"`
-	AccessToken               string              `json:"accessToken,omitempty"`
-	RefreshToken              string              `json:"refreshToken,omitempty"`
-	ClientID                  string              `json:"clientId,omitempty"`
-	ClientSecret              string              `json:"clientSecret,omitempty"`
-	ShouldRefreshAccessToken  bool                `json:"shouldRefreshAccessToken,omitempty"`
-	RefreshInProgress         int64               `json:"refreshInProgress,omitempty"`
-	RefreshTokenWaitTime      int                 `json:"refreshTokenWaitTime,omitempty"`
-	DefaultHeader             map[string]string   `json:"defaultHeader,omitempty"`
-	UserAgent                 string              `json:"userAgent,omitempty"`
-	APIClient                 APIClient           `json:"APIClient,omitempty"`
-	RetryConfiguration        *RetryConfiguration `json:"retryConfiguration,omitempty"`
-	LoggingConfiguration      *LoggingConfiguration `json:"loggingConfiguration,omitempty"`
-	configFileHash            string
-	configFilePath            string
-	configFileName            string
+	UserName                 string                `json:"userName,omitempty"`
+	Password                 string                `json:"password,omitempty"`
+	APIKeyPrefix             map[string]string     `json:"APIKeyPrefix,omitempty"`
+	APIKey                   map[string]string     `json:"APIKey,omitempty"`
+	OAuthToken               string                `json:"oAuthToken,omitempty"`
+	Timeout                  int                   `json:"timeout,omitempty"`
+	BasePath                 string                `json:"basePath,omitempty"`
+	Host                     string                `json:"host,omitempty"`
+	Scheme                   string                `json:"scheme,omitempty"`
+	AccessToken              string                `json:"accessToken,omitempty"`
+	RefreshToken             string                `json:"refreshToken,omitempty"`
+	ClientID                 string                `json:"clientId,omitempty"`
+	ClientSecret             string                `json:"clientSecret,omitempty"`
+	ShouldRefreshAccessToken bool                  `json:"shouldRefreshAccessToken,omitempty"`
+	RefreshInProgress        int64                 `json:"refreshInProgress,omitempty"`
+	RefreshTokenWaitTime     int                   `json:"refreshTokenWaitTime,omitempty"`
+	DefaultHeader            map[string]string     `json:"defaultHeader,omitempty"`
+	UserAgent                string                `json:"userAgent,omitempty"`
+	APIClient                APIClient             `json:"APIClient,omitempty"`
+	RetryConfiguration       *RetryConfiguration   `json:"retryConfiguration,omitempty"`
+	LoggingConfiguration     *LoggingConfiguration `json:"loggingConfiguration,omitempty"`
+	ConfigFilePath           string                `json:"configFilePath,omitempty"`
+	AutoReloadConfig         bool                  `json:"autoReloadConfig,omitempty"`
+	configFileHash           string
 }
 
 const (
@@ -59,20 +61,22 @@ const (
 
 // RetryConfiguration has settings to configure the SDK retry logic
 type RetryConfiguration struct {
-	RetryWaitMin    time.Duration                `json:"retry_wait_min,omitempty"`
-	RetryWaitMax    time.Duration                `json:"retry_wait_max,omitempty"`
-	RetryMax        int                          `json:"retry_max,omitempty"`
-	RequestLogHook	RequestLogHook               `json:"request_log_hook,omitempty"`
+	RetryWaitMin   time.Duration  `json:"retry_wait_min,omitempty"`
+	RetryWaitMax   time.Duration  `json:"retry_wait_max,omitempty"`
+	RetryMax       int            `json:"retry_max,omitempty"`
+	RequestLogHook RequestLogHook `json:"request_log_hook,omitempty"`
 }
 
 type RequestLogHook func(*http.Request, int)
 
 // LoggingConfiguration has settings to configure the SDK logging
 type LoggingConfiguration struct {
-	LogLevel     LoggingLevel  `json:"logLevel,omitempty"`
-	LogFormat    LoggingFormat `json:"logFormat,omitempty"`
-	LogFilePath  string        `json:"logFilePath,omitempty"`
-	LogToConsole bool          `json:"logToConsole,omitempty"`
+	LogLevel        LoggingLevel `json:"logLevel,omitempty"`
+	LogRequestBody  bool         `json:"logRequestBody,omitempty"`
+	LogResponseBody bool         `json:"logResponseBody,omitempty"`
+	logFormat       LoggingFormat
+	logFilePath     string
+	logToConsole    bool
 }
 
 // AuthResponse contains the access token to use in future requests
@@ -91,11 +95,11 @@ type AuthErrorResponse struct {
 }
 
 var (
-	once sync.Once
+	once     sync.Once
 	instance *Configuration
 )
 
-// GetDefaultConfiguration returns the shared default configuration instance
+// GetDefaultConfiguration returns the shared default Configuration instance
 func GetDefaultConfiguration() *Configuration {
 	once.Do(func() {
 		instance = NewConfiguration()
@@ -105,101 +109,184 @@ func GetDefaultConfiguration() *Configuration {
 
 // NewConfiguration returns a new Configuration instance
 func NewConfiguration() *Configuration {
+	homeDir, _ := os.UserHomeDir()
+
 	// Make initial Configuration instance with default values
-	c := &Configuration{
-		BasePath:                 "{{basePath}}",
-		UserName:                 "",
-		LoggingConfiguration:     &LoggingConfiguration{
-			LogLevel:     LNone,
-			LogFormat:    Text,
-			LogToConsole: true,
-		},
-		ShouldRefreshAccessToken: true,
-		RefreshTokenWaitTime:     10,
-		DefaultHeader:            make(map[string]string),
-		APIKey:                   make(map[string]string),
-		APIKeyPrefix:             make(map[string]string),
-		UserAgent:               "{{#httpUserAgent}}{{{.}}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen/{{{packageVersion}}}/go{{/httpUserAgent}}",
-		configFilePath:           "/Users/ronanwatkins/genesys_src/repos/platform-client-sdk-common/output/purecloudgo/platformclientv2/",
-		configFileName:           "config.toml",
+	c := generateDefaultConfig(filepath.Join(homeDir, ".genesyscloudgo", "config"), true)
+
+	_ = c.updateConfigFromFile()
+	if c.AutoReloadConfig {
+		go c.periodicConfigUpdater()
 	}
-	_ = c.initializeConfigFromFile()
-	go c.runConfigChecker()
 
 	c.LoggingConfiguration.configureLogging()
 	c.APIClient = NewAPIClient(c)
 	return c
 }
 
-func (c *Configuration) initializeConfigFromFile() error {
-	viper.SetConfigName("config")
-	viper.SetConfigType("toml")
-	viper.AddConfigPath(c.configFilePath)
+// GetDefaultConfigurationWithConfigFile returns the shared default Configuration instance with overrides provided by a config file
+func GetDefaultConfigurationWithConfigFile(filePath string, autoReload bool) *Configuration {
+	once.Do(func() {
+		instance = NewConfigurationWithConfigFile(filePath, autoReload)
+	})
+	return instance
+}
 
-	if err := c.updateConfigFromFile(); err != nil {
-		return err
+// NewConfigurationWithConfigFile returns a new Configuration instance with overrides provided by a config file
+func NewConfigurationWithConfigFile(filePath string, autoReload bool) *Configuration {
+	// Make initial Configuration instance with default values
+	c := generateDefaultConfig(filePath, autoReload)
+
+	_ = c.updateConfigFromFile()
+	if c.AutoReloadConfig {
+		go c.periodicConfigUpdater()
 	}
 
-	return nil
+	c.LoggingConfiguration.configureLogging()
+	c.APIClient = NewAPIClient(c)
+	return c
+}
+
+func generateDefaultConfig(filePath string, autoReload bool) *Configuration {
+	return &Configuration{
+		BasePath: "{{basePath}}",
+		UserName: "",
+		LoggingConfiguration: &LoggingConfiguration{
+			LogLevel:     LNone,
+			logFormat:    Text,
+			logToConsole: true,
+		},
+		RetryConfiguration: &RetryConfiguration{
+			RetryMax:     0,
+			RetryWaitMax: time.Duration(0),
+		},
+		ShouldRefreshAccessToken: true,
+		RefreshTokenWaitTime:     10,
+		DefaultHeader:            make(map[string]string),
+		APIKey:                   make(map[string]string),
+		APIKeyPrefix:             make(map[string]string),
+		UserAgent:                "{{#httpUserAgent}}{{{.}}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen/{{{packageVersion}}}/go{{/httpUserAgent}}",
+		ConfigFilePath:           filePath,
+		AutoReloadConfig:         autoReload,
+	}
+}
+
+func isJsonFile(filePath string) (bool, error) {
+	s, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return false, err
+	}
+
+	var js map[string]interface{}
+	return json.Unmarshal(s, &js) == nil, nil
 }
 
 func (c *Configuration) updateConfigFromFile() error {
+	isJson, err := isJsonFile(c.ConfigFilePath)
+	if err != nil {
+		return err
+	}
+
+	if isJson {
+		viper.SetConfigType("json")
+	} else {
+		viper.SetConfigType("ini")
+	}
+	viper.SetConfigFile(c.ConfigFilePath)
+
 	if err := viper.ReadInConfig(); err != nil {
 		return err
 	}
 
-	logLevel := getConfigValue("log_level")
-	switch logLevel {
-	case "trace":
-		c.LoggingConfiguration.LogLevel = LTrace
-	case "debug":
-		c.LoggingConfiguration.LogLevel = LDebug
-	case "error":
-		c.LoggingConfiguration.LogLevel = LError
-	case "none":
-		c.LoggingConfiguration.LogLevel = LNone
+	// logging
+	logLevel := getConfigString("logging", "log_level")
+	if logLevel != "" {
+		c.LoggingConfiguration.LogLevel = *(loggingLevelFromString(logLevel))
 	}
 
-	logFormat := getConfigValue("log_format")
-	switch logFormat {
-	case "text":
-		c.LoggingConfiguration.LogFormat = Text
-	case "json":
-		c.LoggingConfiguration.LogFormat = JSON
+	logFormat := getConfigString("logging", "log_format")
+	if logFormat != "" {
+		c.LoggingConfiguration.logFormat = *(loggingFormatFromString(logFormat))
 	}
 
-	logToConsole := getConfigValue("log_to_console")
-	switch logToConsole {
-	case "true":
-		c.LoggingConfiguration.LogToConsole = true
-	case "false":
-		c.LoggingConfiguration.LogToConsole = false
+	// Only update if the value is present
+	if getConfigString("logging", "log_to_console") != "" {
+		c.LoggingConfiguration.logToConsole = getConfigBool("logging", "log_to_console")
 	}
 
-	logFilePath := getConfigValue("log_file_path")
+	logFilePath := getConfigString("logging", "log_file_path")
 	if logFilePath != "" {
-		c.LoggingConfiguration.LogFilePath = logFilePath
+		c.LoggingConfiguration.logFilePath = logFilePath
+	}
+
+	if getConfigString("logging", "log_request_body") != "" {
+		c.LoggingConfiguration.LogRequestBody = getConfigBool("logging", "log_request_body")
+	}
+
+	if getConfigString("logging", "log_response_body") != "" {
+		c.LoggingConfiguration.LogResponseBody = getConfigBool("logging", "log_response_body")
 	}
 
 	c.LoggingConfiguration.configureLogging()
 
+	// general
+	host := getConfigString("general", "host")
+	if host != "" {
+		c.BasePath = host
+	}
+
+	if getConfigString("general", "live_reload_config") != "" {
+		c.AutoReloadConfig = getConfigBool("general", "live_reload_config")
+	}
+
+	// reauthentication
+	if getConfigString("reauthentication", "refresh_access_token") != "" {
+		c.ShouldRefreshAccessToken = getConfigBool("reauthentication", "refresh_access_token")
+	}
+
+	if getConfigString("reauthentication", "refresh_token_wait_max") != "" {
+		c.RefreshTokenWaitTime = getConfigInt("reauthentication", "refresh_token_wait_max")
+	}
+
+	// retry
+	if getConfigString("retry", "retry_wait_min") != "" {
+		c.RetryConfiguration.RetryWaitMin = time.Duration(getConfigInt("retry", "retry_wait_min")) * time.Second
+	}
+
+	if getConfigString("retry", "retry_wait_max") != "" {
+		c.RetryConfiguration.RetryWaitMax = time.Duration(getConfigInt("retry", "retry_wait_max")) * time.Second
+	}
+
+	if getConfigString("retry", "retry_max") != "" {
+		c.RetryConfiguration.RetryMax = getConfigInt("retry", "retry_max")
+	}
+
 	return nil
 }
 
-func getConfigValue(key string) string {
-	value := viper.GetViper().Get(key)
-	if value == nil {
-		return ""
-	}
+func getConfigString(section, key string) string {
+	value := viper.GetString(fmt.Sprintf("%s.%s", section, key))
 
-	return strings.ToLower(fmt.Sprintf("%s", value))
+	return strings.Trim(fmt.Sprintf("%s", value), " ")
 }
 
-func (c *Configuration) runConfigChecker() {
-	for {
-		time.Sleep(10 * time.Second) //TODO 30 seconds
+func getConfigBool(section, key string) bool {
+	return viper.GetBool(fmt.Sprintf("%s.%s", section, key))
+}
 
-		hash, err := getFileHash(fmt.Sprintf("%s%s", c.configFilePath, c.configFileName))
+func getConfigInt(section, key string) int {
+	return viper.GetInt(fmt.Sprintf("%s.%s", section, key))
+}
+
+func (c *Configuration) periodicConfigUpdater() {
+	for {
+		time.Sleep(30 * time.Second)
+
+		if !c.AutoReloadConfig {
+			return
+		}
+
+		hash, err := getFileHash(c.ConfigFilePath)
 		if err != nil {
 			continue
 		}
@@ -256,7 +343,7 @@ func (c *Configuration) AuthorizeClientCredentials(clientID string, clientSecret
 	if c.AccessToken == "" {
 		return fmt.Errorf("Auth Error: No access token found")
 	}
-	
+
 	return nil
 }
 
@@ -361,4 +448,31 @@ func (c *Configuration) GetAPIKeyWithPrefix(APIKeyIdentifier string) string {
 	}
 
 	return c.APIKey[APIKeyIdentifier]
+}
+
+func (c *LoggingConfiguration) SetLogFormat(logFormat LoggingFormat) {
+	c.logFormat = logFormat
+	c.configureLogging()
+}
+
+func (c *LoggingConfiguration) GetLogFormat() LoggingFormat {
+	return c.logFormat
+}
+
+func (c *LoggingConfiguration) SetLogFilePath(logFilePath string) {
+	c.logFilePath = logFilePath
+	c.configureLogging()
+}
+
+func (c *LoggingConfiguration) GetLogFilePath() string {
+	return c.logFilePath
+}
+
+func (c *LoggingConfiguration) SetLogToConsole(logToConsole bool) {
+	c.logToConsole = logToConsole
+	c.configureLogging()
+}
+
+func (c *LoggingConfiguration) GetLogToConsole() bool {
+	return c.logToConsole
 }
