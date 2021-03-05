@@ -17,7 +17,6 @@ var (
 	traceLogger *log.Logger
 	debugLogger *log.Logger
 	errorLogger *log.Logger
-	logFilePath string
 )
 
 type LoggingLevel int
@@ -36,7 +35,7 @@ const (
 	Text
 )
 
-type LogStatement struct {
+type logStatement struct {
 	Date            *time.Time  `json:"date,omitempty"`
 	Method          string      `json:"method,omitempty"`
 	URL             string      `json:"url,omitempty"`
@@ -48,23 +47,24 @@ type LogStatement struct {
 	ResponseBody    string      `json:"responseBody,omitempty"`
 }
 
-func (s *LogStatement) String(format LoggingFormat) string {
+func (s *logStatement) string(format LoggingFormat) string {
 	if len(s.RequestHeaders["Authorization"]) > 0 {
 		s.RequestHeaders["Authorization"] = []string{"[REDACTED]"}
 	}
 
 	if format == Text {
 		return fmt.Sprintf(`
-=== REQUEST ===
-URL: %v
-Method: %v
-Headers: %v
-Body: %v
-=== RESPONSE ===
-Status: %v
-Headers: %v
-CorrelationId: %v
-Body: %v`, s.URL, s.Method, formatHeaders(s.RequestHeaders), s.RequestBody, s.StatusCode, formatHeaders(s.ResponseHeaders), s.CorrelationId, s.ResponseBody)
+=== REQUEST ===%v%v%v%v
+=== RESPONSE ===%v%v%v%v`,
+	   formatValue("URL", s.URL),
+	   formatValue("Method", s.Method),
+	   formatValue("Headers", formatHeaders(s.RequestHeaders)),
+	   formatValue("Body", s.RequestBody),
+
+	   formatValue("Status", fmt.Sprintf("%v",s.StatusCode)),
+	   formatValue("Headers", formatHeaders(s.ResponseHeaders)),
+	   formatValue("CorrelationId", s.CorrelationId),
+	   formatValue("Body", s.ResponseBody))
 	}
 
 	j, _ := json.Marshal(s)
@@ -73,31 +73,41 @@ Body: %v`, s.URL, s.Method, formatHeaders(s.RequestHeaders), s.RequestBody, s.St
 	return strings.TrimRight(string(pretty.Pretty([]byte(str))), "\n")
 }
 
-func init() {
-	flags := log.Ldate | log.Ltime
-
-	traceLogger = log.New(os.Stdout, "TRACE: ", flags)
-	debugLogger = log.New(os.Stdout, "DEBUG: ", flags)
-	errorLogger = log.New(os.Stderr, "ERROR: ", flags)
-}
-
-func (c *Configuration) initLogging() {
-	flags := log.Ldate | log.Ltime
-
-	var stdout *os.File
-	var stderr *os.File
-	if c.LoggingConfiguration.LogToConsole {
-		stdout = os.Stdout
-		stderr = os.Stderr
+func (c *LoggingConfiguration) configureLogging() {
+	var f *os.File
+	if c.LogFilePath != "" {
+		// TODO Do we append or start fresh
+		f, _ = os.OpenFile(c.LogFilePath , os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	}
-	traceLogger = log.New(stdout, "TRACE: ", flags)
-	debugLogger = log.New(stdout, "DEBUG: ", flags)
-	errorLogger = log.New(stderr, "ERROR: ", flags)
+
+	var stdoutWrt io.Writer
+	var stderrWrt io.Writer
+
+	if f != nil && c.LogToConsole { // Logging to console and file
+		stdoutWrt = io.MultiWriter(f, os.Stdout)
+		stderrWrt = io.MultiWriter(f, os.Stderr)
+	} else if f == nil && c.LogToConsole { // Logging to console
+		stdoutWrt = io.MultiWriter(os.Stdout)
+		stderrWrt = io.MultiWriter(os.Stderr)
+	} else if f != nil && !c.LogToConsole { // Logging to file
+		stdoutWrt = io.MultiWriter(f)
+		stderrWrt = io.MultiWriter(f)
+	} else { // Cannot log to anything
+		traceLogger = nil
+		debugLogger = nil
+		errorLogger = nil
+		return
+	}
+
+	flags := log.Ldate | log.Ltime
+	traceLogger = log.New(stdoutWrt, "TRACE: ", flags)
+	debugLogger = log.New(stdoutWrt, "DEBUG: ", flags)
+	errorLogger = log.New(stderrWrt, "ERROR: ", flags)
 }
 
-func (c *Configuration) Trace(method, URL string, requestBody []byte, statusCode int, requestHeaders, responseHeaders http.Header) {
+func (c *LoggingConfiguration) trace(method, URL string, requestBody []byte, statusCode int, requestHeaders, responseHeaders http.Header) {
 	now := time.Now()
-	logStatement := &LogStatement{
+	logStatement := &logStatement{
 		Date:           &now,
 		Method:         method,
 		URL:            URL,
@@ -107,12 +117,12 @@ func (c *Configuration) Trace(method, URL string, requestBody []byte, statusCode
 		ResponseHeaders: responseHeaders,
 	}
 
-	c.log(traceLogger, LTrace, logStatement.String(c.LoggingConfiguration.LogFormat))
+	c.log(traceLogger, LTrace, logStatement.string(c.LogFormat))
 }
 
-func (c *Configuration) Debug(method, URL string, requestBody []byte, statusCode int, requestHeaders http.Header) {
+func (c *LoggingConfiguration) debug(method, URL string, requestBody []byte, statusCode int, requestHeaders http.Header) {
 	now := time.Now()
-	logStatement := &LogStatement{
+	logStatement := &logStatement{
 		Date:           &now,
 		Method:         method,
 		URL:            URL,
@@ -121,12 +131,12 @@ func (c *Configuration) Debug(method, URL string, requestBody []byte, statusCode
 		RequestHeaders: requestHeaders,
 	}
 
-	c.log(debugLogger, LDebug, logStatement.String(c.LoggingConfiguration.LogFormat))
+	c.log(debugLogger, LDebug, logStatement.string(c.LogFormat))
 }
 
-func (c *Configuration) Error(method, URL string, requestBody, responseBody []byte, statusCode int, requestHeaders, responseHeaders http.Header) {
+func (c *LoggingConfiguration) error(method, URL string, requestBody, responseBody []byte, statusCode int, requestHeaders, responseHeaders http.Header) {
 	now := time.Now()
-	logStatement := &LogStatement{
+	logStatement := &logStatement{
 		&now,
 		method,
 		URL,
@@ -138,39 +148,13 @@ func (c *Configuration) Error(method, URL string, requestBody, responseBody []by
 		string(responseBody),
 	}
 
-	c.log(errorLogger, LError, logStatement.String(c.LoggingConfiguration.LogFormat))
+	c.log(errorLogger, LError, logStatement.string(c.LogFormat))
 }
 
-func (c *Configuration) log(logger *log.Logger, logLevel LoggingLevel, v ...interface{}) {
-	c.setLogOutputs()
-	if logLevel >= c.LoggingConfiguration.LogLevel {
+func (c *LoggingConfiguration) log(logger *log.Logger, logLevel LoggingLevel, v ...interface{}) {
+	if logLevel >= c.LogLevel && logger != nil {
 		logger.Println(v...)
 	}
-}
-
-func (c *Configuration) setLogOutputs() {
-	if c.LoggingConfiguration.LogFilePath == "" || c.LoggingConfiguration.LogFilePath == logFilePath {
-		return
-	}
-	logFilePath = c.LoggingConfiguration.LogFilePath
-
-	f, err := os.OpenFile(logFilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		return
-	}
-
-	var stdout *os.File
-	var stderr *os.File
-	if c.LoggingConfiguration.LogToConsole {
-		stdout = os.Stdout
-		stderr = os.Stderr
-	}
-	wrt := io.MultiWriter(f, stdout)
-	traceLogger.SetOutput(wrt)
-	debugLogger.SetOutput(wrt)
-
-	wrt = io.MultiWriter(f, stderr)
-	errorLogger.SetOutput(wrt)
 }
 
 func getCorrelationId(headers http.Header) string {
@@ -187,6 +171,7 @@ func getCorrelationId(headers http.Header) string {
 	return ""
 }
 
+// Returns each header key value pair indented by one tab
 func formatHeaders(headers http.Header) string {
 	var result string
 	for key, values := range headers {
@@ -198,4 +183,12 @@ func formatHeaders(headers http.Header) string {
 		result = fmt.Sprintf("%v\n\t%v: %v", result, key, valuesString)
 	}
 	return result
+}
+
+// Used to only print values that aren't empty
+func formatValue(name, value string) string {
+	if value != "" {
+		return fmt.Sprintf("\n%v: %v", name, value)
+	}
+	return ""
 }

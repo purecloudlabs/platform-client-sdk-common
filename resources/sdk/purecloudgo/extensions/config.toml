@@ -1,0 +1,6 @@
+# Just leaving this here for now
+# Logging
+log_level="trace"
+log_format="text"
+log_to_console="true"
+log_file_path="/Users/ronanwatkins/genesys_src/repos/platform-client-sdk-common/output/purecloudgo/platformclientv2/log.log"

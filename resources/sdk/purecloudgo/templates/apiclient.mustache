@@ -154,8 +154,8 @@ func (c *APIClient) CallAPI(path string, method string,
 
 	// Read body
 	body, _ := ioutil.ReadAll(res.Body)
-	c.configuration.Trace(method, urlString, requestBody, res.StatusCode, request.Header, res.Header)
-	c.configuration.Debug(method, urlString, requestBody, res.StatusCode, request.Header)
+	c.configuration.LoggingConfiguration.trace(method, urlString, requestBody, res.StatusCode, request.Header, res.Header)
+	c.configuration.LoggingConfiguration.debug(method, urlString, requestBody, res.StatusCode, request.Header)
 
 	if res.StatusCode == http.StatusUnauthorized && c.configuration.ShouldRefreshAccessToken && c.configuration.RefreshToken != "" {
 		err := c.handleExpiredAccessToken()
@@ -170,7 +170,7 @@ func (c *APIClient) CallAPI(path string, method string,
 	}
 
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusMultipleChoices {
-		c.configuration.Error(method, urlString, requestBody, body, res.StatusCode, request.Header, res.Header)
+		c.configuration.LoggingConfiguration.error(method, urlString, requestBody, body, res.StatusCode, request.Header, res.Header)
 	}
 
 	return NewAPIResponse(res, body)

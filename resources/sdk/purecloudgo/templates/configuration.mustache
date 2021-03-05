@@ -1,12 +1,17 @@
 package {{packageName}}
 
 import (
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/spf13/viper"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 )
@@ -34,6 +39,9 @@ type Configuration struct {
 	APIClient                 APIClient           `json:"APIClient,omitempty"`
 	RetryConfiguration        *RetryConfiguration `json:"retryConfiguration,omitempty"`
 	LoggingConfiguration      *LoggingConfiguration `json:"loggingConfiguration,omitempty"`
+	configFileHash            string
+	configFilePath            string
+	configFileName            string
 }
 
 const (
@@ -49,6 +57,7 @@ const (
 	APSouth1     = "https://api.aps1.pure.cloud"
 )
 
+// RetryConfiguration has settings to configure the SDK retry logic
 type RetryConfiguration struct {
 	RetryWaitMin    time.Duration                `json:"retry_wait_min,omitempty"`
 	RetryWaitMax    time.Duration                `json:"retry_wait_max,omitempty"`
@@ -58,6 +67,7 @@ type RetryConfiguration struct {
 
 type RequestLogHook func(*http.Request, int)
 
+// LoggingConfiguration has settings to configure the SDK logging
 type LoggingConfiguration struct {
 	LogLevel     LoggingLevel  `json:"logLevel,omitempty"`
 	LogFormat    LoggingFormat `json:"logFormat,omitempty"`
@@ -80,8 +90,10 @@ type AuthErrorResponse struct {
 	ErrorDescription string `json:"error_description,omitempty"`
 }
 
-var once sync.Once
-var instance *Configuration
+var (
+	once sync.Once
+	instance *Configuration
+)
 
 // GetDefaultConfiguration returns the shared default configuration instance
 func GetDefaultConfiguration() *Configuration {
@@ -93,6 +105,7 @@ func GetDefaultConfiguration() *Configuration {
 
 // NewConfiguration returns a new Configuration instance
 func NewConfiguration() *Configuration {
+	// Make initial Configuration instance with default values
 	c := &Configuration{
 		BasePath:                 "{{basePath}}",
 		UserName:                 "",
@@ -106,11 +119,108 @@ func NewConfiguration() *Configuration {
 		DefaultHeader:            make(map[string]string),
 		APIKey:                   make(map[string]string),
 		APIKeyPrefix:             make(map[string]string),
-		UserAgent:                "{{#httpUserAgent}}{{{.}}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen/{{{packageVersion}}}/go{{/httpUserAgent}}",
+		UserAgent:               "{{#httpUserAgent}}{{{.}}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen/{{{packageVersion}}}/go{{/httpUserAgent}}",
+		configFilePath:           "/Users/ronanwatkins/genesys_src/repos/platform-client-sdk-common/output/purecloudgo/platformclientv2/",
+		configFileName:           "config.toml",
 	}
-	c.initLogging()
+	_ = c.initializeConfigFromFile()
+	go c.runConfigChecker()
+
+	c.LoggingConfiguration.configureLogging()
 	c.APIClient = NewAPIClient(c)
 	return c
+}
+
+func (c *Configuration) initializeConfigFromFile() error {
+	viper.SetConfigName("config")
+	viper.SetConfigType("toml")
+	viper.AddConfigPath(c.configFilePath)
+
+	if err := c.updateConfigFromFile(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Configuration) updateConfigFromFile() error {
+	if err := viper.ReadInConfig(); err != nil {
+		return err
+	}
+
+	logLevel := getConfigValue("log_level")
+	switch logLevel {
+	case "trace":
+		c.LoggingConfiguration.LogLevel = LTrace
+	case "debug":
+		c.LoggingConfiguration.LogLevel = LDebug
+	case "error":
+		c.LoggingConfiguration.LogLevel = LError
+	case "none":
+		c.LoggingConfiguration.LogLevel = LNone
+	}
+
+	logFormat := getConfigValue("log_format")
+	switch logFormat {
+	case "text":
+		c.LoggingConfiguration.LogFormat = Text
+	case "json":
+		c.LoggingConfiguration.LogFormat = JSON
+	}
+
+	logToConsole := getConfigValue("log_to_console")
+	switch logToConsole {
+	case "true":
+		c.LoggingConfiguration.LogToConsole = true
+	case "false":
+		c.LoggingConfiguration.LogToConsole = false
+	}
+
+	logFilePath := getConfigValue("log_file_path")
+	if logFilePath != "" {
+		c.LoggingConfiguration.LogFilePath = logFilePath
+	}
+
+	c.LoggingConfiguration.configureLogging()
+
+	return nil
+}
+
+func getConfigValue(key string) string {
+	value := viper.GetViper().Get(key)
+	if value == nil {
+		return ""
+	}
+
+	return strings.ToLower(fmt.Sprintf("%s", value))
+}
+
+func (c *Configuration) runConfigChecker() {
+	for {
+		time.Sleep(10 * time.Second) //TODO 30 seconds
+
+		hash, err := getFileHash(fmt.Sprintf("%s%s", c.configFilePath, c.configFileName))
+		if err != nil {
+			continue
+		}
+		if hash != c.configFileHash {
+			c.configFileHash = hash
+			if err := c.updateConfigFromFile(); err != nil {
+				continue
+			}
+		}
+	}
+}
+
+func getFileHash(filePath string) (string, error) {
+	hasher := sha256.New()
+	s, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return "", err
+	}
+	hasher.Write(s)
+
+	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
 // AuthorizeClientCredentials authorizes this Configuration instance using client credentials.
@@ -128,7 +238,7 @@ func (c *Configuration) AuthorizeClientCredentials(clientID string, clientSecret
 		return err
 	}
 
-	if response.StatusCode != 200 {
+	if response.StatusCode != http.StatusOK {
 		var authErrorResponse *AuthErrorResponse
 		err = json.Unmarshal([]byte(response.RawBody), &authErrorResponse)
 		if err != nil {
@@ -170,7 +280,7 @@ func (c *Configuration) AuthorizeCodeGrant(clientID string, clientSecret string,
 		return nil, err
 	}
 
-	if response.StatusCode != 200 {
+	if response.StatusCode != http.StatusOK {
 		var authErrorResponse *AuthErrorResponse
 		err = json.Unmarshal([]byte(response.RawBody), &authErrorResponse)
 		if err != nil {
@@ -192,7 +302,6 @@ func (c *Configuration) AuthorizeCodeGrant(clientID string, clientSecret string,
 	if c.RefreshToken == "" {
 		return nil, fmt.Errorf("Auth Error: No refresh token found")
 	}
-	
 
 	return authResponse, nil
 }
@@ -214,7 +323,7 @@ func (c *Configuration) RefreshAuthorizationCodeGrant(clientID string, clientSec
 		return nil, err
 	}
 
-	if response.StatusCode != 200 {
+	if response.StatusCode != http.StatusOK {
 		var authErrorResponse *AuthErrorResponse
 		err = json.Unmarshal([]byte(response.RawBody), &authErrorResponse)
 		if err != nil {
