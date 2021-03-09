@@ -16,7 +16,6 @@ const swaggerDiff = require('./swaggerDiff');
 const git = require('./gitModule');
 const zip = require('./zip');
 
-
 /* PRIVATE VARS */
 
 let _this;
@@ -25,13 +24,11 @@ const NOTIFICATION_ID_REGEX = /^urn:jsonschema:(.+):v2:(.+)$/i;
 
 var newSwaggerTempFile = '';
 
-
 /* PUBLIC PROPERTIES */
 
 Builder.prototype.config = {};
 Builder.prototype.resourcePaths = {};
 Builder.prototype.releaseNoteTemplatePath = '';
-
 
 /* CONSTRUCTOR */
 
@@ -40,13 +37,10 @@ function Builder(configPath, localConfigPath) {
 		log.writeBox('Constructing Builder');
 
 		// Load config files
-		if (fs.existsSync(configPath))
-			this.config = loadConfig(configPath);
-		else
-			throw new Error(`Config file doesn't exist! Path: ${configPath}`);
+		if (fs.existsSync(configPath)) this.config = loadConfig(configPath);
+		else throw new Error(`Config file doesn't exist! Path: ${configPath}`);
 
-		if (fs.existsSync(localConfigPath))
-			this.localConfig = loadConfig(localConfigPath);
+		if (fs.existsSync(localConfigPath)) this.localConfig = loadConfig(localConfigPath);
 		else {
 			this.localConfig = {};
 			log.warn(`No local config provided. Path: ${localConfigPath}`);
@@ -66,15 +60,14 @@ function Builder(configPath, localConfigPath) {
 
 		// https://github.com/winstonjs/winston#logging-levels
 		// silly > debug > verbose > info > warn > error
-		if (this.config.settings.logLevel)
-			log.setLogLevel(this.config.settings.logLevel);
+		if (this.config.settings.logLevel) log.setLogLevel(this.config.settings.logLevel);
 
 		// Checketh thyself before thou wrecketh thyself
 		maybeInit(this, 'config', {});
 		maybeInit(this, 'localConfig', {});
 		maybeInit(this.config, 'settings', {});
 		maybeInit(this.config.settings, 'swagger', {});
-		maybeInit(this.config.settings, 'sdkRepo', { 'repo': undefined, 'branch': undefined });
+		maybeInit(this.config.settings, 'sdkRepo', { repo: undefined, branch: undefined });
 		maybeInit(this.config.settings, 'swaggerCodegen', {});
 		maybeInit(this.config.settings.swaggerCodegen, 'generateApiTests', false);
 		maybeInit(this.config.settings.swaggerCodegen, 'generateModelTests', false);
@@ -94,10 +87,10 @@ function Builder(configPath, localConfigPath) {
 		checkAndThrow(this.config.settings.swaggerCodegen, 'configFile');
 
 		// Normalize sdkRepo
-		if (typeof (this.config.settings.sdkRepo) === 'string') {
+		if (typeof this.config.settings.sdkRepo === 'string') {
 			this.config.settings.sdkRepo = {
 				repo: this.config.settings.sdkRepo,
-				branch: ''
+				branch: '',
 			};
 		}
 
@@ -111,8 +104,7 @@ function Builder(configPath, localConfigPath) {
 		// Load env vars from config
 		_.forOwn(this.config.envVars, (value, key) => setEnv(key, value));
 		_.forOwn(this.localConfig.envVars, (group, groupKey) => {
-			if (group && group.groupDisabled !== true)
-				_.forOwn(group, (value, key) => setEnv(key, value));
+			if (group && group.groupDisabled !== true) _.forOwn(group, (value, key) => setEnv(key, value));
 		});
 
 		// Resolve env vars in config
@@ -127,29 +119,31 @@ function Builder(configPath, localConfigPath) {
 		log.setUseColor(this.config.settings.enableLoggerColor === true);
 		var resourceRoot = `./resources/sdk/${this.config.settings.swaggerCodegen.resourceLanguage}/`;
 		this.resourcePaths = {
-			extensions: path.resolve(this.config.settings.resourcePaths.extensions ?
-				this.config.settings.resourcePaths.extensions :
-				path.join(resourceRoot, 'extensions')),
-			scripts: path.resolve(this.config.settings.resourcePaths.scripts ?
-				this.config.settings.resourcePaths.scripts :
-				path.join(resourceRoot, 'scripts')),
-			templates: path.resolve(this.config.settings.resourcePaths.templates ?
-				this.config.settings.resourcePaths.templates :
-				path.join(resourceRoot, 'templates'))
+			extensions: path.resolve(
+				this.config.settings.resourcePaths.extensions
+					? this.config.settings.resourcePaths.extensions
+					: path.join(resourceRoot, 'extensions')
+			),
+			scripts: path.resolve(
+				this.config.settings.resourcePaths.scripts ? this.config.settings.resourcePaths.scripts : path.join(resourceRoot, 'scripts')
+			),
+			templates: path.resolve(
+				this.config.settings.resourcePaths.templates ? this.config.settings.resourcePaths.templates : path.join(resourceRoot, 'templates')
+			),
 		};
 		newSwaggerTempFile = path.join(getEnv('SDK_TEMP'), 'newSwagger.json');
 		this.pureCloud = {
 			clientId: getEnv('PURECLOUD_CLIENT_ID'),
 			clientSecret: getEnv('PURECLOUD_CLIENT_SECRET'),
-			environment: getEnv('PURECLOUD_ENVIRONMENT', 'mypurecloud.com', true)
+			environment: getEnv('PURECLOUD_ENVIRONMENT', 'mypurecloud.com', true),
 		};
 		this.notificationDefinitions = {};
-		this.releaseNoteTemplatePath = this.config.settings.releaseNoteTemplatePath ?
-			this.config.settings.releaseNoteTemplatePath :
-			'./resources/templates/releaseNoteDetail.md';
-		this.releaseNoteSummaryTemplatePath = this.config.settings.releaseNoteSummaryTemplatePath ?
-			this.config.settings.releaseNoteSummaryTemplatePath :
-			'./resources/templates/releaseNoteSummary.md';
+		this.releaseNoteTemplatePath = this.config.settings.releaseNoteTemplatePath
+			? this.config.settings.releaseNoteTemplatePath
+			: './resources/templates/releaseNoteDetail.md';
+		this.releaseNoteSummaryTemplatePath = this.config.settings.releaseNoteSummaryTemplatePath
+			? this.config.settings.releaseNoteSummaryTemplatePath
+			: './resources/templates/releaseNoteSummary.md';
 
 		// Initialize other things
 		git.authToken = getEnv('GITHUB_TOKEN');
@@ -158,7 +152,6 @@ function Builder(configPath, localConfigPath) {
 		throw err;
 	}
 }
-
 
 /* PUBLIC FUNCTIONS */
 
@@ -220,11 +213,9 @@ Builder.prototype.postbuild = function () {
 	return deferred.promise;
 };
 
-
 /* EXPORT MODULE */
 
 module.exports = Builder;
-
 
 /* IMPL FUNCTIONS */
 
@@ -238,7 +229,8 @@ function prebuildImpl() {
 		// Clone repo
 		var startTime = moment();
 		log.info(`Cloning ${_this.config.settings.sdkRepo.repo} (${_this.config.settings.sdkRepo.branch}) to ${getEnv('SDK_REPO')}`);
-		git.clone(_this.config.settings.sdkRepo.repo, _this.config.settings.sdkRepo.branch, getEnv('SDK_REPO'))
+		git
+			.clone(_this.config.settings.sdkRepo.repo, _this.config.settings.sdkRepo.branch, getEnv('SDK_REPO'))
 			.then(function (repository) {
 				log.debug(`Clone operation completed in ${measureDurationFrom(startTime)}`);
 			})
@@ -250,7 +242,8 @@ function prebuildImpl() {
 					_this.config.settings.swagger.oldSwaggerPath,
 					_this.config.settings.swagger.newSwaggerPath,
 					_this.config.settings.swagger.saveOldSwaggerPath,
-					_this.config.settings.swagger.saveNewSwaggerPath);
+					_this.config.settings.swagger.saveNewSwaggerPath
+				);
 			})
 			.then(() => {
 				return addNotifications();
@@ -266,7 +259,7 @@ function prebuildImpl() {
 					minor: 0,
 					point: 0,
 					prerelease: 'UNKNOWN',
-					apiVersion: 0
+					apiVersion: 0,
 				};
 
 				if (_this.config.settings.versionFile) {
@@ -286,12 +279,10 @@ function prebuildImpl() {
 				var newVersion = swaggerDiff.stringifyVersion(_this.version, true);
 
 				// Determine if new version
-				_this.isNewVersion = oldVersion !== newVersion;
+				_this.isNewVersion = getEnv('BRANCH_NAME') !== 'master' ? false : oldVersion !== newVersion;
 				setEnv('SDK_NEW_VERSION', _this.isNewVersion);
-				if (_this.isNewVersion === true)
-					log.info(`New version: ${_this.version.displayFull}`);
-				else
-					log.warn('Version was not incremented');
+				if (_this.isNewVersion === true) log.info(`New version: ${_this.version.displayFull}`);
+				else log.warn('Version was not incremented');
 
 				// Write new version to file
 				if (_this.isNewVersion === true && _this.config.settings.versionFile) {
@@ -360,7 +351,6 @@ function buildImpl() {
 		log.debug(`SDK build dir -> ${outputDir}`);
 		fs.emptyDirSync(outputDir);
 
-
 		var command = '';
 		// Java command and options
 		command += 'java ';
@@ -376,10 +366,9 @@ function buildImpl() {
 		command += `-o ${outputDir} `;
 		command += `-c ${_this.config.settings.swaggerCodegen.configFile} `;
 		// Don't append empty templates directory
-		if (getFileCount(_this.resourcePaths.templates) > 0)
-			command += `-t ${_this.resourcePaths.templates} `;
+		if (getFileCount(_this.resourcePaths.templates) > 0) command += `-t ${_this.resourcePaths.templates} `;
 
-		_.forEach(_this.config.settings.swaggerCodegen.extraGeneratorOptions, (option) => command += ' ' + option);
+		_.forEach(_this.config.settings.swaggerCodegen.extraGeneratorOptions, (option) => (command += ' ' + option));
 
 		log.info('Running swagger-codegen...');
 		log.debug(`command: ${command}`);
@@ -402,19 +391,22 @@ function buildImpl() {
 		// Copy readme from build to docs and repo root
 		log.info('Copying readme...');
 		fs.ensureDirSync(path.join(getEnv('SDK_REPO'), 'build/docs'));
-		fs.createReadStream(path.join(getEnv('SDK_REPO'), 'build/README.md'))
-			.pipe(fs.createWriteStream(path.join(getEnv('SDK_REPO'), 'build/docs/index.md')));
-		fs.createReadStream(path.join(getEnv('SDK_REPO'), 'build/README.md'))
-			.pipe(fs.createWriteStream(path.join(getEnv('SDK_REPO'), 'README.md')));
+		fs.createReadStream(path.join(getEnv('SDK_REPO'), 'build/README.md')).pipe(
+			fs.createWriteStream(path.join(getEnv('SDK_REPO'), 'build/docs/index.md'))
+		);
+		fs.createReadStream(path.join(getEnv('SDK_REPO'), 'build/README.md')).pipe(
+			fs.createWriteStream(path.join(getEnv('SDK_REPO'), 'README.md'))
+		);
 
 		//Copy the release notes from the build directory to the docs directory
 		log.info('Copying releaseNotes.md...');
-		fs.createReadStream(path.join(getEnv('SDK_REPO'), 'releaseNotes.md'))
-			.pipe(fs.createWriteStream(path.join(getEnv('SDK_REPO'), 'build/docs/releaseNotes.md')));
-
+		fs.createReadStream(path.join(getEnv('SDK_REPO'), 'releaseNotes.md')).pipe(
+			fs.createWriteStream(path.join(getEnv('SDK_REPO'), 'build/docs/releaseNotes.md'))
+		);
 
 		log.info('Zipping docs...');
-		zip.zipDir(path.join(outputDir, 'docs'), path.join(getEnv('SDK_TEMP'), 'docs.zip'))
+		zip
+			.zipDir(path.join(outputDir, 'docs'), path.join(getEnv('SDK_TEMP'), 'docs.zip'))
 			.then(() => executeScripts(_this.config.stageSettings.build.postRunScripts, 'custom build post-run'))
 			.then(() => deferred.resolve())
 			.catch((err) => deferred.reject(err));
@@ -443,22 +435,18 @@ function postbuildImpl() {
 	return deferred.promise;
 }
 
-
 /* PRIVATE FUNCTIONS */
 
 function applyOverrides(original, overrides) {
-	if (!original || !overrides)
-		return;
+	if (!original || !overrides) return;
 
 	_.forOwn(overrides, function (value, key) {
 		if (Array.isArray(value)) {
 			log.verbose(`Overriding array ${key}. Length old/new => ${original[key].length}/${value.length}`);
 			original[key] = value;
-		}
-		else if (typeof (value) == 'object') {
+		} else if (typeof value == 'object') {
 			// Initialize original to ensure the full path to the override values
-			if (!original[key])
-				original[key] = {};
+			if (!original[key]) original[key] = {};
 			applyOverrides(original[key], value);
 		} else {
 			log.verbose(`Overriding ${key}. Values old/new => ${original[key]}/${value}`);
@@ -487,7 +475,8 @@ function createRelease() {
 		return deferred.promise;
 	}
 
-	git.saveChanges(_this.config.settings.sdkRepo.repo, getEnv('SDK_REPO'), _this.version.displayFull)
+	git
+		.saveChanges(_this.config.settings.sdkRepo.repo, getEnv('SDK_REPO'), _this.version.displayFull)
 		.then(() => {
 			if (_this.config.stageSettings.postbuild.publishRelease !== true) {
 				log.warn('Skipping github release creation! Set postbuild.publishRelease=true to release.');
@@ -499,8 +488,7 @@ function createRelease() {
 			var repoParts = _this.config.settings.sdkRepo.repo.split('/');
 			var repoName = repoParts[repoParts.length - 1];
 			var repoOwner = repoParts[repoParts.length - 2];
-			if (repoName.endsWith('.git'))
-				repoName = repoName.substring(0, repoName.length - 4);
+			if (repoName.endsWith('.git')) repoName = repoName.substring(0, repoName.length - 4);
 			log.debug(`repoName: ${repoName}`);
 			log.debug(`repoOwner: ${repoOwner}`);
 
@@ -508,14 +496,14 @@ function createRelease() {
 			githubApi.config.owner = repoOwner;
 			githubApi.config.token = getEnv('GITHUB_TOKEN');
 
-			const tagName = _this.config.settings.sdkRepo.tagFormat.replace("{version}",  _this.version.displayFull);
+			const tagName = _this.config.settings.sdkRepo.tagFormat.replace('{version}', _this.version.displayFull);
 			var createReleaseOptions = {
 				tag_name: tagName,
 				target_commitish: _this.config.settings.sdkRepo.branch ? _this.config.settings.sdkRepo.branch : 'master',
 				name: tagName,
 				body: `Release notes for version ${tagName}\n${_this.releaseNoteSummary}`,
 				draft: false,
-				prerelease: false
+				prerelease: false,
 			};
 
 			// Create release
@@ -553,16 +541,17 @@ function addNotifications() {
 			timeout: 20000,
 			clientId: _this.pureCloud.clientId,
 			clientSecret: _this.pureCloud.clientSecret,
-			environment: _this.pureCloud.environment
+			environment: _this.pureCloud.environment,
 		});
 		var notificationsApi = new purecloud.NotificationsApi(pureCloudSession);
 
-		pureCloudSession.login()
+		pureCloudSession
+			.login()
 			.then(() => {
 				return notificationsApi.getAvailabletopics(['schema']);
 			})
 			.then((notifications) => {
-				var notificationMappings = { 'notifications': [] };
+				var notificationMappings = { notifications: [] };
 
 				// Process schemas
 				log.info(`Processing ${notifications.entities.length} notification schemas...`);
@@ -574,7 +563,7 @@ function addNotifications() {
 
 					const schemaName = getNotificationClassName(entity.schema.id);
 					log.info(`Notification mapping: ${entity.id} (${schemaName})`);
-					notificationMappings.notifications.push({ 'topic': entity.id, 'class': schemaName });
+					notificationMappings.notifications.push({ topic: entity.id, class: schemaName });
 					extractDefinitons(entity.schema);
 					swaggerDiff.newSwagger.definitions[schemaName] = JSON.parse(JSON.stringify(entity.schema));
 				});
@@ -597,8 +586,7 @@ function addNotifications() {
 function getNotificationClassName(id) {
 	// Normalize to include v2. Architect topics just have to be different and don't have v2...
 	let parts = id.split(':');
-	if (parts[parts.length - 2] !== 'v2')
-		parts.splice(parts.length - 2, 0, 'v2');
+	if (parts[parts.length - 2] !== 'v2') parts.splice(parts.length - 2, 0, 'v2');
 	const normalizedId = parts.join(':');
 
 	// Regex match the URN parts we want
@@ -626,11 +614,11 @@ function extractDefinitons(entity) {
 			}
 
 			// Recurse on objects
-			if (typeof (property) !== 'object') return;
+			if (typeof property !== 'object') return;
 			extractDefinitons(property);
 
 			// Update object to ref
-			if (property.id && typeof (property.id) === 'string') {
+			if (property.id && typeof property.id === 'string') {
 				let className = getNotificationClassName(property.id);
 
 				// Store definition
@@ -638,8 +626,8 @@ function extractDefinitons(entity) {
 
 				// Set reference
 				entity[key] = {
-					'type': 'object',
-					'$ref': `#/definitions/${className}`
+					type: 'object',
+					$ref: `#/definitions/${className}`,
 				};
 			}
 		});
@@ -665,7 +653,9 @@ function executeScripts(scripts, phase) {
 	if (!scripts) return;
 	var scriptCount = lenSafe(scripts);
 	log.info(`Executing ${scriptCount} ${phase ? phase.trim() + ' ' : ''}${pluralize('scripts', scriptCount)}...`);
-	_.forEach(scripts, function (script) { executeScript(script); });
+	_.forEach(scripts, function (script) {
+		executeScript(script);
+	});
 }
 
 function executeScript(script) {
@@ -680,11 +670,9 @@ function executeScript(script) {
 			options['cwd'] = path.resolve(script.cwd);
 		}
 
-		if (script.appendIsNewReleaseArg === true)
-			args.push(_this.isNewVersion);
+		if (script.appendIsNewReleaseArg === true) args.push(_this.isNewVersion);
 
-		if (script.appendVersionArg === true)
-			args.push(_this.version.displayFull);
+		if (script.appendVersionArg === true) args.push(_this.version.displayFull);
 
 		switch (script.type.toLowerCase()) {
 			case 'node': {
@@ -711,17 +699,13 @@ function executeScript(script) {
 			}
 		}
 
-		if (!code || code === null)
-			code = 0;
+		if (!code || code === null) code = 0;
 	} catch (err) {
-		if (err.message)
-			log.error(err.message);
+		if (err.message) log.error(err.message);
 
-		if (err.error)
-			log.error(err.error);
+		if (err.error) log.error(err.error);
 
-		if (err.status)
-			code = err.status;
+		if (err.status) code = err.status;
 	}
 
 	var completedMessage = `Script completed with return code ${code} in ${measureDurationFrom(startTime)}`;
@@ -763,16 +747,14 @@ function maybeInit(haystack, needle, defaultValue, warning) {
 		return;
 	}
 	if (!haystack[needle]) {
-		if (warning)
-			log.warn(warning);
+		if (warning) log.warn(warning);
 
 		haystack[needle] = defaultValue;
 	}
 }
 
 function checkAndThrow(haystack, needle, message) {
-	if (!haystack[needle] || haystack[needle] === '')
-		throw new Error(message ? message : `${needle} must be set!`);
+	if (!haystack[needle] || haystack[needle] === '') throw new Error(message ? message : `${needle} must be set!`);
 }
 
 function getEnv(varname, defaultValue, isDefaultValue) {
@@ -781,18 +763,13 @@ function getEnv(varname, defaultValue, isDefaultValue) {
 	log.silly(`ENV: ${varname}->${envVar}`);
 	if (!envVar && defaultValue) {
 		envVar = defaultValue;
-		if (isDefaultValue === true)
-			log.info(`Using default value for ${varname}: ${envVar}`);
-		else
-			log.warn(`Using override for ${varname}: ${envVar}`);
+		if (isDefaultValue === true) log.info(`Using default value for ${varname}: ${envVar}`);
+		else log.warn(`Using override for ${varname}: ${envVar}`);
 	}
 	if (envVar) {
-		if (envVar.toLowerCase() === 'true')
-			return true;
-		else if (envVar.toLowerCase() === 'true')
-			return false;
-		else
-			return envVar;
+		if (envVar.toLowerCase() === 'true') return true;
+		else if (envVar.toLowerCase() === 'true') return false;
+		else return envVar;
 	}
 
 	return defaultValue;
@@ -808,7 +785,7 @@ function setEnv(varname, value) {
 
 function resolveEnvVars(config) {
 	_.forOwn(config, function (value, key) {
-		if (typeof (value) == 'string') {
+		if (typeof value == 'string') {
 			config[key] = value.replace(/\$\{(.+?)\}/gi, function (match, p1, offset, string) {
 				return getEnv(p1);
 			});
@@ -834,7 +811,7 @@ function getFileCount(dir) {
 	log.silly(`There are ${files.length} files in ${dir}`);
 
 	if (files.length == 1 && files[0] === '.DS_Store') {
-		log.silly('...and it\'s named .DS_Store   ಠ_ಠ');
+		log.silly("...and it's named .DS_Store   ಠ_ಠ");
 		return 0;
 	}
 
