@@ -258,8 +258,8 @@ System.out.println(meWithHttpInfo.getHeaders());
 System.out.println(meWithHttpInfo.getCorrelationId());
 System.out.println(meWithHttpInfo.getBody().getName());
 ```
-:::{"alert":"warning","title":"Using the Extended HTTP APIs and exception handling","autoCollapse"}
-The default behavior for the our Standard APIs is that they will automatically throw an exception for 429 and 5xx level errors.  
+:::{"alert":"warning","title":"Using the Extended HTTP APIs and exception handling"}
+The default behavior for the our Standard Genesys Cloud Java SDK is that they will automatically throw an exception for 429 and 5xx level errors.  
 However, if you choose to retrieve the HTTP Info using the `ApiRequest`/`ApiResponse`, the Java SDK will not automatically throw an
 exception. Instead, you will need to check the HTTP status code and handle any errors yourself.
 :::
