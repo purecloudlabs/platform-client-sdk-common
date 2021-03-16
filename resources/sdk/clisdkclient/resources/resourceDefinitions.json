@@ -271,5 +271,27 @@
 		"post": {
 			"name": "search"
 		}
+	},
+	"/api/v2/outbound/contactlists": {
+		"name": "contactlists",
+		"get": {},
+		"post": {}
+	},
+	"/api/v2/outbound/contactlists/{contactListId}": {
+		"name": "contactlists"
+	},
+	"/api/v2/outbound/contactlists/{contactListId}/contacts": {
+		"name": "contacts",
+		"supercommand": "contactlists",
+		"post": {
+			"name": "add"
+		},
+		"delete": {
+			"name": "remove"
+		}
+	},
+	"/api/v2/outbound/contactlists/{contactListId}/contacts/{contactId}": {
+		"name": "contacts",
+		"supercommand": "contactlists"
 	}
 }
