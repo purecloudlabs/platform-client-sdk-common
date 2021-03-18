@@ -3,6 +3,8 @@ package {{packageName}}
 import ({{#imports}}
 	"{{import}}"{{/imports}}
 	"encoding/json"
+	"strconv"
+	"strings"
 )
 {{#model}}
 
@@ -16,6 +18,8 @@ type {{classname}} struct { {{#vars}}
 // String returns a JSON representation of the model
 func (o *{{classname}}) String() string {
 	j, _ := json.Marshal(o)
-	return string(j)
+	str, _ := strconv.Unquote(strings.Replace(strconv.Quote(string(j)), `\\u`, `\u`, -1))
+
+	return str
 }
 {{/model}}{{/models}}
