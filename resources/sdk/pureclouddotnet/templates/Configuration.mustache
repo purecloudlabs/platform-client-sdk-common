@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using {{packageName}}.Extensions;
 
 namespace {{packageName}}.Client
@@ -40,6 +41,9 @@ namespace {{packageName}}.Client
                              bool shouldRefreshAccessToken = true,
                              int refreshTokenWaitTime = 10,
                              string userAgent = "{{#httpUserAgent}}{{.}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen{{/httpUserAgent}}/dotnet"
+                             Logger logger = null,
+                             string configFilePath = null,
+                             bool autoReloadConfig = false
                             )
         {
             setApiClientUsingDefault(apiClient);
@@ -62,6 +66,47 @@ namespace {{packageName}}.Client
             Timeout = timeout;
             ShouldRefreshAccessToken = shouldRefreshAccessToken;
             RefreshTokenWaitTime = refreshTokenWaitTime;
+
+            if (logger != null)
+                Logger = logger;
+            else
+                Logger = new Logger();
+
+            if (String.IsNullOrEmpty(configFilePath))
+            {
+                string homePath = (Environment.OSVersion.Platform == PlatformID.Unix || 
+                                Environment.OSVersion.Platform == PlatformID.MacOSX)
+                    ? Environment.GetEnvironmentVariable("HOME")
+                    : Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%");
+                ConfigFilePath = Path.Join(homePath, "genesysclouddotnet", "config");
+            }
+            else
+            {
+                ConfigFilePath = configFilePath;
+            }
+
+            // applyConfigFromFile();
+            if (AutoReloadConfig)
+            {
+                ThreadStart childref = new ThreadStart(RunConfigChecker);
+                Console.WriteLine("In Main: Creating the Child thread");
+                Thread childThread = new Thread(childref);
+                childThread.Start();
+            }
+        }
+
+        private void applyConfigFromFile()
+        {
+
+        }
+
+        public static void RunConfigChecker()
+        {
+            while (true)
+            {
+                Console.WriteLine("runConfigChecker");
+                Thread.Sleep(2000);
+            }
         }
 
         /// <summary>
@@ -70,7 +115,9 @@ namespace {{packageName}}.Client
         /// <param name="apiClient">Api client.</param>
         public Configuration(ApiClient apiClient)
         {
+            Console.WriteLine("second");
             setApiClientUsingDefault(apiClient);
+            Console.WriteLine("end second");
         }
 
         /// <summary>
@@ -299,6 +346,16 @@ namespace {{packageName}}.Client
                 _dateTimeFormat = value;
             }
         }
+
+        /// <summary>
+        /// Gets or sets the Logger.
+        /// </summary>
+        /// <value>Instance of Logger.</value>
+        public Logger Logger { get; set; }
+
+        public string ConfigFilePath { get; set; }
+
+        public bool AutoReloadConfig { get; set; }
 
         /// <summary>
         /// Returns a string with essential information for debugging.

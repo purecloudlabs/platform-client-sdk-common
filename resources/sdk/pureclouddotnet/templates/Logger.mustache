@@ -1,0 +1,312 @@
+using System;
+using System.IO;
+using System.Text;
+using System.Collections.Generic;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using RestSharp;
+
+namespace {{packageName}}.Client
+{
+    /// <summary>
+    ///
+    /// </summary>
+    public class Logger
+    {
+        public Logger(string logFilePath = null,
+                      bool logToConsole = true,
+                      LogFormat logFormat = LogFormat.Text,
+                      LogLevel logLevel = LogLevel.LNone,
+                      bool logResponseBody = false,
+                      bool logRequestBody = false
+                      )
+        {
+            this.logFilePath = logFilePath;
+            LogToConsole = logToConsole;
+            LogFormat = logFormat;
+            LogLevel = logLevel;
+            LogResponseBody = logResponseBody;
+            LogRequestBody = logRequestBody;
+        }
+
+        private string logFilePath;
+
+        public string LogFilePath {
+            get
+            {
+                return logFilePath;
+            }
+
+            set
+            {
+                if (!String.IsNullOrEmpty(value))
+                {
+                    try
+                    {
+                        fs = File.Open(value, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
+                        logFilePath = value;
+                    }
+                    catch (Exception)
+                    {
+                        // no-op
+                    }
+                }
+            }
+        }
+
+        public bool LogToConsole { get; set; }
+
+        public LogFormat LogFormat { get; set; }
+
+        public LogLevel LogLevel { get; set; }
+
+        public bool LogResponseBody { get; set; }
+
+        public bool LogRequestBody { get; set; }
+
+        private FileStream fs;
+
+        public static LogLevel? LogLevelFromString(string logLevel)
+        {
+            try
+            {
+                LogLevel logLevelValue = (LogLevel) Enum.Parse(typeof(LogLevel), logLevel, true);
+                if (Enum.IsDefined(typeof(LogLevel), logLevelValue) | logLevelValue.ToString().Contains(","))
+                    return logLevelValue;
+                else
+                    return null;
+            }
+            catch (ArgumentException)
+            {
+                return null;
+            }
+        }
+
+        public static LogFormat? LogFormatFromString(string logFormat)
+        {
+            try
+            {
+                LogFormat logFormatValue = (LogFormat) Enum.Parse(typeof(LogFormat), logFormat, true);
+                if (Enum.IsDefined(typeof(LogFormat), logFormatValue) | logFormatValue.ToString().Contains(","))
+                    return logFormatValue;
+                else
+                    return null;
+            }
+            catch (ArgumentException)
+            {
+                return null;
+            }
+        }
+
+        public void Trace(string method,
+                          string url,
+                          object requestBody,
+                          int statusCode,
+                          Dictionary<String, String> requestHeaders,
+                          Dictionary<String, String> responseHeaders)
+        {
+            LogStatement logStatement = new LogStatement(
+                DateTime.UtcNow,
+                "trace",
+                method,
+                url,
+                requestHeaders,
+                responseHeaders,
+                statusCode,
+                requestBodyToString(requestBody)
+            );
+
+            log(LogLevel.LTrace, logStatement);
+        }
+
+        public void Error(string method,
+                          string url,
+                          object requestBody,
+                          string responseBody,
+                          int statusCode,
+                          Dictionary<String, String> requestHeaders,
+                          Dictionary<String, String> responseHeaders)
+        {
+            LogStatement logStatement = new LogStatement(
+                DateTime.UtcNow,
+                "error",
+                method,
+                url,
+                requestHeaders,
+                responseHeaders,
+                statusCode,
+                requestBodyToString(requestBody),
+                responseBody
+            );
+
+            log(LogLevel.LError, logStatement);
+        }
+
+        private void log(LogLevel logLevel, LogStatement logStatement)
+        {
+            if (logLevel >= LogLevel)
+            {
+                string logString = logStatement.AsString(LogFormat, LogRequestBody, LogResponseBody);
+                if (LogToConsole)
+                    Console.WriteLine(logString);
+
+                if (fs != null)
+                {
+                    try
+                    {
+                        byte[] info = new UTF8Encoding(true).GetBytes(String.Format("{0}\n", logString));
+                        fs.Write(info, 0, info.Length);
+                        fs.Flush();
+                    }
+                    catch (Exception)
+                    {
+                        // no-op
+                    }
+                }
+            }
+        }
+
+        private static string requestBodyToString(object requestBody)
+        {
+            if (requestBody != null)
+            {
+            //     if (requestBody.GetType() == typeof(String))
+            //     {
+                return requestBody.ToString();
+            //     }
+            //     else if (requestBody.GetType() == typeof(byte[]))
+            //     {
+            //         requestBodyString = System.Text.Encoding.UTF8.GetString(requestBody);
+            //     }
+            }
+
+            return null;
+        }
+    }
+
+    public enum LogFormat
+    {
+        JSON,
+        Text
+    }
+
+    public enum LogLevel
+    {
+        LTrace,
+        LDebug,
+        LError,
+        LNone
+    }
+
+    public class LogStatement
+    {
+        public LogStatement(DateTime date,
+                            string level = null,
+                            string method = null,
+                            string url = null,
+                            Dictionary<String, String> requestHeaders = null,
+                            Dictionary<String, String> responseHeaders = null,
+                            int statusCode = 0,
+                            string requestBody = null,
+                            string responseBody = null
+        )
+        {
+            Date = date;
+            Level = level;
+            Method = method;
+            URL = url;
+            RequestHeaders = requestHeaders;
+            ResponseHeaders = responseHeaders;
+            CorrelationId = getCorrelationId(responseHeaders);
+            StatusCode = statusCode;
+            RequestBody = requestBody;
+            ResponseBody = responseBody;
+        }
+
+        public DateTime Date { get; set; }
+
+        public string Level { get; set; }
+
+        public string Method { get; set; }
+
+        public string URL { get; set; }
+
+        public Dictionary<String, String> RequestHeaders { get; set; }
+
+        public Dictionary<String, String> ResponseHeaders { get; set; }
+
+        public string CorrelationId { get; set; }
+
+        public int StatusCode { get; set; }
+
+        public string RequestBody { get; set; }
+
+        public string ResponseBody { get; set; }
+
+        public string AsString(LogFormat logFormat, bool logRequestBody, bool logResponseBody)
+        {
+            RequestHeaders["Authorization"] = "[REDACTED]";
+
+            if (!logRequestBody)
+                RequestBody = null;
+            if (!logResponseBody)
+                ResponseBody = null;
+
+            if (logFormat == LogFormat.JSON)
+            {
+                JsonSerializerSettings settings = new JsonSerializerSettings()
+                {
+                    NullValueHandling = NullValueHandling.Ignore,
+                    ContractResolver = new DefaultContractResolver
+                    {
+                        NamingStrategy = new CamelCaseNamingStrategy()
+                    }
+                };
+
+                return JsonConvert.SerializeObject(this, settings);
+            }
+
+            return String.Format(@"{0}: {1}
+=== REQUEST ==={2}{3}{4}{5}
+=== RESPONSE ==={6}{7}{8}{9}", Level.ToUpper(),
+                            Date,
+                            formatValue("URL", URL),
+                            formatValue("Method", Method),
+                            formatValue("Headers", formatHeaders(RequestHeaders)),
+                            formatValue("Body", RequestBody),
+
+                            formatValue("Status", String.Format("{0}", StatusCode)),
+                            formatValue("Headers", formatHeaders(ResponseHeaders)),
+                            formatValue("CorrelationId", getCorrelationId(ResponseHeaders)),
+                            formatValue("Body", ResponseBody));
+        }
+
+        private string formatValue(string name, string value)
+        {
+            return String.IsNullOrEmpty(value) ? "" : String.Format("\n{0}: {1}", name, value);
+        }
+
+        private string formatHeaders(Dictionary<String, String> headers)
+        {
+            if (headers == null)
+                return "";
+
+            string result = "";
+            foreach(var item in headers)
+                result += String.Format("\n\t{0}: {1}", item.Key, item.Value);
+
+            return result;
+        }
+
+        private string getCorrelationId(Dictionary<String, String> headers)
+        {
+            if (headers == null)
+                return "";
+
+            string correlationId = "";
+            headers.TryGetValue("ININ-Correlation-Id", out correlationId);
+
+            return correlationId;
+        }
+    }
+}

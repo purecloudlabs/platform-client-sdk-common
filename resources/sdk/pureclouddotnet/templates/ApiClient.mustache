@@ -235,6 +235,7 @@ namespace {{packageName}}.Client
             // Using async method to perform sync call (uwp-only)
                response = RestClient.ExecuteTaskAsync(request).Result;
             {{/supportsUWP}}
+                Configuration.Logger.Trace(method.ToString(), RestClient.BuildUri(request).ToString(), postBody, (int)response.StatusCode, headerParams, response.Headers.ToDictionary(x => x.Name, x => x.Value.ToString()));
             }while(retry.ShouldRetry(response));
 
             if (UsingCodeAuth && Configuration.ShouldRefreshAccessToken)
@@ -247,6 +248,9 @@ namespace {{packageName}}.Client
                     return CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
                 }
             }
+
+            if ((int)response.StatusCode < 200 || (int)response.StatusCode >= 300)
+                Configuration.Logger.Error(method.ToString(), RestClient.BuildUri(request).ToString(), postBody, response.Content, (int)response.StatusCode, headerParams, response.Headers.ToDictionary(x => x.Name, x => x.Value.ToString()));
 
             return (Object) response;
         }
