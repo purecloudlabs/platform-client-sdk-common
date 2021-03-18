@@ -59,7 +59,15 @@
     "postbuild": {
       "gitCommit": false,
       "publishRelease": false,
-      "preRunScripts": [],
+      "preRunScripts": [
+        {
+          "type": "command",
+          "command": "rm",
+      		"cwd": "${SDK_REPO}",
+      		"args":[ "-rf", "./platformclientv2" ],
+          "failOnError": true
+        }
+      ],
       "postRunScripts": [
         {
           "type": "node",
