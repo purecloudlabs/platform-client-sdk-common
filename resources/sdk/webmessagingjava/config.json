@@ -1,6 +1,8 @@
 {
 	"name": "Web Messaging SDK",
-	"envVars": {},
+	"envVars": {
+		"EXCLUDE_NOTIFICATIONS": true
+	},
 	"settings": {
 		"sdkRepo": {
 			"repo": "https://github.com/MyPureCloud/web-messaging-sdk-java.git",
