@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const childProcess = require('child_process');
 const { each } = require('lodash');
+const maxFileBufferSize = 1024 * 1024 * 1024;
 
 try {
 	const newSwaggerPath = process.argv[2];
@@ -174,7 +175,7 @@ function downloadFile(url) {
 		i++;
 		console.log(`Downloading file: ${url}`);
 		// Source: https://www.npmjs.com/package/download-file-sync
-		var file = childProcess.execFileSync('curl', ['--silent', '-L', url], { encoding: 'utf8', maxBuffer: 1024 * 1024 * 1024 });
+		var file = childProcess.execFileSync('curl', ['--silent', '-L', url], { encoding: 'utf8', maxBuffer: maxFileBufferSize });
 		if (!file || file === '') {
 			console.log(`File was empty! sleeping for 5 seconds. Retries left: ${10 - i}`);
 			childProcess.execFileSync('curl', ['--silent', 'https://httpbin.org/delay/10'], { encoding: 'utf8' });

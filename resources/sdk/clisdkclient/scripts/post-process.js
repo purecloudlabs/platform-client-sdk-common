@@ -80,16 +80,21 @@ function generateRootFiles(rootDir, resourceDefinitions, duplicateMappings, topL
 			for (var i = supercommandlist.length - 1; i >= 1; i--) {
 				let currentCommand = supercommandlist[i];
 				let currentSuperCommand = supercommandlist[i - 1];
+				let key;
 				if (i > 1) {
 					for (const duplicateCommand of Object.keys(duplicateMappings)) {
-						if (duplicateCommand === currentSuperCommand + '_' + supercommandlist[i - 2]) {
-							currentSuperCommand = currentSuperCommand + '_' + supercommandlist[i - 2];
+						if (duplicateCommand.includes(currentSuperCommand + '_' + supercommandlist[i - 2])) {
+							if (duplicateCommand.startsWith(currentCommand)) {
+								key = duplicateCommand;
+							} else {
+								currentSuperCommand = duplicateCommand;
+							}
 							break;
 						}
 					}
 				}
 				let entry = commandMappings.get(currentSuperCommand) || new Set();
-				let key = `${currentCommand}_${currentSuperCommand}`;
+				key = key ? key : `${currentCommand}_${currentSuperCommand}`;
 				let value = duplicateMappings[key];
 				entry.add(value ? key : currentCommand);
 				commandMappings.set(currentSuperCommand, entry);
