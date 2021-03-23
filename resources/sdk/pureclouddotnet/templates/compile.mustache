@@ -10,5 +10,6 @@ if not exist ".\bin" mkdir bin
 
 copy packages\Newtonsoft.Json.9.0.1\lib\{{targetFrameworkNuget}}\Newtonsoft.Json.dll bin\Newtonsoft.Json.dll
 copy packages\RestSharp.105.2.3\lib\{{targetFrameworkNuget}}\RestSharp.dll bin\RestSharp.dll
+copy packages\ini-parser.3.4.0\lib\net20\{{targetFrameworkNuget}}\INIFileParser.dll bin\INIFileParser.dll;
 
-%CSCPATH%\csc /reference:bin\Newtonsoft.Json.dll;bin\RestSharp.dll /target:library /out:bin\{{packageName}}.dll /recurse:src\{{packageName}}\*.cs /doc:bin\{{packageName}}.xml
+%CSCPATH%\csc /reference:bin\Newtonsoft.Json.dll;bin\RestSharp.dll;bin\INIFileParser.dll /target:library /out:bin\{{packageName}}.dll /recurse:src\{{packageName}}\*.cs /doc:bin\{{packageName}}.xml

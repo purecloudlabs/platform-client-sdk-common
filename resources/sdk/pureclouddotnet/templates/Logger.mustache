@@ -9,10 +9,19 @@ using RestSharp;
 namespace {{packageName}}.Client
 {
     /// <summary>
-    ///
+    /// SDK Logger
     /// </summary>
     public class Logger
     {
+        /// <summary>
+        /// Initializes a new instance of the Logger class
+        /// </summary>
+        /// <param name="logFilePath">Log file path</param>
+        /// <param name="logToConsole">Log to console bool</param>
+        /// <param name="logFormat">Log format</param>
+        /// <param name="logLevel">Log level</param>
+        /// <param name="logResponseBody">Log response body bool</param>
+        /// <param name="logRequestBody">Log request body bool</param>
         public Logger(string logFilePath = null,
                       bool logToConsole = true,
                       LogFormat logFormat = LogFormat.Text,
@@ -23,14 +32,18 @@ namespace {{packageName}}.Client
         {
             this.logFilePath = logFilePath;
             LogToConsole = logToConsole;
-            LogFormat = logFormat;
-            LogLevel = logLevel;
+            Format = logFormat;
+            Level = logLevel;
             LogResponseBody = logResponseBody;
             LogRequestBody = logRequestBody;
         }
 
         private string logFilePath;
 
+        /// <summary>
+        /// Gets or sets the LogFilePath.
+        /// </summary>
+        /// <value>LogFilePath</value>
         public string LogFilePath {
             get
             {
@@ -54,20 +67,46 @@ namespace {{packageName}}.Client
             }
         }
 
+        /// <summary>
+        /// Gets or sets the LogToConsole value.
+        /// </summary>
+        /// <value>LogToConsole</value>
         public bool LogToConsole { get; set; }
 
-        public LogFormat LogFormat { get; set; }
+        /// <summary>
+        /// Gets or sets the Log Format.
+        /// </summary>
+        /// <value>Format</value>
+        public LogFormat? Format { get; set; }
 
-        public LogLevel LogLevel { get; set; }
+        /// <summary>
+        /// Gets or sets the Log Level.
+        /// </summary>
+        /// <value>Level</value>
+        public LogLevel? Level { get; set; }
 
+        /// <summary>
+        /// Gets or sets the LogResponseBody value.
+        /// </summary>
+        /// <value>LogResponseBody</value>
         public bool LogResponseBody { get; set; }
 
+        /// <summary>
+        /// Gets or sets the LogRequestBody value.
+        /// </summary>
+        /// <value>LogRequestBody</value>
         public bool LogRequestBody { get; set; }
 
         private FileStream fs;
 
+        /// <summary>
+        /// Parses a LogLevel value from a string
+        /// </summary>
+        /// <param name="logLevel">log level value as a string</param>
+        /// <returns>LogLevel</returns>
         public static LogLevel? LogLevelFromString(string logLevel)
         {
+            logLevel = "l" + logLevel;
             try
             {
                 LogLevel logLevelValue = (LogLevel) Enum.Parse(typeof(LogLevel), logLevel, true);
@@ -82,6 +121,11 @@ namespace {{packageName}}.Client
             }
         }
 
+        /// <summary>
+        /// Parses a LogFormat value from a string
+        /// </summary>
+        /// <param name="logFormat">log format value as a string</param>
+        /// <returns>LogFormat</returns>
         public static LogFormat? LogFormatFromString(string logFormat)
         {
             try
@@ -98,6 +142,15 @@ namespace {{packageName}}.Client
             }
         }
 
+        /// <summary>
+        /// Logs a trace-level message
+        /// </summary>
+        /// <param name="method">HTTP Method</param>
+        /// <param name="url">URL</param>
+        /// <param name="requestBody">Request body</param>
+        /// <param name="statusCode">HTTP status code</param>
+        /// <param name="requestHeaders">Request headers</param>
+        /// <param name="responseHeaders">Response headers</param>
         public void Trace(string method,
                           string url,
                           object requestBody,
@@ -119,6 +172,43 @@ namespace {{packageName}}.Client
             log(LogLevel.LTrace, logStatement);
         }
 
+        /// <summary>
+        /// Logs a debug-level message
+        /// </summary>
+        /// <param name="method">HTTP Method</param>
+        /// <param name="url">URL</param>
+        /// <param name="requestBody">Request body</param>
+        /// <param name="statusCode">HTTP status code</param>
+        /// <param name="requestHeaders">Request headers</param>
+        public void Debug(string method,
+                          string url,
+                          object requestBody,
+                          int statusCode,
+                          Dictionary<String, String> requestHeaders)
+        {
+            LogStatement logStatement = new LogStatement(
+                DateTime.UtcNow,
+                "debug",
+                method,
+                url,
+                requestHeaders,
+                statusCode: statusCode,
+                requestBody: requestBodyToString(requestBody)
+            );
+
+            log(LogLevel.LDebug, logStatement);
+        }
+
+        /// <summary>
+        /// Logs an error-level message
+        /// </summary>
+        /// <param name="method">HTTP Method</param>
+        /// <param name="url">URL</param>
+        /// <param name="requestBody">Request body</param>
+        /// <param name="responseBody">Response body</param>
+        /// <param name="statusCode">HTTP status code</param>
+        /// <param name="requestHeaders">Request headers</param>
+        /// <param name="responseHeaders">Response headers</param>
         public void Error(string method,
                           string url,
                           object requestBody,
@@ -144,9 +234,9 @@ namespace {{packageName}}.Client
 
         private void log(LogLevel logLevel, LogStatement logStatement)
         {
-            if (logLevel >= LogLevel)
+            if (logLevel >= Level)
             {
-                string logString = logStatement.AsString(LogFormat, LogRequestBody, LogResponseBody);
+                string logString = logStatement.AsString(Format, LogRequestBody, LogResponseBody);
                 if (LogToConsole)
                     Console.WriteLine(logString);
 
@@ -170,36 +260,73 @@ namespace {{packageName}}.Client
         {
             if (requestBody != null)
             {
-            //     if (requestBody.GetType() == typeof(String))
-            //     {
-                return requestBody.ToString();
-            //     }
-            //     else if (requestBody.GetType() == typeof(byte[]))
-            //     {
-            //         requestBodyString = System.Text.Encoding.UTF8.GetString(requestBody);
-            //     }
+                if (requestBody.GetType() == typeof(String))
+                    return requestBody.ToString();
+                else if (requestBody.GetType() == typeof(byte[]))
+                    return System.Text.Encoding.UTF8.GetString((byte[])requestBody);
             }
 
             return null;
         }
     }
 
+    /// <summary>
+    /// LogFormat
+    /// </summary>
+    /// <value>LogFormat</value>
     public enum LogFormat
     {
+        /// <summary>
+        /// Enum JSON
+        /// </summary>
         JSON,
+        /// <summary>
+        /// Enum Text
+        /// </summary>
         Text
     }
 
+    /// <summary>
+    /// LogLevel
+    /// </summary>
+    /// <value>LogLevel</value>
     public enum LogLevel
     {
+        /// <summary>
+        /// Enum LTrace
+        /// </summary>
         LTrace,
+        /// <summary>
+        /// Enum LDebug
+        /// </summary>
         LDebug,
+        /// <summary>
+        /// Enum LError
+        /// </summary>
         LError,
+        /// <summary>
+        /// Enum LNone
+        /// </summary>
         LNone
     }
 
+    /// <summary>
+    /// LogStatement
+    /// </summary>
     public class LogStatement
     {
+        /// <summary>
+        /// Initializes a new instance of the Logger LogStatement
+        /// </summary>
+        /// <param name="date">date</param>
+        /// <param name="level">level</param>
+        /// <param name="method">method</param>
+        /// <param name="url">url</param>
+        /// <param name="requestHeaders">requestHeaders</param>
+        /// <param name="responseHeaders">responseHeaders</param>
+        /// <param name="statusCode">statusCode</param>
+        /// <param name="requestBody">requestBody</param>
+        /// <param name="responseBody">responseBody</param>
         public LogStatement(DateTime date,
                             string level = null,
                             string method = null,
@@ -211,46 +338,44 @@ namespace {{packageName}}.Client
                             string responseBody = null
         )
         {
-            Date = date;
-            Level = level;
-            Method = method;
-            URL = url;
-            RequestHeaders = requestHeaders;
-            ResponseHeaders = responseHeaders;
-            CorrelationId = getCorrelationId(responseHeaders);
-            StatusCode = statusCode;
-            RequestBody = requestBody;
-            ResponseBody = responseBody;
+            this._date = date;
+            this._level = level;
+            this._method = method;
+            this._url = url;
+            this._requestHeaders = requestHeaders;
+            this._responseHeaders = responseHeaders;
+            this._correlationId = getCorrelationId(responseHeaders);
+            this._statusCode = statusCode;
+            this._requestBody = requestBody;
+            this._responseBody = responseBody;
         }
 
-        public DateTime Date { get; set; }
+        private DateTime _date;
+        private string _level;
+        private string _method;
+        private string _url;
+        private Dictionary<String, String> _requestHeaders;
+        private Dictionary<String, String> _responseHeaders;
+        private string _correlationId;
+        private int _statusCode;
+        private string _requestBody;
+        private string _responseBody;
 
-        public string Level { get; set; }
-
-        public string Method { get; set; }
-
-        public string URL { get; set; }
-
-        public Dictionary<String, String> RequestHeaders { get; set; }
-
-        public Dictionary<String, String> ResponseHeaders { get; set; }
-
-        public string CorrelationId { get; set; }
-
-        public int StatusCode { get; set; }
-
-        public string RequestBody { get; set; }
-
-        public string ResponseBody { get; set; }
-
-        public string AsString(LogFormat logFormat, bool logRequestBody, bool logResponseBody)
+        /// <summary>
+        /// Returns a string representation of the log statement
+        /// </summary>
+        /// <param name="logFormat">Log format</param>
+        /// <param name="logRequestBody">Log request body bool</param>
+        /// <param name="logResponseBody">Log response body bool</param>
+        /// <return>String representation of the log statement</return>
+        public string AsString(LogFormat? logFormat, bool logRequestBody, bool logResponseBody)
         {
-            RequestHeaders["Authorization"] = "[REDACTED]";
+            _requestHeaders["Authorization"] = "[REDACTED]";
 
             if (!logRequestBody)
-                RequestBody = null;
+                _requestBody = null;
             if (!logResponseBody)
-                ResponseBody = null;
+                _responseBody = null;
 
             if (logFormat == LogFormat.JSON)
             {
@@ -268,17 +393,17 @@ namespace {{packageName}}.Client
 
             return String.Format(@"{0}: {1}
 === REQUEST ==={2}{3}{4}{5}
-=== RESPONSE ==={6}{7}{8}{9}", Level.ToUpper(),
-                            Date,
-                            formatValue("URL", URL),
-                            formatValue("Method", Method),
-                            formatValue("Headers", formatHeaders(RequestHeaders)),
-                            formatValue("Body", RequestBody),
+=== RESPONSE ==={6}{7}{8}{9}", _level.ToUpper(),
+                            _date,
+                            formatValue("URL", _url),
+                            formatValue("Method", _method),
+                            formatValue("Headers", formatHeaders(_requestHeaders)),
+                            formatValue("Body", _requestBody),
 
-                            formatValue("Status", String.Format("{0}", StatusCode)),
-                            formatValue("Headers", formatHeaders(ResponseHeaders)),
-                            formatValue("CorrelationId", getCorrelationId(ResponseHeaders)),
-                            formatValue("Body", ResponseBody));
+                            formatValue("Status", String.Format("{0}", _statusCode)),
+                            formatValue("Headers", formatHeaders(_responseHeaders)),
+                            formatValue("CorrelationId", _correlationId),
+                            formatValue("Body", _responseBody));
         }
 
         private string formatValue(string name, string value)

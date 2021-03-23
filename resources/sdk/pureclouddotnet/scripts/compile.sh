@@ -31,11 +31,13 @@ cp $BUILD_DIR/packages/RestSharp.106.3.1/lib/net452/RestSharp.dll $BUILD_DIR/bin
 cp $BUILD_DIR/packages/WebSocketSharp.1.0.3-rc11/lib/websocket-sharp.dll $BUILD_DIR/bin/websocket-sharp.dll;
 cp $BUILD_DIR/packages/NUnit.3.10.1/lib/net45/nunit.framework.dll $BUILD_DIR/bin/nunit.framework.dll;
 cp $BUILD_DIR/packages/Moq.4.5.3/lib/net45/Moq.dll $BUILD_DIR/bin/Moq.dll;
+cp $BUILD_DIR/packages/ini-parser.3.4.0/lib/net20/INIFileParser.dll $BUILD_DIR/bin/INIFileParser.dll;
 
 echo "Compiling SDK..."
 mcs -r:$BUILD_DIR/bin/Newtonsoft.Json.dll,\
 $BUILD_DIR/bin/RestSharp.dll,\
 $BUILD_DIR/bin/websocket-sharp.dll,\
+$BUILD_DIR/bin/INIFileParser.dll,\
 System.Runtime.Serialization.dll \
 -target:library \
 -out:$BUILD_DIR/bin/${ROOT_NAMESPACE}.dll \
@@ -47,6 +49,7 @@ echo "Compiling tests..."
 mcs -r:$BUILD_DIR/bin/Newtonsoft.Json.dll,\
 $BUILD_DIR/bin/RestSharp.dll,\
 $BUILD_DIR/bin/websocket-sharp.dll,\
+$BUILD_DIR/bin/INIFileParser.dll,\
 System.Runtime.Serialization.dll,\
 $BUILD_DIR/bin/${ROOT_NAMESPACE}.dll,\
 $BUILD_DIR/bin/nunit.framework.dll,\
