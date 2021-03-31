@@ -293,5 +293,65 @@
 	"/api/v2/outbound/contactlists/{contactListId}/contacts/{contactId}": {
 		"name": "contacts",
 		"supercommand": "contactlists"
+	},
+	"/api/v2/languageunderstanding/domains": {
+		"name": "domains",
+		"supercommand": "nlu"
+	},
+	"/api/v2/languageunderstanding/domains/{domainId}": {
+		"name": "domains",
+		"supercommand": "nlu"
+	},
+	"/api/v2/languageunderstanding/domains/{domainId}/feedback": {
+		"name": "feedback",
+		"supercommand": "nlu.domains",
+		"get": {
+			"name": "list"
+		},
+		"post": {}
+	},
+	"/api/v2/languageunderstanding/domains/{domainId}/feedback/{feedbackId}": {
+		"name": "feedback",
+		"supercommand": "nlu.domains"
+	},
+	"/api/v2/languageunderstanding/domains/{domainId}/versions": {
+		"name": "versions",
+		"supercommand": "nlu.domains",
+		"get": {
+			"name": "list"
+		},
+		"post": {}
+	},
+	"/api/v2/languageunderstanding/domains/{domainId}/versions/{domainVersionId}": {
+		"name": "versions",
+		"supercommand": "nlu.domains"
+	},
+	"/api/v2/languageunderstanding/domains/{domainId}/versions/{domainVersionId}/detect": {
+		"name": "versions",
+		"supercommand": "nlu.domains",
+		"post": {
+			"name": "detect"
+		}
+	},
+	"/api/v2/languageunderstanding/domains/{domainId}/versions/{domainVersionId}/publish": {
+		"name": "versions",
+		"supercommand": "nlu.domains",
+		"post": {
+			"name": "publish"
+		}
+	},
+	"/api/v2/languageunderstanding/domains/{domainId}/versions/{domainVersionId}/report": {
+		"name": "versions",
+		"supercommand": "nlu.domains",
+		"get": {
+			"name": "report"
+		}
+	},
+	"/api/v2/languageunderstanding/domains/{domainId}/versions/{domainVersionId}/train": {
+		"name": "versions",
+		"supercommand": "nlu.domains",
+		"post": {
+			"name": "train"
+		}
 	}
 }
