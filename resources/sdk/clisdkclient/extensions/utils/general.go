@@ -112,12 +112,28 @@ func AliasOperationId(operationId string, classVarName string) string {
 
 func ConvertStdInString() string {
 	consolescanner := bufio.NewScanner(os.Stdin)
-
 	var inputBuffer bytes.Buffer
+
+	done := make(chan struct{})
+	gotText := false
+
 	// by default, bufio.Scanner scans newline-separated lines
-	for consolescanner.Scan() {
-		input := consolescanner.Text()
-		inputBuffer.WriteString(input)
+	go func() {
+		for consolescanner.Scan() {
+			input := consolescanner.Text()
+			gotText = true
+			inputBuffer.WriteString(input)
+		}
+		close(done)
+	}()
+
+	// if no input is read after 1 second then the command will error out
+	select {
+	case <-done:
+	case <-time.After(1000 * time.Millisecond):
+		if !gotText {
+			logger.Fatal("This command requires a body to be piped to it, or provided from a file via the \"--file\" flag\n")
+		}
 	}
 
 	return string(inputBuffer.Bytes())
