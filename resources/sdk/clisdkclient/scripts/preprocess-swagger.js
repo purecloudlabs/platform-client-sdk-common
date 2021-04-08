@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const childProcess = require('child_process');
-const { each } = require('lodash');
 const maxFileBufferSize = 1024 * 1024 * 1024;
 
 try {
@@ -65,6 +64,11 @@ function processDefinitions(duplicateCommandMappings, includedSwaggerPathObjects
 				}
 			}
 			value.tags = [commandName];
+			// Add description if possible
+			if (!value.description.includes("SWAGGER_OVERRIDE") && resourceDefinitions[path].description)
+				value.description = `SWAGGER_OVERRIDE_${resourceDefinitions[path].description}`;
+			else
+				value.description = "";
 		}
 
 		// Override operationId if possible
