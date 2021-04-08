@@ -1,0 +1,128 @@
+const ConfigParser = require('configparser');
+const os = require('os');
+const path = require('path');
+const fs = require('fs');
+
+import Logger from './logger.js';
+
+class Configuration {
+	/**
+	 * Singleton getter
+	 */
+	get instance() {
+		return Configuration.instance;
+	}
+
+	/**
+	 * Singleton setter
+	 */
+	set instance(value) {
+		Configuration.instance = value;
+	}
+
+	constructor() {
+		if (!Configuration.instance) {
+			Configuration.instance = this;
+		}
+
+		this.configPath = typeof window !== 'undefined' ? '' : path.join(os.homedir(), '.genesyscloudjavascript', 'config');
+		this.refresh_access_token = true;
+		this.refresh_token_wait_max = 10;
+		this.live_reload_config = true;
+		this.host;
+		this.environment;
+		this.basePath;
+		this.authUrl;
+		this.config;
+		this.logger = new Logger();
+		this.setEnvironment();
+		this.liveLoadConfig();
+	}
+
+	liveLoadConfig() {
+		// If in browser, don't read config file, use default values
+		if (typeof window !== 'undefined') {
+			this.configPath = '';
+			return;
+		}
+
+		if (!fs.existsSync(this.configPath)) {
+			console.error('No config file exists in the specified path.');
+			return;
+		}
+
+		this.updateConfigFromFile();
+
+		if (this.live_reload_config && this.live_reload_config === true) {
+			const watcher = fs.watch(this.configPath, (eventType, filename) => {
+				this.updateConfigFromFile();
+				if (!this.live_reload_config) {
+					watcher.close();
+				}
+			});
+		}
+	}
+
+	setConfigPath(path) {
+		if (path) {
+			this.configPath = path;
+		}
+	}
+
+	updateConfigFromFile() {
+		var configparser = new ConfigParser();
+
+		try {
+			configparser.read(this.configPath); // If no error catched, indicates it's INI format
+			this.config = configparser;
+		} catch (error) {
+			if (error.name && error.name === 'MissingSectionHeaderError') {
+				// Not INI format, see if it's JSON format
+				var configData = fs.readFileSync(this.configPath, 'utf8');
+				this.config = {
+					_sections: JSON.parse(configData), // To match INI data format
+				};
+			} else {
+				console.error(error);
+				return;
+			}
+		}
+
+		if (this.config) this.updateConfigValues();
+	}
+
+	updateConfigValues() {
+		this.logger.log_level = this.config._sections.logging.log_level;
+		this.logger.log_format = this.config._sections.logging.log_format;
+		this.logger.log_to_console = this.config._sections.logging.log_to_console;
+		this.logger.log_file_path = this.config._sections.logging.log_file_path;
+		this.logger.log_response_body = this.config._sections.logging.log_response_body;
+		this.logger.log_request_body = this.config._sections.logging.log_request_body;
+		this.refresh_access_token = this.config._sections.reauthentication.refresh_access_token;
+		this.refresh_token_wait_max = this.config._sections.reauthentication.refresh_token_wait_max;
+		this.live_reload_config = this.config._sections.general.live_reload_config;
+		this.host = this.config._sections.general.host;
+		this.setEnvironment();
+
+		this.logger.setLogger();
+	}
+
+	setEnvironment() {
+		// Default value
+		if (!this.environment) this.environment = this.host ? this.host : 'mypurecloud.com';
+
+		// Strip trailing slash
+		this.environment = this.environment.replace(/\/+$/, '');
+
+		// Strip protocol and subdomain
+		if (this.environment.startsWith('https://')) this.environment = this.environment.substring(8);
+		if (this.environment.startsWith('http://')) this.environment = this.environment.substring(7);
+		if (this.environment.startsWith('api.')) this.environment = this.environment.substring(4);
+
+		// Set vars
+		this.basePath = `https://api.${this.environment}`;
+		this.authUrl = `https://login.${this.environment}`;
+	}
+}
+
+export default Configuration;

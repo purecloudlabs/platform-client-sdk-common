@@ -1,0 +1,125 @@
+const winston = require('winston');
+
+const logLevels = {
+	levels: {
+		none: 0,
+		trace: 1,
+		debug: 2,
+		error: 3,
+	},
+};
+
+class Logger {
+	constructor() {
+		this.log_level = 'none';
+		this.log_format = 'text';
+		this.log_to_console = true;
+		this.log_file_path;
+		this.log_response_body = false;
+		this.log_request_body = false;
+
+		this.setLogger();
+	}
+
+	createNewLogger() {
+		this.logger = winston.createLogger({
+			levels: logLevels.levels,
+			level: this.log_level,
+		});
+	}
+
+	setLogger() {
+		this.createNewLogger();
+		if (this.log_file_path && this.log_file_path !== '') {
+			if (this.log_format === 'json') {
+				this.logger.add(new winston.transports.File({ format: winston.format.json(), filename: this.log_file_path }));
+			} else {
+				this.logger.add(
+					new winston.transports.File({
+						format: winston.format.combine(
+							winston.format((info) => {
+								info.level = info.level.toUpperCase();
+								return info;
+							})(),
+							winston.format.simple()
+						),
+						filename: this.log_file_path,
+					})
+				);
+			}
+		}
+		if (this.log_to_console) {
+			if (this.log_format === 'json') {
+				this.logger.add(new winston.transports.Console({ format: winston.format.json() }));
+			} else {
+				this.logger.add(
+					new winston.transports.Console({
+						format: winston.format.combine(
+							winston.format((info) => {
+								info.level = info.level.toUpperCase();
+								return info;
+							})(),
+							winston.format.simple()
+						),
+					})
+				);
+			}
+		}
+	}
+
+	log(level, method, url, requestBody, statusCode, requestHeaders, responseBody, responseHeaders) {
+		var content = this.formatLog(level, statusCode, method, url, requestHeaders, responseHeaders, requestBody, responseBody);
+		if (this.logger.transports.length > 0) this.logger.log(level, content);
+	}
+
+	formatLog(level, statusCode, method, url, requestHeaders, responseHeaders, requestBody, responseBody) {
+		var result;
+		if (requestHeaders) requestHeaders['Authorization'] = '[REDACTED]';
+		if (!this.log_request_body) requestBody = undefined;
+		if (!this.log_response_body) responseBody = undefined;
+		if (this.log_format && this.log_format === 'json') {
+			result = {
+				level: level,
+				date: new Date().toISOString(),
+				method: method,
+				url: url,
+				correlationId: responseHeaders ? (responseHeaders['inin-correlation-id'] ? responseHeaders['inin-correlation-id'] : '') : '',
+				statusCode: statusCode,
+			};
+			if (requestHeaders) result.requestHeaders = requestHeaders;
+			if (responseHeaders) result.responseHeaders = responseHeaders;
+			if (requestBody) result.requestBody = requestBody;
+			if (responseBody) result.responseBody = responseBody;
+		} else {
+			result = `${new Date().toISOString()}
+=== REQUEST === 
+${this.formatValue('URL', url)}${this.formatValue('Method', method)}${this.formatValue(
+				'Headers',
+				this.formatHeaderString(requestHeaders)
+			)}${this.formatValue('Body', requestBody ? JSON.stringify(requestBody, null, 2) : '')}
+=== RESPONSE ===
+${this.formatValue('Status', statusCode)}${this.formatValue('Headers', this.formatHeaderString(responseHeaders))}${this.formatValue(
+				'CorrelationId',
+				responseHeaders ? (responseHeaders['inin-correlation-id'] ? responseHeaders['inin-correlation-id'] : '') : ''
+			)}${this.formatValue('Body', responseBody ? JSON.stringify(responseBody, null, 2) : '')}`;
+		}
+
+		return result;
+	}
+
+	formatHeaderString(headers) {
+		var headerString = '';
+		if (!headers) return headerString;
+		for (const [key, value] of Object.entries(headers)) {
+			headerString += `\n\t${key}: ${value}`;
+		}
+		return headerString;
+	}
+
+	formatValue(key, value) {
+		if (!value || value === '' || value === '{}') return '';
+		return `${key}: ${value}\n`;
+	}
+}
+
+export default Logger;
