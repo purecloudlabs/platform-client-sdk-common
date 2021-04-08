@@ -50,7 +50,6 @@ public class ApacheHttpClientConnectorProvider implements ApiClientConnectorProv
         }
 
         DetailLevel detailLevel = properties.getProperty(ApiClientConnectorProperty.DETAIL_LEVEL, DetailLevel.class, DetailLevel.MINIMAL);
-        SLF4JInterceptor interceptor = new SLF4JInterceptor(detailLevel);
 
         HttpClientBuilder builder = HttpClients.custom()
                 .setDefaultRequestConfig(requestBuilder.build())

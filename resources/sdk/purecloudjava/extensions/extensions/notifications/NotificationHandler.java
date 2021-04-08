@@ -12,8 +12,6 @@ import com.mypurecloud.sdk.v2.model.ChannelTopicEntityListing;
 import com.mypurecloud.sdk.v2.model.SystemMessageSystemMessage;
 import com.mypurecloud.sdk.v2.api.request.PostNotificationsChannelsRequest;
 import com.neovisionaries.ws.client.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;

@@ -1,8 +1,23 @@
 package {{invokerPackage}};
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.map;
+import java.io.File;
+import java.io.FileReader;
+import org.ini4j.Ini;
+import java.io.FileNotFoundException;
+import java.lang.Throwable;
+import java.security.MessageDigest;
+import java.lang.Thread;
+import java.util.Map;
+import {{invokerPackage}}.Logger;
+
 {{>generatedAnnotation}}
 public class Configuration {
   private static ApiClient defaultApiClient = null;
+  private static String configFileHash = null;
+  private static String configFilePath = null;
+  private static Logger logger = null;
 
   /**
    * Get the default API client, which would be used when creating API
@@ -20,5 +35,244 @@ public class Configuration {
    */
   public static void setDefaultApiClient(ApiClient apiClient) {
     defaultApiClient = apiClient;
+    boolean autoReloadConfig = defaultApiClient.getAutoReloadConfig();
+    logger = defaultApiClient.getLogger();
+    configFilePath = defaultApiClient.getConfigFilePath();
+    LoggingConfiguration loggingConfiguration = defaultApiClient.getLoggingConfiguration();
+    Configuration configuration = new Configuration();
+    configuration.applyConfigFromFile();
+    if (autoReloadConfig) {
+      Runnable runnable = () -> configuration.runConfigChecker();
+      Thread configCheckerThread = new Thread(runnable);
+      configCheckerThread.start();
+    }
+  }
+
+  public void applyConfigFromFile() {
+    ConfigurationParser parser = new ConfigurationParser(configFilePath);
+    if (!parser.read()) {
+      return;
+    }
+    // Logging
+    String logLevel = parser.getString("logging", "log_level");
+    if (logLevel != null && !logLevel.isEmpty()) {
+        logger.setLevel(logger.logLevelFromString(logLevel));
+    }
+    String logFormat = parser.getString("logging", "log_format");
+    if (logFormat != null && !logFormat.isEmpty()) {
+        logger.setFormat(logger.logFormatFromString(logFormat));
+    }
+    String logToConsole = parser.getString("logging", "log_to_console");
+    if (logToConsole != null && !logToConsole.isEmpty()) {
+        logger.setLogToConsole(parser.GetBool("logging", "log_to_console"));
+    }
+    String logFilePath = parser.getString("logging", "log_file_path");
+    if (logFilePath != null && !logFilePath.isEmpty()) {
+        logger.setLogFilePath(logFilePath);
+    }
+    String logRequestBody = parser.getString("logging", "log_request_body");
+    if (logRequestBody != null && !logRequestBody.isEmpty()) {
+        logger.setLogRequestBody(parser.GetBool("logging", "log_request_body"));
+    }
+    String logResponseBody = parser.getString("logging", "log_response_body");
+    if (logResponseBody != null && !logResponseBody.isEmpty()) {
+        logger.setLogResponseBody(parser.GetBool("logging", "log_response_body"));
+    }
+    // General
+    String host = parser.getString("general", "host");
+    if (host != null && !host.isEmpty()) {
+        defaultApiClient
+        .setBasePath(host);
+    }
+    String liveReloadConfig = parser.getString("general", "live_reload_config");
+    if (liveReloadConfig != null && !liveReloadConfig.isEmpty()) {
+        defaultApiClient.setAutoReloadConfig(parser.GetBool("general", "live_reload_config"));
+    }
+    // Re-authentication
+    String refreshAccessToken = parser.getString("reauthentication", "refresh_access_token");
+    if (refreshAccessToken != null && !refreshAccessToken.isEmpty()) {
+        defaultApiClient.setShouldRefreshAccessToken(refreshAccessToken);
+    }
+    String refreshTokenWaitTime = parser.getString("reauthentication", "refresh_token_wait_max");
+    if (refreshTokenWaitTime != null && !refreshTokenWaitTime.isEmpty()) {
+        defaultApiClient.setRefreshTokenWaitTime(refreshTokenWaitTime);
+    }
+    // Retry
+    String maxRetryTimeSec = parser.getString("retry", "retry_wait_max");
+    if (maxRetryTimeSec != null && !maxRetryTimeSec.isEmpty()) {
+        RetryConfiguration retryConfiguration = defaultApiClient.getRetryConfiguration();
+        retryConfiguration.setMaxRetryTimeSec(maxRetryTimeSec);
+        defaultApiClient.setRetryConfiguration(retryConfiguration);
+    }
+    String retryMax = parser.getString("retry", "retry_max");
+    if (retryMax != null && !retryMax.isEmpty()) {
+      RetryConfiguration retryConfiguration = defaultApiClient.getRetryConfiguration();
+      retryConfiguration.setRetryMax(retryMax);
+      defaultApiClient.setRetryConfiguration(retryConfiguration);
+    }
+  }
+
+  public String getConfigHash() {
+    try (FileInputStream fis = new FileInputStream(new File(configFilePath))) {
+      MessageDigest md = MessageDigest.getInstance("MD5");
+      byte[] bytesBuffer = new byte[1024];
+      int bytesReady = -1;
+      while ((bytesRead = fis.read(bytesBuffer)) != -1) {
+        md.update(bytesBuffer, 0, bytesRead);
+      }
+      byte[] hashedBytes = md.digest();
+      return new String(hashedBytes, StandardCharsets.UTF_8);
+    } catch (Exception e) {
+      return "";
+    }
+  }
+
+  public void runConfigChecker() {
+    while (true) {
+        try {
+          Thread.sleep(30 * 1000);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          break;
+        }
+        if (!autoReloadConfig) {
+            return;
+        }
+        String hash = getConfigHash();
+        if (hash.isEmpty() || hash == null) {
+            continue; 
+        }
+        if (hash.compareTo(configFileHash) != 0) {
+            configFileHash = hash;
+            applyConfigFromFile();
+        }
+    }
+  }
+  
+  private class ConfigurationParser {
+    private String filePath;
+    private FileFormat fileFormat;
+    private Ini iniData;
+    private Map<String, String> jsonData;
+
+    public ConfigurationParser(String filePath) {
+      this.filePath = filePath;
+      this.fileFormat = FileFormat.Invalid;
+    }
+
+    public boolean read() {
+      try {
+        File configFile = new File(filePath);
+        Ini ini = new Ini(new FileReader(configFile));
+        this.iniData = ini;
+        this.fileFormat = FileFormat.INI;
+      } catch (FileNotFoundException e) {
+        return false;
+      } catch (Exception e) {
+        try {
+          ObjectMapper mapper = new ObjectMapper();
+          File configFile = new File(filePath);
+          Map<String, Object> jsonMap = mapper.readValue(configFile, Map.class);
+          this.jsonData = jsonMap;
+          this.fileFormat = FileFormat.JSON;
+        } catch (Exception e) {
+          return false;
+        }
+      }
+    }
+
+    public String getString(String section, String key) {
+      switch (fileFormat) {
+        case FileFormat.INI:
+          return getIniString(section, key);
+        case FileFormat.JSON:
+          return getJsonString(section, key);
+        default: 
+          return "";
+      }
+    }
+
+    public boolean getBool(String section, String key) {
+      switch (fileFormat) {
+        case FileFormat.INI:
+          return getIniBool(section, key);
+        case FileFormat.JSON:
+          return getJsonBool(section, key);
+        default: 
+          return false;
+      }
+    }
+
+    public int getInt(String section, String key) {
+      switch (fileFormat) {
+        case FileFormat.INI:
+          return getIniInt(section, key);
+        case FileFormat.JSON:
+          return getJsonInt(section, key);
+        default: 
+          return false;
+      }
+    }
+
+    public String getJsonString(String section, String key) {
+      try {
+        Map<String, Object> section = jsonData.get(section);
+        return section.get(key).toString().trim();
+      } catch (Exception e) {
+        return "";
+      }
+    }
+
+    public boolean getJsonBool(String section, String key) {
+      try {
+        Map<String, Object> section = jsonData.get(section);
+        return Boolean.parseBoolean(section.get(key).toString().trim());
+      } catch (Exception e) {
+        return "";
+      }
+    }
+
+    public int getJsonInt(String section, String key) {
+      try {
+        Map<String, Object> section = jsonData.get(section);
+        return Integer.parseInt(section.get(key).toString().trim());
+      } catch (Exception e) {
+        return -1;
+      }
+    }
+
+    public String getIniString(String section, String key) {
+      try {
+        Ini.Section section = iniData.get(section);
+        return section.get(key).trim();
+      } catch (Exception e) {
+        return "";
+      }
+    }
+
+    public boolean getIniBool(String section, String key) {
+      try {
+        Ini.Section section = jsonData.get(section);
+        return Boolean.parseBoolean(section.get(key).trim());
+      } catch (Exception e) {
+        return "";
+      }
+    }
+
+    public int getIniInt(String section, String key) {
+      try {
+        Ini.Section section = jsonData.get(section);
+        return Integer.parseInt(section.get(key).trim());
+      } catch (Exception e) {
+        return -1;
+      }
+    }
+
+  }
+
+  private enum FileFormat {
+    INI,
+    INVALID,
+    JSON
   }
 }
