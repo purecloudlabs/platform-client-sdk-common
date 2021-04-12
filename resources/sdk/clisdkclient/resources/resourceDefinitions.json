@@ -143,6 +143,10 @@
 	"/api/v2/stations": {},
 	"/api/v2/stations/{stationId}": {},
 	"/api/v2/users": {},
+	"/api/v2/users/bulk": {
+		"name": "bulkupdate",
+		"supercommand": "users"
+	},
 	"/api/v2/users/{userId}": {},
 	"/api/v2/users/{userId}/queues": {
 		"name": "queues",
