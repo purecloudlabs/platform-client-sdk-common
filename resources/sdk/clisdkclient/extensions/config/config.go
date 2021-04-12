@@ -2,8 +2,9 @@ package config
 
 import (
 	"fmt"
-	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
 	"os"
+
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
 
 	"github.com/spf13/viper"
 )
@@ -18,11 +19,11 @@ type Configuration interface {
 }
 
 type configuration struct {
-	profileName  string
-	environment  string
-	clientID     string
-	clientSecret string
-	oAuthTokenData   string
+	profileName    string
+	environment    string
+	clientID       string
+	clientSecret   string
+	oAuthTokenData string
 }
 
 //ProfileName is the name of the profile being used to run the CLI
@@ -57,7 +58,13 @@ func (c *configuration) String() string {
 //GetConfig retrieves the config for the current profile
 func GetConfig(profileName string) (Configuration, error) {
 	if err := viper.ReadInConfig(); err != nil {
-		return nil, fmt.Errorf("Error reading config file, %s", err)
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			homeDir, _ := os.UserHomeDir()
+			configDir := fmt.Sprintf("%s/.gc/config.toml", homeDir)
+			return nil, fmt.Errorf(`Failed to load config file in "%s". Please use "gc profiles" command to configure the CLI profiles`, configDir)
+		} else {
+			return nil, fmt.Errorf("Error reading config file, %s", err)
+		}
 	}
 
 	profile := viper.GetViper().Get(profileName)
@@ -67,16 +74,22 @@ func GetConfig(profileName string) (Configuration, error) {
 	}
 
 	return &configuration{profileName: profileName,
-		clientID:         viper.GetString(fmt.Sprintf("%s.client_credentials", profileName)),
-		clientSecret:     viper.GetString(fmt.Sprintf("%s.client_secret", profileName)),
-		environment:      viper.GetString(fmt.Sprintf("%s.environment", profileName)),
-		oAuthTokenData:   viper.GetString(fmt.Sprintf("%s.oauth_token_data", profileName)),
+		clientID:       viper.GetString(fmt.Sprintf("%s.client_credentials", profileName)),
+		clientSecret:   viper.GetString(fmt.Sprintf("%s.client_secret", profileName)),
+		environment:    viper.GetString(fmt.Sprintf("%s.environment", profileName)),
+		oAuthTokenData: viper.GetString(fmt.Sprintf("%s.oauth_token_data", profileName)),
 	}, nil
 }
 
 func ListConfigs() ([]configuration, error) {
 	if err := viper.ReadInConfig(); err != nil {
-		return nil, fmt.Errorf("Error reading config file, %s", err)
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			homeDir, _ := os.UserHomeDir()
+			configDir := fmt.Sprintf("%s/.gc/config.toml", homeDir)
+			return nil, fmt.Errorf(`Failed to load config file in "%s". Please use "gc profiles" command to configure the CLI profiles`, configDir)
+		} else {
+			return nil, fmt.Errorf("Error reading config file, %s", err)
+		}
 	}
 
 	settings := viper.GetViper().AllSettings()
@@ -87,11 +100,11 @@ func ListConfigs() ([]configuration, error) {
 	configurations := make([]configuration, 0)
 	for profileName, _ := range settings {
 		configurations = append(configurations, configuration{
-			profileName:      profileName,
-			clientID:         viper.GetString(fmt.Sprintf("%s.client_credentials", profileName)),
-			clientSecret:     viper.GetString(fmt.Sprintf("%s.client_secret", profileName)),
-			environment:      viper.GetString(fmt.Sprintf("%s.environment", profileName)),
-			oAuthTokenData:   viper.GetString(fmt.Sprintf("%s.oauth_token_data", profileName)),
+			profileName:    profileName,
+			clientID:       viper.GetString(fmt.Sprintf("%s.client_credentials", profileName)),
+			clientSecret:   viper.GetString(fmt.Sprintf("%s.client_secret", profileName)),
+			environment:    viper.GetString(fmt.Sprintf("%s.environment", profileName)),
+			oAuthTokenData: viper.GetString(fmt.Sprintf("%s.oauth_token_data", profileName)),
 		})
 	}
 
