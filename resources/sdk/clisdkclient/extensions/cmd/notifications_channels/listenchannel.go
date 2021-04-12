@@ -1,4 +1,4 @@
-package channels
+package notifications_channels
 
 import (
 	"fmt"
@@ -15,7 +15,7 @@ import (
 )
 
 func init() {
-	channelsCmd.AddCommand(listenChannelCmd)
+	notifications_channelsCmd.AddCommand(listenChannelCmd)
 }
 
 //processWSMessage is the function that processes a WebSocket channel.
@@ -69,7 +69,7 @@ func waitForWSClose(c *websocket.Conn, done chan struct{}) {
 }
 
 var listenChannelCmd = &cobra.Command{
-	Use:   "listen [channel id]",
+	Use:   "listen [channelId]",
 	Short: "Listens to a channel and sends messages to standard out",
 	Long:  `Listens to a channel and sends messages to standard out`,
 	Args:  cobra.ExactArgs(1),

@@ -1,4 +1,4 @@
-package members
+package groups_members
 
 import (
 	"encoding/json"
@@ -17,8 +17,8 @@ import (
 func init() {
 	note := "Note: The 'version' value from the command input will be ignored and the latest version value will be retrieved from the API instead"
 	addCmd.SetHelpTemplate(fmt.Sprintf("%s\nOperation:\n  %s %s\n\n%s\n", addCmd.UsageTemplate(), addMembersOperation.Method, addMembersOperation.Path, note))
-	utils.AddFileFlagIfUpsert(addCmd.Flags(), addMembersOperation.Method, "")
-	membersCmd.AddCommand(addCmd)
+	addCmd.Flags().StringP("file", "f", "", "File name containing the JSON for creating an object")
+	groups_membersCmd.AddCommand(addCmd)
 }
 
 type group struct {
@@ -43,8 +43,8 @@ var (
 
 var addCmd = &cobra.Command{
 	Use:   "add [groupId]",
-	Short: "Add members",
-	Long:  `Add members`,
+	Short: "Add members - POST method override",
+	Long:  `Add members - POST method override`,
 	Args:  utils.DetermineArgs([]string{"groupId"}),
 
 	Run: func(cmd *cobra.Command, args []string) {

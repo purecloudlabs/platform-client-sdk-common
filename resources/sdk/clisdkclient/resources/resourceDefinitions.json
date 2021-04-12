@@ -1,29 +1,33 @@
 {
-	"/api/v2/outbound/campaigns": {
-		"name": "campaigns",
-		"description": "outbound campaigns"
+	"/api/v2/analytics/conversations/details": {
+		"get": {
+			"name": "getmultiple"
+		}
 	},
-	"/api/v2/outbound/campaigns/{campaignId}": {
-		"name": "campaigns"
+	"/api/v2/configuration/schemas/edges/vnext": {
+		"get": {
+			"name": "listschemacategories"
+		}
 	},
-	"/api/v2/authorization/divisions": {
-		"name": "divisions",
-		"description": "authorization divisions"
+	"/api/v2/configuration/schemas/edges/vnext/{schemaCategory}": {
+		"get": {
+			"name": "listcategoryschemas"
+		}
 	},
-	"/api/v2/authorization/divisions/{divisionId}": {
-		"name": "divisions"
+	"/api/v2/configuration/schemas/edges/vnext/{schemaCategory}/{schemaType}":{
+		"get": {
+			"name": "getcategoryschemas"
+		}
 	},
-	"/api/v2/authorization/roles": {
-		"name": "roles",
-		"description": "authorization roles"
+	"/api/v2/configuration/schemas/edges/vnext/{schemaCategory}/{schemaType}/{schemaId}": {
+		"get": {
+			"name": "getjsonschema"
+		}
 	},
-	"/api/v2/authorization/roles/{roleId}": {
-		"name": "roles",
-		"delete": {
-			"name": "remove"
-		},
-		"get": {},
-		"put": {}
+	"/api/v2/configuration/schemas/edges/vnext/{schemaCategory}/{schemaType}/{schemaId}/{extensionType}/{metadataId}": {
+		"get": {
+			"name": "getschemametadata"
+		}
 	},
 	"/api/v2/authorization/roles/{roleId}/subjectgrants": {
 		"name": "subjectgrants",
@@ -34,21 +38,17 @@
 		"description": "authorization roles users",
 		"supercommand": "roles",
 		"get": {
-			"name": "get"
+			"name": "getmessages"
 		}
 	},
-	"/api/v2/authorization/roles/{roleId}/users/add": {
-		"name": "users",
-		"supercommand": "roles",
-		"put": {
-			"name": "add"
+	"/api/v2/conversations/{conversationId}/participants/{participantId}/secureivrsessions": {
+		"get": {
+			"name": "getsecuresessions"
 		}
 	},
-	"/api/v2/authorization/roles/{roleId}/users/remove": {
-		"name": "users",
-		"supercommand": "roles",
-		"put": {
-			"name": "delete"
+	"/api/v2/conversations/{conversationId}/recordings": {
+		"get": {
+			"name": "getrecordings"
 		}
 	},
 	"/api/v2/authorization/subjects/{subjectId}": {
@@ -70,106 +70,83 @@
 	"/api/v2/telephony/providers/edges": {
 		"name": "edges"
 	},
-	"/api/v2/telephony/providers/edges/{edgeId}": {
-		"name": "edges"
-	},
-	"/api/v2/telephony/providers/edges/{edgeId}/reboot": {
-		"name": "edges",
-		"post": {
-			"name": "reboot"
-		}
-	},
-	"/api/v2/telephony/providers/edges/didpools": {
-		"name": "didpools",
-		"description": "edge didpools",
-		"supercommand": "edges"
-	},
-	"/api/v2/telephony/providers/edges/didpools/{didPoolId}": {
-		"name": "didpools",
-		"supercommand": "edges"
-	},
-	"/api/v2/telephony/providers/edges/dids/{didId}": {
-		"name": "dids",
-		"description": "edge dids",
-		"supercommand": "edges"
-	},
-	"/api/v2/telephony/providers/edges/dids": {
-		"name": "dids",
-		"supercommand": "edges"
-	},
-	"/api/v2/groups": {},
-	"/api/v2/groups/{groupId}": {},
-	"/api/v2/groups/{groupId}/members": {
-		"name": "members",
-		"description": "group members",
-		"supercommand": "groups",
-		"get": {
-			"name": "list"
-		},
+	"/api/v2/architect/prompts": {
 		"delete": {
-			"name": "remove"
+			"name": "batchdelete"
 		}
 	},
-	"/api/v2/locations": {},
-	"/api/v2/locations/{locationId}": {},
-	"/api/v2/telephony/providers/edges/phones": {
-		"name": "phones",
-		"description": "edge phones"
-	},
-	"/api/v2/telephony/providers/edges/phones/{phoneId}": {
-		"name": "phones"
-	},
-	"/api/v2/telephony/providers/edges/phones/{phoneId}/reboot": {
-		"name": "phones",
+	"/api/v2/authorization/roles/{roleId}": {
 		"post": {
-			"name": "reboot"
-		}
-	},
-	"/api/v2/routing/queues": {
-		"name": "queues"
-	},
-	"/api/v2/routing/queues/{queueId}": {
-		"name": "queues"
-	},
-	"/api/v2/routing/queues/{queueId}/estimatedwaittime": {
-		"name": "queues",
-		"get": {
-			"name": "estimatedwait"
-		}
-	},
-	"/api/v2/routing/queues/{queueId}/users": {
-		"name": "users",
-		"description": "queue users",
-		"supercommand": "queues",
-		"get": {
-			"name": "get"
-		},
-		"post": {
-			"name": "move"
+			"name": "bulkgrant"
 		},
 		"patch": {
-			"name": "activate"
+			"name": "patch"
 		}
 	},
-	"/api/v2/routing/queues/{queueId}/users/{memberId}": {
-		"name": "users",
-		"supercommand": "queues",
-		"delete": {},
-		"patch": {}
+	"/api/v2/chat/settings": {
+		"patch": {
+			"name": "patch"
+		}
 	},
-	"/api/v2/telephony/providers/edges/sites": {
-		"name": "sites",
-		"description": "edge sites"
+	"/api/v2/contentmanagement/documents/{documentId}": {
+		"post": {
+			"name": "update"
+		}
 	},
-	"/api/v2/telephony/providers/edges/sites/{siteId}": {
-		"name": "sites"
+	"/api/v2/conversations/{conversationId}/recordingmetadata": {
+		"get": {
+			"name": "conversationmetadata"
+		}
 	},
-	"/api/v2/routing/skills": {
-		"name": "skills",
-		"description": "routing skills"
+	"/api/v2/conversations/{conversationId}/recordingmetadata/{recordingId}": {
+		"get": {
+			"name": "recordingmetadata"
+		}
 	},
-	"/api/v2/routing/skills/{skillId}": {
-		"name": "skills"
+	"/api/v2/conversations/calls/{conversationId}": {
+		"post": {
+			"name": "placecallbackcall"
+		}
+	},
+	"/api/v2/dataextensions/coretypes": {
+		"get": {
+			"name": "gettypes"
+		}
+	},
+	"/api/v2/externalcontacts/contacts": {
+		"get": {
+			"name": "search"
+		}
+	},
+	"/api/v2/externalcontacts/contacts/schemas": {
+		"get": {
+			"name": "getschemas"
+		}
+	},
+	"/api/v2/externalcontacts/contacts/schemas/{schemaId}/versions": {
+		"get": {
+			"name": "getversions"
+		}
+	},
+	"/api/v2/externalcontacts/organizations": {
+		"get": {
+			"name": "search"
+		}
+	},
+	"/api/v2/externalcontacts/organizations/{externalOrganizationId}/contacts": {
+		"get": {
+			"name": "search"
+		}
+	},
+	"/api/v2/externalcontacts/organizations/schemas": {
+		"get": {
+			"name": "getschemas"
+		}
+	},
+	"/api/v2/externalcontacts/organizations/schemas/{schemaId}/versions": {
+		"get": {
+			"name": "getversions"
+		}
 	},
 	"/api/v2/stations": {},
 	"/api/v2/stations/{stationId}": {},
@@ -184,223 +161,239 @@
 		"description": "users queues",
 		"supercommand": "users",
 		"get": {
+			"name": "scan"
+		}
+	},
+	"/api/v2/externalcontacts/scan/organizations": {
+		"get": {
+			"name": "scan"
+		}
+	},
+	"/api/v2/externalcontacts/scan/notes": {
+		"get": {
+			"name": "scan"
+		}
+	},
+	"/api/v2/externalcontacts/scan/relationships": {
+		"get": {
+			"name": "scan"
+		}
+	},
+	"/api/v2/externalcontacts/reversewhitepageslookup": {
+		"get": {
+			"name": "search"
+		}
+	},
+	"/api/v2/flows/datatables/{datatableId}/import/jobs/{importJobId}": {
+		"get": {
+			"name": "getstateinformation"
+		}
+	},
+	"/api/v2/flows": {
+		"delete": {
+			"name": "batchdelete"
+		}
+	},
+	"/api/v2/gamification/metrics": {
+		"get": {
+			"name": "getprofilemetrics"
+		}
+	},
+	"/api/v2/gamification/metricdefinitions": {
+		"get": {
+			"name": "getalldefinitions"
+		}
+	},
+	"/api/v2/gamification/profiles": {
+		"get": {
+			"name": "getallprofiles"
+		}
+	},
+	"/api/v2/gamification/scorecards/users/{userId}/values/trends": {
+		"get": {
+			"name": "getusertrends"
+		}
+	},
+	"/api/v2/gamification/templates": {
+		"get": {
+			"name": "getobjectivetemplates"
+		}
+	},
+	"/api/v2/knowledge/knowledgebases/{knowledgeBaseId}/languages/{languageCode}/documents": {
+		"patch": {
+			"name": "updatecollection"
+		}
+	},
+	"/api/v2/license/definitions": {
+		"get": {
+			"name": "getdefinitions"
+		}
+	},
+	"/api/v2/outbound/contactlists/{contactListId}/contacts": {
+		"delete": {
+			"name": "deletecontacts"
+		}
+	},
+	"/api/v2/outbound/contactlists": {
+		"delete": {
+			"name": "deletecontactlists"
+		}
+	},
+	"/api/v2/quality/forms/surveys/{formId}": {
+		"patch": {
+			"name": "disable"
+		}
+	},
+	"/api/v2/quality/keywordsets": {
+		"delete": {
+			"name": "deletekeywordsets"
+		}
+	},
+	"/api/v2/recording/crossplatform/mediaretentionpolicies": {
+		"delete": {
+			"name": "deletepolicies"
+		}
+	},
+	"/api/v2/recording/crossplatform/mediaretentionpolicies/{policyId}": {
+		"patch": {
+			"name": "patch"
+		}
+	},
+	"/api/v2/recording/mediaretentionpolicies": {
+		"delete": {
+			"name": "deletepolicies"
+		}
+	},
+	"/api/v2/recording/mediaretentionpolicies/{policyId}": {
+		"patch": {
+			"name": "patch"
+		}
+	},
+	"/api/v2/routing/sms/addresses/{addressId}": {
+		"get": {
+			"name": "get"
+		}
+	},
+	"/api/v2/routing/queues/{queueId}/users": {
+		"get": {
 			"name": "get"
 		},
+		"post": {
+			"name": "move"
+		},
+		"patch": {
+			"name": "activate"
+		}
+	},
+	"/api/v2/routing/queues/{queueId}/members": {
+		"get": {
+			"name": "get"
+		},
+		"post": {
+			"name": "move"
+		},
+		"patch": {
+			"name": "activate"
+		}
+	},
+	"/api/v2/scim/users/{userId}": {
+		"put": {
+			"name": "replace"
+		}
+	},
+	"/api/v2/scim/groups/{groupId}": {
+		"put": {
+			"name": "replace"
+		}
+	},
+	"/api/v2/scim/v2/groups/{groupId}": {
+		"put": {
+			"name": "replace"
+		},
+		"patch": {
+			"name": "modify"
+		}
+	},
+	"/api/v2/scim/v2/users/{userId}": {
+		"put": {
+			"name": "replace"
+		},
+		"patch": {
+			"name": "modify"
+		}
+	},
+	"/api/v2/telephony/providers/edges/{edgeId}/logicalinterfaces": {
+		"get": {
+			"name": "getedgelogicalinterfaces"
+		}
+	},
+	"/api/v2/telephony/providers/edges/phones/reboot": {
+		"post": {
+			"name": "rebootphones"
+		}
+	},
+	"/api/v2/telephony/providers/edges/phones/{phoneId}/reboot": {
+		"post": {
+			"name": "reboot"
+		}
+	},
+	"/api/v2/telephony/providers/edges/{edgeId}/lines/{lineId}": {
+		"get": {
+			"name": "getedgeline"
+		}
+	},
+	"/api/v2/telephony/providers/edges/{edgeId}/lines": {
+		"get": {
+			"name": "listedgelines"
+		}
+	},
+	"/api/v2/telephony/providers/edges/{edgeId}/trunks": {
+		"get": {
+			"name": "listedgetrunks"
+		}
+	},
+	"/api/v2/telephony/providers/edges/{edgeId}/physicalinterfaces": {
+		"get": {
+			"name": "listedgeinterfaces"
+		}
+	},
+	"/api/v2/users/{userId}/queues": {
 		"patch": {
 			"name": "joinset"
 		}
 	},
 	"/api/v2/users/{userId}/queues/{queueId}": {
-		"name": "queues",
-		"supercommand": "users",
 		"patch": {
 			"name": "join"
 		}
 	},
-	"/api/v2/users/{userId}/routingskills": {
-		"name": "skills",
-		"description": "users routing skills",
-		"supercommand": "users"
-	},
-	"/api/v2/users/{userId}/routingskills/{skillId}": {
-		"name": "skills",
-		"supercommand": "users"
-	},
 	"/api/v2/users/{userId}/routingskills/bulk": {
-		"name": "skills",
-		"supercommand": "users",
+		"patch": {
+			"name": "bulkadd"
+		},
 		"put": {
 			"name": "bulkupdate"
-		},
+		}
+	},
+	"/api/v2/users/{userId}/callforwarding": {
 		"patch": {
-			"name": "bulkremove"
+			"name": "patch"
 		}
 	},
-	"/api/v2/notifications/availabletopics": {
-		"name": "topics",
-		"description": "notification topics",
-		"supercommand": "notifications",
-		"get": {
-			"name": "list"
-		}
-	},
-	"/api/v2/notifications/channels": {
-		"name": "channels",
-		"description": "notification channels",
-		"supercommand": "notifications"
-	},
-	"/api/v2/notifications/channels/{channelId}/subscriptions": {
-		"name": "subscriptions",
-		"description": "notification subscriptions",
-		"supercommand": "notifications",
-		"get": {},
+	"/api/v2/voicemail/messages": {
 		"post": {
-			"name": "subscribe"
-		},
-		"delete": {}
-	},
-	"/api/v2/usage/query/{executionId}/results": {
-		"name": "usage",
-		"get": {
-			"name": "results"
-		}
-	},
-	"/api/v2/externalcontacts/contacts": {
-		"name": "contacts",
-		"description": "externalcontacts contacts",
-		"supercommand": "externalcontacts",
-		"post": {},
-		"get": {
-			"name": "search"
-		}
-	},
-	"/api/v2/externalcontacts/contacts/{contactId}": {
-		"name": "contacts",
-		"supercommand": "externalcontacts",
-		"get": {},
-		"put": {},
-		"delete": {}
-	},
-	"/api/v2/externalcontacts/organizations": {
-		"name": "organizations",
-		"supercommand": "externalcontacts",
-		"post": {},
-		"get": {
-			"name": "search"
-		}
-	},
-	"/api/v2/externalcontacts/organizations/{externalOrganizationId}": {
-		"name": "organizations",
-		"description": "externalcontacts organizations",
-		"supercommand": "externalcontacts",
-		"get": {},
-		"put": {},
-		"delete": {}
-	},
-	"/api/v2/externalcontacts/scan/contacts": {
-		"name": "contacts",
-		"supercommand": "externalcontacts",
-		"get": {
-			"name": "scan"
-		}
-	},
-	"/api/v2/externalcontacts/scan/organizations": {
-		"name": "organizations",
-		"supercommand": "externalcontacts",
-		"get": {
-			"name": "scan"
-		}
-	},
-	"/api/v2/responsemanagement/libraries": {
-		"name": "libraries",
-		"description": "response management libraries",
-		"supercommand": "responsemgt"
-	},
-	"/api/v2/responsemanagement/libraries/{libraryId}": {
-		"name": "libraries",
-		"supercommand": "responsemgt"
-	},
-	"/api/v2/responsemanagement/responses": {
-		"name": "responses",
-		"description": "response management responses",
-		"supercommand": "responsemgt"
-	},
-	"/api/v2/responsemanagement/responses/{responseId}": {
-		"name": "responses",
-		"supercommand": "responsemgt"
-	},
-	"/api/v2/responsemanagement/responses/query": {
-		"name": "responses",
-		"supercommand": "responsemgt",
-		"post": {
-			"name": "search"
-		}
-	},
-	"/api/v2/outbound/contactlists": {
-		"name": "contactlists",
-		"description": "outbound contact lists",
-		"get": {},
-		"post": {}
-	},
-	"/api/v2/outbound/contactlists/{contactListId}": {
-		"name": "contactlists"
-	},
-	"/api/v2/outbound/contactlists/{contactListId}/contacts": {
-		"name": "contacts",
-		"description": "outbound contacts",
-		"supercommand": "contactlists",
-		"post": {
-			"name": "add"
+			"name": "copy"
 		},
 		"delete": {
-			"name": "remove"
+			"name": "deleteall"
 		}
 	},
-	"/api/v2/outbound/contactlists/{contactListId}/contacts/{contactId}": {
-		"name": "contacts",
-		"supercommand": "contactlists"
-	},
-	"/api/v2/languageunderstanding/domains": {
-		"name": "domains",
-		"description": "natural language understanding domains",
-		"supercommand": "nlu"
-	},
-	"/api/v2/languageunderstanding/domains/{domainId}": {
-		"name": "domains",
-		"supercommand": "nlu"
-	},
-	"/api/v2/languageunderstanding/domains/{domainId}/feedback": {
-		"name": "feedback",
-		"description": "natural language understanding domain feedback",
-		"supercommand": "nlu.domains",
-		"get": {
-			"name": "list"
+	"/api/v2/voicemail/messages/{messageId}": {
+		"patch": {
+			"name": "patch"
 		},
-		"post": {}
-	},
-	"/api/v2/languageunderstanding/domains/{domainId}/feedback/{feedbackId}": {
-		"name": "feedback",
-		"supercommand": "nlu.domains"
-	},
-	"/api/v2/languageunderstanding/domains/{domainId}/versions": {
-		"name": "versions",
-		"description": "natural language understanding domain versions",
-		"supercommand": "nlu.domains",
-		"get": {
-			"name": "list"
-		},
-		"post": {}
-	},
-	"/api/v2/languageunderstanding/domains/{domainId}/versions/{domainVersionId}": {
-		"name": "versions",
-		"supercommand": "nlu.domains"
-	},
-	"/api/v2/languageunderstanding/domains/{domainId}/versions/{domainVersionId}/detect": {
-		"name": "versions",
-		"supercommand": "nlu.domains",
-		"post": {
-			"name": "detect"
-		}
-	},
-	"/api/v2/languageunderstanding/domains/{domainId}/versions/{domainVersionId}/publish": {
-		"name": "versions",
-		"supercommand": "nlu.domains",
-		"post": {
-			"name": "publish"
-		}
-	},
-	"/api/v2/languageunderstanding/domains/{domainId}/versions/{domainVersionId}/report": {
-		"name": "versions",
-		"supercommand": "nlu.domains",
-		"get": {
-			"name": "report"
-		}
-	},
-	"/api/v2/languageunderstanding/domains/{domainId}/versions/{domainVersionId}/train": {
-		"name": "versions",
-		"supercommand": "nlu.domains",
-		"post": {
-			"name": "train"
+		"put": {
+			"name": "put"
 		}
 	},
 	"/api/v2/architect/emergencygroups": {

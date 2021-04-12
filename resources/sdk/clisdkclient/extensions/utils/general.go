@@ -51,7 +51,7 @@ func AddFileFlagIfUpsert(flags *pflag.FlagSet, method string, jsonSchema string)
 }
 
 func AddPaginateFlagsIfListingResponse(flags *pflag.FlagSet, method, jsonSchema string) {
-	if method == http.MethodGet && strings.Contains(jsonSchema, "Listing") {
+	if method == http.MethodGet && strings.Contains(jsonSchema, "SWAGGER_OVERRIDE_list") {
 		flags.BoolP("autopaginate", "a", false, "Automatically paginate through the results stripping page information")
 		flags.BoolP("stream", "s", false, "Paginate and stream data as it is being processed leaving page information intact")
 	}
@@ -86,8 +86,11 @@ func FormatUsageDescription(inputs ...string) string {
 		}
 	}
 
-	// Some command names are separated by underscores. We only want the first name
-	message := strings.Split(messages[0], "_")[0]
+	// Some command names are separated by underscores. We only want the last name
+	name := strings.Split(messages[0], "_")
+	message := name[len(name) - 1]
+	message = strings.Replace(message, "testfile" , "test", -1)
+	message = strings.Replace(message, "documentationfile" , "documentation", -1)
 	if len(messages) == 1 {
 		return message
 	}
@@ -100,7 +103,7 @@ func FormatUsageDescription(inputs ...string) string {
 			break
 		}
 	}
-	return fmt.Sprintf("Manages Genesys Cloud %s", strings.Replace(description, SwaggerOverride, "", 1))
+	return fmt.Sprintf("%s", strings.Replace(description, SwaggerOverride, "", 1))
 }
 
 func FormatPermissions(permissions []string) string {

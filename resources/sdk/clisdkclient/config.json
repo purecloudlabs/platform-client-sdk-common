@@ -13,7 +13,7 @@
     "extensionsDestination": "${SDK_REPO}/build/gc/",
     "swagger": {
       "oldSwaggerPath": "${SDK_REPO}/swagger.json",
-      "newSwaggerPath": "https://api.mypurecloud.com/api/v2/docs/swagger",
+      "newSwaggerPath": "/Users/ronanwatkins/genesys_src/repos/platform-client-sdk-common/swagger.json",
       "saveNewSwaggerPath": "${SDK_REPO}/swagger.json"
     },
     "swaggerCodegen": {
@@ -56,8 +56,8 @@
               "$ref": "#/settings/swagger/newSwaggerPath"
             },
             "${SDK_TEMP}/newSwagger.json",
-            "${SDK_TEMP}/duplicateMappings.json",
-            "${SDK_TEMP}/topLevelCommands.json"
+            "${SDK_TEMP}/topLevelCommands.json",
+            "${SDK_TEMP}/resourceDefinitions.json"
           ],
           "failOnError": true
         }
@@ -72,9 +72,8 @@
           "path": "post-process.js",
           "args": [
             "${SDK_REPO}/build/gc/cmd/root.go",
-            "${SDK_TEMP}/duplicateMappings.json",
             "${SDK_TEMP}/topLevelCommands.json",
-            "${COMMON_ROOT}/resources/sdk/clisdkclient/resources/resourceDefinitions.json"
+            "${SDK_TEMP}/resourceDefinitions.json"
           ],
           "failOnError": true
         }
@@ -97,7 +96,7 @@
           "type": "command",
           "command": "make",
           "cwd": "${SDK_REPO}",
-          "args":[ "test", "build" ],
+          "args":[ "darwin" ],
           "failOnError": true
         },
         {

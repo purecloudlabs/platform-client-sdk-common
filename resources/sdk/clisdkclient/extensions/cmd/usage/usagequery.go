@@ -34,7 +34,7 @@ var (
 )
 
 var queryUsageCmd = &cobra.Command{
-	Use:   "query",
+	Use:   "customquery",
 	Short: "Creates a query for Genesys Cloud API Usage",
 	Long:  `Creates a query for Genesys Cloud API Usage`,
 	Args:  cobra.NoArgs,

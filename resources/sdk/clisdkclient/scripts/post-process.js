@@ -6,60 +6,96 @@ try {
 	dot.templateSettings.strip = false;
 
 	const rootPath = path.resolve(process.argv[2]);
-	const duplicateMappingsPath = path.resolve(process.argv[3]);
-	const topLevelCommandsPath = path.resolve(process.argv[4]);
-	const resourceDefinitionsPath = path.resolve(process.argv[5]);
+	const topLevelCommandsPath = path.resolve(process.argv[3]);
+	const resourceDefinitionsPath = path.resolve(process.argv[4]);
 
 	console.log(`rootPath=${rootPath}`);
-	console.log(`duplicateMappingsPath=${duplicateMappingsPath}`);
 	console.log(`topLevelCommandsPath=${topLevelCommandsPath}`);
 
 	const resourceDefinitions = JSON.parse(fs.readFileSync(resourceDefinitionsPath, 'utf8'));
-	const duplicateMappings = JSON.parse(fs.readFileSync(duplicateMappingsPath, 'utf8'));
 	const topLevelCommands = JSON.parse(fs.readFileSync(topLevelCommandsPath, 'utf8'));
 
 	const rootFileName = rootPath.split('/').pop();
 	const rootDir = rootPath.replace(rootFileName, '');
 
-	generateSuperCommandFiles(rootDir, topLevelCommands);
-	generateRootFiles(rootDir, resourceDefinitions, duplicateMappings, topLevelCommands);
-	processRoot(rootDir, rootFileName, resourceDefinitions, duplicateMappings, topLevelCommands);
+	generateSuperCommandFiles(rootDir, topLevelCommands, null);
+	generateRootFiles(rootDir, resourceDefinitions);
+	processRoot(rootDir, rootFileName, resourceDefinitions, topLevelCommands);
 } catch (err) {
 	process.exitCode = 1;
 	console.log(err);
 }
 
 // Creates command root files if they don't already exist
-function generateSuperCommandFiles(rootDir, topLevelCommands) {
-	const templateString = `
-package {{=it.supercommand}}
+function generateSuperCommandFiles(rootDir, topLevelCommands, resourcePath) {
+	const templateString = `package {{=it.supercommand}}
 
 import (
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/services"
+
 	"github.com/spf13/cobra"
 )
 
-var {{=it.supercommand}}Cmd = &cobra.Command{
-	Use:   "{{=it.supercommand}}",
-	Short: "Manages Genesys Cloud {{=it.supercommand}}",
-	Long:  \`Manages Genesys Cloud {{=it.supercommand}}\`,
+var (
+	{{=it.supercommand}}Cmd = &cobra.Command{
+		Use:   utils.FormatUsageDescription("{{=it.supercommand}}"),
+		Short: "{{=it.description}}",
+		Long:  \`{{=it.description}}\`,
+	}
+	CommandService services.CommandService
+)
+
+func init() {
+	CommandService = services.NewCommandService({{=it.supercommand}}Cmd)
 }
 
 func Cmd{{=it.supercommand}}() *cobra.Command {
 	return {{=it.supercommand}}Cmd
 }
 `;
+	console.log("topLevelCommands", topLevelCommands)
 	for (const supercommand of topLevelCommands) {
 		const commandPath = path.join(rootDir, supercommand);
 		const commandFile = path.join(commandPath, `${supercommand}.go`);
 		if (!fs.existsSync(commandFile)) {
-			fs.mkdirSync(commandPath);
-			writeTemplate(templateString, { supercommand: supercommand }, commandFile);
+			if (!fs.existsSync(commandPath)) fs.mkdirSync(commandPath);
+
+			let description = ""
+			if (resourcePath) {
+				let split = resourcePath.split("/")
+				let tmp = split.pop()
+				if (!supercommand.endsWith(tmp)) {
+					console.log("hey", supercommand)
+					while (!supercommand.includes(split[split.length-1])) {
+						split.pop()
+					}
+					description = split.join("/")
+				}
+			} else {
+				description = `/api/v2/${supercommand}`
+					.replace(/\_/g, "/")
+					.replace(/[\/]{2,}/g, "/")
+					.replace(/\b(\w*documentationfile\w*)\b/g, "documentation")
+					.replace(/\b(\w*profile\w*)\b/g, "profiles")
+			}
+			description = description.replace(/\/$/g, "")
+
+			// console.log(description, supercommand, resourcePath)
+			console.log(`Creating ${commandFile} with description ${description}`)
+			writeTemplate(templateString, { supercommand: supercommand, description: description }, commandFile);
 		}
 	}
 }
 
+function processName(name) {
+	return name.replace(/_test$/g, "_testfile")
+	           .replace(/_test\//g, "_testfile/")
+			   .replace(/[\_]{2,}/g, "_");
+}
+
 // Generates root files to attach subcommands to supercommands
-function generateRootFiles(rootDir, resourceDefinitions, duplicateMappings, topLevelCommands) {
+function generateRootFiles(rootDir, resourceDefinitions) {
 	let commandMappings = new Map();
 	for (const path of Object.keys(resourceDefinitions)) {
 		var commandName = resourceDefinitions[path].name;
@@ -67,43 +103,47 @@ function generateRootFiles(rootDir, resourceDefinitions, duplicateMappings, topL
 			const supercommandlist = resourceDefinitions[path].supercommand.split('.');
 
 			let nonRootSuperCommands = new Set();
-			for (const command of supercommandlist) {
-				if (!topLevelCommands.includes(command)) {
-					nonRootSuperCommands.add(command);
+			let name = processName(`${supercommandlist.join("_")}_${commandName}`)
+			nonRootSuperCommands.add(name);
+
+			do {
+				let temp = supercommandlist.pop()
+				if (!temp) continue
+
+				if (supercommandlist.length == 0) {
+					nonRootSuperCommands.add(processName(temp));
+				} else {
+					name = processName(`${supercommandlist.join("_")}_${temp}`)
+					nonRootSuperCommands.add(name);
+				}
+			} while(supercommandlist.length > 1);
+
+			let arr = Array.from(nonRootSuperCommands)
+				.reverse()
+
+			for (i = 0; i < arr.length; i++) {
+				if (!arr[i + 1]) continue
+				let entry = commandMappings.get(arr[i]) || new Set();
+				entry.add(arr[i + 1]);
+				commandMappings.set(processName(arr[i]), entry);
+
+				let split = arr[i].split("_")
+				if (split.length == 2) {
+					entry = commandMappings.get(split[0]) || new Set();
+					entry.add(arr[i]);
+					commandMappings.set(processName(split[0]), entry)
 				}
 			}
 
-			generateSuperCommandFiles(rootDir, nonRootSuperCommands);
+			generateSuperCommandFiles(rootDir, nonRootSuperCommands, path);
 
 			supercommandlist.push(commandName);
-
-			for (var i = supercommandlist.length - 1; i >= 1; i--) {
-				let currentCommand = supercommandlist[i];
-				let currentSuperCommand = supercommandlist[i - 1];
-				let key;
-				if (i > 1) {
-					for (const duplicateCommand of Object.keys(duplicateMappings)) {
-						if (duplicateCommand.includes(currentSuperCommand + '_' + supercommandlist[i - 2])) {
-							if (duplicateCommand.startsWith(currentCommand)) {
-								key = duplicateCommand;
-							} else {
-								currentSuperCommand = duplicateCommand;
-							}
-							break;
-						}
-					}
-				}
-				let entry = commandMappings.get(currentSuperCommand) || new Set();
-				key = key ? key : `${currentCommand}_${currentSuperCommand}`;
-				let value = duplicateMappings[key];
-				entry.add(value ? key : currentCommand);
-				commandMappings.set(currentSuperCommand, entry);
-			}
 		}
 	}
 
-	const templateString = `
-package {{=it.supercommand}}
+	console.log("commandMappings", commandMappings)
+
+	const templateString = `package {{=it.supercommand}}
 
 import (
 	{{=it.import}}
@@ -125,6 +165,8 @@ func init() {
 		const commandPath = path.join(rootDir, supercommand);
 		const commandFile = path.join(commandPath, `${supercommand}root.go`);
 
+		if (!fs.existsSync(commandPath)) fs.mkdirSync(commandPath)
+
 		writeTemplate(
 			templateString,
 			{ supercommand: supercommand, import: imports.join('\n\t'), addcommand: addcommands.join('\n\t') },
@@ -134,23 +176,23 @@ func init() {
 }
 
 // Adds imports for every command and attaches them to the root
-function processRoot(rootDir, rootFileName, resourceDefinitions, duplicateMappings, topLevelCommands) {
+function processRoot(rootDir, rootFileName, resourceDefinitions, topLevelCommands) {
 	let exclusionList = new Set();
 	exclusionList.add(rootFileName);
 	for (const resourceDefinition of Object.values(resourceDefinitions)) {
 		if (resourceDefinition.supercommand !== undefined) {
 			const supercommandlist = resourceDefinition.supercommand.split('.');
 
-			if (!topLevelCommands.includes(resourceDefinition.name)) exclusionList.add(resourceDefinition.name);
+			if (!topLevelCommands.includes(resourceDefinition.name)) {
+				if (resourceDefinition.name !== "profiles")
+					exclusionList.add(resourceDefinition.name);
+			}
 			for (const command of supercommandlist) {
 				if (!topLevelCommands.includes(command)) {
 					exclusionList.add(command);
 				}
 			}
 		}
-	}
-	for (const duplicateCommand of Object.keys(duplicateMappings)) {
-		exclusionList.add(duplicateCommand);
 	}
 
 	let addCommands = [];
@@ -159,7 +201,7 @@ function processRoot(rootDir, rootFileName, resourceDefinitions, duplicateMappin
 	const dir = fs.opendirSync(rootDir);
 	let dirent;
 	while ((dirent = dir.readSync()) !== null) {
-		if (exclusionList.has(dirent.name)) continue;
+		if (exclusionList.has(dirent.name) || dirent.name.includes("_")) continue;
 		// imports for packages under cmd
 		addImports.push(`"github.com/mypurecloud/platform-client-sdk-cli/build/gc/cmd/${dirent.name}"`);
 		let packageName = `${dirent.name}`;
@@ -178,5 +220,5 @@ function writeTemplate(templateString, templateObj, filePath) {
 	let result = template(templateObj);
 
 	fs.writeFileSync(filePath, result);
-	console.log(`Extension templated to ${filePath}`);
+	// //console.log(`Extension templated to ${filePath}`);
 }

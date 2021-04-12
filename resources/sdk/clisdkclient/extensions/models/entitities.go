@@ -4,10 +4,15 @@ import (
 	"encoding/json"
 )
 
+// Entities is a generic structure containing entity listing, cursor and index based paginatable responses
 type Entities struct {
-	Entities   []json.RawMessage `json:"entities"`
-	PageSize   int               `json:"pageSize"`
-	PageNumber int               `json:"pageNumber"`
-	Total      int               `json:"total"`
-	PageCount  int               `json:"pageCount"`
+	Entities     []json.RawMessage `json:"entities"`
+	Resources    []json.RawMessage `json:"Resources"`
+	PageSize     int               `json:"pageSize"`
+	PageNumber   int               `json:"pageNumber"`
+	Total        int               `json:"total"`
+	PageCount    int               `json:"pageCount"`
+	NextUri      string            `json:"nextUri"`
+	StartIndex   int               `json:"startIndex"`
+	TotalResults int               `json:"totalResults"`
 }

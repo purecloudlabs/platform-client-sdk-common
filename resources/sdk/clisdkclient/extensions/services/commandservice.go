@@ -37,6 +37,14 @@ type commandService struct {
 	startTime time.Time
 }
 
+type paginationStyle int
+
+const (
+	entityPagination paginationStyle = iota
+	cursorPagination
+	indexPagination
+)
+
 // The following functions are added as variables to allow reassignment to mock functions in unit tests
 var (
 	configGetConfig         = config.GetConfig
@@ -84,6 +92,7 @@ func (c *commandService) Stream(uri string) (string, error) {
 	restClient := restclientNewRESTClient(config)
 
 	//Looks up first page
+	c.traceStart(http.MethodGet, uri, "")
 	data, err := restClient.Get(uri)
 	if err != nil {
 		err = reAuthenticateIfNecessary(config, err)
@@ -96,27 +105,76 @@ func (c *commandService) Stream(uri string) (string, error) {
 	utils.Render(data)
 
 	firstPage := &models.Entities{}
-	json.Unmarshal([]byte(data), firstPage)
-	if firstPage.PageCount == 1 || firstPage.PageNumber >= firstPage.PageCount {
-		return "", nil
+	err = json.Unmarshal([]byte(data), firstPage)
+	if err != nil {
+		return "", err
 	}
 
-	pagedURI := uri
-	for x := firstPage.PageNumber + 1; x <= firstPage.PageCount; x++ {
-		pagedURI = updatePageNumber(pagedURI, x)
-		logger.Info("Paginating with URI: ", pagedURI)
-		retryFunc := retry.Retry(pagedURI, restClient.Get)
-		data, err = retryFunc(&retry.RetryConfiguration{
-			RetryWaitMax: 1000 * time.Second,
-			RetryWaitMin: 1000 * time.Second,
-			RetryMax:     100,
-		})
-		if err != nil {
-			return "", err
+	switch determinePaginationStyle(firstPage) {
+	case cursorPagination:
+		pagedURI := firstPage.NextUri
+		for ok := true; ok; ok = pagedURI != "" {
+			logger.Info("Paginating with URI: ", pagedURI)
+			c.traceProgress(pagedURI)
+			retryFunc := retry.Retry(pagedURI, restClient.Get)
+			data, err = retryFunc(getPaginationRetryConfiguration())
+			if err != nil {
+				return "", err
+			}
+
+			pageData := &models.Entities{}
+			err = json.Unmarshal([]byte(data), pageData)
+			if err != nil {
+				return "", err
+			}
+
+			utils.Render(data)
+			pagedURI = pageData.NextUri
 		}
+		break
+	case entityPagination:
+		pagedURI := uri
+		for x := firstPage.PageNumber + 1; x <= firstPage.PageCount; x++ {
+			pagedURI = updatePagingIndex(pagedURI, "pageNumber", x)
+			logger.Info("Paginating with URI: ", pagedURI)
+			c.traceProgress(pagedURI)
+			retryFunc := retry.Retry(pagedURI, restClient.Get)
+			data, err = retryFunc(getPaginationRetryConfiguration())
+			if err != nil {
+				return "", err
+			}
 
-		utils.Render(data)
+			utils.Render(data)
+		}
+		break
+	case indexPagination:
+		//Appends the individual records from Resources into the array
+		pagedURI := uri
+		pageData := firstPage
+		for ok := true; ok; ok = len(pageData.Resources) > 0 {
+			pagedURI = updatePagingIndex(pagedURI, "startIndex", pageData.StartIndex)
+			logger.Info("Paginating with URI: ", pagedURI)
+			c.traceProgress(pagedURI)
+			retryFunc := retry.Retry(pagedURI, restClient.Get)
+			data, err = retryFunc(getPaginationRetryConfiguration())
+			if err != nil {
+				return "", err
+			}
+
+			pageData = &models.Entities{}
+			err = json.Unmarshal([]byte(data), pageData)
+			if err != nil {
+				return "", err
+			}
+
+			if len(pageData.Resources) > 0 {
+				utils.Render(data)
+			}
+		}
+		break
 	}
+
+	c.traceEnd()
 
 	return "", nil
 }
@@ -142,40 +200,99 @@ func (c *commandService) List(uri string) (string, error) {
 	}
 
 	firstPage := &models.Entities{}
-	json.Unmarshal([]byte(data), firstPage)
+	err = json.Unmarshal([]byte(data), firstPage)
+	if err != nil {
+		return "", err
+	}
 
 	//Allocate the total results based on the page count
 	totalResults := make([]string, 0)
 
-	//Appends the individual records from Entities into the array
-	for _, val := range firstPage.Entities {
-		totalResults = append(totalResults, string(val))
-	}
-
 	//Looks up the rest of the pages
-	if firstPage.PageCount > 1 {
-		pagedURI := uri
-		for x := firstPage.PageNumber + 1; x <= firstPage.PageCount; x++ {
-			pagedURI = updatePageNumber(pagedURI, x)
+	switch determinePaginationStyle(firstPage) {
+	case cursorPagination:
+		//Appends the individual records from Entities into the array
+		for _, val := range firstPage.Entities {
+			totalResults = append(totalResults, string(val))
+		}
+		// This will work for cursor pagination and most entityListing responses
+		pagedURI := firstPage.NextUri
+		for ok := true; ok; ok = pagedURI != "" {
 			logger.Info("Paginating with URI: ", pagedURI)
 			c.traceProgress(pagedURI)
 			retryFunc := retry.Retry(pagedURI, restClient.Get)
-			data, err = retryFunc(&retry.RetryConfiguration{
-				RetryWaitMax: 1000 * time.Second,
-				RetryWaitMin: 1000 * time.Second,
-				RetryMax:     100,
-			})
+			data, err = retryFunc(getPaginationRetryConfiguration())
 			if err != nil {
 				return "", err
 			}
 
 			pageData := &models.Entities{}
-			json.Unmarshal([]byte(data), pageData)
+			err = json.Unmarshal([]byte(data), pageData)
+			if err != nil {
+				return "", err
+			}
+
+			for _, val := range pageData.Entities {
+				totalResults = append(totalResults, string(val))
+			}
+			pagedURI = pageData.NextUri
+		}
+		break
+	case entityPagination:
+		//Appends the individual records from Entities into the array
+		for _, val := range firstPage.Entities {
+			totalResults = append(totalResults, string(val))
+		}
+		pagedURI := uri
+		for x := firstPage.PageNumber + 1; x <= firstPage.PageCount; x++ {
+			pagedURI = updatePagingIndex(pagedURI, "pageNumber", x)
+			logger.Info("Paginating with URI: ", pagedURI)
+			c.traceProgress(pagedURI)
+			retryFunc := retry.Retry(pagedURI, restClient.Get)
+			data, err = retryFunc(getPaginationRetryConfiguration())
+			if err != nil {
+				return "", err
+			}
+
+			pageData := &models.Entities{}
+			err = json.Unmarshal([]byte(data), pageData)
+			if err != nil {
+				return "", err
+			}
 
 			for _, val := range pageData.Entities {
 				totalResults = append(totalResults, string(val))
 			}
 		}
+		break
+	case indexPagination:
+		//Appends the individual records from Resources into the array
+		for _, val := range firstPage.Resources {
+			totalResults = append(totalResults, string(val))
+		}
+		pagedURI := uri
+		pageData := firstPage
+		for ok := true; ok; ok = len(pageData.Resources) > 0 {
+			pagedURI = updatePagingIndex(pagedURI, "startIndex", pageData.StartIndex)
+			logger.Info("Paginating with URI: ", pagedURI)
+			c.traceProgress(pagedURI)
+			retryFunc := retry.Retry(pagedURI, restClient.Get)
+			data, err = retryFunc(getPaginationRetryConfiguration())
+			if err != nil {
+				return "", err
+			}
+
+			pageData = &models.Entities{}
+			err = json.Unmarshal([]byte(data), pageData)
+			if err != nil {
+				return "", err
+			}
+
+			for _, val := range pageData.Resources {
+				totalResults = append(totalResults, string(val))
+			}
+		}
+		break
 	}
 
 	//Convert the data into one big string
@@ -194,18 +311,42 @@ func (c *commandService) List(uri string) (string, error) {
 	return finalJSONString, nil
 }
 
-func updatePageNumber(pagedURI string, index int) string {
-	if strings.Contains(pagedURI, "pageNumber=") {
-		re := regexp.MustCompile("pageNumber=([0-9]+)")
+func determinePaginationStyle(entities *models.Entities) paginationStyle {
+	if entities.NextUri != "" {
+		return cursorPagination
+	}
+
+	if entities.PageCount > 1 {
+		return entityPagination
+	}
+
+	if entities.StartIndex != 0 {
+		return indexPagination
+	}
+
+	return entityPagination
+}
+
+func getPaginationRetryConfiguration() *retry.RetryConfiguration {
+	return &retry.RetryConfiguration{
+		RetryWaitMax: 1000 * time.Second,
+		RetryWaitMin: 1000 * time.Second,
+		RetryMax:     100,
+	}
+}
+
+func updatePagingIndex(pagedURI, indexName string, index int) string {
+	if strings.Contains(pagedURI, fmt.Sprintf("%s=", indexName)) {
+		re := regexp.MustCompile(fmt.Sprintf("%s=([0-9]+)", indexName))
 		result := re.FindStringSubmatch(pagedURI)
-		pageNumber, _ := strconv.Atoi(result[1])
-		pageNumber++
-		pagedURI = strings.Replace(pagedURI, result[0], fmt.Sprintf("pageNumber=%v", pageNumber), 1)
+		index, _ := strconv.Atoi(result[1])
+		index++
+		pagedURI = strings.Replace(pagedURI, result[0], fmt.Sprintf("%s=%v", indexName, index), 1)
 	} else {
 		if strings.Contains(pagedURI, "?") {
-			pagedURI = fmt.Sprintf("%s&pageNumber=%d", pagedURI, index)
+			pagedURI = fmt.Sprintf("%s&%s=%d", indexName, pagedURI, index)
 		} else {
-			pagedURI = fmt.Sprintf("%s?pageNumber=%d", pagedURI, index)
+			pagedURI = fmt.Sprintf("%s?%s=%d", indexName, pagedURI, index)
 		}
 	}
 

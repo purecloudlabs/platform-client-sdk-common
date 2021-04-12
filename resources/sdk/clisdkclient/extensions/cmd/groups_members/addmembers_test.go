@@ -1,4 +1,4 @@
-package members
+package groups_members
 
 import (
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
