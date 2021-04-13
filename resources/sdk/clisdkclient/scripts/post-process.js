@@ -8,7 +8,7 @@ try {
 	const rootPath = path.resolve(process.argv[2]);
 	const duplicateMappingsPath = path.resolve(process.argv[3]);
 	const topLevelCommandsPath = path.resolve(process.argv[4]);
-	const resourceDefinitionsPath = path.join(path.dirname(require.main.filename), '../resources/resourceDefinitions.json');
+	const resourceDefinitionsPath = path.resolve(process.argv[5]);
 
 	console.log(`rootPath=${rootPath}`);
 	console.log(`duplicateMappingsPath=${duplicateMappingsPath}`);
