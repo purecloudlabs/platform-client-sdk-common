@@ -46,20 +46,19 @@ class Configuration {
 			return;
 		}
 
-		if (!fs.existsSync(this.configPath)) {
-			console.error('No config file exists in the specified path.');
-			return;
-		}
-
 		this.updateConfigFromFile();
 
 		if (this.live_reload_config && this.live_reload_config === true) {
-			const watcher = fs.watch(this.configPath, (eventType, filename) => {
-				this.updateConfigFromFile();
-				if (!this.live_reload_config) {
-					watcher.close();
-				}
-			});
+			try {
+				const watcher = fs.watchFile(this.configPath, { persistent: false, interval: 30000 }, (eventType, filename) => {
+					this.updateConfigFromFile();
+					if (!this.live_reload_config) {
+						watcher.close();
+					}
+				});
+			} catch (err) {
+				// do nothing
+			}
 		}
 	}
 
@@ -82,9 +81,6 @@ class Configuration {
 				this.config = {
 					_sections: JSON.parse(configData), // To match INI data format
 				};
-			} else {
-				console.error(error);
-				return;
 			}
 		}
 
@@ -92,24 +88,48 @@ class Configuration {
 	}
 
 	updateConfigValues() {
-		this.logger.log_level = this.config._sections.logging.log_level;
-		this.logger.log_format = this.config._sections.logging.log_format;
-		this.logger.log_to_console = this.config._sections.logging.log_to_console;
-		this.logger.log_file_path = this.config._sections.logging.log_file_path;
-		this.logger.log_response_body = this.config._sections.logging.log_response_body;
-		this.logger.log_request_body = this.config._sections.logging.log_request_body;
-		this.refresh_access_token = this.config._sections.reauthentication.refresh_access_token;
-		this.refresh_token_wait_max = this.config._sections.reauthentication.refresh_token_wait_max;
-		this.live_reload_config = this.config._sections.general.live_reload_config;
-		this.host = this.config._sections.general.host;
+		this.logger.log_level = this.logger.getLogLevel(this.getConfigString('logging', 'log_level'));
+		this.logger.log_format = this.logger.getLogFormat(this.getConfigString('logging', 'log_format'));
+		this.logger.log_to_console =
+			this.getConfigBoolean('logging', 'log_to_console') !== undefined
+				? this.getConfigBoolean('logging', 'log_to_console')
+				: this.logger.log_to_console;
+		this.logger.log_file_path =
+			this.getConfigString('logging', 'log_file_path') !== undefined
+				? this.getConfigString('logging', 'log_file_path')
+				: this.logger.log_file_path;
+		this.logger.log_response_body =
+			this.getConfigBoolean('logging', 'log_response_body') !== undefined
+				? this.getConfigBoolean('logging', 'log_response_body')
+				: this.logger.log_response_body;
+		this.logger.log_request_body =
+			this.getConfigBoolean('logging', 'log_request_body') !== undefined
+				? this.getConfigBoolean('logging', 'log_request_body')
+				: this.logger.log_request_body;
+		this.refresh_access_token =
+			this.getConfigBoolean('reauthentication', 'refresh_access_token') !== undefined
+				? this.getConfigBoolean('reauthentication', 'refresh_access_token')
+				: this.refresh_access_token;
+		this.refresh_token_wait_max =
+			this.getConfigInt('reauthentication', 'refresh_token_wait_max') !== undefined
+				? this.getConfigInt('reauthentication', 'refresh_token_wait_max')
+				: this.refresh_token_wait_max;
+		this.live_reload_config =
+			this.getConfigBoolean('general', 'live_reload_config') !== undefined
+				? this.getConfigBoolean('general', 'live_reload_config')
+				: this.live_reload_config;
+		this.host = this.getConfigString('general', 'host') !== undefined ? this.getConfigString('general', 'host') : this.host;
+
 		this.setEnvironment();
 
+		// Update logging configs
 		this.logger.setLogger();
 	}
 
-	setEnvironment() {
+	setEnvironment(env) {
 		// Default value
-		if (!this.environment) this.environment = this.host ? this.host : 'mypurecloud.com';
+		if (env) this.environment = env;
+		else this.environment = this.host ? this.host : 'mypurecloud.com';
 
 		// Strip trailing slash
 		this.environment = this.environment.replace(/\/+$/, '');
@@ -119,9 +139,28 @@ class Configuration {
 		if (this.environment.startsWith('http://')) this.environment = this.environment.substring(7);
 		if (this.environment.startsWith('api.')) this.environment = this.environment.substring(4);
 
-		// Set vars
 		this.basePath = `https://api.${this.environment}`;
 		this.authUrl = `https://login.${this.environment}`;
+	}
+
+	getConfigString(section, key) {
+		if (this.config._sections[section]) return this.config._sections[section][key];
+	}
+
+	getConfigBoolean(section, key) {
+		if (this.config._sections[section] && this.config._sections[section][key]) {
+			if (typeof this.config._sections[section][key] === 'string') {
+				return this.config._sections[section][key] === 'true';
+			} else return this.config._sections[section][key];
+		}
+	}
+
+	getConfigInt(section, key) {
+		if (this.config._sections[section] && this.config._sections[section][key]) {
+			if (typeof this.config._sections[section][key] === 'string') {
+				return parseInt(this.config._sections[section][key]);
+			} else return this.config._sections[section][key];
+		}
 	}
 }
 
