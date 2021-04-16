@@ -7,7 +7,7 @@ const https = require('https');
 const moment = require('moment-timezone');
 const path = require('path');
 const pluralize = require('pluralize');
-const purecloud = require('purecloud_api_sdk_javascript');
+const platformClient = require('purecloud-platform-client-v2');
 const Q = require('q');
 const yaml = require('yamljs');
 
@@ -536,46 +536,42 @@ function addNotifications() {
 		checkAndThrow(_this.pureCloud, 'clientSecret', 'Environment variable PURECLOUD_CLIENT_SECRET must be set!');
 		checkAndThrow(_this.pureCloud, 'environment', 'PureCloud environment was blank!');
 
-		var pureCloudSession = purecloud.PureCloudSession({
-			strategy: 'client-credentials',
-			timeout: 20000,
-			clientId: _this.pureCloud.clientId,
-			clientSecret: _this.pureCloud.clientSecret,
-			environment: _this.pureCloud.environment,
+		const client = platformClient.ApiClient.instance;
+		client.setEnvironment(_this.pureCloud.environment);
+		var notificationsApi = new platformClient.NotificationsApi();
+
+		client.loginClientCredentialsGrant(_this.pureCloud.clientId, _this.pureCloud.clientSecret)
+		.then(()=> {
+			return notificationsApi.getNotificationsAvailabletopics({'expand': ['schema']});
+		})
+		.then((notifications) => {
+			var notificationMappings = { notifications: [] };
+
+			// Process schemas
+			log.info(`Processing ${notifications.entities.length} notification schemas...`);
+			_.forEach(notifications.entities, (entity) => {
+				if (!entity.schema) {
+					log.warn(`Notification ${entity.id} does not have a defined schema!`);
+					return;
+				}
+
+				const schemaName = getNotificationClassName(entity.schema.id);
+				log.info(`Notification mapping: ${entity.id} (${schemaName})`);
+				notificationMappings.notifications.push({ topic: entity.id, class: schemaName });
+				extractDefinitons(entity.schema);
+				swaggerDiff.newSwagger.definitions[schemaName] = JSON.parse(JSON.stringify(entity.schema));
+			});
+
+			// Write mappings to file
+			var mappingFilePath = path.resolve(path.join(getEnv('SDK_REPO'), 'notificationMappings.json'));
+			log.info(`Writing Notification mappings to ${mappingFilePath}`);
+			fs.writeFileSync(mappingFilePath, JSON.stringify(notificationMappings, null, 2));
+
+			deferred.resolve();
+		})
+		.catch((err) => {
+			deferred.reject(err)
 		});
-		var notificationsApi = new purecloud.NotificationsApi(pureCloudSession);
-
-		pureCloudSession
-			.login()
-			.then(() => {
-				return notificationsApi.getAvailabletopics(['schema']);
-			})
-			.then((notifications) => {
-				var notificationMappings = { notifications: [] };
-
-				// Process schemas
-				log.info(`Processing ${notifications.entities.length} notification schemas...`);
-				_.forEach(notifications.entities, (entity) => {
-					if (!entity.schema) {
-						log.warn(`Notification ${entity.id} does not have a defined schema!`);
-						return;
-					}
-
-					const schemaName = getNotificationClassName(entity.schema.id);
-					log.info(`Notification mapping: ${entity.id} (${schemaName})`);
-					notificationMappings.notifications.push({ topic: entity.id, class: schemaName });
-					extractDefinitons(entity.schema);
-					swaggerDiff.newSwagger.definitions[schemaName] = JSON.parse(JSON.stringify(entity.schema));
-				});
-
-				// Write mappings to file
-				var mappingFilePath = path.resolve(path.join(getEnv('SDK_REPO'), 'notificationMappings.json'));
-				log.info(`Writing Notification mappings to ${mappingFilePath}`);
-				fs.writeFileSync(mappingFilePath, JSON.stringify(notificationMappings, null, 2));
-
-				deferred.resolve();
-			})
-			.catch((err) => deferred.reject(err));
 	} catch (err) {
 		deferred.reject(err);
 	}

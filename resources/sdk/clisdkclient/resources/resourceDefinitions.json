@@ -1,18 +1,21 @@
 {
 	"/api/v2/outbound/campaigns": {
-		"name": "campaigns"
+		"name": "campaigns",
+		"description": "outbound campaigns"
 	},
 	"/api/v2/outbound/campaigns/{campaignId}": {
 		"name": "campaigns"
 	},
 	"/api/v2/authorization/divisions": {
-		"name": "divisions"
+		"name": "divisions",
+		"description": "authorization divisions"
 	},
 	"/api/v2/authorization/divisions/{divisionId}": {
 		"name": "divisions"
 	},
 	"/api/v2/authorization/roles": {
-		"name": "roles"
+		"name": "roles",
+		"description": "authorization roles"
 	},
 	"/api/v2/authorization/roles/{roleId}": {
 		"name": "roles",
@@ -24,6 +27,7 @@
 	},
 	"/api/v2/authorization/roles/{roleId}/users": {
 		"name": "users",
+		"description": "authorization roles users",
 		"supercommand": "roles",
 		"get": {
 			"name": "get"
@@ -57,6 +61,7 @@
 	},
 	"/api/v2/telephony/providers/edges/didpools": {
 		"name": "didpools",
+		"description": "edge didpools",
 		"supercommand": "edges"
 	},
 	"/api/v2/telephony/providers/edges/didpools/{didPoolId}": {
@@ -65,6 +70,7 @@
 	},
 	"/api/v2/telephony/providers/edges/dids/{didId}": {
 		"name": "dids",
+		"description": "edge dids",
 		"supercommand": "edges"
 	},
 	"/api/v2/telephony/providers/edges/dids": {
@@ -75,6 +81,7 @@
 	"/api/v2/groups/{groupId}": {},
 	"/api/v2/groups/{groupId}/members": {
 		"name": "members",
+		"description": "group members",
 		"supercommand": "groups",
 		"get": {
 			"name": "list"
@@ -86,7 +93,8 @@
 	"/api/v2/locations": {},
 	"/api/v2/locations/{locationId}": {},
 	"/api/v2/telephony/providers/edges/phones": {
-		"name": "phones"
+		"name": "phones",
+		"description": "edge phones"
 	},
 	"/api/v2/telephony/providers/edges/phones/{phoneId}": {
 		"name": "phones"
@@ -111,6 +119,7 @@
 	},
 	"/api/v2/routing/queues/{queueId}/users": {
 		"name": "users",
+		"description": "queue users",
 		"supercommand": "queues",
 		"get": {
 			"name": "get"
@@ -129,13 +138,15 @@
 		"patch": {}
 	},
 	"/api/v2/telephony/providers/edges/sites": {
-		"name": "sites"
+		"name": "sites",
+		"description": "edge sites"
 	},
 	"/api/v2/telephony/providers/edges/sites/{siteId}": {
 		"name": "sites"
 	},
 	"/api/v2/routing/skills": {
-		"name": "skills"
+		"name": "skills",
+		"description": "routing skills"
 	},
 	"/api/v2/routing/skills/{skillId}": {
 		"name": "skills"
@@ -146,6 +157,7 @@
 	"/api/v2/users/{userId}": {},
 	"/api/v2/users/{userId}/queues": {
 		"name": "queues",
+		"description": "users queues",
 		"supercommand": "users",
 		"get": {
 			"name": "get"
@@ -163,6 +175,7 @@
 	},
 	"/api/v2/users/{userId}/routingskills": {
 		"name": "skills",
+		"description": "users routing skills",
 		"supercommand": "users"
 	},
 	"/api/v2/users/{userId}/routingskills/{skillId}": {
@@ -181,6 +194,7 @@
 	},
 	"/api/v2/notifications/availabletopics": {
 		"name": "topics",
+		"description": "notification topics",
 		"supercommand": "notifications",
 		"get": {
 			"name": "list"
@@ -188,10 +202,12 @@
 	},
 	"/api/v2/notifications/channels": {
 		"name": "channels",
+		"description": "notification channels",
 		"supercommand": "notifications"
 	},
 	"/api/v2/notifications/channels/{channelId}/subscriptions": {
 		"name": "subscriptions",
+		"description": "notification subscriptions",
 		"supercommand": "notifications",
 		"get": {},
 		"post": {
@@ -207,6 +223,7 @@
 	},
 	"/api/v2/externalcontacts/contacts": {
 		"name": "contacts",
+		"description": "externalcontacts contacts",
 		"supercommand": "externalcontacts",
 		"post": {},
 		"get": {
@@ -230,6 +247,7 @@
 	},
 	"/api/v2/externalcontacts/organizations/{externalOrganizationId}": {
 		"name": "organizations",
+		"description": "externalcontacts organizations",
 		"supercommand": "externalcontacts",
 		"get": {},
 		"put": {},
@@ -251,6 +269,7 @@
 	},
 	"/api/v2/responsemanagement/libraries": {
 		"name": "libraries",
+		"description": "response management libraries",
 		"supercommand": "responsemgt"
 	},
 	"/api/v2/responsemanagement/libraries/{libraryId}": {
@@ -259,6 +278,7 @@
 	},
 	"/api/v2/responsemanagement/responses": {
 		"name": "responses",
+		"description": "response management responses",
 		"supercommand": "responsemgt"
 	},
 	"/api/v2/responsemanagement/responses/{responseId}": {
@@ -274,6 +294,7 @@
 	},
 	"/api/v2/outbound/contactlists": {
 		"name": "contactlists",
+		"description": "outbound contact lists",
 		"get": {},
 		"post": {}
 	},
@@ -282,6 +303,7 @@
 	},
 	"/api/v2/outbound/contactlists/{contactListId}/contacts": {
 		"name": "contacts",
+		"description": "outbound contacts",
 		"supercommand": "contactlists",
 		"post": {
 			"name": "add"
@@ -293,5 +315,68 @@
 	"/api/v2/outbound/contactlists/{contactListId}/contacts/{contactId}": {
 		"name": "contacts",
 		"supercommand": "contactlists"
+	},
+	"/api/v2/languageunderstanding/domains": {
+		"name": "domains",
+		"description": "natural language understanding domains",
+		"supercommand": "nlu"
+	},
+	"/api/v2/languageunderstanding/domains/{domainId}": {
+		"name": "domains",
+		"supercommand": "nlu"
+	},
+	"/api/v2/languageunderstanding/domains/{domainId}/feedback": {
+		"name": "feedback",
+		"description": "natural language understanding domain feedback",
+		"supercommand": "nlu.domains",
+		"get": {
+			"name": "list"
+		},
+		"post": {}
+	},
+	"/api/v2/languageunderstanding/domains/{domainId}/feedback/{feedbackId}": {
+		"name": "feedback",
+		"supercommand": "nlu.domains"
+	},
+	"/api/v2/languageunderstanding/domains/{domainId}/versions": {
+		"name": "versions",
+		"description": "natural language understanding domain versions",
+		"supercommand": "nlu.domains",
+		"get": {
+			"name": "list"
+		},
+		"post": {}
+	},
+	"/api/v2/languageunderstanding/domains/{domainId}/versions/{domainVersionId}": {
+		"name": "versions",
+		"supercommand": "nlu.domains"
+	},
+	"/api/v2/languageunderstanding/domains/{domainId}/versions/{domainVersionId}/detect": {
+		"name": "versions",
+		"supercommand": "nlu.domains",
+		"post": {
+			"name": "detect"
+		}
+	},
+	"/api/v2/languageunderstanding/domains/{domainId}/versions/{domainVersionId}/publish": {
+		"name": "versions",
+		"supercommand": "nlu.domains",
+		"post": {
+			"name": "publish"
+		}
+	},
+	"/api/v2/languageunderstanding/domains/{domainId}/versions/{domainVersionId}/report": {
+		"name": "versions",
+		"supercommand": "nlu.domains",
+		"get": {
+			"name": "report"
+		}
+	},
+	"/api/v2/languageunderstanding/domains/{domainId}/versions/{domainVersionId}/train": {
+		"name": "versions",
+		"supercommand": "nlu.domains",
+		"post": {
+			"name": "train"
+		}
 	}
 }

@@ -9,7 +9,7 @@ try {
 		basePath: 'https://api.mypurecloud.com',
 		packageName: 'platform-client',
 		packageVersion: version.displayFull,
-		httpUserAgent: 'PureCloud SDK'
+		httpUserAgent: 'PureCloud SDK',
 	};
 
 	fs.writeFileSync(swaggerCodegenConfigFilePath, JSON.stringify(config, null, 2));
