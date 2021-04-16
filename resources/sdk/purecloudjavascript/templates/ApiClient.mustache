@@ -269,7 +269,7 @@ class ApiClient {
 	 */
 	loginClientCredentialsGrant(clientId, clientSecret) {
 		this.clientId = clientId;
-		var authHeader = new Buffer(`${clientId}:${clientSecret}`).toString('base64');
+		var authHeader = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
 		return new Promise((resolve, reject) => {
 			// Block browsers from using client credentials
@@ -289,8 +289,41 @@ class ApiClient {
 			// Execute request
 			request.end((error, response) => {
 				if (error) {
+					// Log error
+					this.config.logger.log(
+						'error',
+						response.statusCode,
+						'POST',
+						`https://login.${this.config.environment}/oauth/token`,
+						request.header,
+						response.headers,
+						{ grant_type: 'client_credentials' },
+						response.body
+					);
 					reject(error);
 				} else {
+					// Logging
+					this.config.logger.log(
+						'trace',
+						response.statusCode,
+						'POST',
+						`https://login.${this.config.environment}/oauth/token`,
+						request.header,
+						response.headers,
+						{ grant_type: 'client_credentials' },
+						undefined
+					);
+					this.config.logger.log(
+						'debug',
+						response.statusCode,
+						'POST',
+						`https://login.${this.config.environment}/oauth/token`,
+						request.header,
+						undefined,
+						{ grant_type: 'client_credentials' },
+						undefined
+					);
+
 					// Save access token
 					this.setAccessToken(response.body['access_token']);
 
@@ -319,16 +352,55 @@ class ApiClient {
 				reject(new Error('The saml2bearer grant is not supported in a browser.'));
 				return;
 			}
-			var encodedData = new Buffer(clientId + ':' + clientSecret).toString('base64');
+			var encodedData = Buffer.from(clientId + ':' + clientSecret).toString('base64');
 			var request = this._formAuthRequest(encodedData,
 												{ grant_type: 'urn:ietf:params:oauth:grant-type:saml2-bearer' },
 										        { orgName: orgName },
 										        { assertion: assertion });
+			var bodyParam = {
+				grant_type: 'urn:ietf:params:oauth:grant-type:saml2-bearer',
+				orgName: orgName,
+				assertion: assertion,
+			};
+
 			// Handle response
 			request.end((error, response) => {
 				if (error) {
+					// Log error
+					this.config.logger.log(
+						'error',
+						response.statusCode,
+						'POST',
+						`https://login.${this.config.environment}/oauth/token`,
+						request.header,
+						response.headers,
+						bodyParam,
+						response.body
+					);
 					reject(error);
 				} else {
+					// Logging
+					this.config.logger.log(
+						'trace',
+						response.statusCode,
+						'POST',
+						`https://login.${this.config.environment}/oauth/token`,
+						request.header,
+						response.headers,
+						bodyParam,
+						undefined
+					);
+					this.config.logger.log(
+						'debug',
+						response.statusCode,
+						'POST',
+						`https://login.${this.config.environment}/oauth/token`,
+						request.header,
+						undefined,
+						bodyParam,
+						undefined
+					);
+
 					// Get access token from response
 					var access_token = response.body.access_token;
 
@@ -358,13 +430,18 @@ class ApiClient {
 				reject(new Error('The Code Authorization grant is not supported in a browser.'));
 				return;
 			}
-			var encodedData = new Buffer(clientId + ':' + clientSecret).toString('base64');
+			var encodedData = Buffer.from(clientId + ':' + clientSecret).toString('base64');
 			var request = this._formAuthRequest(encodedData,
 												{ grant_type: 'authorization_code' },
 									            { code: authCode },
 										        { redirect_uri: redirectUri });
+			var bodyParam = {
+				grant_type: 'authorization_code',
+				code: authCode,
+				redirect_uri: redirectUri,
+			};
 			// Handle response
-			this._handleCodeAuthorizationResponse(request, resolve, reject);
+			this._handleCodeAuthorizationResponse(request, bodyParam, resolve, reject);
 		});
 	}
 
@@ -381,37 +458,76 @@ class ApiClient {
 				reject(new Error('The Code Authorization grant is not supported in a browser.'));
 				return;
 			}
-			var encodedData = new Buffer(clientId + ':' + clientSecret).toString('base64');
+			var encodedData = Buffer.from(clientId + ':' + clientSecret).toString('base64');
 			var request = this._formAuthRequest(encodedData, { grant_type: 'refresh_token' }, { refresh_token: refreshToken });
+			var bodyParam = {
+				grant_type: 'refresh_token',
+				refresh_token: refreshToken,
+			};
 			// Handle response
-			this._handleCodeAuthorizationResponse(request, resolve, reject);
+			this._handleCodeAuthorizationResponse(request, bodyParam, resolve, reject);
 		});
 	}
 
 	/**
 	 * @description Handles the response for code auth requests
-	 * @param {object} request - Authoriation request object
+	 * @param {object} request - Authorization request object
+	 * @param {object} bodyParam - Input body data for authorization request
 	 * @param {function} resolve - Promise resolve callback
 	 * @param {function} reject - Promise reject callback
 	 */
-	_handleCodeAuthorizationResponse(request, resolve, reject) {
+	_handleCodeAuthorizationResponse(request, bodyParam, resolve, reject) {
 		request.end((error, response) => {
-				if (error) {
-					reject(error);
-				} else {
-					// Get access token from response
-					var access_token = response.body.access_token;
-					var refresh_token = response.body.refresh_token;
+			if (error) {
+				// Log error
+				this.config.logger.log(
+					'error',
+					response.statusCode,
+					'POST',
+					`https://login.${this.config.environment}/oauth/token`,
+					request.header,
+					response.headers,
+					bodyParam,
+					response.body
+				);
 
-					this.setAccessToken(access_token);
-					this.authData.refreshToken = refresh_token;
-					this.authData.tokenExpiryTime = new Date().getTime() + response.body['expires_in'] * 1000;
-					this.authData.tokenExpiryTimeString = new Date(this.authData.tokenExpiryTime).toUTCString();
+				reject(error);
+			} else {
+				// Logging
+				this.config.logger.log(
+					'trace',
+					response.statusCode,
+					'POST',
+					`https://login.${this.config.environment}/oauth/token`,
+					request.header,
+					response.headers,
+					bodyParam,
+					undefined
+				);
+				this.config.logger.log(
+					'debug',
+					response.statusCode,
+					'POST',
+					`https://login.${this.config.environment}/oauth/token`,
+					request.header,
+					undefined,
+					bodyParam,
+					undefined
+				);
 
-					// Return auth data
-					resolve(this.authData);
-				}
-			});
+				// Get access token from response
+				var access_token = response.body.access_token;
+				var refresh_token = response.body.refresh_token;
+
+				this.setAccessToken(access_token);
+				this.authData.refreshToken = refresh_token;
+				this.authData.tokenExpiryTime = new Date().getTime() + response.body['expires_in'] * 1000;
+				this.authData.tokenExpiryTimeString = new Date(this.authData.tokenExpiryTime).toUTCString();
+
+				// Return auth data
+				resolve(this.authData);
+			}
+		});
 	}
 
 	/**
@@ -895,8 +1011,8 @@ class ApiClient {
 					} : response.body ? response.body : response.text;
 
 					// Debug logging
-					that.config.logger.log('trace', httpMethod, url, bodyParam, response.statusCode, request.header, undefined, response.headers);
-					that.config.logger.log('debug', httpMethod, url, bodyParam, response.statusCode, request.header, undefined, undefined);
+					that.config.logger.log('trace', response.statusCode, httpMethod, url, request.header, response.headers, bodyParam, undefined);
+					that.config.logger.log('debug', response.statusCode, httpMethod, url, request.header, undefined, bodyParam, undefined);
 
 					// Resolve promise
 					if (error) {
@@ -912,13 +1028,13 @@ class ApiClient {
 							// Log error
 							that.config.logger.log(
 								'error',
+								response.statusCode,
 								httpMethod,
 								url,
-								bodyParam,
-								response.statusCode,
 								request.header,
-								response.body,
-								response.headers
+								response.headers,
+								bodyParam,
+								response.body
 							);
 							reject(data);
 						}
