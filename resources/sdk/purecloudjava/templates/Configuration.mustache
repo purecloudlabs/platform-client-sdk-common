@@ -1,22 +1,23 @@
 package {{invokerPackage}};
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.map;
 import java.io.File;
 import java.io.FileReader;
-import org.ini4j.Ini;
+import java.io.FileInputStream;
+import java.nio.charset.StandardCharsets;
 import java.io.FileNotFoundException;
+import org.ini4j.Ini;
 import java.lang.Throwable;
 import java.security.MessageDigest;
 import java.lang.Thread;
 import java.util.Map;
-import {{invokerPackage}}.Logger;
 
 {{>generatedAnnotation}}
 public class Configuration {
   private static ApiClient defaultApiClient = null;
-  private static String configFileHash = null;
+  private static String configFileHash = "";
   private static String configFilePath = null;
+  private static Boolean autoReloadConfig = false;
   private static Logger logger = null;
 
   /**
@@ -35,11 +36,12 @@ public class Configuration {
    */
   public static void setDefaultApiClient(ApiClient apiClient) {
     defaultApiClient = apiClient;
-    boolean autoReloadConfig = defaultApiClient.getAutoReloadConfig();
+    autoReloadConfig = defaultApiClient.getAutoReloadConfig();
     logger = defaultApiClient.getLogger();
     configFilePath = defaultApiClient.getConfigFilePath();
-    LoggingConfiguration loggingConfiguration = defaultApiClient.getLoggingConfiguration();
+    ApiClient.LoggingConfiguration loggingConfiguration = defaultApiClient.getLoggingConfiguration();
     Configuration configuration = new Configuration();
+    configFileHash = configuration.getConfigHash();
     configuration.applyConfigFromFile();
     if (autoReloadConfig) {
       Runnable runnable = () -> configuration.runConfigChecker();
@@ -64,7 +66,7 @@ public class Configuration {
     }
     String logToConsole = parser.getString("logging", "log_to_console");
     if (logToConsole != null && !logToConsole.isEmpty()) {
-        logger.setLogToConsole(parser.GetBool("logging", "log_to_console"));
+        logger.setLogToConsole(parser.getBool("logging", "log_to_console"));
     }
     String logFilePath = parser.getString("logging", "log_file_path");
     if (logFilePath != null && !logFilePath.isEmpty()) {
@@ -72,42 +74,41 @@ public class Configuration {
     }
     String logRequestBody = parser.getString("logging", "log_request_body");
     if (logRequestBody != null && !logRequestBody.isEmpty()) {
-        logger.setLogRequestBody(parser.GetBool("logging", "log_request_body"));
+        logger.setLogRequestBody(parser.getBool("logging", "log_request_body"));
     }
     String logResponseBody = parser.getString("logging", "log_response_body");
     if (logResponseBody != null && !logResponseBody.isEmpty()) {
-        logger.setLogResponseBody(parser.GetBool("logging", "log_response_body"));
+        logger.setLogResponseBody(parser.getBool("logging", "log_response_body"));
     }
     // General
     String host = parser.getString("general", "host");
     if (host != null && !host.isEmpty()) {
-        defaultApiClient
-        .setBasePath(host);
+        defaultApiClient.setBasePath(host);
     }
     String liveReloadConfig = parser.getString("general", "live_reload_config");
     if (liveReloadConfig != null && !liveReloadConfig.isEmpty()) {
-        defaultApiClient.setAutoReloadConfig(parser.GetBool("general", "live_reload_config"));
+        defaultApiClient.setAutoReloadConfig(parser.getBool("general", "live_reload_config"));
     }
     // Re-authentication
     String refreshAccessToken = parser.getString("reauthentication", "refresh_access_token");
     if (refreshAccessToken != null && !refreshAccessToken.isEmpty()) {
-        defaultApiClient.setShouldRefreshAccessToken(refreshAccessToken);
+        defaultApiClient.setShouldRefreshAccessToken(parser.getBool("reauthentication", "refresh_access_token"));
     }
     String refreshTokenWaitTime = parser.getString("reauthentication", "refresh_token_wait_max");
     if (refreshTokenWaitTime != null && !refreshTokenWaitTime.isEmpty()) {
-        defaultApiClient.setRefreshTokenWaitTime(refreshTokenWaitTime);
+        defaultApiClient.setRefreshTokenWaitTime(parser.getInt("reauthentication", "refresh_token_wait_max"));
     }
     // Retry
     String maxRetryTimeSec = parser.getString("retry", "retry_wait_max");
     if (maxRetryTimeSec != null && !maxRetryTimeSec.isEmpty()) {
-        RetryConfiguration retryConfiguration = defaultApiClient.getRetryConfiguration();
-        retryConfiguration.setMaxRetryTimeSec(maxRetryTimeSec);
+        ApiClient.RetryConfiguration retryConfiguration = defaultApiClient.getRetryConfiguration();
+        retryConfiguration.setMaxRetryTimeSec(parser.getInt("retry", "retry_wait_max"));
         defaultApiClient.setRetryConfiguration(retryConfiguration);
     }
     String retryMax = parser.getString("retry", "retry_max");
     if (retryMax != null && !retryMax.isEmpty()) {
-      RetryConfiguration retryConfiguration = defaultApiClient.getRetryConfiguration();
-      retryConfiguration.setRetryMax(retryMax);
+      ApiClient.RetryConfiguration retryConfiguration = defaultApiClient.getRetryConfiguration();
+      retryConfiguration.setRetryMax(parser.getInt("retry", "retry_max"));
       defaultApiClient.setRetryConfiguration(retryConfiguration);
     }
   }
@@ -116,7 +117,7 @@ public class Configuration {
     try (FileInputStream fis = new FileInputStream(new File(configFilePath))) {
       MessageDigest md = MessageDigest.getInstance("MD5");
       byte[] bytesBuffer = new byte[1024];
-      int bytesReady = -1;
+      int bytesRead = -1;
       while ((bytesRead = fis.read(bytesBuffer)) != -1) {
         md.update(bytesBuffer, 0, bytesRead);
       }
@@ -153,7 +154,7 @@ public class Configuration {
     private String filePath;
     private FileFormat fileFormat;
     private Ini iniData;
-    private Map<String, String> jsonData;
+    private Map<String, Object> jsonData;
 
     public ConfigurationParser(String filePath) {
       this.filePath = filePath;
@@ -170,22 +171,23 @@ public class Configuration {
         return false;
       } catch (Exception e) {
         try {
-          ObjectMapper mapper = new ObjectMapper();
+          ObjectMapper objectMapper = new ObjectMapper();
           File configFile = new File(filePath);
-          Map<String, Object> jsonMap = mapper.readValue(configFile, Map.class);
+          Map<String, Object> jsonMap = objectMapper.readValue(configFile, Map.class);
           this.jsonData = jsonMap;
           this.fileFormat = FileFormat.JSON;
-        } catch (Exception e) {
+        } catch (Exception ex) {
           return false;
         }
       }
+      return true;
     }
 
     public String getString(String section, String key) {
       switch (fileFormat) {
-        case FileFormat.INI:
+        case INI:
           return getIniString(section, key);
-        case FileFormat.JSON:
+        case JSON:
           return getJsonString(section, key);
         default: 
           return "";
@@ -194,9 +196,9 @@ public class Configuration {
 
     public boolean getBool(String section, String key) {
       switch (fileFormat) {
-        case FileFormat.INI:
+        case INI:
           return getIniBool(section, key);
-        case FileFormat.JSON:
+        case JSON:
           return getJsonBool(section, key);
         default: 
           return false;
@@ -205,19 +207,19 @@ public class Configuration {
 
     public int getInt(String section, String key) {
       switch (fileFormat) {
-        case FileFormat.INI:
+        case INI:
           return getIniInt(section, key);
-        case FileFormat.JSON:
+        case JSON:
           return getJsonInt(section, key);
         default: 
-          return false;
+          return 0;
       }
     }
 
     public String getJsonString(String section, String key) {
       try {
-        Map<String, Object> section = jsonData.get(section);
-        return section.get(key).toString().trim();
+        Map<String, Object> sectionData = (Map<String, Object>)jsonData.get(section);
+        return sectionData.get(key).toString().trim();
       } catch (Exception e) {
         return "";
       }
@@ -225,17 +227,17 @@ public class Configuration {
 
     public boolean getJsonBool(String section, String key) {
       try {
-        Map<String, Object> section = jsonData.get(section);
-        return Boolean.parseBoolean(section.get(key).toString().trim());
+        Map<String, Object> sectionData = (Map<String, Object>)jsonData.get(section);
+        return Boolean.parseBoolean(sectionData.get(key).toString().trim());
       } catch (Exception e) {
-        return "";
+        return false;
       }
     }
 
     public int getJsonInt(String section, String key) {
       try {
-        Map<String, Object> section = jsonData.get(section);
-        return Integer.parseInt(section.get(key).toString().trim());
+        Map<String, Object> sectionData = (Map<String, Object>)jsonData.get(section);
+        return Integer.parseInt(sectionData.get(key).toString().trim());
       } catch (Exception e) {
         return -1;
       }
@@ -243,8 +245,8 @@ public class Configuration {
 
     public String getIniString(String section, String key) {
       try {
-        Ini.Section section = iniData.get(section);
-        return section.get(key).trim();
+        Ini.Section sectionData = iniData.get(section);
+        return sectionData.get(key).trim();
       } catch (Exception e) {
         return "";
       }
@@ -252,17 +254,17 @@ public class Configuration {
 
     public boolean getIniBool(String section, String key) {
       try {
-        Ini.Section section = jsonData.get(section);
-        return Boolean.parseBoolean(section.get(key).trim());
+        Ini.Section sectionData = iniData.get(section);
+        return Boolean.parseBoolean(sectionData.get(key).trim());
       } catch (Exception e) {
-        return "";
+        return false;
       }
     }
 
     public int getIniInt(String section, String key) {
       try {
-        Ini.Section section = jsonData.get(section);
-        return Integer.parseInt(section.get(key).trim());
+        Ini.Section sectionData = iniData.get(section);
+        return Integer.parseInt(sectionData.get(key).trim());
       } catch (Exception e) {
         return -1;
       }
@@ -272,7 +274,7 @@ public class Configuration {
 
   private enum FileFormat {
     INI,
-    INVALID,
+    Invalid,
     JSON
   }
 }

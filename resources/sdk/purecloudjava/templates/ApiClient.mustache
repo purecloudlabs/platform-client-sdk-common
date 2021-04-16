@@ -78,10 +78,10 @@ public class ApiClient implements AutoCloseable {
     }
 
     private final Map<String, String> defaultHeaderMap;
-    private final String basePath;
+    private String basePath;
     private final Boolean shouldThrowErrors;
     private Boolean shouldRefreshAccessToken;
-    private final int refreshTokenWaitTime;
+    private int refreshTokenWaitTime;
 
     private final DateFormat dateFormat;
     private final ObjectMapper objectMapper;
@@ -91,9 +91,9 @@ public class ApiClient implements AutoCloseable {
     private final Map<String, Authentication> authentications;
     private final ApiClientConnector connector;
 
-    private final RetryConfiguration retryConfiguration;
-    private final LoggingConfiguration loggingConfiguration;
-    private static final RetryConfiguration DEFAULT_RETRY_CONFIG = new RetryConfiguration();
+    private RetryConfiguration retryConfiguration;
+    private LoggingConfiguration loggingConfiguration;
+    private static RetryConfiguration DEFAULT_RETRY_CONFIG = new RetryConfiguration();
     // These fields are only applicable to the Code Authorization OAuth flow:
     private String clientId;
     private String clientSecret;
@@ -156,6 +156,7 @@ public class ApiClient implements AutoCloseable {
         
         String configFilePath = builder.configFilePath;
         if (configFilePath == null || configFilePath.isEmpty()) {
+            String homePath = System.getProperty("user.home");
             File homeDir = new File(homePath);
             File subDir = new File(homeDir, ".genesyscloudjava");
             File fullDir = new File(subDir, "config");
@@ -222,7 +223,7 @@ public class ApiClient implements AutoCloseable {
         return shouldRefreshAccessToken;
     }
 
-    public boolean setShouldRefreshAccessToken(boolean shouldRefreshAccessToken) {
+    public void setShouldRefreshAccessToken(boolean shouldRefreshAccessToken) {
         this.shouldRefreshAccessToken = shouldRefreshAccessToken;
     }
 
@@ -231,31 +232,31 @@ public class ApiClient implements AutoCloseable {
     }
 
     public ObjectMapper getObjectMapper() {
-        return this.objectMapper;
+        return objectMapper;
     }
 
     public String getConfigFilePath() {
-        return this.configFilePath;
+        return configFilePath;
     }
 
     public LoggingConfiguration getLoggingConfiguration() {
-        return this.loggingConfiguration;
+        return loggingConfiguration;
     }
 
     public Logger getLogger() {
-        return this.logger;
+        return logger;
     }
 
     public boolean getAutoReloadConfig() {
-        return this.autoReloadConfig();
+        return autoReloadConfig;
     }
 
-    public boolean setAutoReloadConfig(boolean autoReloadConfig) {
+    public void setAutoReloadConfig(boolean autoReloadConfig) {
         this.autoReloadConfig = autoReloadConfig;
     }
 
     public RetryConfiguration getRetryConfiguration() {
-        return this.retryConfiguration;
+        return retryConfiguration;
     }
 
     public void setRetryConfiguration(RetryConfiguration retryConfig) {
@@ -275,6 +276,10 @@ public class ApiClient implements AutoCloseable {
         throw new RuntimeException("No OAuth2 authentication configured!");
     }
 
+    public void setBasePath(String basePath) {
+        this.basePath = basePath;
+    }
+
     /**
      * Helper method to apply logging settings to logger 
      */
@@ -284,26 +289,25 @@ public class ApiClient implements AutoCloseable {
         if (logLevel != null && !logLevel.isEmpty()) {
             logger.setLevel(logger.logLevelFromString(logLevel));
         }
+
         String logFormat = loggingConfiguration.getLogFormat();
         if (logFormat != null && !logFormat.isEmpty()) {
             logger.setFormat(logger.logFormatFromString(logFormat));
         }
+
         boolean logToConsole = loggingConfiguration.getLogToConsole();
-        if (logToConsole != null) {
-            logger.setLogToConsole(logToConsole);
-        }
+        logger.setLogToConsole(logToConsole);
+
         String logFilePath = loggingConfiguration.getLogFilePath();;
         if (logFilePath != null && !logFilePath.isEmpty()) {
             logger.setLogFilePath(logFilePath);
         }
+
         boolean logRequestBody = loggingConfiguration.getLogRequestBody();
-        if (logRequestBody != null) {
-            logger.setLogRequestBody(logRequestBody);
-        }
+        logger.setLogRequestBody(logRequestBody);
+
         boolean logResponseBody = loggingConfiguration.getLogResponseBody();
-        if (logResponseBody != null) {
-            logger.setLogResponseBody(logResponseBody);
-        }
+        logger.setLogResponseBody(logResponseBody);
     }
 
     /**
@@ -767,8 +771,11 @@ public class ApiClient implements AutoCloseable {
             Retry retry = new Retry(retryConfiguration);
             do {
                 connectorResponse = connector.invoke(connectorRequest);
-                logger.debug(request.getMethod(), request.getPath(), (Object)request.getBody(), connectorResponse.getStatusCode(), request.getHeaderParams());
-                logger.trace(request.getMethod(), request.getPath(), (Object)request.getBody(), connectorResponse.getStatusCode(), request.getHeaderParams(), connectorResponse.getHeaders());
+                // copy unmodifiable maps to make modifiable
+                Map<String,String> requestHeaderCopy = new HashMap<>(request.getHeaderParams());
+                Map<String,String> responseHeaderCopy = new HashMap<>(connectorResponse.getHeaders());
+                logger.debug(request.getMethod(), request.getPath(), (Object)request.getBody(), connectorResponse.getStatusCode(), requestHeaderCopy);
+                logger.trace(request.getMethod(), request.getPath(), (Object)request.getBody(), connectorResponse.getStatusCode(), requestHeaderCopy, responseHeaderCopy);
             } while (retry.shouldRetry(connectorResponse));
             try {
                 return interpretConnectorResponse(connectorResponse, returnType);
@@ -1375,6 +1382,10 @@ public class ApiClient implements AutoCloseable {
 
         public boolean getLogResponseBody() {
             return logResponseBody;
+        }
+
+        public String getLogFilePath() {
+            return logFilePath;
         }
     }
 

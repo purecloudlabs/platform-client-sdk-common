@@ -12,8 +12,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 class ApacheHttpResponse implements ApiClientConnectorResponse {
-    private static final Logger LOG = LoggerFactory.getLogger(ApacheHttpResponse.class);
-
     private final CloseableHttpResponse response;
 
     public ApacheHttpResponse(CloseableHttpResponse response) {
@@ -25,7 +23,7 @@ class ApacheHttpResponse implements ApiClientConnectorResponse {
                     response.setEntity(new BufferedHttpEntity(entity));
                 }
                 catch (Exception exception) {
-                    LOG.error("Failed to buffer HTTP entity.", exception);
+                    // no-op
                 }
             }
         }

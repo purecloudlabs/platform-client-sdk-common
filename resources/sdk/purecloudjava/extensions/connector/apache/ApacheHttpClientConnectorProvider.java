@@ -52,9 +52,7 @@ public class ApacheHttpClientConnectorProvider implements ApiClientConnectorProv
         DetailLevel detailLevel = properties.getProperty(ApiClientConnectorProperty.DETAIL_LEVEL, DetailLevel.class, DetailLevel.MINIMAL);
 
         HttpClientBuilder builder = HttpClients.custom()
-                .setDefaultRequestConfig(requestBuilder.build())
-                .addInterceptorFirst((HttpRequestInterceptor) interceptor)
-                .addInterceptorLast((HttpResponseInterceptor) interceptor);
+                .setDefaultRequestConfig(requestBuilder.build());
         if (credentialsProvider != null) {
             builder.setDefaultCredentialsProvider(credentialsProvider);
         }
