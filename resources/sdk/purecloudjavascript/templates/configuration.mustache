@@ -50,10 +50,10 @@ class Configuration {
 
 		if (this.live_reload_config && this.live_reload_config === true) {
 			try {
-				const watcher = fs.watchFile(this.configPath, { persistent: false, interval: 30000 }, (eventType, filename) => {
+				fs.watchFile(this.configPath, { persistent: false }, (eventType, filename) => {
 					this.updateConfigFromFile();
 					if (!this.live_reload_config) {
-						watcher.close();
+						fs.unwatchFile(this.configPath);
 					}
 				});
 			} catch (err) {
@@ -63,8 +63,9 @@ class Configuration {
 	}
 
 	setConfigPath(path) {
-		if (path) {
+		if (path && path !== this.configPath) {
 			this.configPath = path;
+			this.liveLoadConfig();
 		}
 	}
 
@@ -148,7 +149,7 @@ class Configuration {
 	}
 
 	getConfigBoolean(section, key) {
-		if (this.config._sections[section] && this.config._sections[section][key]) {
+		if (this.config._sections[section] && this.config._sections[section][key] !== undefined) {
 			if (typeof this.config._sections[section][key] === 'string') {
 				return this.config._sections[section][key] === 'true';
 			} else return this.config._sections[section][key];
