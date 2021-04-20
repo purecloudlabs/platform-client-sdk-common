@@ -205,13 +205,13 @@ To log to a file, provide a `LogFilePath` value. SDK users are responsible for t
 
 Example logging configuration:
 ```{"language":"java"}
-ApiClient.LoggingConfiguration = new ApiClient.LoggingConfiguration();
+ApiClient.LoggingConfiguration loggingConfiguration = new ApiClient.LoggingConfiguration();
 loggingConfiguration.setLogLevel("trace");
 loggingConfiguration.setLogFormat("json");
 loggingConfiguration.setLogRequestBody(true);
 loggingConfiguration.setLogResponseBody(true);
 loggingConfiguration.setLogToConsole(true);
-loggingConfiguration.setLogFilePath("src/main/resources/javasdk.log");
+loggingConfiguration.setLogFilePath("/var/log/javasdk.log");
 ```
 
 #### Configuration file
@@ -224,7 +224,7 @@ A number of configuration parameters can be applied using a configuration file. 
 Example setting the configuration file:
 
 ```{"language": "java"}
-ApiClient apiClient = ApiClient.Builder.standard().withConfigFilePath("src/main/resources/logconfig.json").build();
+ApiClient apiClient = ApiClient.Builder.standard().withConfigFilePath("/path/config").build();
 ```
 
 The SDK will check every 30 seconds to see if the config file has been updated, regardless of whether a config file was present at start-up. To disable this behaviour, set `autoReloadConfig` to false.  
@@ -241,7 +241,7 @@ INI:
 log_level = trace
 log_format = text
 log_to_console = false
-log_file_path = src/main/resources/javasdk.log
+log_file_path = /path/log
 log_response_body = false
 log_request_body = false
 [retry]
@@ -263,7 +263,7 @@ JSON:
         "log_level": "trace",
         "log_format": "text",
         "log_to_console": false,
-        "log_file_path": "src/main/resources/javasdk.log",
+        "log_file_path": "/var/log/javasdk.log",
         "log_response_body": false,
         "log_request_body": false
     },

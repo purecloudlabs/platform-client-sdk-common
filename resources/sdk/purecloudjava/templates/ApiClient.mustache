@@ -772,10 +772,10 @@ public class ApiClient implements AutoCloseable {
             do {
                 connectorResponse = connector.invoke(connectorRequest);
                 // copy unmodifiable maps to make modifiable
-                Map<String,String> requestHeaderCopy = new HashMap<>(request.getHeaderParams());
+                Map<String,String> requestHeaderCopy = new HashMap<>(connectorRequest.getHeaders());
                 Map<String,String> responseHeaderCopy = new HashMap<>(connectorResponse.getHeaders());
-                logger.debug(request.getMethod(), request.getPath(), (Object)request.getBody(), connectorResponse.getStatusCode(), requestHeaderCopy);
-                logger.trace(request.getMethod(), request.getPath(), (Object)request.getBody(), connectorResponse.getStatusCode(), requestHeaderCopy, responseHeaderCopy);
+                logger.debug(connectorRequest.getMethod(), connectorRequest.getUrl(), connectorRequest.readBody(), connectorResponse.getStatusCode(), requestHeaderCopy);
+                logger.trace(connectorRequest.getMethod(), connectorRequest.getUrl(), connectorRequest.readBody(), connectorResponse.getStatusCode(), requestHeaderCopy, responseHeaderCopy);
             } while (retry.shouldRetry(connectorResponse));
             try {
                 return interpretConnectorResponse(connectorResponse, returnType);
@@ -784,7 +784,7 @@ public class ApiClient implements AutoCloseable {
                     handleExpiredAccessToken();
                     return getAPIResponse(request, returnType, isAuthRequest);
                 } else if (e.getStatusCode() < 200 || e.getStatusCode() >= 300) {
-                    logger.error(request.getMethod(), request.getPath(), (Object)request.getBody(), connectorResponse.readBody(), connectorResponse.getStatusCode(), request.getHeaderParams(), connectorResponse.getHeaders());
+                    logger.error(request.getMethod(), connectorRequest.getUrl(), connectorRequest.readBody(), connectorResponse.readBody(), connectorResponse.getStatusCode(), requestHeaderCopy, responseHeaderCopy);
                     throw e;
                 } else {
                     throw e;
@@ -1075,11 +1075,6 @@ public class ApiClient implements AutoCloseable {
             return this;
         }
 
-        public Builder withLogger(Logger logger) {
-            this.logger = logger;
-            return this;
-        }
-
         public Builder withConfigFilePath(String configFilePath) {
             this.configFilePath = configFilePath;
             return this;
@@ -1327,7 +1322,7 @@ public class ApiClient implements AutoCloseable {
         private String logFilePath = null;
         private String logFormat = "text";
         private Boolean logToConsole = true;
-        private Boolean logRequestBody = true;
+        private Boolean logRequestBody = false;
         private Boolean logResponseBody = false;
 
         public void setLogLevel(String logLevel) {

@@ -47,6 +47,7 @@ public class Configuration {
       Runnable runnable = () -> configuration.runConfigChecker();
       Thread configCheckerThread = new Thread(runnable);
       configCheckerThread.start();
+      configCheckerThread.setDaemon(true);
     }
   }
 
