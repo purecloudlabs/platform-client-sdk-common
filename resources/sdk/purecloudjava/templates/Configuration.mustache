@@ -46,8 +46,8 @@ public class Configuration {
     if (autoReloadConfig) {
       Runnable runnable = () -> configuration.runConfigChecker();
       Thread configCheckerThread = new Thread(runnable);
-      configCheckerThread.start();
       configCheckerThread.setDaemon(true);
+      configCheckerThread.start();
     }
   }
 

@@ -130,7 +130,7 @@ public class Logger {
     public void trace(
         String method,
         String url,
-        Object requestBody,
+        String requestBody,
         int statusCode,
         Map<String, String> requestHeaders,
         Map<String, String> responseHeaders
@@ -151,7 +151,7 @@ public class Logger {
     public void debug(
         String method,
         String url,
-        Object requestBody,
+        String requestBody,
         int statusCode,
         Map<String, String> requestHeaders
     ) {
@@ -170,7 +170,7 @@ public class Logger {
     public void error(
         String method,
         String url,
-        Object requestBody,
+        String requestBody,
         String responseBody,
         int statusCode,
         Map<String, String> requestHeaders,
@@ -225,10 +225,10 @@ public class Logger {
     }
     
     public enum LogLevel {
-        LError(4);
+        LError(4),
         LDebug(3),
         LTrace(1),
-        LNone(0),
+        LNone(0);
 
         private int order;
     
