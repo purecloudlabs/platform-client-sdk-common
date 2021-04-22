@@ -40,8 +40,7 @@ import (
 var (
 	{{=it.supercommand}}Cmd = &cobra.Command{
 		Use:   utils.FormatUsageDescription("{{=it.supercommand}}"),
-		Short: "{{=it.description}}",
-		Long:  \`{{=it.description}}\`,
+		Short: utils.FormatUsageDescription("{{=it.supercommand}}", "SWAGGER_OVERRIDE_{{=it.description}}"),
 	}
 	CommandService services.CommandService
 )
@@ -71,6 +70,7 @@ func Cmd{{=it.supercommand}}() *cobra.Command {
 						split.pop()
 					}
 					description = split.join("/")
+					// description = `${description} postprocess1 ${resourcePath}`
 				}
 			} else {
 				description = `/api/v2/${supercommand}`
@@ -78,12 +78,42 @@ func Cmd{{=it.supercommand}}() *cobra.Command {
 					.replace(/[\/]{2,}/g, "/")
 					.replace(/\b(\w*documentationfile\w*)\b/g, "documentation")
 					.replace(/\b(\w*profile\w*)\b/g, "profiles")
+				// description = `${description} postprocess2 ${supercommand}`
 			}
 			description = description.replace(/\/$/g, "")
 
 			// console.log(description, supercommand, resourcePath)
 			console.log(`Creating ${commandFile} with description ${description}`)
 			writeTemplate(templateString, { supercommand: supercommand, description: description }, commandFile);
+		} else {
+			if (resourcePath != null && resourcePath.includes("/{")) {
+				let resourcePathSplit = resourcePath.replace("/api/v2/", "").split("/")
+				let supercommandSplit = supercommand.split("_")
+				// if (resourcePathSplit.length > supercommand.split("_").length)
+				// 	console.log("not creating", resourcePath, supercommand, commandFile)
+				// else console.log("wut", resourcePath, supercommand)
+				for (i = 0; i < supercommandSplit.length; i++) {
+					if (supercommandSplit[i] !== resourcePathSplit[i]) {
+						console.log("sham", resourcePath, supercommand, commandFile)
+						let data = fs.readFileSync(commandFile, 'utf8')
+						const dataSplit = data.split("\n")
+						for (const d of dataSplit) {
+							if (d.startsWith("		Short: utils.FormatUsageDescription(")) {
+								if (!d.includes(resourcePath)) {
+									console.log("RONAN_LOOK", supercommand, resourcePath, commandFile)
+									let newLine = d.replace(", ),", `, "SWAGGER_OVERRIDE_${resourcePath}", ),`)
+									data.replace(d, newLine)
+								} else {
+									console.log("MAYBEHERE", supercommand, resourcePath, commandFile)
+								}
+							}
+							break
+						}
+						fs.writeFileSync(commandFile, data)
+						break
+					}
+				}
+			}
 		}
 	}
 }

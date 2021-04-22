@@ -163,7 +163,7 @@ function getDescription(path, supercommand) {
 		.replace(/\/$/g, "")
 	// if (!path.endsWith("/"))
 		// path = `${path}/`
-	return path
+	return `${path}`
 
 	// let name = getName(path)
 	// let description = `/api/v2/${supercommand.replace(/\./g, "/")}/${name}`

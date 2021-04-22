@@ -98,12 +98,21 @@ func FormatUsageDescription(inputs ...string) string {
 	// Add a description if it was specified in the resource definition
 	const SwaggerOverride = "SWAGGER_OVERRIDE_"
 	var description string
+	var descriptions = make([]string, 0)
 	for _, description = range messages {
 		if strings.Contains(description, SwaggerOverride) {
-			break
+			alreadyIncluded := false
+			for _, existingDescription := range descriptions {
+				if existingDescription == description {
+					alreadyIncluded = true
+				}
+			}
+			if !alreadyIncluded {
+				descriptions = append(descriptions, description)
+			}
 		}
 	}
-	return fmt.Sprintf("%s", strings.Replace(description, SwaggerOverride, "", 1))
+	return strings.Replace(strings.Join(descriptions, " "), SwaggerOverride, "", -1)
 }
 
 func FormatPermissions(permissions []string) string {
