@@ -164,6 +164,7 @@ func (c *LoggingConfiguration) trace(method, URL string, requestBody []byte, sta
 		Method:          method,
 		URL:             URL,
 		RequestBody:     string(requestBody),
+		CorrelationId:   getCorrelationId(responseHeaders),
 		StatusCode:      statusCode,
 		RequestHeaders:  requestHeaders,
 		ResponseHeaders: responseHeaders,
