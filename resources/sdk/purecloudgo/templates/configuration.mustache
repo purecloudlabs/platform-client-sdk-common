@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/rjeczalik/notify"
 	"github.com/spf13/viper"
 	"io/ioutil"
 	"net/http"
@@ -43,7 +44,6 @@ type Configuration struct {
 	LoggingConfiguration     *LoggingConfiguration `json:"loggingConfiguration,omitempty"`
 	ConfigFilePath           string                `json:"configFilePath,omitempty"`
 	AutoReloadConfig         bool                  `json:"autoReloadConfig,omitempty"`
-	configFileHash           string
 }
 
 const (
@@ -279,21 +279,36 @@ func getConfigInt(section, key string) int {
 }
 
 func (c *Configuration) periodicConfigUpdater() {
+	notificationChannel := make(chan notify.EventInfo, 1)
+	// Set up a watchpoint listening on events within the parent directory of the config file.
+	watchedDirectory := filepath.Dir(c.ConfigFilePath)
+	err := notify.Watch(watchedDirectory+ "/...", notificationChannel, notify.Write)
+	// If an error is returned and the error indicates that the directory doesn't exist
+	// enter a loop and try to watch subsequent parent directories until an unrecoverable error is returned or no error is returned
+	if err != nil {
+		for ok := true; ok; ok = err != nil {
+			errorType := strings.Split(err.Error(), " ")[0]
+			// This error indicates the directory doesn't exist
+			if errorType == "lstat" {
+				watchedDirectory = filepath.Dir(watchedDirectory)
+			} else {
+				return
+			}
+			err = notify.Watch(watchedDirectory+ "/...", notificationChannel, notify.Write)
+		}
+	}
+	defer notify.Stop(notificationChannel)
+	
+	// Wait for events
 	for {
-		time.Sleep(30 * time.Second)
-
-		if !c.AutoReloadConfig {
-			return
-		}
-
-		hash, err := getFileHash(c.ConfigFilePath)
-		if err != nil {
-			continue
-		}
-		if hash != c.configFileHash {
-			c.configFileHash = hash
-			if err := c.updateConfigFromFile(); err != nil {
-				continue
+		select {
+		case event := <-notificationChannel:
+			if !c.AutoReloadConfig {
+				return
+			}
+			// Only act on updates to the config file.
+			if event.Path() == c.ConfigFilePath {
+				_ = c.updateConfigFromFile()
 			}
 		}
 	}
