@@ -97,10 +97,10 @@ public class FileWatcher implements Runnable {
    }
 
    public static List<WatchService> getWatchServices() {
-       return Collections.unmodifiableList(watchServices)
+       return Collections.unmodifiableList(watchServices);
    }
 
-   private class FileEvent extends EventObject{
+   public static class FileEvent extends EventObject{
        public FileEvent(File file) {
            super(file);
        }
@@ -112,10 +112,10 @@ public class FileWatcher implements Runnable {
    public interface FileListener extends EventListener {
        public void onCreated(FileEvent event);
        public void onModified(FileEvent event);
-       public void onDeleted(FileEvent event)
+       public void onDeleted(FileEvent event);
    }
 
-   public abstract class FileAdapter implements FileListener {
+   public static abstract class FileAdapter implements FileListener {
        @Override
        public void onCreated(FileEvent event) {
        }

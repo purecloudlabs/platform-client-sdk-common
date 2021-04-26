@@ -47,20 +47,20 @@ public class Configuration {
       while (parentFolder != null && !parentFolder.exists()) {
         File temp = parentFolder.getParentFile();
         if (temp != null) {
-          parentDirectory = temp;
+          parentFolder = temp;
         } else {
           break;
         }
       }
       if (parentFolder != null) {
-        new FileWatcher(parentFolder).addListener(new FileAdapter() {
-          onModified(FileEvent event) {
+        new FileWatcher(parentFolder).addListener(new FileWatcher.FileAdapter() {
+          public void onModified(FileWatcher.FileEvent event) {
             applyConfigFromFile();
           }
-          onCreated(FileEvent event) {
+          public void onCreated(FileWatcher.FileEvent event) {
             applyConfigFromFile();
           }
-          onDeleted(FileEvent event) {
+          public void onDeleted(FileWatcher.FileEvent event) {
             defaultApiClient.applyLoggingConfiguration();
           }
         }).watch();
