@@ -1010,26 +1010,31 @@ public class ApiClient implements AutoCloseable {
         private Boolean logToConsole = true;
         private Boolean logRequestBody = false;
         private Boolean logResponseBody = false;
+        
         public void setLogLevel(String logLevel) {
-            List<String> validArguments = Arrays.asList("trace", "debug", "error", "none");
-            String match = validArguments.stream()
-                .filter(validArgument -> logLevel.trim().equalsIgnoreCase(validArgument))
-                .findFirst()
-                .orElse(null);
-            if (match == null)
+            String[] validArguments = new String[] {"trace", "debug", "error", "none"};
+            String match = "";
+            for (int i = 0; i < validArguments.length; i++) {
+                if (logLevel.trim().equalsIgnoreCase(validArguments[i])) {
+                    match = validArguments[i];
+                }
+            }
+            if (match.isEmpty())
                 throw new IllegalArgumentException("logLevel should be one of \"trace\", \"debug\", \"error\", or \"none\"");
-            this.logLevel = logLevel.trim();
+            this.logLevel = match;
         }
 
         public void setLogFormat(String logFormat) {
-            List<String> validArguments = Arrays.asList("json", "text");
-            String match = validArguments.stream()
-                .filter(validArgument -> logFormat.trim().equalsIgnoreCase(validArgument))
-                .findFirst()
-                .orElse(null);
+            String[] validArguments = String[] { "json", "text" };
+            String match = "";
+            for (int i = 0; i < validArguments.length; i++) {
+                if (logFormat.trim().equalsIgnoreCase(validArguments[i])) {
+                    match = validArguments[i];
+                }
+            }
             if (match == null)
                 throw new IllegalArgumentException("logFormat should be one of \"json\" or \"text\"");
-            this.logFormat = logFormat.trim();
+            this.logFormat = match;
         }
 
         public void setLogToConsole(boolean logToConsole) {
