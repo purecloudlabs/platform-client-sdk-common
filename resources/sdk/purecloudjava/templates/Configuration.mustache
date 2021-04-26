@@ -41,13 +41,30 @@ public class Configuration {
     configFilePath = defaultApiClient.getConfigFilePath();
     ApiClient.LoggingConfiguration loggingConfiguration = defaultApiClient.getLoggingConfiguration();
     Configuration configuration = new Configuration();
-    configFileHash = configuration.getConfigHash();
     configuration.applyConfigFromFile();
     if (autoReloadConfig) {
-      Runnable runnable = () -> configuration.runConfigChecker();
-      Thread configCheckerThread = new Thread(runnable);
-      configCheckerThread.setDaemon(true);
-      configCheckerThread.start();
+      File parentFolder = new File(configFilePath).getParentFile();
+      while (parentFolder != null && !parentFolder.exists()) {
+        File temp = parentFolder.getParentFile();
+        if (temp != null) {
+          parentDirectory = temp;
+        } else {
+          break;
+        }
+      }
+      if (parentFolder != null) {
+        new FileWatcher(parentFolder).addListener(new FileAdapter() {
+          onModified(FileEvent event) {
+            applyConfigFromFile();
+          }
+          onCreated(FileEvent event) {
+            applyConfigFromFile();
+          }
+          onDeleted(FileEvent event) {
+            defaultApiClient.applyLoggingConfiguration();
+          }
+        }).watch();
+      }
     }
   }
 
@@ -111,43 +128,6 @@ public class Configuration {
       ApiClient.RetryConfiguration retryConfiguration = defaultApiClient.getRetryConfiguration();
       retryConfiguration.setRetryMax(parser.getInt("retry", "retry_max"));
       defaultApiClient.setRetryConfiguration(retryConfiguration);
-    }
-  }
-
-  public String getConfigHash() {
-    try (FileInputStream fis = new FileInputStream(new File(configFilePath))) {
-      MessageDigest md = MessageDigest.getInstance("MD5");
-      byte[] bytesBuffer = new byte[1024];
-      int bytesRead = -1;
-      while ((bytesRead = fis.read(bytesBuffer)) != -1) {
-        md.update(bytesBuffer, 0, bytesRead);
-      }
-      byte[] hashedBytes = md.digest();
-      return new String(hashedBytes, StandardCharsets.UTF_8);
-    } catch (Exception e) {
-      return "";
-    }
-  }
-
-  public void runConfigChecker() {
-    while (true) {
-        try {
-          Thread.sleep(30 * 1000);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          break;
-        }
-        if (!autoReloadConfig) {
-            return;
-        }
-        String hash = getConfigHash();
-        if (hash.isEmpty() || hash == null) {
-            continue; 
-        }
-        if (hash.compareTo(configFileHash) != 0) {
-            configFileHash = hash;
-            applyConfigFromFile();
-        }
     }
   }
   
