@@ -151,7 +151,7 @@ public class ApiClient implements AutoCloseable {
 
         this.loggingConfiguration = builder.loggingConfiguration;
         if (this.loggingConfiguration != null) {
-            applyLoggingConfiguration();
+            applyLoggingConfiguration(this.loggingConfiguration);
         }
         
         String configFilePath = builder.configFilePath;
@@ -283,7 +283,7 @@ public class ApiClient implements AutoCloseable {
     /**
      * Helper method to apply logging settings to logger 
      */
-    public void applyLoggingConfiguration() {
+    public void applyLoggingConfiguration(LoggingConfiguration loggingConfiguration) {
         // Logging
         String logLevel = loggingConfiguration.getLogLevel();
         if (logLevel != null && !logLevel.isEmpty()) {

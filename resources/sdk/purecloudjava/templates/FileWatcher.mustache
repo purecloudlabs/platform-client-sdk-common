@@ -8,23 +8,29 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.WatchService;
+import java.nio.file.WatchEvent;
+import java.nio.file.WatchKey;
 import java.nio.file.ClosedWatchServiceException;
 import java.util.EventObject;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Collections;
 import static java.nio.file.StandardWatchEventKinds.*;
 
 {{>generatedAnnotation}}
 public class FileWatcher implements Runnable {
-   protected static final List<WatchServices> watchServices = new ArrayList<>();
-   protected final File configFolder;
+   protected List<FileListener> listeners = new ArrayList<>();
+   protected static final List<WatchService> watchServices = new ArrayList<>();
+   protected final File parentFolder;
+   protected Path fileName;
 
-   public FileWatcher(File configFolder) {
-       this.configFolder = configFolder;
+   public FileWatcher(File parentFolder, Path fileName) {
+       this.parentFolder = parentFolder;
+       this.fileName = fileName;
    }
 
    public void watch() {
-       if (configFolder.exists()) {
+       if (parentFolder.exists()) {
            Thread thread = new Thread(this);
            thread.setDaemon(true);
            thread.start();
@@ -34,7 +40,7 @@ public class FileWatcher implements Runnable {
    @Override
    public void run() {
        try (WatchService watchService = FileSystems.getDefault().newWatchService()) {
-           Path path = Paths.get(configFolder.getAbsolutePath());
+           Path path = Paths.get(parentFolder.getAbsolutePath());
            path.register(watchService, ENTRY_CREATE, ENTRY_MODIFY, ENTRY_DELETE);
            watchServices.add(watchService);
            boolean poll = true;
@@ -51,7 +57,7 @@ public class FileWatcher implements Runnable {
        Path path = (Path) key.watchable();
        for (WatchEvent<?> event : key.pollEvents()) {
            final Path changed = (Path) event.context();
-           if (changed.endsWith("configFile")) {
+           if (changed.endsWith(fileName)) {
                notifyListeners(event.kind(), path.resolve(changed).toFile());
            }
        }
