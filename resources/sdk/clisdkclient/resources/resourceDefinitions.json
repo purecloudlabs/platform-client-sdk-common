@@ -25,6 +25,10 @@
 		"get": {},
 		"put": {}
 	},
+	"/api/v2/authorization/roles/{roleId}/subjectgrants": {
+		"name": "subjectgrants",
+		"supercommand": "roles"
+	},
 	"/api/v2/authorization/roles/{roleId}/users": {
 		"name": "users",
 		"description": "authorization roles users",
@@ -46,6 +50,22 @@
 		"put": {
 			"name": "delete"
 		}
+	},
+	"/api/v2/authorization/subjects/{subjectId}": {
+		"name": "subjects",
+		"description": "authorization subjects"
+	},
+	"/api/v2/authorization/subjects/{subjectId}/bulkadd": {
+		"name": "bulkadd",
+		"supercommand": "subjects"
+	},
+	"/api/v2/authorization/subjects/{subjectId}/bulkremove": {
+		"name": "bulkremove",
+		"supercommand": "subjects"
+	},
+	"/api/v2/authorization/subjects/{subjectId}/bulkreplace": {
+		"name": "bulkreplace",
+		"supercommand": "subjects"
 	},
 	"/api/v2/telephony/providers/edges": {
 		"name": "edges"
