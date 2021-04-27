@@ -31,7 +31,6 @@ import {{invokerPackage}}.connector.*;
 import {{invokerPackage}}.extensions.AuthResponse;
 import {{invokerPackage}}.PureCloudRegionHosts;
 import {{invokerPackage}}.Logger;
-import {{invokerPackage}}.LocalDateSerializer;
 
 {{>generatedAnnotation}}
 public class ApiClient implements AutoCloseable {
@@ -105,7 +104,7 @@ public class ApiClient implements AutoCloseable {
 
         this.loggingConfiguration = builder.loggingConfiguration;
         if (this.loggingConfiguration != null) {
-            applyLoggingConfiguration();
+            applyLoggingConfiguration(this.loggingConfiguration);
         }
 
         String configFilePath = builder.configFilePath;
@@ -562,37 +561,7 @@ public class ApiClient implements AutoCloseable {
     /**
      * Helper method to apply logging settings to logger 
      */
-    public void applyLoggingConfiguration() {
-        // Logging
-        String logLevel = loggingConfiguration.getLogLevel();
-        if (logLevel != null && !logLevel.isEmpty()) {
-            logger.setLevel(logger.logLevelFromString(logLevel));
-        }
-
-        String logFormat = loggingConfiguration.getLogFormat();
-        if (logFormat != null && !logFormat.isEmpty()) {
-            logger.setFormat(logger.logFormatFromString(logFormat));
-        }
-
-        boolean logToConsole = loggingConfiguration.getLogToConsole();
-        logger.setLogToConsole(logToConsole);
-
-        String logFilePath = loggingConfiguration.getLogFilePath();;
-        if (logFilePath != null && !logFilePath.isEmpty()) {
-            logger.setLogFilePath(logFilePath);
-        }
-
-        boolean logRequestBody = loggingConfiguration.getLogRequestBody();
-        logger.setLogRequestBody(logRequestBody);
-
-        boolean logResponseBody = loggingConfiguration.getLogResponseBody();
-        logger.setLogResponseBody(logResponseBody);
-    }
-
-    /**
-     * Helper method to apply logging settings to logger 
-     */
-    public void applyLoggingConfiguration() {
+    public void applyLoggingConfiguration(LoggingConfiguration loggingConfiguration) {
         // Logging
         String logLevel = loggingConfiguration.getLogLevel();
         if (logLevel != null && !logLevel.isEmpty()) {
@@ -628,7 +597,17 @@ public class ApiClient implements AutoCloseable {
             Map<String,String> responseHeaderCopy = new HashMap<>(connectorResponse.getHeaders());
             logger.debug(connectorRequest.getMethod(), connectorRequest.getUrl(), connectorRequest.readBody(), connectorResponse.getStatusCode(), requestHeaderCopy);
             logger.trace(connectorRequest.getMethod(), connectorRequest.getUrl(), connectorRequest.readBody(), connectorResponse.getStatusCode(), requestHeaderCopy, responseHeaderCopy);
-            return interpretConnectorResponse(connectorResponse, returnType);
+            try {
+                return interpretConnectorResponse(connectorResponse, returnType);
+            } catch (ApiException e) {
+                if (e.getStatusCode() < 200 || e.getStatusCode() >= 300) {
+                    responseHeaderCopy = new HashMap<>(e.getHeaders());
+                    logger.error(connectorRequest.getMethod(), connectorRequest.getUrl(), connectorRequest.readBody(), e.getRawBody(), e.getStatusCode(), requestHeaderCopy, responseHeaderCopy);
+                    throw e;
+                } else {
+                    throw e;
+                }
+            }
         }
         finally {
             if (connectorResponse != null) {
@@ -636,8 +615,6 @@ public class ApiClient implements AutoCloseable {
                     connectorResponse.close();
                 }
                 catch (Throwable e) {
-                    Map<String,String> responseHeaderCopy = new HashMap<>(e.getHeaders());
-                    logger.error(connectorRequest.getMethod(), connectorRequest.getUrl(), connectorRequest.readBody(), e.getRawBody(), e.getStatusCode(), requestHeaderCopy, responseHeaderCopy);
                     throw new RuntimeException(e);
                 }
             }
@@ -1025,7 +1002,7 @@ public class ApiClient implements AutoCloseable {
         }
 
         public void setLogFormat(String logFormat) {
-            String[] validArguments = String[] { "json", "text" };
+            String[] validArguments = new String[] { "json", "text" };
             String match = "";
             for (int i = 0; i < validArguments.length; i++) {
                 if (logFormat.trim().equalsIgnoreCase(validArguments[i])) {
