@@ -7,12 +7,15 @@ class Logger(object):
         # disable urllib3 logging
         logging.getLogger("urllib3").setLevel(logging.CRITICAL + 1)
         logging.getLogger("urllib3").propagate = False
+        # disable watchdog logging   
+        logging.getLogger("watchdog").setLevel(logging.CRITICAL + 1)
+        logging.getLogger("watchdog").propagate = False
 
         # add trace log level
         logging.addLevelName(LogLevel.LTrace, 'TRACE')
 
         # private properties
-        self._logger = logging.getLogger()
+        self._logger = logging.getLogger('PureCloudPlatformClientV2')
         self._file_handler = None
         self._console_handler = None
 

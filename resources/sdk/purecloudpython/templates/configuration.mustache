@@ -32,6 +32,8 @@ import sys
 from six import iteritems
 from os.path import expanduser
 import configparser
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler, FileModifiedEvent
 import os
 import time
 import threading
@@ -110,11 +112,11 @@ class Configuration(object):
         self.logger = Logger()
 
         # Private config file variables
-        # SHA256 hash of the config file
-        self._config_file_hash = None
         # path to the config file
         # default to ~/.genesyscloudpython/config
         self.config_file_path = os.path.join(expanduser("~"), ".genesyscloudpython", "config")
+        # private directory observer instance
+        self._observer = None
 
         # flag to control running of _config_updater thread
         self.live_reload_config = True
@@ -124,9 +126,11 @@ class Configuration(object):
 
         # if live_reload_config set, start the config_updater thread
         if self.live_reload_config:
-            config_updater = threading.Thread(target=self._config_updater)
-            config_updater.setDaemon(True)
-            config_updater.start()
+            run_observer = threading.Thread(target=self._run_observer)
+            run_observer.setDaemon(True)
+            run_observer.start()
+
+            self._config_updater()
 
     @property
     def config_file_path(self):
@@ -136,6 +140,10 @@ class Configuration(object):
     def config_file_path(self, value):
         self.__config_file_path = value
         self._update_config_from_file()
+        if not hasattr(self, "_observer"):
+            return
+        if self.live_reload_config:
+            self._config_updater()
 
     def get_api_key_with_prefix(self, identifier):
         """
@@ -209,80 +217,98 @@ class Configuration(object):
                format(env=sys.platform, pyversion=sys.version)
 
     def _update_config_from_file(self):
-        config = configparser.ConfigParser()
-        # try to parse as INI format
         try:
-            # if it doesn't exist, this function will return []
-            if config.read(self.config_file_path) == []:
-                return
-        except configparser.MissingSectionHeaderError as e:
-            # this exception means it's possibly JSON
+            config = configparser.ConfigParser()
+            # try to parse as INI format
             try:
-                with open(self.config_file_path, "r") as read_file:
-                    config = json.load(read_file)
-            except Exception as e:
-                return
-        # logging
-        log_level = _get_config_string(config, "logging", "log_level")
-        if log_level is not None:
-            self.logger.log_level = LogLevel.from_string(log_level)
+                # if it doesn't exist, this function will return []
+                if config.read(self.config_file_path) == []:
+                    return
+            except configparser.MissingSectionHeaderError as e:
+                # this exception means it's possibly JSON
+                try:
+                    with open(self.config_file_path, "r") as read_file:
+                        config = json.load(read_file)
+                except Exception:
+                    return
+            # logging
+            log_level = _get_config_string(config, "logging", "log_level")
+            if log_level is not None:
+                self.logger.log_level = LogLevel.from_string(log_level)
 
-        log_format = _get_config_string(config, "logging", "log_format")
-        if log_format is not None:
-            self.logger.log_format = LogFormat.from_string(log_format)
-        
-        log_to_console = _get_config_bool(config, "logging", "log_to_console")
-        if log_to_console is not None:
-            self.logger.log_to_console = log_to_console
+            log_format = _get_config_string(config, "logging", "log_format")
+            if log_format is not None:
+                self.logger.log_format = LogFormat.from_string(log_format)
+            
+            log_to_console = _get_config_bool(config, "logging", "log_to_console")
+            if log_to_console is not None:
+                self.logger.log_to_console = log_to_console
 
-        log_file_path = _get_config_string(config, "logging", "log_file_path")
-        if log_file_path is not None:
-            self.logger.log_file_path = log_file_path
+            log_file_path = _get_config_string(config, "logging", "log_file_path")
+            if log_file_path is not None:
+                self.logger.log_file_path = log_file_path
 
-        log_response_body = _get_config_bool(config, "logging", "log_response_body")
-        if log_response_body is not None:
-            self.logger.log_response_body = log_response_body
+            log_response_body = _get_config_bool(config, "logging", "log_response_body")
+            if log_response_body is not None:
+                self.logger.log_response_body = log_response_body
 
-        log_request_body = _get_config_bool(config, "logging", "log_request_body")
-        if log_request_body is not None:
-            self.logger.log_request_body = log_request_body
-        
-        # general
-        host = _get_config_string(config, "general", "host")
-        if host is not None:
-            self.host = host
+            log_request_body = _get_config_bool(config, "logging", "log_request_body")
+            if log_request_body is not None:
+                self.logger.log_request_body = log_request_body
+            
+            # general
+            host = _get_config_string(config, "general", "host")
+            if host is not None:
+                self.host = host
 
-        live_reload_config = _get_config_bool(config, "general", "live_reload_config")
-        if live_reload_config is not None:
-            self.live_reload_config = live_reload_config
+            live_reload_config = _get_config_bool(config, "general", "live_reload_config")
+            if live_reload_config is not None:
+                self.live_reload_config = live_reload_config
 
-        # reauthentication
-        refresh_access_token = _get_config_bool(config, "reauthentication", "refresh_access_token")
-        if refresh_access_token is not None:
-            self.should_refresh_access_token = refresh_access_token
-        
-        refresh_token_wait_max = _get_config_int(config, "reauthentication", "refresh_token_wait_max")
-        if refresh_token_wait_max is not None:
-            self.refresh_token_wait_time = refresh_token_wait_max
+            # reauthentication
+            refresh_access_token = _get_config_bool(config, "reauthentication", "refresh_access_token")
+            if refresh_access_token is not None:
+                self.should_refresh_access_token = refresh_access_token
+            
+            refresh_token_wait_max = _get_config_int(config, "reauthentication", "refresh_token_wait_max")
+            if refresh_token_wait_max is not None:
+                self.refresh_token_wait_time = refresh_token_wait_max
+        except Exception:
+            return
+
+    def _run_observer(self):
+        self._observer = Observer()
+        self._observer.start()
+        try:
+            while True:
+                time.sleep(1)
+        finally:
+            self._observer.stop()
+            self._observer.join()
 
     def _config_updater(self):
-        while True:
-            CHECK_CONFIG_INTERVAL = 30
-            time.sleep(CHECK_CONFIG_INTERVAL)
-            if not self.live_reload_config:
-                return
-            file_hash = self._get_file_hash()
-            if file_hash != self._config_file_hash:
-                self._config_file_hash = file_hash
-                self._update_config_from_file()
+        if self._observer is not None:
+            self._observer.unschedule_all()
+        event_handler = ConfigFileEventHandler(self)
 
-    def _get_file_hash(self):
-        try:
-            with open(self.config_file_path, "rb") as f:
-                bytes = f.read()
-                return hashlib.sha256(bytes).hexdigest()
-        except:
-            return None
+        # watch the parent directory of the config file
+        watched_directory = os.path.dirname(self.config_file_path)
+        # go up the directory tree if the parent directory doesn't yet exist
+        while not os.path.exists(watched_directory):
+            watched_directory = os.path.dirname(watched_directory)
+            if watched_directory == "":
+                return
+
+        while True:
+            try:
+                self._observer.schedule(event_handler, watched_directory, recursive=True)
+                break
+            except FileNotFoundError:
+                watched_directory = os.path.dirname(watched_directory)
+                if watched_directory == "":
+                    return
+            except Exception as e:
+                return
 
 def _get_config_string(config, section, key):
         try:
@@ -307,3 +333,15 @@ def _get_config_int(config, section, key):
                 return config[section][key]
         except:
             return None
+
+class ConfigFileEventHandler(FileSystemEventHandler):
+    def __init__(self, configuration):
+        super()
+        self.configuration = configuration
+        self.config_file_path = self.configuration.config_file_path
+
+    def on_modified(self, event):
+        # only respond if the config file has been modified
+        if type(event) == FileModifiedEvent and event.src_path == self.config_file_path:
+            if self.configuration.live_reload_config:
+                self.configuration._update_config_from_file()
