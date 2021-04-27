@@ -17,7 +17,6 @@ import java.util.Map;
 {{>generatedAnnotation}}
 public class Configuration {
   private static ApiClient defaultApiClient = null;
-  private static String configFileHash = "";
   private static String configFilePath = null;
   private static Boolean autoReloadConfig = false;
   private static Logger logger = null;
@@ -74,7 +73,7 @@ public class Configuration {
               defaultApiClient.applyLoggingConfiguration(loggingConfiguration);
             }
           }
-          
+
         }).watch();
       }
     }
@@ -148,6 +147,8 @@ public class Configuration {
     private FileFormat fileFormat;
     private Ini iniData;
     private Map<String, Object> jsonData;
+    private Boolean emptyData = true;
+
 
     public ConfigurationParser(String filePath) {
       this.filePath = filePath;
@@ -158,8 +159,9 @@ public class Configuration {
       try {
         File configFile = new File(filePath);
         Ini ini = new Ini(new FileReader(configFile));
-        this.iniData = ini;
-        this.fileFormat = FileFormat.INI;
+        iniData = ini;
+        fileFormat = FileFormat.INI;
+        emptyData = iniData == null || iniData.isEmpty();
       } catch (FileNotFoundException e) {
         return false;
       } catch (Exception e) {
@@ -167,11 +169,15 @@ public class Configuration {
           ObjectMapper objectMapper = new ObjectMapper();
           File configFile = new File(filePath);
           Map<String, Object> jsonMap = objectMapper.readValue(configFile, Map.class);
-          this.jsonData = jsonMap;
-          this.fileFormat = FileFormat.JSON;
+          jsonData = jsonMap;
+          fileFormat = FileFormat.JSON;
+          emptyData = jsonData == null || jsonData.isEmpty();
         } catch (Exception ex) {
           return false;
         }
+      }
+      if (emptyData) {
+        return false;
       }
       return true;
     }
