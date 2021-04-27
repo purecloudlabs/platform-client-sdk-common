@@ -13,8 +13,10 @@ import java.util.Map;
 public class Configuration {
   private static ApiClient defaultApiClient = null;
   private static String configFilePath = "";
-  private static Boolean autoReloadConfig = false;
   private static Logger logger = null;
+  private static FileWatcher configFileWatcher = null;
+  private static FileWatcher.FileAdapter configListener = null;
+  private static ApiClient.LoggingConfiguration loggingConfiguration;
 
   /**
    * Get the default API client, which would be used when creating API
@@ -32,40 +34,64 @@ public class Configuration {
    */
   public static void setDefaultApiClient(ApiClient apiClient) {
     defaultApiClient = apiClient;
-    autoReloadConfig = defaultApiClient.getAutoReloadConfig();
     logger = defaultApiClient.getLogger();
     configFilePath = defaultApiClient.getConfigFilePath();
-    final ApiClient.LoggingConfiguration loggingConfiguration = defaultApiClient.getLoggingConfiguration();
+    loggingConfiguration = defaultApiClient.getLoggingConfiguration();
     final Configuration configuration = new Configuration();
     configuration.applyConfigFromFile();
-    if (autoReloadConfig) {
-      File parentFolder = new File(configFilePath).getParentFile();
-      Path configFileName = Paths.get(configFilePath).getFileName();
-      while (parentFolder != null && !parentFolder.exists()) {
-        File temp = parentFolder.getParentFile();
-        if (temp != null) {
-          parentFolder = temp;
-        } else {
-          break;
+    configuration.configureAutoReload();
+  }
+
+  public void configureAutoReload() {
+    boolean shouldUnsubscribeFromFileWatcher = !defaultApiClient.getAutoReloadConfig()
+            && configFileWatcher != null
+            && configFileWatcher.getListeners().contains(configListener);
+    boolean shouldSubscribeToFileWatcher = defaultApiClient.getAutoReloadConfig()
+            && (configFileWatcher == null || configFileWatcher.getListeners().size() == 0);
+    if (shouldUnsubscribeFromFileWatcher) {
+      configFileWatcher.removeListener(configListener);
+    }
+    if (shouldSubscribeToFileWatcher) {
+      if (configFileWatcher == null) {
+        initializeFileWatcher();
+      } else {
+        configFileWatcher.addListener(configListener);
+      }
+    }
+  }
+
+  public void initializeFileWatcher() {
+    File parentFolder = new File(configFilePath).getParentFile();
+    Path configFileName = Paths.get(configFilePath).getFileName();
+    while (parentFolder != null && !parentFolder.exists()) {
+      File temp = parentFolder.getParentFile();
+      if (temp != null) {
+        parentFolder = temp;
+      } else {
+        break;
+      }
+    }
+    if (parentFolder != null) {
+      configListener = new FileWatcher.FileAdapter() {
+        public void onModified(FileWatcher.FileEvent event) {
+          applyConfigFromFile();
+          configureAutoReload();
         }
-      }
-      if (parentFolder != null) {
-        new FileWatcher(parentFolder, configFileName).addListener(new FileWatcher.FileAdapter() {
-          public void onModified(FileWatcher.FileEvent event) {
-            configuration.applyConfigFromFile();
+        public void onCreated(FileWatcher.FileEvent event) {
+          applyConfigFromFile();
+          configureAutoReload();
+        }
+        public void onDeleted(FileWatcher.FileEvent event) {
+          if (loggingConfiguration == null) {
+            defaultApiClient.applyLoggingConfiguration(new ApiClient.LoggingConfiguration());
+          } else {
+            defaultApiClient.applyLoggingConfiguration(loggingConfiguration);
           }
-          public void onCreated(FileWatcher.FileEvent event) {
-            configuration.applyConfigFromFile();
-          }
-          public void onDeleted(FileWatcher.FileEvent event) {
-            if (loggingConfiguration == null) {
-              defaultApiClient.applyLoggingConfiguration(new ApiClient.LoggingConfiguration());
-            } else {
-              defaultApiClient.applyLoggingConfiguration(loggingConfiguration);
-            }
-          }
-        }).watch();
-      }
+          configureAutoReload();
+        }
+      };
+      configFileWatcher = new FileWatcher(parentFolder, configFileName).addListener(configListener);
+      configFileWatcher.watch();
     }
   }
 
