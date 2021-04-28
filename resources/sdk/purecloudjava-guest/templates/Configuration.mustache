@@ -42,7 +42,7 @@ public class Configuration {
     configuration.configureAutoReload();
   }
 
-  public boolean configureAutoReload() {
+  private boolean configureAutoReload() {
     boolean shouldUnsubscribeFromFileWatcher = !defaultApiClient.getAutoReloadConfig()
             && configFileWatcher != null
             && configFileWatcher.getListeners().contains(configListener);
@@ -61,7 +61,7 @@ public class Configuration {
     return false;
   }
 
-  public void initializeFileWatcher() {
+  private void initializeFileWatcher() {
     File parentFolder = new File(configFilePath).getParentFile();
     Path configFileName = Paths.get(configFilePath).getFileName();
     while (parentFolder != null && !parentFolder.exists()) {
@@ -96,7 +96,7 @@ public class Configuration {
     }
   }
 
-  public void applyConfigFromFile() {
+  private void applyConfigFromFile() {
     ConfigurationParser parser = new ConfigurationParser(configFilePath);
     if (!parser.read()) {
       return;
@@ -145,12 +145,12 @@ public class Configuration {
     private Boolean emptyData = true;
 
 
-    public ConfigurationParser(String filePath) {
+    private ConfigurationParser(String filePath) {
       this.filePath = filePath;
       this.fileFormat = FileFormat.Invalid;
     }
 
-    public boolean read() {
+    private boolean read() {
       try {
         File configFile = new File(filePath);
         Ini ini = new Ini(new FileReader(configFile));
@@ -177,7 +177,7 @@ public class Configuration {
       return true;
     }
 
-    public String getString(String section, String key) {
+    private String getString(String section, String key) {
       switch (fileFormat) {
         case INI:
           return getIniString(section, key);
@@ -188,7 +188,7 @@ public class Configuration {
       }
     }
 
-    public boolean getBool(String section, String key) {
+    private boolean getBool(String section, String key) {
       switch (fileFormat) {
         case INI:
           return getIniBool(section, key);
@@ -199,7 +199,7 @@ public class Configuration {
       }
     }
 
-    public int getInt(String section, String key) {
+    private int getInt(String section, String key) {
       switch (fileFormat) {
         case INI:
           return getIniInt(section, key);
@@ -210,7 +210,7 @@ public class Configuration {
       }
     }
 
-    public String getJsonString(String section, String key) {
+    private String getJsonString(String section, String key) {
       try {
         Map<String, Object> sectionData = (Map<String, Object>)jsonData.get(section);
         return sectionData.get(key).toString().trim();
@@ -219,7 +219,7 @@ public class Configuration {
       }
     }
 
-    public boolean getJsonBool(String section, String key) {
+    private boolean getJsonBool(String section, String key) {
       try {
         Map<String, Object> sectionData = (Map<String, Object>)jsonData.get(section);
         return Boolean.parseBoolean(sectionData.get(key).toString().trim());
@@ -228,7 +228,7 @@ public class Configuration {
       }
     }
 
-    public int getJsonInt(String section, String key) {
+    private int getJsonInt(String section, String key) {
       try {
         Map<String, Object> sectionData = (Map<String, Object>)jsonData.get(section);
         return Integer.parseInt(sectionData.get(key).toString().trim());
@@ -237,7 +237,7 @@ public class Configuration {
       }
     }
 
-    public String getIniString(String section, String key) {
+    private String getIniString(String section, String key) {
       try {
         Ini.Section sectionData = iniData.get(section);
         return sectionData.get(key).trim();
@@ -246,7 +246,7 @@ public class Configuration {
       }
     }
 
-    public boolean getIniBool(String section, String key) {
+    private boolean getIniBool(String section, String key) {
       try {
         Ini.Section sectionData = iniData.get(section);
         return Boolean.parseBoolean(sectionData.get(key).trim());
@@ -255,7 +255,7 @@ public class Configuration {
       }
     }
 
-    public int getIniInt(String section, String key) {
+    private int getIniInt(String section, String key) {
       try {
         Ini.Section sectionData = iniData.get(section);
         return Integer.parseInt(sectionData.get(key).trim());
