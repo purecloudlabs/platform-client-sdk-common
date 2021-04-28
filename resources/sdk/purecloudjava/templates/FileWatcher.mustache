@@ -131,20 +131,20 @@ public class FileWatcher implements Runnable {
     }
 
     public interface FileListener extends EventListener {
-        public void onCreated(FileEvent event);
-        public void onModified(FileEvent event);
-        public void onDeleted(FileEvent event);
+        public boolean onCreated(FileEvent event);
+        public boolean onModified(FileEvent event);
+        public boolean onDeleted(FileEvent event);
     }
 
     public static abstract class FileAdapter implements FileListener {
         @Override
-        public void onCreated(FileEvent event) {
+        public boolean onCreated(FileEvent event) {
         }
         @Override
-        public void onModified(FileEvent event) {
+        public boolean onModified(FileEvent event) {
         }
         @Override
-        public void onDeleted(FileEvent event) {
+        public boolean onDeleted(FileEvent event) {
         }
     }
 }
