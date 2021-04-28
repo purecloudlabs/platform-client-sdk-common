@@ -19,117 +19,132 @@ import static java.nio.file.StandardWatchEventKinds.*;
 
 {{>generatedAnnotation}}
 public class FileWatcher implements Runnable {
-   protected List<FileListener> listeners = new ArrayList<>();
-   protected static final List<WatchService> watchServices = new ArrayList<>();
-   protected final File parentFolder;
-   protected Path fileName;
+    protected List<FileListener> listeners = new ArrayList<>();
+    protected static final List<WatchService> watchServices = new ArrayList<>();
+    protected final File parentFolder;
+    protected Path fileName;
 
-   public FileWatcher(File parentFolder, Path fileName) {
-       this.parentFolder = parentFolder;
-       this.fileName = fileName;
-   }
+    public FileWatcher(File parentFolder, Path fileName) {
+        this.parentFolder = parentFolder;
+        this.fileName = fileName;
+    }
 
-   public void watch() {
-       if (parentFolder.exists()) {
-           Thread thread = new Thread(this);
-           thread.setDaemon(true);
-           thread.start();
-       }
-   }
+    public void watch() {
+        if (parentFolder.exists()) {
+            Thread thread = new Thread(this);
+            thread.setDaemon(true);
+            thread.start();
+        }
+    }
 
-   @Override
-   public void run() {
-       try (WatchService watchService = FileSystems.getDefault().newWatchService()) {
-           Path path = Paths.get(parentFolder.getAbsolutePath());
-           path.register(watchService, ENTRY_CREATE, ENTRY_MODIFY, ENTRY_DELETE);
-           watchServices.add(watchService);
-           boolean poll = true;
-           while (poll) {
-               poll = pollEvents(watchService);
-           }
-       } catch (IOException | InterruptedException | ClosedWatchServiceException e) {
-           Thread.currentThread().interrupt();
-       }
-   }
+    @Override
+    public void run() {
+        try (WatchService watchService = FileSystems.getDefault().newWatchService()) {
+            Path path = Paths.get(parentFolder.getAbsolutePath());
+            path.register(watchService, ENTRY_CREATE, ENTRY_MODIFY, ENTRY_DELETE);
+            watchServices.add(watchService);
+            boolean poll = true;
+            while (poll) {
+                poll = pollEvents(watchService);
+            }
+        } catch (IOException | InterruptedException | ClosedWatchServiceException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
 
-   protected boolean pollEvents(WatchService watchService) throws InterruptedException {
-       WatchKey key = watchService.take();
-       Path path = (Path) key.watchable();
-       for (WatchEvent<?> event : key.pollEvents()) {
-           final Path changed = (Path) event.context();
-           if (changed.endsWith(fileName)) {
-               notifyListeners(event.kind(), path.resolve(changed).toFile());
-           }
-       }
-       return key.reset();
-   }
+    protected boolean pollEvents(WatchService watchService) throws InterruptedException {
+        WatchKey key = watchService.take();
+        Path path = (Path) key.watchable();
+        for (WatchEvent<?> event : key.pollEvents()) {
+            final Path changed = (Path) event.context();
+            if (changed.endsWith(fileName)) {
+                notifyListeners(event.kind(), path.resolve(changed).toFile());
+            }
+        }
+        return key.reset();
+    }
 
-   protected void notifyListeners(WatchEvent.Kind<?> kind, File file) {
-       FileEvent event = new FileEvent(file);
-       if (kind == ENTRY_CREATE) {
-           for (FileListener listener : listeners) {
-               listener.onCreated(event);
-           }
-       }
-       else if (kind == ENTRY_MODIFY) {
-           for (FileListener listener : listeners) {
-               listener.onModified(event);
-           }
-       }
-       else if (kind == ENTRY_DELETE) {
-           for (FileListener listener : listeners) {
-               listener.onDeleted(event);
-           }
-       }
-   }
+    protected void notifyListeners(WatchEvent.Kind<?> kind, File file) {
+        FileEvent event = new FileEvent(file);
+        if (kind == ENTRY_CREATE) {
+            List<FileListener> removeList = new ArrayList<>();
+            for (FileListener listener : listeners) {
+                boolean shouldRemove = listener.onCreated(event);
+                if (shouldRemove) {
+                    removeList.add(listener);
+                }
+            }
+            removeList.forEach(listener -> removeListener(listener));
+        }
+        else if (kind == ENTRY_MODIFY) {
+            List<FileListener> removeList = new ArrayList<>();
+            for (FileListener listener : listeners) {
+                boolean shouldRemove = listener.onModified(event);
+                if (shouldRemove) {
+                    removeList.add(listener);
+                }
+            }
+            removeList.forEach(listener -> removeListener(listener));
+        }
+        else if (kind == ENTRY_DELETE) {
+            List<FileListener> removeList = new ArrayList<>();
+            for (FileListener listener : listeners) {
+                boolean shouldRemove = listener.onDeleted(event);
+                if (shouldRemove) {
+                    removeList.add(listener);
+                }
+            }
+            removeList.forEach(listener -> removeListener(listener));
+        }
+    }
 
-   public FileWatcher addListener(FileListener listener) {
-       listeners.add(listener);
-       return this;
-   }
+    public FileWatcher addListener(FileListener listener) {
+        listeners.add(listener);
+        return this;
+    }
 
-   public FileWatcher removeListener(FileListener listener) {
-       listeners.remove(listener);
-       return this;
-   }
+    public FileWatcher removeListener(FileListener listener) {
+        listeners.remove(listener);
+        return this;
+    }
 
-   public List<FileListener> getListeners() {
-       return listeners;
-   }
+    public List<FileListener> getListeners() {
+        return listeners;
+    }
 
-   public FileWatcher setListeners(List<FileListener> listeners) {
-       this.listeners = listeners;
-       return this;
-   }
+    public FileWatcher setListeners(List<FileListener> listeners) {
+        this.listeners = listeners;
+        return this;
+    }
 
-   public static List<WatchService> getWatchServices() {
-       return Collections.unmodifiableList(watchServices);
-   }
+    public static List<WatchService> getWatchServices() {
+        return Collections.unmodifiableList(watchServices);
+    }
 
-   public static class FileEvent extends EventObject{
-       public FileEvent(File file) {
-           super(file);
-       }
-       public File getFile() {
-           return (File) getSource();
-       }
-   }
+    public static class FileEvent extends EventObject{
+        public FileEvent(File file) {
+            super(file);
+        }
+        public File getFile() {
+            return (File) getSource();
+        }
+    }
 
-   public interface FileListener extends EventListener {
-       public void onCreated(FileEvent event);
-       public void onModified(FileEvent event);
-       public void onDeleted(FileEvent event);
-   }
+    public interface FileListener extends EventListener {
+        public void onCreated(FileEvent event);
+        public void onModified(FileEvent event);
+        public void onDeleted(FileEvent event);
+    }
 
-   public static abstract class FileAdapter implements FileListener {
-       @Override
-       public void onCreated(FileEvent event) {
-       }
-       @Override
-       public void onModified(FileEvent event) {
-       }
-       @Override
-       public void onDeleted(FileEvent event) {
-       }
-   }
+    public static abstract class FileAdapter implements FileListener {
+        @Override
+        public void onCreated(FileEvent event) {
+        }
+        @Override
+        public void onModified(FileEvent event) {
+        }
+        @Override
+        public void onDeleted(FileEvent event) {
+        }
+    }
 }
