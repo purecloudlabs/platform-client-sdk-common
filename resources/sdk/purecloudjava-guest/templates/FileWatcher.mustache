@@ -66,19 +66,34 @@ public class FileWatcher implements Runnable {
     protected void notifyListeners(WatchEvent.Kind<?> kind, File file) {
         FileEvent event = new FileEvent(file);
         if (kind == ENTRY_CREATE) {
+            List<FileListener> removeList = new ArrayList<>();
             for (FileListener listener : listeners) {
-                listener.onCreated(event);
+                boolean shouldRemove = listener.onCreated(event);
+                if (shouldRemove) {
+                    removeList.add(listener);
+                }
             }
+            removeList.forEach(listener -> removeListener(listener));
         }
         else if (kind == ENTRY_MODIFY) {
+            List<FileListener> removeList = new ArrayList<>();
             for (FileListener listener : listeners) {
-                listener.onModified(event);
+                boolean shouldRemove = listener.onModified(event);
+                if (shouldRemove) {
+                    removeList.add(listener);
+                }
             }
+            removeList.forEach(listener -> removeListener(listener));
         }
         else if (kind == ENTRY_DELETE) {
+            List<FileListener> removeList = new ArrayList<>();
             for (FileListener listener : listeners) {
-                listener.onDeleted(event);
+                boolean shouldRemove = listener.onDeleted(event);
+                if (shouldRemove) {
+                    removeList.add(listener);
+                }
             }
+            removeList.forEach(listener -> removeListener(listener));
         }
     }
     
@@ -122,13 +137,17 @@ public class FileWatcher implements Runnable {
     
     public static abstract class FileAdapter implements FileListener {
         @Override
-        public void onCreated(FileEvent event) {
+        public boolean onCreated(FileEvent event) {
+            return false;
         }
         @Override
-        public void onModified(FileEvent event) {
+        public boolean onModified(FileEvent event) {
+            return false;
         }
         @Override
-        public void onDeleted(FileEvent event) {
+        public boolean onDeleted(FileEvent event) {
+            return false;
         }
+    }
     }
 }

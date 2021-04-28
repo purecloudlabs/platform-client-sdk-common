@@ -42,14 +42,14 @@ public class Configuration {
     configuration.configureAutoReload();
   }
 
-  public void configureAutoReload() {
+  public boolean configureAutoReload() {
     boolean shouldUnsubscribeFromFileWatcher = !defaultApiClient.getAutoReloadConfig()
             && configFileWatcher != null
             && configFileWatcher.getListeners().contains(configListener);
     boolean shouldSubscribeToFileWatcher = defaultApiClient.getAutoReloadConfig()
             && (configFileWatcher == null || configFileWatcher.getListeners().size() == 0);
     if (shouldUnsubscribeFromFileWatcher) {
-      configFileWatcher.removeListener(configListener);
+      return true;
     }
     if (shouldSubscribeToFileWatcher) {
       if (configFileWatcher == null) {
@@ -58,6 +58,7 @@ public class Configuration {
         configFileWatcher.addListener(configListener);
       }
     }
+    return false;
   }
 
   public void initializeFileWatcher() {
@@ -75,11 +76,11 @@ public class Configuration {
       configListener = new FileWatcher.FileAdapter() {
         public void onModified(FileWatcher.FileEvent event) {
           applyConfigFromFile();
-          configureAutoReload();
+          return configureAutoReload();
         }
         public void onCreated(FileWatcher.FileEvent event) {
           applyConfigFromFile();
-          configureAutoReload();
+          return configureAutoReload();
         }
         public void onDeleted(FileWatcher.FileEvent event) {
           if (loggingConfiguration == null) {
@@ -87,7 +88,7 @@ public class Configuration {
           } else {
             defaultApiClient.applyLoggingConfiguration(loggingConfiguration);
           }
-          configureAutoReload();
+          return configureAutoReload();
         }
       };
       configFileWatcher = new FileWatcher(parentFolder, configFileName).addListener(configListener);
