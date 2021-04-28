@@ -14,7 +14,7 @@ import java.util.Date;
 import java.util.Map;
 
 {{>generatedAnnotation}}
-public class Logger {
+class Logger {
     private String logFilePath = null;
     private Boolean logToConsole = true;
     private LogFormat format = LogFormat.Text;
@@ -23,11 +23,11 @@ public class Logger {
     private Boolean logRequestBody = false;
     private BufferedWriter bw;
 
-    public Logger() {
+    Logger() {
         super();
     }
 
-    public Logger(
+    Logger(
         String logFilePath,
         Boolean logToConsole,
         LogFormat logFormat,
@@ -43,11 +43,11 @@ public class Logger {
         this.logRequestBody = logRequestBody;
     }
 
-    public String getLogFilePath() {
+    String getLogFilePath() {
         return this.logFilePath;
     }
 
-    public void setLogFilePath(String logFilePath) {
+    void setLogFilePath(String logFilePath) {
         if (logFilePath != null && !logFilePath.isEmpty()) {
             try {
                 this.bw = new BufferedWriter(new FileWriter(logFilePath));
@@ -58,47 +58,47 @@ public class Logger {
         }
     }
 
-    public boolean getLogToConsole() {
+    boolean getLogToConsole() {
         return logToConsole;
     }
 
-    public void setLogToConsole(boolean logToConsole) {
+    void setLogToConsole(boolean logToConsole) {
         this.logToConsole = logToConsole;
     }
 
-    public LogFormat getFormat() {
+    LogFormat getFormat() {
         return format;
     }
 
-    public void setFormat(LogFormat format) {
+    void setFormat(LogFormat format) {
         this.format = format;
     }
 
-    public LogLevel getLevel() {
+    LogLevel getLevel() {
         return level;
     }
 
-    public void setLevel(LogLevel level) {
+    void setLevel(LogLevel level) {
         this.level = level;
     }
 
-    public boolean getLogResponseBody() {
+    boolean getLogResponseBody() {
         return logResponseBody;
     }
 
-    public void setLogResponseBody(boolean logResponseBody) {
+    void setLogResponseBody(boolean logResponseBody) {
         this.logResponseBody = logResponseBody;
     }
 
-    public boolean getLogRequestBody() {
+    boolean getLogRequestBody() {
         return logRequestBody;
     }
 
-    public void setLogRequestBody(boolean logRequestBody) {
+    void setLogRequestBody(boolean logRequestBody) {
         this.logRequestBody = logRequestBody;
     }
 
-    public static LogLevel logLevelFromString(String logLevel) {
+    static LogLevel logLevelFromString(String logLevel) {
         String formattedLogLevel = "l" + logLevel;
         try {
             LogLevel logLevelValue = null;
@@ -113,7 +113,7 @@ public class Logger {
         }
     }
     
-    public static LogFormat logFormatFromString(String logFormat) {
+    static LogFormat logFormatFromString(String logFormat) {
         try {
             LogFormat logFormatValue = null;
             for (LogFormat lf : LogFormat.values()) {
@@ -127,7 +127,7 @@ public class Logger {
         }
     }
     
-    public void trace(
+    void trace(
         String method,
         String url,
         Object requestBody,
@@ -148,7 +148,7 @@ public class Logger {
         log(LogLevel.LTrace, logStatement);
     }
 
-    public void debug(
+    void debug(
         String method,
         String url,
         Object requestBody,
@@ -167,7 +167,7 @@ public class Logger {
         log(LogLevel.LDebug, logStatement);
     }
     
-    public void error(
+    void error(
         String method,
         String url,
         Object requestBody,
@@ -219,12 +219,12 @@ public class Logger {
         return null;
     }
 
-    public enum LogFormat {
+    enum LogFormat {
         JSON,
         Text
     }
     
-    public enum LogLevel {
+    enum LogLevel {
         LNone(3),
         LError(2),
         LDebug(1),
@@ -236,12 +236,12 @@ public class Logger {
             this.order = order;
         }
     
-        public int getOrder() {
+        int getOrder() {
             return this.order;
         }
     }
 
-    public class LogStatement {
+    class LogStatement {
         private Date date;
         private String level = null;
         private String method = null;
@@ -254,7 +254,7 @@ public class Logger {
         private String responseBody = null;
 
         // error constructor
-        public LogStatement(
+        LogStatement(
             Date date,
             String level,
             String method,
@@ -278,7 +278,7 @@ public class Logger {
         }
     
         // trace constructor
-        public LogStatement(
+        LogStatement(
             Date date,
             String level,
             String method,
@@ -300,7 +300,7 @@ public class Logger {
         }
 
         // debug constructor
-        public LogStatement(
+        LogStatement(
             Date date,
             String level,
             String method,
@@ -318,43 +318,43 @@ public class Logger {
             this.requestBody = requestBody;
         }
 
-        public Date getDate() {
+        Date getDate() {
             return date;
         }
 
-        public String getLevel() {
+        String getLevel() {
             return level;
         }
 
-        public String getMethod() {
+        String getMethod() {
             return method;
         }
 
-        public String getUrl() {
+        String getUrl() {
             return url;
         }
 
-        public Map<String, String> getRequestHeaders() {
+        Map<String, String> getRequestHeaders() {
             return requestHeaders;
         }
 
-        public Map<String, String> getResponseHeaders() {
+        Map<String, String> getResponseHeaders() {
             return responseHeaders;
         }
 
-        public int getStatusCode() {
+        int getStatusCode() {
             return statusCode;
         }
 
-        public String getRequestBody() {
+        String getRequestBody() {
             return requestBody;
         }
 
-        public String getResponseBody() {
+        String getResponseBody() {
             return responseBody;
         }
     
-        public String asString(LogFormat logFormat, boolean logRequestBody, boolean logResponseBody) {
+        String asString(LogFormat logFormat, boolean logRequestBody, boolean logResponseBody) {
             this.requestHeaders.put("Authorization", "[REDACTED]");
             if (!logRequestBody)
                 this.requestBody = null;
