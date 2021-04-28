@@ -4,6 +4,11 @@
 			"name": "getmultiple"
 		}
 	},
+	"/api/v2/architect/prompts": {
+		"delete": {
+			"name": "batchdelete"
+		}
+	},
 	"/api/v2/configuration/schemas/edges/vnext": {
 		"get": {
 			"name": "listschemacategories"
@@ -29,18 +34,6 @@
 			"name": "getschemametadata"
 		}
 	},
-	"/api/v2/authorization/roles/{roleId}/subjectgrants": {
-		"name": "subjectgrants",
-		"supercommand": "roles"
-	},
-	"/api/v2/authorization/roles/{roleId}/users": {
-		"name": "users",
-		"description": "authorization roles users",
-		"supercommand": "roles",
-		"get": {
-			"name": "getmessages"
-		}
-	},
 	"/api/v2/conversations/{conversationId}/participants/{participantId}/secureivrsessions": {
 		"get": {
 			"name": "getsecuresessions"
@@ -49,30 +42,6 @@
 	"/api/v2/conversations/{conversationId}/recordings": {
 		"get": {
 			"name": "getrecordings"
-		}
-	},
-	"/api/v2/authorization/subjects/{subjectId}": {
-		"name": "subjects",
-		"description": "authorization subjects"
-	},
-	"/api/v2/authorization/subjects/{subjectId}/bulkadd": {
-		"name": "bulkadd",
-		"supercommand": "subjects"
-	},
-	"/api/v2/authorization/subjects/{subjectId}/bulkremove": {
-		"name": "bulkremove",
-		"supercommand": "subjects"
-	},
-	"/api/v2/authorization/subjects/{subjectId}/bulkreplace": {
-		"name": "bulkreplace",
-		"supercommand": "subjects"
-	},
-	"/api/v2/telephony/providers/edges": {
-		"name": "edges"
-	},
-	"/api/v2/architect/prompts": {
-		"delete": {
-			"name": "batchdelete"
 		}
 	},
 	"/api/v2/authorization/roles/{roleId}": {
@@ -148,37 +117,6 @@
 			"name": "getversions"
 		}
 	},
-	"/api/v2/stations": {},
-	"/api/v2/stations/{stationId}": {},
-	"/api/v2/users": {},
-	"/api/v2/users/bulk": {
-		"name": "bulkupdate",
-		"supercommand": "users"
-	},
-	"/api/v2/users/{userId}": {},
-	"/api/v2/users/{userId}/queues": {
-		"name": "queues",
-		"description": "users queues",
-		"supercommand": "users",
-		"get": {
-			"name": "scan"
-		}
-	},
-	"/api/v2/externalcontacts/scan/organizations": {
-		"get": {
-			"name": "scan"
-		}
-	},
-	"/api/v2/externalcontacts/scan/notes": {
-		"get": {
-			"name": "scan"
-		}
-	},
-	"/api/v2/externalcontacts/scan/relationships": {
-		"get": {
-			"name": "scan"
-		}
-	},
 	"/api/v2/externalcontacts/reversewhitepageslookup": {
 		"get": {
 			"name": "search"
@@ -227,6 +165,11 @@
 	"/api/v2/license/definitions": {
 		"get": {
 			"name": "getdefinitions"
+		}
+	},
+	"/api/v2/notifications/channels/{channelId}/subscriptions": {
+		"post": {
+			"name": "subscribe"
 		}
 	},
 	"/api/v2/outbound/contactlists/{contactListId}/contacts": {
@@ -395,29 +338,5 @@
 		"put": {
 			"name": "put"
 		}
-	},
-	"/api/v2/architect/emergencygroups": {
-		"name": "emergencygroups"
-	},
-	"/api/v2/architect/emergencygroups/{emergencyGroupId}": {
-		"name": "emergencygroups"
-	},
-	"/api/v2/architect/ivrs": {
-		"name": "IVR"
-	},
-	"/api/v2/architect/ivrs/{ivrId}": {
-		"name": "IVR"
-	},
-	"/api/v2/architect/schedulegroups": {
-		"name": "schedulegroups"
-	},
-	"/api/v2/architect/schedulegroups/{scheduleGroupId}": {
-		"name": "schedulegroups"
-	},
-	"/api/v2/architect/schedules": {
-		"name": "schedules"
-	},
-	"/api/v2/architect/schedules/{scheduleId}": {
-		"name": "schedules"
 	}
 }

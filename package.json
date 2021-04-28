@@ -35,7 +35,6 @@
     "fs-extra": "^5.0.0",
     "github-api-promise": "^1.13.5",
     "json-schema-deref-sync": "^0.13.0",
-    "json-schema-ref-parser": "^9.0.7",
     "klaw-sync": "^3.0.2",
     "lodash": "^4.17.19",
     "lognext": "0.0.4",

@@ -13,7 +13,7 @@
     "extensionsDestination": "${SDK_REPO}/build/gc/",
     "swagger": {
       "oldSwaggerPath": "${SDK_REPO}/swagger.json",
-      "newSwaggerPath": "/Users/ronanwatkins/genesys_src/repos/platform-client-sdk-common/swagger.json",
+      "newSwaggerPath": "https://api.mypurecloud.com/api/v2/docs/swagger",
       "saveNewSwaggerPath": "${SDK_REPO}/swagger.json"
     },
     "swaggerCodegen": {
@@ -57,7 +57,8 @@
             },
             "${SDK_TEMP}/newSwagger.json",
             "${SDK_TEMP}/topLevelCommands.json",
-            "${SDK_TEMP}/resourceDefinitions.json"
+            "${SDK_TEMP}/resourceDefinitions.json",
+            "${COMMON_ROOT}/resources/sdk/clisdkclient/resources/operationNameOverrides.json"
           ],
           "failOnError": true
         }
@@ -96,7 +97,7 @@
           "type": "command",
           "command": "make",
           "cwd": "${SDK_REPO}",
-          "args":[ "darwin" ],
+          "args":[ "test", "build" ],
           "failOnError": true
         },
         {

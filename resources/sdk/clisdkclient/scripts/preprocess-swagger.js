@@ -1,7 +1,5 @@
 const fs = require('fs');
-const path = require('path');
 const childProcess = require('child_process');
-const utils = require('./utilities');
 const maxFileBufferSize = 1024 * 1024 * 1024;
 
 try {
@@ -9,9 +7,9 @@ try {
 	const saveNewSwaggerPath = process.argv[3];
 	const saveSuperCommandsPath = process.argv[4];
 	const saveResourceDefinitionsPath = process.argv[5];
+	const overridesPath = process.argv[6];
 
 	let newSwagger = retrieveSwagger(newSwaggerPath);
-	const overridesPath = path.join(path.dirname(require.main.filename), '../resources/resourceDefinitions.json');
 	const overrides = JSON.parse(fs.readFileSync(overridesPath, 'utf8'));
 	const resourceDefinitions = overrideDefinitions(createDefinitions(newSwagger), overrides)
 	let [superCommands, includedSwaggerPathObjects] = initialProcessOfDefinitions(newSwagger, resourceDefinitions);
@@ -41,7 +39,6 @@ function processDefinitions(includedSwaggerPathObjects, resourceDefinitions, new
 		// Override tags if possible
 		for (let value of Object.values(includedSwaggerPathObjects[path])) {
 			if (value.operationId.startsWith("get")) {
-				console.log("PATH", path)
 				const successResponse = value.responses["200"]
 				if (successResponse) {
 					const schema = successResponse.schema['$ref'] || ''
@@ -107,79 +104,61 @@ function initialProcessOfDefinitions(newSwagger, resourceDefinitions) {
 function createDefinitions(swagger) {
 	let definitions = {};
 
-    for (const path of Object.keys(swagger['paths'])) {
+	for (const path of Object.keys(swagger['paths'])) {
 		const name = getName(path),
 			supercommand = getSuperCommand(path),
-			description = getDescription(path, supercommand)
+			description = getDescription(path)
 
-        definitions[path] = {
-            name: name,
+		definitions[path] = {
+			name: name,
 			supercommand: supercommand,
 			description: description
-        }
-    }
+		}
+	}
 
-    return definitions
+	return definitions
 }
 
 function separatePath(path) {
-    const pathParamRegex = /\{[a-zA-Z]*\}/g
-    const trailingSlashRegex = /\/$/g
+	const pathParamRegex = /\{[a-zA-Z]*\}/g
+	const trailingSlashRegex = /\/$/g
 	path = path.replace(pathParamRegex, "")
-	path = utils.processPath(path)
+	path = processPath(path)
 		.replace("/api/v2/", "")
 		.replace(trailingSlashRegex, "");
 
-			// .replace("/api/v2/documentation/", "/api/v2/documentationfile/")
-			// .replace("/api/v2/profiles/", "/api/v2/profile/")
-			// .replace("/api/v2/", "")
-            
-			// .replace(/[\/]{2,}/g, "/")
-			
-	
-	console.log("separatePath", path)
+	return path.split("/")
+}
 
-    return path.split("/")
+function processPath(path) { 
+	return path
+		.replace("_", "/")
+		.replace(/[\/]{2,}/g, "/")
+		.replace("/api/v2/documentation/", "/api/v2/documentationfile/")
+		.replace("/api/v2/profiles/", "/api/v2/profile/")
 }
 
 function getName(path) {
-    let names = separatePath(path)
+	let names = separatePath(path)
 
-    return names[names.length -1]
+	return names[names.length -1]
 }
 
 function getSuperCommand(path) {
-    let names = separatePath(path)
-    names.pop()
-    return names.join(".")
+	let names = separatePath(path)
+	names.pop()
+	return names.join(".")
 }
 
-function getDescription(path, supercommand) {
-	// return `/api/v2/${supercommand.replace(/\./g, "/")}/${name}/`
-	// 	.replace(/[\/]{2,}/g, "/")
-	// 	.replace("documentationfile", "documentation")
-	// 	.replace("/api/v2/profile", "/api/v2/profiles")
-	path = path.replace(/\{[a-zA-Z]*\}$/g, "")
+function getDescription(path) {
+	return path.replace(/\{[a-zA-Z]*\}$/g, "")
 		.replace(/\/$/g, "")
-	// if (!path.endsWith("/"))
-		// path = `${path}/`
-	return `${path}`
-
-	// let name = getName(path)
-	// let description = `/api/v2/${supercommand.replace(/\./g, "/")}/${name}`
-
-	// description = utils.processPath(description)
-	// 	.replace("documentationfile", "documentation")
-
-	// if (path.includes("/{"))
-	// 	return `${description} ${path}`
-	// return description
 }
 
 function canPanginate(schema, newSwagger) {
 	if (schema === '') return false
 	const definitionName = schema.split("/").pop()
-	// TODO check for other pagination forms
+
 	return newSwagger.definitions[definitionName].properties.pageNumber !== undefined 
 			|| newSwagger.definitions[definitionName].properties.cursor !== undefined
 			|| newSwagger.definitions[definitionName].properties.nextUri !== undefined

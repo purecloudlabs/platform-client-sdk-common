@@ -18,7 +18,7 @@ try {
 	const rootFileName = rootPath.split('/').pop();
 	const rootDir = rootPath.replace(rootFileName, '');
 
-	generateSuperCommandFiles(rootDir, topLevelCommands, null);
+	generateSuperCommandFiles(rootDir, topLevelCommands, resourceDefinitions, null);
 	generateRootFiles(rootDir, resourceDefinitions);
 	processRoot(rootDir, rootFileName, resourceDefinitions, topLevelCommands);
 } catch (err) {
@@ -27,7 +27,7 @@ try {
 }
 
 // Creates command root files if they don't already exist
-function generateSuperCommandFiles(rootDir, topLevelCommands, resourcePath) {
+function generateSuperCommandFiles(rootDir, topLevelCommands, resourceDefinitions, resourcePath) {
 	const templateString = `package {{=it.supercommand}}
 
 import (
@@ -38,9 +38,11 @@ import (
 )
 
 var (
+	Description = utils.FormatUsageDescription("{{=it.supercommand}}", "SWAGGER_OVERRIDE_{{=it.description}}")
 	{{=it.supercommand}}Cmd = &cobra.Command{
 		Use:   utils.FormatUsageDescription("{{=it.supercommand}}"),
-		Short: utils.FormatUsageDescription("{{=it.supercommand}}", "SWAGGER_OVERRIDE_{{=it.description}}"),
+		Short: Description,
+		Long:  Description,
 	}
 	CommandService services.CommandService
 )
@@ -53,7 +55,6 @@ func Cmd{{=it.supercommand}}() *cobra.Command {
 	return {{=it.supercommand}}Cmd
 }
 `;
-	console.log("topLevelCommands", topLevelCommands)
 	for (const supercommand of topLevelCommands) {
 		const commandPath = path.join(rootDir, supercommand);
 		const commandFile = path.join(commandPath, `${supercommand}.go`);
@@ -62,15 +63,12 @@ func Cmd{{=it.supercommand}}() *cobra.Command {
 
 			let description = ""
 			if (resourcePath) {
-				let split = resourcePath.split("/")
-				let tmp = split.pop()
-				if (!supercommand.endsWith(tmp)) {
-					console.log("hey", supercommand)
-					while (!supercommand.includes(split[split.length-1])) {
-						split.pop()
+				let resourcePathSplit = resourcePath.split("/")
+				if (!supercommand.endsWith(resourcePathSplit.pop())) {
+					while (!supercommand.includes(resourcePathSplit[resourcePathSplit.length-1])) {
+						resourcePathSplit.pop()
 					}
-					description = split.join("/")
-					// description = `${description} postprocess1 ${resourcePath}`
+					description = resourcePathSplit.join("/")
 				}
 			} else {
 				description = `/api/v2/${supercommand}`
@@ -78,50 +76,14 @@ func Cmd{{=it.supercommand}}() *cobra.Command {
 					.replace(/[\/]{2,}/g, "/")
 					.replace(/\b(\w*documentationfile\w*)\b/g, "documentation")
 					.replace(/\b(\w*profile\w*)\b/g, "profiles")
-				// description = `${description} postprocess2 ${supercommand}`
 			}
 			description = description.replace(/\/$/g, "")
 
-			// console.log(description, supercommand, resourcePath)
 			console.log(`Creating ${commandFile} with description ${description}`)
+
 			writeTemplate(templateString, { supercommand: supercommand, description: description }, commandFile);
-		} else {
-			if (resourcePath != null && resourcePath.includes("/{")) {
-				let resourcePathSplit = resourcePath.replace("/api/v2/", "").split("/")
-				let supercommandSplit = supercommand.split("_")
-				// if (resourcePathSplit.length > supercommand.split("_").length)
-				// 	console.log("not creating", resourcePath, supercommand, commandFile)
-				// else console.log("wut", resourcePath, supercommand)
-				for (i = 0; i < supercommandSplit.length; i++) {
-					if (supercommandSplit[i] !== resourcePathSplit[i]) {
-						console.log("sham", resourcePath, supercommand, commandFile)
-						let data = fs.readFileSync(commandFile, 'utf8')
-						const dataSplit = data.split("\n")
-						for (const d of dataSplit) {
-							if (d.startsWith("		Short: utils.FormatUsageDescription(")) {
-								if (!d.includes(resourcePath)) {
-									console.log("RONAN_LOOK", supercommand, resourcePath, commandFile)
-									let newLine = d.replace(", ),", `, "SWAGGER_OVERRIDE_${resourcePath}", ),`)
-									data.replace(d, newLine)
-								} else {
-									console.log("MAYBEHERE", supercommand, resourcePath, commandFile)
-								}
-							}
-							break
-						}
-						fs.writeFileSync(commandFile, data)
-						break
-					}
-				}
-			}
 		}
 	}
-}
-
-function processName(name) {
-	return name.replace(/_test$/g, "_testfile")
-	           .replace(/_test\//g, "_testfile/")
-			   .replace(/[\_]{2,}/g, "_");
 }
 
 // Generates root files to attach subcommands to supercommands
@@ -133,64 +95,74 @@ function generateRootFiles(rootDir, resourceDefinitions) {
 			const supercommandlist = resourceDefinitions[path].supercommand.split('.');
 
 			let nonRootSuperCommands = new Set();
-			let name = processName(`${supercommandlist.join("_")}_${commandName}`)
-			nonRootSuperCommands.add(name);
+			nonRootSuperCommands.add(
+				processName(`${supercommandlist.join("_")}_${commandName}`)
+			);
 
 			do {
-				let temp = supercommandlist.pop()
-				if (!temp) continue
+				let lowestSupercommand = supercommandlist.pop()
+				if (!lowestSupercommand) continue
 
 				if (supercommandlist.length == 0) {
-					nonRootSuperCommands.add(processName(temp));
+					nonRootSuperCommands.add(
+						processName(lowestSupercommand)
+					);
 				} else {
-					name = processName(`${supercommandlist.join("_")}_${temp}`)
-					nonRootSuperCommands.add(name);
+					nonRootSuperCommands.add(
+						processName(`${supercommandlist.join("_")}_${lowestSupercommand}`)
+					);
 				}
 			} while(supercommandlist.length > 1);
 
-			let arr = Array.from(nonRootSuperCommands)
+			let nonRootSuperCommandsArray = Array.from(nonRootSuperCommands)
 				.reverse()
 
-			for (i = 0; i < arr.length; i++) {
-				if (!arr[i + 1]) continue
-				let entry = commandMappings.get(arr[i]) || new Set();
-				entry.add(arr[i + 1]);
-				commandMappings.set(processName(arr[i]), entry);
+			for (i = 0; i < nonRootSuperCommandsArray.length; i++) {
+				if (!nonRootSuperCommandsArray[i + 1]) continue
 
-				let split = arr[i].split("_")
+				let entry = commandMappings.get(nonRootSuperCommandsArray[i]) || new Set();
+				entry.add(nonRootSuperCommandsArray[i + 1]);
+				commandMappings.set(processName(nonRootSuperCommandsArray[i]), entry);
+
+				let split = nonRootSuperCommandsArray[i].split("_")
 				if (split.length == 2) {
 					entry = commandMappings.get(split[0]) || new Set();
-					entry.add(arr[i]);
+					entry.add(nonRootSuperCommandsArray[i]);
 					commandMappings.set(processName(split[0]), entry)
 				}
 			}
 
-			generateSuperCommandFiles(rootDir, nonRootSuperCommands, path);
+			generateSuperCommandFiles(rootDir, nonRootSuperCommands, resourceDefinitions, path);
 
 			supercommandlist.push(commandName);
 		}
 	}
 
-	console.log("commandMappings", commandMappings)
-
 	const templateString = `package {{=it.supercommand}}
 
 import (
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
 	{{=it.import}}
 )
 
 func init() {
 	{{=it.addcommand}}
+	{{=it.short}}
+	{{=it.long}}
 }
 `;
 
 	for (const [supercommand, value] of commandMappings) {
 		let imports = [];
 		let addcommands = [];
+		let customDescription = `utils.GenerateCustomDescription(${supercommand}Cmd.Short, `
 		for (const subcommand of value) {
 			imports.push(`"github.com/mypurecloud/platform-client-sdk-cli/build/gc/cmd/${subcommand}"`);
 			addcommands.push(`${supercommand}Cmd.AddCommand(${subcommand}.Cmd${subcommand}())`);
+			customDescription += `${subcommand}.Description, `
 		}
+		const short = `${supercommand}Cmd.Short = ${customDescription})`
+		const long = `${supercommand}Cmd.Long = ${supercommand}Cmd.Short`
 
 		const commandPath = path.join(rootDir, supercommand);
 		const commandFile = path.join(commandPath, `${supercommand}root.go`);
@@ -199,10 +171,22 @@ func init() {
 
 		writeTemplate(
 			templateString,
-			{ supercommand: supercommand, import: imports.join('\n\t'), addcommand: addcommands.join('\n\t') },
+			{ 
+			  supercommand: supercommand,
+			  import: imports.join('\n\t'),
+			  addcommand: addcommands.join('\n\t'),
+			  short: short,
+			  long: long
+			},
 			commandFile
 		);
 	}
+}
+
+function processName(name) {
+	return name.replace(/_test$/g, "_testfile")
+			   .replace(/_test\//g, "_testfile/")
+			   .replace(/[\_]{2,}/g, "_");
 }
 
 // Adds imports for every command and attaches them to the root
@@ -250,5 +234,5 @@ function writeTemplate(templateString, templateObj, filePath) {
 	let result = template(templateObj);
 
 	fs.writeFileSync(filePath, result);
-	// //console.log(`Extension templated to ${filePath}`);
+	console.log(`Extension templated to ${filePath}`);
 }

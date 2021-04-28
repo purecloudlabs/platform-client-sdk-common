@@ -17,7 +17,7 @@ import (
 func init() {
 	note := "Note: The 'version' value from the command input will be ignored and the latest version value will be retrieved from the API instead"
 	addCmd.SetHelpTemplate(fmt.Sprintf("%s\nOperation:\n  %s %s\n\n%s\n", addCmd.UsageTemplate(), addMembersOperation.Method, addMembersOperation.Path, note))
-	addCmd.Flags().StringP("file", "f", "", "File name containing the JSON for creating an object")
+	addCmd.Flags().StringP("file", "f", "", "File name containing the JSON body")
 	groups_membersCmd.AddCommand(addCmd)
 }
 

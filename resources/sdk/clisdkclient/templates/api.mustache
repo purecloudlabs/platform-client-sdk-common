@@ -14,10 +14,11 @@ import (
 )
 
 var (
+	Description = utils.FormatUsageDescription("{{classVarName}}", {{#operation}}"{{notes}}", {{/operation}})
 	{{classVarName}}Cmd = &cobra.Command{
 		Use:   utils.FormatUsageDescription("{{classVarName}}"),
-		Short: utils.FormatUsageDescription("{{classVarName}}", {{#operation}}"{{notes}}", {{/operation}}),
-		Long:  utils.FormatUsageDescription(`{{classVarName}}`, {{#operation}}"{{notes}}", {{/operation}}),
+		Short: Description,
+		Long:  Description,
 	}
 	CommandService services.CommandService
 )
@@ -42,6 +43,7 @@ func Cmd{{classVarName}}() *cobra.Command { {{#operation}}
 var {{operationId}}Cmd = &cobra.Command{
 	Use:   "{{operationId}}{{#pathParams}} [{{paramName}}{{#hasMore}}{{/hasMore}}]{{/pathParams}}",
 	Short: "{{#summary}}{{summary}}{{/summary}}",
+	Long:  "{{#summary}}{{summary}}{{/summary}}",
 	Args:  utils.DetermineArgs([]string{ {{#pathParams}}"{{paramName}}", {{#hasMore}}{{/hasMore}}{{/pathParams}}}),
 
 	Run: func(cmd *cobra.Command, args []string) {
