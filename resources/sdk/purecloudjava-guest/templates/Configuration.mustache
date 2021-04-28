@@ -37,7 +37,7 @@ public class Configuration {
     logger = defaultApiClient.getLogger();
     configFilePath = defaultApiClient.getConfigFilePath();
     loggingConfiguration = defaultApiClient.getLoggingConfiguration();
-    final Configuration configuration = new Configuration();
+    Configuration configuration = new Configuration();
     configuration.applyConfigFromFile();
     configuration.configureAutoReload();
   }
@@ -104,11 +104,11 @@ public class Configuration {
     // Logging
     String logLevel = parser.getString("logging", "log_level");
     if (logLevel != null && !logLevel.isEmpty()) {
-        logger.setLevel(logger.logLevelFromString(logLevel));
+        logger.setLevel(Logger.logLevelFromString(logLevel));
     }
     String logFormat = parser.getString("logging", "log_format");
     if (logFormat != null && !logFormat.isEmpty()) {
-        logger.setFormat(logger.logFormatFromString(logFormat));
+        logger.setFormat(Logger.logFormatFromString(logFormat));
     }
     String logToConsole = parser.getString("logging", "log_to_console");
     if (logToConsole != null && !logToConsole.isEmpty()) {
@@ -142,8 +142,6 @@ public class Configuration {
     private FileFormat fileFormat;
     private Ini iniData;
     private Map<String, Object> jsonData;
-    private Boolean emptyData = true;
-
 
     private ConfigurationParser(String filePath) {
       this.filePath = filePath;
@@ -151,10 +149,10 @@ public class Configuration {
     }
 
     private boolean read() {
+      boolean emptyData = true;
       try {
         File configFile = new File(filePath);
-        Ini ini = new Ini(new FileReader(configFile));
-        iniData = ini;
+        iniData = new Ini(new FileReader(configFile));
         fileFormat = FileFormat.INI;
         emptyData = iniData == null || iniData.isEmpty();
       } catch (FileNotFoundException e) {
@@ -163,18 +161,14 @@ public class Configuration {
         try {
           ObjectMapper objectMapper = new ObjectMapper();
           File configFile = new File(filePath);
-          Map<String, Object> jsonMap = objectMapper.readValue(configFile, Map.class);
-          jsonData = jsonMap;
+          jsonData = objectMapper.readValue(configFile, Map.class);
           fileFormat = FileFormat.JSON;
           emptyData = jsonData == null || jsonData.isEmpty();
         } catch (Exception ex) {
           return false;
         }
       }
-      if (emptyData) {
-        return false;
-      }
-      return true;
+      return !emptyData;
     }
 
     private String getString(String section, String key) {

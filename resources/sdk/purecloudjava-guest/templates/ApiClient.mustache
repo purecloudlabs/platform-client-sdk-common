@@ -18,9 +18,6 @@ import java.text.DateFormat;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Future;
-import org.ini4j.Ini;
-
-import javax.xml.bind.DatatypeConverter;
 
 import com.google.common.util.concurrent.SettableFuture;
 
@@ -111,7 +108,7 @@ public class ApiClient implements AutoCloseable {
         if (configFilePath == null || configFilePath.isEmpty()) {
             String homePath = System.getProperty("user.home");
             File homeDir = new File(homePath);
-            File subDir = new File(homePath, ".genesyscloudjava");
+            File subDir = new File(homeDir, ".genesyscloudjava");
             File fullDir = new File(subDir, "config");
             configFilePath = fullDir.getPath();
         }
