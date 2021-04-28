@@ -139,12 +139,15 @@ public class FileWatcher implements Runnable {
     public static abstract class FileAdapter implements FileListener {
         @Override
         public boolean onCreated(FileEvent event) {
+            return false;
         }
         @Override
         public boolean onModified(FileEvent event) {
+            return false;
         }
         @Override
         public boolean onDeleted(FileEvent event) {
+            return false;
         }
     }
 }
