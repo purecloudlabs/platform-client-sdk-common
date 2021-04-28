@@ -21,34 +21,9 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Future;
 import com.mypurecloud.sdk.v2.extensions.AuthResponse;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.httpclient.UsernamePasswordCredentials;
-import org.apache.commons.httpclient.auth.BasicScheme;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
 import com.google.common.base.Stopwatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.joda.time.DateTime;
-import org.opensaml.saml2.core.Response;
-import org.opensaml.saml2.core.impl.ResponseMarshaller;
-import org.opensaml.xml.io.MarshallingException;
-import org.opensaml.xml.util.XMLHelper;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import java.io.IOException;
-import org.ini4j.Ini;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -298,7 +273,7 @@ public class ApiClient implements AutoCloseable {
         boolean logToConsole = loggingConfiguration.getLogToConsole();
         logger.setLogToConsole(logToConsole);
 
-        String logFilePath = loggingConfiguration.getLogFilePath();;
+        String logFilePath = loggingConfiguration.getLogFilePath();
         if (logFilePath != null && !logFilePath.isEmpty()) {
             logger.setLogFilePath(logFilePath);
         }
