@@ -55,7 +55,6 @@ public class Configuration {
     boolean shouldSubscribeToFileWatcher = defaultApiClient.getAutoReloadConfig()
             && (configFileWatcher == null || configFileWatcher.getListeners().size() == 0);
     if (shouldUnsubscribeFromFileWatcher) {
-      // configFileWatcher.removeListener(configListener);
       return true;
     }
     if (shouldSubscribeToFileWatcher) {
