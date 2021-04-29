@@ -402,5 +402,29 @@
 		"post": {
 			"name": "train"
 		}
+	},
+	"/api/v2/architect/emergencygroups": {
+		"name": "emergencygroups"
+	},
+	"/api/v2/architect/emergencygroups/{emergencyGroupId}": {
+		"name": "emergencygroups"
+	},
+	"/api/v2/architect/ivrs": {
+		"name": "IVR"
+	},
+	"/api/v2/architect/ivrs/{ivrId}": {
+		"name": "IVR"
+	},
+	"/api/v2/architect/schedulegroups": {
+		"name": "schedulegroups"
+	},
+	"/api/v2/architect/schedulegroups/{scheduleGroupId}": {
+		"name": "schedulegroups"
+	},
+	"/api/v2/architect/schedules": {
+		"name": "schedules"
+	},
+	"/api/v2/architect/schedules/{scheduleId}": {
+		"name": "schedules"
 	}
 }
