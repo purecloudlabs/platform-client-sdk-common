@@ -85,16 +85,6 @@ public class FileWatcher implements Runnable {
             }
             removeList.forEach(this::removeListener);
         }
-        else if (kind == ENTRY_DELETE) {
-            List<FileListener> removeList = new ArrayList<>();
-            for (FileListener listener : listeners) {
-                boolean shouldRemove = listener.onDeleted(event);
-                if (shouldRemove) {
-                    removeList.add(listener);
-                }
-            }
-            removeList.forEach(this::removeListener);
-        }
     }
     
     public FileWatcher addListener(FileListener listener) {
@@ -132,7 +122,6 @@ public class FileWatcher implements Runnable {
     public interface FileListener extends EventListener {
         public void onCreated(FileEvent event);
         public void onModified(FileEvent event);
-        public void onDeleted(FileEvent event);
     }
     
     public static abstract class FileAdapter implements FileListener {
@@ -144,10 +133,5 @@ public class FileWatcher implements Runnable {
         public boolean onModified(FileEvent event) {
             return false;
         }
-        @Override
-        public boolean onDeleted(FileEvent event) {
-            return false;
-        }
-    }
     }
 }
