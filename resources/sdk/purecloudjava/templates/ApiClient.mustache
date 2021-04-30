@@ -258,7 +258,7 @@ public class ApiClient implements AutoCloseable {
     /**
      * Helper method to apply logging settings to logger 
      */
-    void applyLoggingConfiguration(LoggingConfiguration loggingConfiguration) {
+    private void applyLoggingConfiguration(LoggingConfiguration loggingConfiguration) {
         // Logging
         String logLevel = loggingConfiguration.getLogLevel();
         if (logLevel != null && !logLevel.isEmpty()) {

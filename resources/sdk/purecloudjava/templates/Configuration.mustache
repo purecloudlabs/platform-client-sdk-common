@@ -82,14 +82,6 @@ public class Configuration {
           applyConfigFromFile();
           return configureAutoReload();
         }
-        public boolean onDeleted(FileWatcher.FileEvent event) {
-          if (loggingConfiguration == null) {
-            defaultApiClient.applyLoggingConfiguration(new ApiClient.LoggingConfiguration());
-          } else {
-            defaultApiClient.applyLoggingConfiguration(loggingConfiguration);
-          }
-          return configureAutoReload();
-        }
       };
       configFileWatcher = new FileWatcher(parentFolder, configFileName).addListener(configListener);
       configFileWatcher.watch();
