@@ -184,7 +184,7 @@ ApiClient apiClient = ApiClient.Builder.standard().withLoggingConfiguration(logg
 
 A number of configuration parameters can be applied using a configuration file. There are two sources for this file:
 
-1. The SDK will look for `%HOMEDRIVE%%HOMEPATH%\.genesyscloudjava\config` on Windows, or `$HOME/.genesyscloudjava/config` on Unix.
+1. The SDK will look for `%HOMEDRIVE%%HOMEPATH%\.genesyscloudjava-guest\config` on Windows, or `$HOME/.genesyscloudjava-guest/config` on Unix.
 2. Provide a valid file path to the ApiClient
 
 Example setting the configuration file:
@@ -193,7 +193,8 @@ Example setting the configuration file:
 ApiClient apiClient = ApiClient.Builder.standard().withConfigFilePath("/path/config").build();
 ```
 
-The SDK will check every 30 seconds to see if the config file has been updated, regardless of whether a config file was present at start-up. To disable this behaviour, set `autoReloadConfig` to false.  
+The SDK will check every 30 seconds to see if the config file has been updated, regardless of whether a config file was present at start-up. 
+If changes are detected, they will be applied instantly. To disable this behaviour, set `autoReloadConfig` to false.  
 Example setting autoReloadConfig to false:
 
 ```{"language": "java"}
