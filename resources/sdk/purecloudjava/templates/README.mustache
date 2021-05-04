@@ -168,13 +168,12 @@ Specify the connector in the builder:
 #### Setting the max retry time
 
 By default, the Java SDK does not automatically retry any failed requests.
-To enable automatic retries, provide a RetryConfiguration object with the maximum number of seconds to retry requests and the max number of retries when building the ApiClient instance.
+To enable automatic retries, provide a RetryConfiguration object with the maximum number of seconds to retry requests when building the ApiClient instance.
 
 Building a `RetryConfiguration` instance:  
 ```{"language":"java"}
 ApiClient.RetryConfiguration retryConfiguration = new ApiClient.RetryConfiguration();
 retryConfiguration.setMaxRetryTimeSec(30);
-retryConfiguration.setRetryMax(5);
 ```
 
 Setting `RetryConfiguration` instance to `ApiClient`:
@@ -182,7 +181,6 @@ Setting `RetryConfiguration` instance to `ApiClient`:
         .withRetryConfiguration(retryConfiguration)
 ```
 Set the `maxRetryTimeSec` to the number of seconds to process retries before returning an error.
-Set the 'MaxRetryTimeSec' to the number of seconds to process retries before returning an error.
 When the retry time is a a positive integer, the SDK will follow the recommended backoff logic using the provided configuration.
 The best practices are documented in the [Rate Limiting](https://developer.mypurecloud.com/api/rest/rate_limits.html) Developer Center article.
 

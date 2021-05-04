@@ -72,7 +72,6 @@ public class ApiClientRetryTest {
 
         retryConfiguration.setMaxRetryTimeSec(6);
         retryConfiguration.setRetryAfterDefaultMs(100);
-        retryConfiguration.setRetryMax(50);
 
         apiClient = getApiClient(retryConfiguration);
 
@@ -127,7 +126,6 @@ public class ApiClientRetryTest {
         retryConfiguration.setMaxRetryTimeSec(13);
         retryConfiguration.setRetryAfterDefaultMs(2000);
         retryConfiguration.setBackoffIntervalMs(11000);
-        retryConfiguration.setRetryMax(50);
 
         apiClient = getApiClient(retryConfiguration);
 
@@ -153,7 +151,6 @@ public class ApiClientRetryTest {
         retryConfiguration.setMaxRetryTimeSec(40);
         retryConfiguration.setRetryAfterDefaultMs(200);
         retryConfiguration.setBackoffIntervalMs(3000);
-        retryConfiguration.setRetryMax(50);
 
         apiClient = getApiClient(retryConfiguration);
 
@@ -179,7 +176,6 @@ public class ApiClientRetryTest {
 
         retryConfiguration.setMaxRetryTimeSec(2);
         retryConfiguration.setRetryAfterDefaultMs(1000);
-        retryConfiguration.setRetryMax(50);
 
         apiClient = getApiClient(retryConfiguration);
         mockResponse = getMockCloseableHttpResponse(504);
@@ -225,7 +221,6 @@ public class ApiClientRetryTest {
 
         ApiClient.RetryConfiguration retryConfiguration = new ApiClient.RetryConfiguration();
         retryConfiguration.setMaxRetryTimeSec(30);
-        retryConfiguration.setRetryMax(50);
 
         ApiClient.Retry retry = new ApiClient.Retry(retryConfiguration);
         Stopwatch stopwatch = Stopwatch.createStarted();
@@ -297,7 +292,6 @@ public class ApiClientRetryTest {
         retryConfiguration.setRetryAfterDefaultMs(3000L);
         retryConfiguration.setMaxRetryTimeSec(10);
         retryConfiguration.setMaxRetriesBeforeBackoff(0);
-        retryConfiguration.setRetryMax(50);
 
         ApiClient.Retry retry = new ApiClient.Retry(retryConfiguration);
         Stopwatch stopwatch = Stopwatch.createStarted();

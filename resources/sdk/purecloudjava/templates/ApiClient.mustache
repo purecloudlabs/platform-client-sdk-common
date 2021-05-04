@@ -12,7 +12,6 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.io.File;
 import java.net.URLEncoder;
 import java.net.Proxy;
 import java.text.DateFormat;
@@ -53,10 +52,10 @@ public class ApiClient implements AutoCloseable {
     }
 
     private final Map<String, String> defaultHeaderMap;
-    private String basePath;
+    private final String basePath;
     private final Boolean shouldThrowErrors;
     private Boolean shouldRefreshAccessToken;
-    private int refreshTokenWaitTime;
+    private final int refreshTokenWaitTime;
 
     private final DateFormat dateFormat;
     private final ObjectMapper objectMapper;
@@ -66,17 +65,13 @@ public class ApiClient implements AutoCloseable {
     private final Map<String, Authentication> authentications;
     private final ApiClientConnector connector;
 
-    private RetryConfiguration retryConfiguration;
-    private LoggingConfiguration loggingConfiguration;
-    private static RetryConfiguration DEFAULT_RETRY_CONFIG = new RetryConfiguration();
+    private final RetryConfiguration retryConfiguration;
+    private static final RetryConfiguration DEFAULT_RETRY_CONFIG = new RetryConfiguration();
     // These fields are only applicable to the Code Authorization OAuth flow:
     private String clientId;
     private String clientSecret;
     private String refreshToken;
     private AtomicBoolean refreshInProgress = new AtomicBoolean(false);
-    private Logger logger;
-    private String configFilePath;
-    private Boolean autoReloadConfig;
 
     public ApiClient() {
         this(Builder.standard());
@@ -190,16 +185,8 @@ public class ApiClient implements AutoCloseable {
         return refreshTokenWaitTime;
     }
 
-    public void setRefreshTokenWaitTime(int refreshTokenWaitTime) {
-        this.refreshTokenWaitTime = refreshTokenWaitTime;
-    }
-
     public boolean getShouldRefreshAccessToken() {
         return shouldRefreshAccessToken;
-    }
-
-    public void setShouldRefreshAccessToken(boolean shouldRefreshAccessToken) {
-        this.shouldRefreshAccessToken = shouldRefreshAccessToken;
     }
 
     public String getBasePath() {
@@ -207,35 +194,7 @@ public class ApiClient implements AutoCloseable {
     }
 
     public ObjectMapper getObjectMapper() {
-        return objectMapper;
-    }
-
-    public String getConfigFilePath() {
-        return configFilePath;
-    }
-
-    public LoggingConfiguration getLoggingConfiguration() {
-        return loggingConfiguration;
-    }
-
-    public Logger getLogger() {
-        return logger;
-    }
-
-    public boolean getAutoReloadConfig() {
-        return autoReloadConfig;
-    }
-
-    public void setAutoReloadConfig(boolean autoReloadConfig) {
-        this.autoReloadConfig = autoReloadConfig;
-    }
-
-    public RetryConfiguration getRetryConfiguration() {
-        return retryConfiguration;
-    }
-
-    public void setRetryConfiguration(RetryConfiguration retryConfig) {
-        this.retryConfiguration = retryConfig;
+        return this.objectMapper;
     }
 
     /**
@@ -752,6 +711,7 @@ public class ApiClient implements AutoCloseable {
                 logger.debug(connectorRequest.getMethod(), connectorRequest.getUrl(), connectorRequest.readBody(), connectorResponse.getStatusCode(), requestHeaderCopy);
                 logger.trace(connectorRequest.getMethod(), connectorRequest.getUrl(), connectorRequest.readBody(), connectorResponse.getStatusCode(), requestHeaderCopy, responseHeaderCopy);
             } while (retry.shouldRetry(connectorResponse));
+
             try {
                 return interpretConnectorResponse(connectorResponse, returnType);
             } catch (ApiException e) {
@@ -930,13 +890,9 @@ public class ApiClient implements AutoCloseable {
             builder.objectMapper = client.objectMapper;
             builder.basePath = client.basePath;
             builder.retryConfiguration = client.retryConfiguration;
-            builder.loggingConfiguration = client.loggingConfiguration;
             builder.shouldThrowErrors = client.shouldThrowErrors;
             builder.shouldRefreshAccessToken = client.shouldRefreshAccessToken;
             builder.refreshTokenWaitTime = client.refreshTokenWaitTime;
-            builder.logger = client.logger;
-            builder.configFilePath = client.configFilePath;
-            builder.autoReloadConfig = client.autoReloadConfig;
             return builder;
         }
 
@@ -951,13 +907,9 @@ public class ApiClient implements AutoCloseable {
         private DateFormat dateFormat;
         private String basePath;
         private RetryConfiguration retryConfiguration;
-        private LoggingConfiguration loggingConfiguration;
         private Boolean shouldThrowErrors = true;
         private Boolean shouldRefreshAccessToken = true;
         private int refreshTokenWaitTime = 10;
-        private Logger logger = null;
-        private String configFilePath = null;
-        private Boolean autoReloadConfig = true;
 
         private Builder(ConnectorProperties properties) {
             this.properties = (properties != null) ? properties.copy() : new ConnectorProperties();
@@ -1002,11 +954,6 @@ public class ApiClient implements AutoCloseable {
         public Builder withRetryConfiguration(RetryConfiguration retryConfiguration) {
         this.retryConfiguration = retryConfiguration;
         return this;
-        }
-
-        public Builder withLoggingConfiguration(LoggingConfiguration loggingConfiguration) {
-            this.loggingConfiguration = loggingConfiguration;
-            return this;
         }
 
         public Builder withConnectionTimeout(int connectionTimeout) {
@@ -1255,7 +1202,6 @@ public class ApiClient implements AutoCloseable {
         private long retryAfterDefaultMs = 3000L;
         private int maxRetryTimeSec = 0;
         private int maxRetriesBeforeBackoff = 5;
-        private int retryMax = 5;
 
         public void setBackoffIntervalMs(long backoffIntervalMs) {
             if (backoffIntervalMs < 0) {
@@ -1360,31 +1306,28 @@ public class ApiClient implements AutoCloseable {
         }
     }
 
-
     public static class Retry {
         private long backoffIntervalMs;
         private long retryAfterDefaultMs;
         private int maxRetryTimeSec;
         private int maxRetriesBeforeBackoff;
         private int retryCountBeforeBackOff = 0;
-        private int retryMax = 5;
-        private int retryCount;
         private long retryAfterMs;
         private Stopwatch stopwatch = null;
 
         private final List<Integer> statusCodes = Arrays.asList(429, 502, 503, 504);
+        private static Logger LOGGER = LoggerFactory.getLogger(Retry.class);
 
         public Retry(RetryConfiguration retryConfiguration) {
             this.backoffIntervalMs = retryConfiguration.backoffIntervalMs;
             this.retryAfterDefaultMs = retryConfiguration.retryAfterDefaultMs;
             this.maxRetryTimeSec = retryConfiguration.maxRetryTimeSec;
             this.maxRetriesBeforeBackoff = retryConfiguration.maxRetriesBeforeBackoff;
-            this.retryMax = retryConfiguration.retryMax;
             stopwatch = Stopwatch.createStarted();
         }
 
         public boolean shouldRetry(ApiClientConnectorResponse connectorResponse) {
-            if (stopwatch.elapsed(TimeUnit.MILLISECONDS) < maxRetryTimeSec * 1000L && statusCodes.contains(connectorResponse.getStatusCode()) && retryCount <= retryMax) {
+            if (stopwatch.elapsed(TimeUnit.MILLISECONDS) < maxRetryTimeSec * 1000L && statusCodes.contains(connectorResponse.getStatusCode())) {
 
                 if (connectorResponse.getHeaders().containsKey("Retry-After")) {
                     retryAfterMs = Integer.parseInt(connectorResponse.getHeaders().getOrDefault("Retry-After", "3")) * 1000L;
@@ -1393,7 +1336,6 @@ public class ApiClient implements AutoCloseable {
                 }
                 //If status code is 429 then wait until retry-after time and retry. OR If status code is retryable then for the first 5 times: wait until retry-after time and retry.
                 if (connectorResponse.getStatusCode() == 429 || retryCountBeforeBackOff++ < maxRetriesBeforeBackoff) {
-                    retryCount++;
                     return waitBeforeRetry(retryAfterMs);
                 }
 
@@ -1407,6 +1349,7 @@ public class ApiClient implements AutoCloseable {
 
         private boolean waitBeforeRetry(long retryAfterMs){
             try {
+                LOGGER.info("SDK will be sleeping for: " + retryAfterMs + " milliseconds before retrying.");
                 Thread.sleep(retryAfterMs);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
