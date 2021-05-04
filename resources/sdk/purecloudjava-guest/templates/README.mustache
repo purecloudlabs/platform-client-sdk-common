@@ -211,13 +211,6 @@ log_to_console = false
 log_file_path = /path/log
 log_response_body = false
 log_request_body = false
-[retry]
-retry_wait_min = 3
-retry_wait_max = 10
-retry_max = 5
-[reauthentication]
-refresh_access_token = true
-refresh_token_wait_max = 10
 [general]
 live_reload_config = true
 host = https://api.mypurecloud.com
@@ -233,15 +226,6 @@ JSON:
         "log_file_path": "/var/log/javasdk.log",
         "log_response_body": false,
         "log_request_body": false
-    },
-    "retry": {
-        "retry_wait_min": 3,
-        "retry_wait_max": 10,
-        "retry_max": 5
-    },
-    "reauthentication": {
-        "refresh_access_token": true,
-        "refresh_token_wait_max": 10
     },
     "general": {
         "live_reload_config": true,
