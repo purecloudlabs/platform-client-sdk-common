@@ -74,11 +74,11 @@ public class Configuration {
     }
     if (parentFolder != null) {
       configListener = new FileWatcher.FileAdapter() {
-        public void onModified(FileWatcher.FileEvent event) {
+        public boolean onModified(FileWatcher.FileEvent event) {
           applyConfigFromFile();
           return configureAutoReload();
         }
-        public void onCreated(FileWatcher.FileEvent event) {
+        public boolean onCreated(FileWatcher.FileEvent event) {
           applyConfigFromFile();
           return configureAutoReload();
         }
