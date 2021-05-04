@@ -171,23 +171,40 @@ namespace {{packageName}}.Client
 
         private void runConfigChecker()
         {
-            while (true)
+            try
             {
-                Thread.Sleep(30 * 1000);
-
-                if (!AutoReloadConfig)
-                    return;
-
-                string hash = getConfigHash();
-                if (String.IsNullOrEmpty(hash)) 
-                    continue;
-
-                if (String.Compare(hash, configFileHash) != 0)
+                var configDir = Path.GetDirectoryName(ConfigFilePath);
+                var configFile = Path.GetFileName(ConfigFilePath);
+                while (!Directory.Exists(configDir))
                 {
-                    configFileHash = hash;
-                    applyConfigFromFile();
+                    configDir = Path.GetDirectoryName(configDir);
+                    if (configDir == "") return;
                 }
+            
+                watcher = new FileSystemWatcher()
+                {
+                    Path = configDir,
+                    IncludeSubdirectories = true,
+                    Filter = configFile,
+                    EnableRaisingEvents = true
+                };
+                onChangedHandler = new FileSystemEventHandler(onChanged);
+                watcher.Changed += onChangedHandler;
             }
+            catch (Exception e)
+            {
+                // no-op
+            }
+        }
+
+        private void onChanged(object source, FileSystemEventArgs e)
+        {
+            if (!AutoReloadConfig)
+            {
+                watcher.Changed -= onChangedHandler;
+                return;
+            }
+            applyConfigFromFile();
         }
 
         /// <summary>
@@ -443,25 +460,9 @@ namespace {{packageName}}.Client
         /// <value>AutoReloadConfig</value>
         public bool AutoReloadConfig { get; set; }
 
-        private string configFileHash;
+        private FileSystemWatcher watcher;
 
-        private string getConfigHash()
-        {
-            try
-            {
-                using (var md5 = MD5.Create())
-                {
-                    using (var stream = File.OpenRead(ConfigFilePath))
-                    {
-                        return System.Text.Encoding.UTF8.GetString(md5.ComputeHash(stream));
-                    }
-                }
-            }
-            catch (Exception)
-            {
-                return "";
-            }
-        }
+        private FileSystemEventHandler onChangedHandler;
 
         /// <summary>
         /// Returns a string with essential information for debugging.

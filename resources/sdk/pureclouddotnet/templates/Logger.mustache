@@ -338,28 +338,38 @@ namespace {{packageName}}.Client
                             string responseBody = null
         )
         {
-            this._date = date;
-            this._level = level;
-            this._method = method;
-            this._url = url;
-            this._requestHeaders = requestHeaders;
-            this._responseHeaders = responseHeaders;
-            this._correlationId = getCorrelationId(responseHeaders);
-            this._statusCode = statusCode;
-            this._requestBody = requestBody;
-            this._responseBody = responseBody;
+            this.date = date;
+            this.level = level;
+            this.method = method;
+            this.url = url;
+            this.requestHeaders = requestHeaders;
+            this.responseHeaders = responseHeaders;
+            this.correlationId = getCorrelationId(responseHeaders);
+            this.statusCode = statusCode;
+            this.requestBody = requestBody;
+            this.responseBody = responseBody;
         }
 
-        private DateTime _date;
-        private string _level;
-        private string _method;
-        private string _url;
-        private Dictionary<String, String> _requestHeaders;
-        private Dictionary<String, String> _responseHeaders;
-        private string _correlationId;
-        private int _statusCode;
-        private string _requestBody;
-        private string _responseBody;
+        [JsonProperty]
+        private DateTime date;
+        [JsonProperty]
+        private string level;
+        [JsonProperty]
+        private string method;
+        [JsonProperty]
+        private string url;
+        [JsonProperty]
+        private Dictionary<String, String> requestHeaders;
+        [JsonProperty]
+        private Dictionary<String, String> responseHeaders;
+        [JsonProperty]
+        private string correlationId;
+        [JsonProperty]
+        private int statusCode;
+        [JsonProperty]
+        private string requestBody;
+        [JsonProperty]
+        private string responseBody;
 
         /// <summary>
         /// Returns a string representation of the log statement
@@ -370,12 +380,12 @@ namespace {{packageName}}.Client
         /// <return>String representation of the log statement</return>
         public string AsString(LogFormat? logFormat, bool logRequestBody, bool logResponseBody)
         {
-            _requestHeaders["Authorization"] = "[REDACTED]";
+            requestHeaders["Authorization"] = "[REDACTED]";
 
             if (!logRequestBody)
-                _requestBody = null;
+                requestBody = null;
             if (!logResponseBody)
-                _responseBody = null;
+                responseBody = null;
 
             if (logFormat == LogFormat.JSON)
             {
@@ -393,17 +403,17 @@ namespace {{packageName}}.Client
 
             return String.Format(@"{0}: {1}
 === REQUEST ==={2}{3}{4}{5}
-=== RESPONSE ==={6}{7}{8}{9}", _level.ToUpper(),
-                            _date,
-                            formatValue("URL", _url),
-                            formatValue("Method", _method),
-                            formatValue("Headers", formatHeaders(_requestHeaders)),
-                            formatValue("Body", _requestBody),
+=== RESPONSE ==={6}{7}{8}{9}", level.ToUpper(),
+                            date,
+                            formatValue("URL", url),
+                            formatValue("Method", method),
+                            formatValue("Headers", formatHeaders(requestHeaders)),
+                            formatValue("Body", requestBody),
 
-                            formatValue("Status", String.Format("{0}", _statusCode)),
-                            formatValue("Headers", formatHeaders(_responseHeaders)),
-                            formatValue("CorrelationId", _correlationId),
-                            formatValue("Body", _responseBody));
+                            formatValue("Status", String.Format("{0}", statusCode)),
+                            formatValue("Headers", formatHeaders(responseHeaders)),
+                            formatValue("CorrelationId", correlationId),
+                            formatValue("Body", responseBody));
         }
 
         private string formatValue(string name, string value)
