@@ -73,7 +73,9 @@ public class FileWatcher implements Runnable {
                     removeList.add(listener);
                 }
             }
-            removeList.forEach(this::removeListener);
+            for (FileListener listener : removeList) {
+                removeListener(listener);
+            }
         }
         else if (kind == ENTRY_MODIFY) {
             List<FileListener> removeList = new ArrayList<>();
@@ -83,7 +85,9 @@ public class FileWatcher implements Runnable {
                     removeList.add(listener);
                 }
             }
-            removeList.forEach(this::removeListener);
+            for (FileListener listener : removeList) {
+                removeListener(listener);
+            }
         }
     }
     
