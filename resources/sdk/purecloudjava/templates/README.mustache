@@ -229,7 +229,8 @@ Example setting the configuration file:
 ApiClient apiClient = ApiClient.Builder.standard().withConfigFilePath("/path/config").build();
 ```
 
-The SDK will check every 30 seconds to see if the config file has been updated, regardless of whether a config file was present at start-up. To disable this behaviour, set `autoReloadConfig` to false.  
+The SDK will check every 30 seconds to see if the config file has been updated, regardless of whether a config file was present at start-up. 
+If changes are detected, they will be applied instantly. To disable this behaviour, set `autoReloadConfig` to false.  
 Example setting autoReloadConfig to false:
 
 ```{"language": "java"}
