@@ -47,7 +47,7 @@ class Logger {
     void setLogFilePath(String logFilePath) {
         if (logFilePath != null && !logFilePath.isEmpty()) {
             try {
-                this.bw = new BufferedWriter(new FileWriter(logFilePath));
+                this.bw = new BufferedWriter(new FileWriter(logFilePath, true));
                 this.logFilePath = logFilePath;
             } catch (IOException e) {
                 // no-op
