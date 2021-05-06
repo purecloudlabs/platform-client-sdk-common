@@ -101,7 +101,7 @@ public class FileWatcher implements Runnable {
                     } catch (IOException e) {
                         // no-op
                     }
-                    return searchFiles(file, file.listFiles(), Arrays.copyOfRange(pathPoints, 1, pathPoints.length));
+                    return searchFiles(file, file.listFiles(), Arrays.copyOfRange(pathPoints, 1, pathPoints.length), watchService);
                 }
             }
         }
