@@ -86,7 +86,7 @@ public class Configuration {
           return configureAutoReload();
         }
       };
-      configFileWatcher = new FileWatcher(parentFolder, configFileName).addListener(configListener);
+      configFileWatcher = new FileWatcher(parentFolder, Paths.get(configFileName.toString())).addListener(configListener);
       configFileWatcher.watch();
     }
   }
