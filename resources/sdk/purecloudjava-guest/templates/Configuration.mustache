@@ -62,12 +62,15 @@ public class Configuration {
   }
 
   private void initializeFileWatcher() {
-    File parentFolder = new File(configFilePath).getParentFile();
-    Path configFileName = Paths.get(configFilePath).getFileName();
+    File configFile = new File(configFilePath);
+    File parentFolder = configFile.getParentFile();
+    StringBuilder configFileName = new StringBuilder(Paths.get(configFilePath).getFileName().toString());
     while (parentFolder != null && !parentFolder.exists()) {
       File temp = parentFolder.getParentFile();
       if (temp != null) {
         parentFolder = temp;
+        String[] splitPaths = configFile.getAbsolutePath().split(parentFolder.getAbsolutePath());
+        configFileName = new StringBuilder(splitPaths[splitPaths.length - 1]);
       } else {
         break;
       }
@@ -83,7 +86,7 @@ public class Configuration {
           return configureAutoReload();
         }
       };
-      configFileWatcher = new FileWatcher(parentFolder, configFileName).addListener(configListener);
+      configFileWatcher = new FileWatcher(parentFolder, Paths.get(configFileName.toString())).addListener(configListener);
       configFileWatcher.watch();
     }
   }

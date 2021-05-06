@@ -14,6 +14,7 @@ import java.nio.file.ClosedWatchServiceException;
 import java.util.EventObject;
 import java.util.List;
 import java.util.Collections;
+import java.util.Arrays;
 import static java.nio.file.StandardWatchEventKinds.*;
 
 {{>generatedAnnotation}}
@@ -56,11 +57,49 @@ public class FileWatcher implements Runnable {
         Path path = (Path) key.watchable();
         for (WatchEvent<?> event : key.pollEvents()) {
             final Path changed = (Path) event.context();
-            if (changed.endsWith(fileName)) {
+            if (changed.endsWith(fileName) || fullPathEndsWith(changed)) {
                 notifyListeners(event.kind(), path.resolve(changed).toFile());
             }
         }
         return key.reset();
+    }
+
+    // method for checking the changed path's ending when the config file's parent directory did not exist at init
+    protected boolean fullPathEndsWith(Path changed) {
+        boolean nullOrEmpty = changed == null
+                || changed.toString().isEmpty()
+                || fileName == null
+                || fileName.toString().isEmpty();
+        if (nullOrEmpty)
+            return false;
+        File parentDirectory = new File(parentFolder.getAbsolutePath());
+        StringBuilder filePath = new StringBuilder();
+        if (fileName.toString().indexOf('\\') != -1) {
+            filePath = new StringBuilder(fileName.toString().replace('\\', '/'));
+        } else {
+            filePath = new StringBuilder(fileName.toString());
+        }
+        if (filePath.charAt(0) == '/')
+            filePath = new StringBuilder(filePath.substring(1, filePath.length()));
+        String[] pathPoints = filePath.toString().split("/");
+        return searchFiles(parentDirectory, parentDirectory.listFiles(), pathPoints);
+    }
+
+    // recursively searches for the config file in subdirectories of the config file path
+    protected boolean searchFiles(File parent, File[] files, String[] pathPoints) {
+        if (files != null && files.length > 0) {
+            for (File file : files) {
+                if (file.getName().equals(pathPoints[0])) {
+                    if (file.isFile()
+                            && file.exists()
+                            && file.getAbsolutePath().endsWith(fileName.toString())) {
+                        return true;
+                    }
+                    return searchFiles(file, file.listFiles(), Arrays.copyOfRange(pathPoints, 1, pathPoints.length));
+                }
+            }
+        }
+        return false;
     }
     
     protected void notifyListeners(WatchEvent.Kind<?> kind, File file) {
