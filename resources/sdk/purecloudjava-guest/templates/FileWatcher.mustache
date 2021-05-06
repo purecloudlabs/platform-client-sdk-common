@@ -41,7 +41,7 @@ public class FileWatcher implements Runnable {
     public void run() {
         try (WatchService watchService = FileSystems.getDefault().newWatchService()) {
             Path path = Paths.get(parentFolder.getAbsolutePath());
-            path.register(watchService, ENTRY_CREATE, ENTRY_MODIFY, ENTRY_DELETE);
+            path.register(watchService, ENTRY_CREATE, ENTRY_MODIFY);
             watchServices.add(watchService);
             boolean poll = true;
             while (poll) {
@@ -57,7 +57,7 @@ public class FileWatcher implements Runnable {
         Path path = (Path) key.watchable();
         for (WatchEvent<?> event : key.pollEvents()) {
             final Path changed = (Path) event.context();
-            if (changed.endsWith(fileName) || fullPathEndsWith(changed)) {
+            if (changed.endsWith(fileName) || fullPathEndsWith(changed, watchService)) {
                 notifyListeners(event.kind(), path.resolve(changed).toFile());
             }
         }
@@ -65,7 +65,7 @@ public class FileWatcher implements Runnable {
     }
 
     // method for checking the changed path's ending when the config file's parent directory did not exist at init
-    protected boolean fullPathEndsWith(Path changed) {
+    protected boolean fullPathEndsWith(Path changed, WatchService watchService) {
         boolean nullOrEmpty = changed == null
                 || changed.toString().isEmpty()
                 || fileName == null
@@ -82,11 +82,11 @@ public class FileWatcher implements Runnable {
         if (filePath.charAt(0) == '/')
             filePath = new StringBuilder(filePath.substring(1, filePath.length()));
         String[] pathPoints = filePath.toString().split("/");
-        return searchFiles(parentDirectory, parentDirectory.listFiles(), pathPoints);
+        return searchFiles(parentDirectory, parentDirectory.listFiles(), pathPoints, watchService);
     }
 
     // recursively searches for the config file in subdirectories of the config file path
-    protected boolean searchFiles(File parent, File[] files, String[] pathPoints) {
+    protected boolean searchFiles(File parent, File[] files, String[] pathPoints, WatchService watchService) {
         if (files != null && files.length > 0) {
             for (File file : files) {
                 if (file.getName().equals(pathPoints[0])) {
@@ -95,7 +95,13 @@ public class FileWatcher implements Runnable {
                             && file.getAbsolutePath().endsWith(fileName.toString())) {
                         return true;
                     }
-                    return searchFiles(file, file.listFiles(), Arrays.copyOfRange(pathPoints, 1, pathPoints.length));
+                    Path path = Paths.get(file.getAbsolutePath());
+                    try {
+                        path.register(watchService, ENTRY_CREATE, ENTRY_MODIFY);
+                    } catch (IOException e) {
+                        // no-op
+                    }
+                    return searchFiles(file, file.listFiles(), Arrays.copyOfRange(pathPoints, 1, pathPoints.length), watchService);
                 }
             }
         }

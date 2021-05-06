@@ -152,7 +152,7 @@ Specify the connector in the builder:
 
 #### SDK Logging
 
-Logging of API requests and responses can be controlled by a number of parameters on the `Configuration`'s `Logger` instance.
+Logging of API requests and responses can be controlled programatically by creating an instance of `ApiClient.LoggingConfiguration` and passing it to the `withLoggingConfiguration` builder method of the `APIClient`.
 
 `LogLevel` values:
 1. trace (HTTP Method, URL, Request Body, HTTP Status Code, Request Headers, Response Headers)
@@ -177,7 +177,9 @@ loggingConfiguration.setLogResponseBody(true);
 loggingConfiguration.setLogToConsole(true);
 loggingConfiguration.setLogFilePath("/var/log/javasdk.log");
 
-ApiClient apiClient = ApiClient.Builder.standard().withLoggingConfiguration(loggingConfiguration).build();
+ApiClient apiClient = ApiClient.Builder.standard()
+                        .withLoggingConfiguration(loggingConfiguration)
+                        .build();
 ```
 
 #### Configuration file
@@ -190,15 +192,17 @@ A number of configuration parameters can be applied using a configuration file. 
 Example setting the configuration file:
 
 ```{"language": "java"}
-ApiClient apiClient = ApiClient.Builder.standard().withConfigFilePath("/path/config").build();
+ApiClient apiClient = ApiClient.Builder.standard()
+                        .withConfigFilePath("/path/to/config")
+                        .build();
 ```
 
-The SDK will check every 30 seconds to see if the config file has been updated, regardless of whether a config file was present at start-up. 
-If changes are detected, they will be applied instantly. To disable this behaviour, set `autoReloadConfig` to false.  
-Example setting autoReloadConfig to false:
+The SDK will take an event-driven approach to monitor for config file changes and will apply changes in near real-time, regardless of whether a config file was present at start-up. To disable this behavior, set `autoReloadConfig` to false like so:  
 
 ```{"language": "java"}
-ApiClient apiClient = ApiClient.Builder.standard().withAutoReloadConfig(false).build();
+ApiClient apiClient = ApiClient.Builder.standard()
+                       .withAutoReloadConfig(false)
+                       .build();
 ```
 INI and JSON formats are supported. See below for examples of configuration values in both formats:
 
@@ -208,7 +212,7 @@ INI:
 log_level = trace
 log_format = text
 log_to_console = false
-log_file_path = /path/log
+log_file_path = /var/log/javasdk.log
 log_response_body = false
 log_request_body = false
 [general]
