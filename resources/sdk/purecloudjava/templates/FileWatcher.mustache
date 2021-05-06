@@ -41,7 +41,7 @@ public class FileWatcher implements Runnable {
     public void run() {
         try (WatchService watchService = FileSystems.getDefault().newWatchService()) {
             Path path = Paths.get(parentFolder.getAbsolutePath());
-            path.register(watchService, ENTRY_CREATE, ENTRY_MODIFY, ENTRY_DELETE);
+            path.register(watchService, ENTRY_CREATE, ENTRY_MODIFY);
             watchServices.add(watchService);
             boolean poll = true;
             while (poll) {
