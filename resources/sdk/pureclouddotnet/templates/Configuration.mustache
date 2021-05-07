@@ -38,7 +38,6 @@ namespace {{packageName}}.Client
         /// <param name="shouldRefreshAccessToken">ShouldRefreshAccessToken</param>
         /// <param name="refreshTokenWaitTime">Refresh token wait time in seconds</param>
         /// <param name="userAgent">HTTP user agent</param>
-        /// <param name="logger">Logger instance</param>
         /// <param name="configFilePath">Config file path</param>
         /// <param name="autoReloadConfig">AutoReloadConfig</param>
         public Configuration(ApiClient apiClient = null,
@@ -54,7 +53,6 @@ namespace {{packageName}}.Client
                              bool shouldRefreshAccessToken = true,
                              int refreshTokenWaitTime = 10,
                              string userAgent = "{{#httpUserAgent}}{{.}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen{{/httpUserAgent}}/dotnet",
-                             Logger logger = null,
                              string configFilePath = null,
                              bool autoReloadConfig = true
                             )
@@ -80,10 +78,7 @@ namespace {{packageName}}.Client
             ShouldRefreshAccessToken = shouldRefreshAccessToken;
             RefreshTokenWaitTime = refreshTokenWaitTime;
 
-            if (logger != null)
-                Logger = logger;
-            else
-                Logger = new Logger();
+            Logger = new Logger();
 
             if (String.IsNullOrEmpty(configFilePath))
             {

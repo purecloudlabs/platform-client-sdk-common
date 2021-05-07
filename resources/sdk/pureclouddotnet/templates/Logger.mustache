@@ -22,7 +22,7 @@ namespace {{packageName}}.Client
         /// <param name="logLevel">Log level</param>
         /// <param name="logResponseBody">Log response body bool</param>
         /// <param name="logRequestBody">Log request body bool</param>
-        public Logger(string logFilePath = null,
+        internal Logger(string logFilePath = null,
                       bool logToConsole = true,
                       LogFormat logFormat = LogFormat.Text,
                       LogLevel logLevel = LogLevel.LNone,
@@ -104,7 +104,7 @@ namespace {{packageName}}.Client
         /// </summary>
         /// <param name="logLevel">log level value as a string</param>
         /// <returns>LogLevel</returns>
-        public static LogLevel? LogLevelFromString(string logLevel)
+        internal static LogLevel? LogLevelFromString(string logLevel)
         {
             logLevel = "l" + logLevel;
             try
@@ -126,7 +126,7 @@ namespace {{packageName}}.Client
         /// </summary>
         /// <param name="logFormat">log format value as a string</param>
         /// <returns>LogFormat</returns>
-        public static LogFormat? LogFormatFromString(string logFormat)
+        internal static LogFormat? LogFormatFromString(string logFormat)
         {
             try
             {
@@ -151,7 +151,7 @@ namespace {{packageName}}.Client
         /// <param name="statusCode">HTTP status code</param>
         /// <param name="requestHeaders">Request headers</param>
         /// <param name="responseHeaders">Response headers</param>
-        public void Trace(string method,
+        internal void Trace(string method,
                           string url,
                           object requestBody,
                           int statusCode,
@@ -180,7 +180,7 @@ namespace {{packageName}}.Client
         /// <param name="requestBody">Request body</param>
         /// <param name="statusCode">HTTP status code</param>
         /// <param name="requestHeaders">Request headers</param>
-        public void Debug(string method,
+        internal void Debug(string method,
                           string url,
                           object requestBody,
                           int statusCode,
@@ -209,7 +209,7 @@ namespace {{packageName}}.Client
         /// <param name="statusCode">HTTP status code</param>
         /// <param name="requestHeaders">Request headers</param>
         /// <param name="responseHeaders">Response headers</param>
-        public void Error(string method,
+        internal void Error(string method,
                           string url,
                           object requestBody,
                           string responseBody,
@@ -313,7 +313,7 @@ namespace {{packageName}}.Client
     /// <summary>
     /// LogStatement
     /// </summary>
-    public class LogStatement
+    class LogStatement
     {
         /// <summary>
         /// Initializes a new instance of the Logger LogStatement
