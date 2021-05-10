@@ -1,4 +1,4 @@
-package com.mypurecloud.sdk.v2.guest.connector.apache;
+package com.mypurecloud.sdk.v2;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -7,8 +7,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-
-import com.mypurecloud.sdk.v2.guest.DetailLevel;
 import org.apache.http.Header;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
@@ -50,6 +48,20 @@ public class SLF4JInterceptor implements HttpRequestInterceptor, HttpResponseInt
     public SLF4JInterceptor(DetailLevel detailLevel) {
         this.detailLevel = detailLevel;
     }
+    
+    /**
+     * The level of detail to log
+     * 
+     * <ul>
+     * <li>NONE - don't log anything
+     * <li>MINIMAL - only log the verb, url, and response code
+     * <li>HEADERS - as above, but also log all the headers for both the request and response
+     * <li>FULL - as above, but also log the full body for both the request and response
+     */
+    public static enum DetailLevel {
+        NONE, MINIMAL, HEADERS, FULL
+    }
+    
     
     /**
      * @return the current detail level of the filter
@@ -173,7 +185,7 @@ public class SLF4JInterceptor implements HttpRequestInterceptor, HttpResponseInt
      * </pre>
      * 
      * @param response - the response to build a message for
-     * @param requestLine - the request line of the initial request for the response
+     * @param request - the request line of the initial request for the response
      * @param tookMs - how long the request took, in milliseconds
      */
     private void logResponse(HttpResponse response, RequestLine requestLine, long tookMs) throws IOException {
