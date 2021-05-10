@@ -1,4 +1,5 @@
 import superagent from 'superagent';
+import Configuration from './configuration.js';
 
 /**
  * @module {{#invokerPackage}}{{invokerPackage}}/{{/invokerPackage}}ApiClient
@@ -80,6 +81,11 @@ class ApiClient {
 		}
 
 		/**
+		 * Create configuration instance for ApiClient and prepare logger.
+		 */
+		this.config = new Configuration();
+
+		/**
 		 * The base URL against which to resolve every API call's (relative) path.
 		 * @type {String}
 		 * @default {{basePath}}
@@ -120,16 +126,6 @@ class ApiClient {
 	}
 
 	/**
-	 * @description Sets the debug log to enable debug logging
-	 * @param {log} debugLog - In most cases use `console.log`
-	 * @param {integer} maxLines - (optional) The max number of lines to write to the log. Must be > 0.
-	 */
-	setDebugLog(debugLog, maxLines) {
-		this.debugLog = debugLog;
-		this.debugLogMaxLines = (maxLines && maxLines > 0) ? maxLines : undefined;
-	}
-
-	/**
 	 * @description If set to `true`, the response object will contain additional information about the HTTP response. When `false` (default) only the body object will be returned.
 	 * @param {boolean} returnExtended - `true` to return extended responses
 	 */
@@ -145,7 +141,6 @@ class ApiClient {
 	setPersistSettings(doPersist, prefix) {
 		this.persistSettings = doPersist;
 		this.settingsPrefix = prefix ? prefix.replace(/\W+/g, '_') : 'purecloud';
-		this._debugTrace(`this.settingsPrefix=${this.settingsPrefix}`);
 	}
 
 	/**
@@ -170,7 +165,6 @@ class ApiClient {
 
 			// Ensure we can access local storage
 			if (!this.hasLocalStorage) {
-				this._debugTrace('Warning: Cannot access local storage. Settings will not be saved.');
 				return;
 			}
 
@@ -180,7 +174,6 @@ class ApiClient {
 
 			// Save updated auth data
 			localStorage.setItem(`${this.settingsPrefix}_auth_data`, JSON.stringify(tempData));
-			this._debugTrace('Auth data saved to local storage');
 		} catch (e) {
 			console.error(e);
 		}
@@ -195,7 +188,6 @@ class ApiClient {
 
 		// Ensure we can access local storage
 		if (!this.hasLocalStorage) {
-			this._debugTrace('Warning: Cannot access local storage. Settings will not be loaded.');
 			return;
 		}
 
@@ -215,24 +207,7 @@ class ApiClient {
 	 * @param {string} environment - (Optional, default "mypurecloud.com") Environment the session use, e.g. mypurecloud.ie, mypurecloud.com.au, etc.
 	 */
 	setEnvironment(environment) {
-		if (!environment)
-			environment = 'mypurecloud.com';
-
-		// Strip trailing slash
-		environment = environment.replace(/\/+$/, '');
-
-		// Strip protocol and subdomain
-		if (environment.startsWith('https://'))
-			environment = environment.substring(8);
-		if (environment.startsWith('http://'))
-			environment = environment.substring(7);
-		if (environment.startsWith('api.'))
-			environment = environment.substring(4);
-
-		// Set vars
-		this.environment = environment;
-		this.basePath = `https://api.${environment}`;
-		this.authUrl = `https://login.${environment}`;
+		this.config.setEnvironment(environment);
 	}
 
 	/**
@@ -289,7 +264,7 @@ class ApiClient {
 	 */
 	_buildAuthUrl(path, query) {
 		if (!query) query = {};
-		return Object.keys(query).reduce((url, key) => !query[key] ? url : `${url}&${key}=${query[key]}`, `${this.authUrl}/${path}?`);
+		return Object.keys(query).reduce((url, key) => !query[key] ? url : `${url}&${key}=${query[key]}`, `${this.config.authUrl}/${path}?`);
 	}
 
 	/**
@@ -318,7 +293,7 @@ class ApiClient {
 		if (!path.match(/^\//)) {
 			path = `/${path}`;
 		}
-		var url = this.basePath + path;
+		var url = this.config.basePath + path;
 		url = url.replace(/\{([\w-]+)\}/g, (fullMatch, key) => {
 			var value;
 			if (pathParams.hasOwnProperty(key)) {
@@ -503,23 +478,6 @@ class ApiClient {
 			request.proxy(this.proxy);
 		}
 
-		if(this.debugLog){
-			var trace = `[REQUEST] ${httpMethod} ${url}`;
-			if(pathParams && Object.keys(pathParams).count > 0 && pathParams[Object.keys(pathParams)[0]]){
-				trace += `\nPath Params: ${JSON.stringify(pathParams)}`;
-			}
-
-			if(queryParams && Object.keys(queryParams).count > 0 && queryParams[Object.keys(queryParams)[0]]){
-				trace += `\nQuery Params: ${JSON.stringify(queryParams)}`;
-			}
-
-			if(bodyParam){
-				trace += `\nnBody: ${JSON.stringify(bodyParam)}`;
-			}
-
-			this._debugTrace(trace);
-		}
-
 		// apply authentications
 		this.applyAuthToRequest(request, authNames);
 
@@ -590,62 +548,28 @@ class ApiClient {
 				} : response.body ? response.body : response.text;
 
 				// Debug logging
-				if (this.debugLog) {
-					var trace = `[RESPONSE] ${response.status}: ${httpMethod} ${url}`;
-					if (response.headers)
-						trace += `\ninin-correlation-id: ${response.headers['inin-correlation-id']}`;
-					if (response.body)
-						trace += `\nBody: ${JSON.stringify(response.body,null,2)}`;
-
-					// Log trace message
-					this._debugTrace(trace);
-
-					// Log stack trace
-					if (error)
-						this._debugTrace(error);
-				}
+				this.config.logger.log('trace', response.statusCode, httpMethod, url, request.header, response.headers, bodyParam, undefined);
+				this.config.logger.log('debug', response.statusCode, httpMethod, url, request.header, undefined, bodyParam, undefined);
 
 				// Resolve promise
 				if (error) {
+					// Log error
+					this.config.logger.log(
+						'error',
+						response.statusCode,
+						httpMethod,
+						url,
+						request.header,
+						response.headers,
+						bodyParam,
+						response.body
+					);
 					reject(data);
 				} else {
 					resolve(data);
 				}
 			});
 		});
-	}
-
-	/**
-	 * @description Parses an ISO-8601 string representation of a date value.
-	 * @param {String} str The date value as a string.
-	 * @returns {Date} The parsed date object.
-	 */
-	parseDate(str) {
-		return new Date(str.replace(/T/i, ' '));
-	}
-
-	/**
-	 * @description Logs to the debug log
-	 * @param {String} str The date value as a string.
-	 * @returns {Date} The parsed date object.
-	 */
-	_debugTrace(trace) {
-		if (!this.debugLog) return;
-
-		if (typeof(trace) === 'string') {
-			// Truncate
-			var truncTrace = '';
-			var lines = trace.split('\n');
-			if (this.debugLogMaxLines && lines.length > this.debugLogMaxLines) {
-				for  (var i = 0; i < this.debugLogMaxLines; i++) {
-					truncTrace += `${lines[i]}\n`;
-				}
-				truncTrace += '...response truncated...';
-				trace = truncTrace;
-			}
-		}
-
-		this.debugLog(trace);
 	}
 }
 
