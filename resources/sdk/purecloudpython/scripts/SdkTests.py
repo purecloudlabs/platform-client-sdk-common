@@ -149,7 +149,9 @@ class SdkTests(unittest.TestCase):
 			'usw2.pure.cloud': PureCloudPlatformClientV2.PureCloudRegionHosts.us_west_2,
 			'cac1.pure.cloud': PureCloudPlatformClientV2.PureCloudRegionHosts.ca_central_1,
 			'apne2.pure.cloud': PureCloudPlatformClientV2.PureCloudRegionHosts.ap_northeast_2,
-			'euw2.pure.cloud': PureCloudPlatformClientV2.PureCloudRegionHosts.eu_west_2
+			'euw2.pure.cloud': PureCloudPlatformClientV2.PureCloudRegionHosts.eu_west_2,
+			'aps1.pure.cloud': PureCloudPlatformClientV2.PureCloudRegionHosts.ap_south_1,
+			'use2.us-gov-pure.cloud': PureCloudPlatformClientV2.PureCloudRegionHosts.us_east_2
 			}.get(x,x)
 
 
