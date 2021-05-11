@@ -18,6 +18,16 @@ Bash:
   # Linux:
   $ gc completion bash > /etc/bash_completion.d/gc
   # macOS:
+
+  # Firstly, install bash-completion if it is not already installed:
+  $ brew install bash-completion
+  
+  # Configure the bash-completion package in your ~/.bash_profile or ~/.profile by adding the following:
+  if [ -f $(brew --prefix)/etc/bash_completion ]; then
+	  . $(brew --prefix)/etc/bash_completion
+  fi
+  
+  # Finally, run the following command:
   $ gc completion bash > /usr/local/etc/bash_completion.d/gc
 
 Zsh:
