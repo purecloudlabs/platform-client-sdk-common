@@ -126,12 +126,12 @@ client.loginCodeAuthorizationGrant(clientId,clientSecret,authCode,redirectUri)
   });
 ```
 
-By default the SDK will transparently request a new access token when it expires. By default the SDK will transparently request a new access token when it expires. If multiple threads are running 1 thread will request a new token, other threads will wait a maximum of 10 seconds for the token refresh to complete, this time can be overriden with the _refreshTokenWaitTime_ field of the _ApiClient_ object.  
-If you wish to apply the refresh logic yourself, set _shouldRefreshAccessToken_ to false and store the refresh token. The _tokenExpiryTime_ can be used to preemptively request a new token. Use _refreshCodeAuthorizationGrant_ to request a new token when necessary.
+By default the SDK will transparently request a new access token when it expires. If multiple threads are running 1 thread will request a new token, other threads will wait a maximum of 10 seconds for the token refresh to complete, this time can be overriden with the _client.config.refresh_token_wait_max_ field of the _Configuration_ object within ApiClient.  
+If you wish to apply the refresh logic yourself, set _client.config.refresh_access_token_ to false and store the refresh token. The _tokenExpiryTime_ can be used to preemptively request a new token. Use _refreshCodeAuthorizationGrant_ to request a new token when necessary.
 
 ```{"language":"javascript"}
 const client = {{moduleName}}.ApiClient.instance;
-client.shouldRefreshAccessToken = false;
+client.config.refresh_access_token = false;
 client.loginCodeAuthorizationGrant(clientId,clientSecret,authCode,redirectUri)
   .then((authData) => {
     refreshToken = authData.refreshToken;
@@ -425,16 +425,6 @@ Example error response object:
     "original": null
   }
 }
-```
-
-
-## Debug Logging
-
-There are hooks to trace requests and responses.  To enable debug tracing, provide a log object. Optionally, specify a maximum number of lines. If specified, the response body trace will be truncated. If not specified, the entire response body will be traced out.
-
-```{"language":"javascript"}
-const client = {{moduleName}}.ApiClient.instance;
-client.setDebugLog(console.log, 25);
 ```
 
 
