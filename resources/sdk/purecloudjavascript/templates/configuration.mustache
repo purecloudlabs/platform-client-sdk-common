@@ -1,4 +1,3 @@
-const ConfigParser = require('configparser');
 const os = require('os');
 const path = require('path');
 const fs = require('fs');
@@ -70,6 +69,7 @@ class Configuration {
 	}
 
 	updateConfigFromFile() {
+		const ConfigParser = require('configparser');
 		var configparser = new ConfigParser();
 
 		try {

@@ -113,9 +113,9 @@ class ApiClient {
 		// Transparently request a new access token when it expires (Code Authorization only)
 		this.refreshInProgress = false;
 
-		if (typeof(window) !== 'undefined') window.ApiClient = this;
-
 		this.config = new Configuration();
+
+		if (typeof(window) !== 'undefined') window.ApiClient = this;
 	}
 
 	/**
