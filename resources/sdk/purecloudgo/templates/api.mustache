@@ -17,8 +17,8 @@ type {{classname}} struct {
 
 // New{{classname}} creates an API instance using the default configuration
 func New{{classname}}() *{{classname}} {
+	fmt.Sprintf(strings.Title(""), "")
 	config := GetDefaultConfiguration()
-	config.Debug(fmt.Sprintf("Creating {{classname}} with base path: %s", strings.ToLower(config.BasePath)))
 	return &{{classname}}{
 		Configuration: config,
 	}
@@ -26,7 +26,6 @@ func New{{classname}}() *{{classname}} {
 
 // New{{classname}}WithConfig creates an API instance using the provided configuration
 func New{{classname}}WithConfig(config *Configuration) *{{classname}} {
-	config.Debugf("Creating {{classname}} with base path: %s\n", strings.ToLower(config.BasePath))
 	return &{{classname}}{
 		Configuration: config,
 	}

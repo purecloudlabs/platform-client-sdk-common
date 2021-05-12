@@ -73,7 +73,8 @@
           "args": [
             "${SDK_REPO}/build/gc/cmd/root.go",
             "${SDK_TEMP}/duplicateMappings.json",
-            "${SDK_TEMP}/topLevelCommands.json"
+            "${SDK_TEMP}/topLevelCommands.json",
+            "${COMMON_ROOT}/resources/sdk/clisdkclient/resources/resourceDefinitions.json"
           ],
           "failOnError": true
         }

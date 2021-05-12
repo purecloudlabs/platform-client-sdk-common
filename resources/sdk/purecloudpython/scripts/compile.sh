@@ -23,5 +23,7 @@ echo "Install requests..."
 python3 -m pip install --user -U requests
 echo "Install six..."
 python3 -m pip install --user -U six
+echo "Install watchdog..."
+python3 -m pip install --user -U watchdog
 echo "Run unit tests"
 python3 -m unittest SdkTests

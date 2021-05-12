@@ -14,11 +14,13 @@ This CLI focuses mainly on exposing the following operations:
 
 At the time of writing the following objects are supported by the CLI:
 - campaigns
+- contactlists
 - divisions
 - edges
 - externalcontacts
 - groups
 - locations
+- nlu
 - notifications
 - phones
 - queues
@@ -56,7 +58,7 @@ environment="mypurecloud.com"
 client_credentials="OAUTH CLIENT CREDENTIAL GRANT"
 client_secret="OAUTH CLIENT SECRET"
 
-[hollywoo]
+[test]
 environment="mypurecloud.com"
 client_credentials="OAUTH CLIENT CREDENTIAL GRANT"
 client_secret="OAUTH CLIENT SECRET"
@@ -68,22 +70,94 @@ client_secret="OAUTH CLIENT SECRET"
 The CLI follows standard POSIX command name and command flag parameter styles.  To see all of the available objects you can issue a `gc` command.  To see all the sub-commands under a particular entity (eg. users) type `gc <<subcommand>>`.  For example to see all of the users in the org you can type `gc users list --autopaginate`.
 
 # Application logging
-The CLI logs Information, Warning and Fatal data to a log file, the location of which depends on the operating system:
+
+By default, the CLI does not log information to a file. To enable logging, use the following command:
+
+```
+gc logging enable
+```  
+
+And to disable:
+
+```
+gc logging disable
+```
+
+The default location of the log file depends on the operating system:
 
 ### Linux
-`/tmp/GenesysCloud`
+`/tmp/GenesysCloud/gc.log`
 
 ### Windows
-`%TEMP%\GenesysCloud`
+`%TEMP%\GenesysCloud\gc.txt`
 
 ### macOS
-`~/Library/Logs/GenesysCloud`
+`~/Library/Logs/GenesysCloud/gc.log`
+
+To set a custom path, use the following command:
+
+```
+gc logging path /path/to/log.log
+```
+
+Logging is configured on a per-profile basis so the above commands will only configure logging for the default profile.
 
 # Tracing progress information
 Passing the flag `-i` or `--indicateprogress` to any command will result in progress information traced to stderr and written to the application log file.  For example to see progress information for a list operation and ignore API output, use `gc users list --autopaginate -i > /dev/null`.
 
-# Pagnation
+# Pagination
 As of version `3.0.0` the default behaviour will be to *not* automatically paginate any paginatable resources. To automatically paginate, you must pass the `--autopaginate` or `-a` flag. In addition, there is a new `--stream` or `-s` flag for paginatable resources. This will paginate through the results and print them one page at a time leaving the page information intact.
+
+# Autocompletion
+
+See below for instructions on how to enable autocompletion for supported shells:
+
+### Bash (macOs)
+
+```
+gc completion bash > /etc/bash_completion.d/gc
+```
+
+### Bash (Linux)
+
+```
+gc completion bash > /usr/local/etc/bash_completion.d/gc
+```
+
+### Zsh
+
+If shell completion is not already enabled in your environment, you will need to enable it. You can execute the following once:
+
+```
+echo "autoload -U compinit; compinit" >> ~/.zshrc
+```
+
+```
+gc completion zsh > "${fpath[1]}/_gc"
+```
+
+You will need to start a new shell for this setup to take effect.
+
+### Fish
+
+```
+gc completion fish > ~/.config/fish/completions/gc.fish
+```
+
+### Powershell
+
+```
+gc completion powershell > gc.ps1
+```
+
+And source this file from your PowerShell profile.  
+
+To see further examples of enabling autocompletion, run the following command:
+
+```
+gc completion --help
+```
+
 
 # Examples
 
@@ -114,7 +188,7 @@ gc users create -f examples-json/create-user.json
 To perform a delete:
 
 ```
-gc users delete {{genesys cloud id of the user being deleted}}
+gc users delete [userId]
 ```
 
 # Additional Tools

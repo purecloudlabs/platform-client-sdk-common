@@ -2,8 +2,9 @@ package config
 
 import (
 	"fmt"
-	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
 	"os"
+
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
 
 	"github.com/spf13/viper"
 )
@@ -14,15 +15,19 @@ type Configuration interface {
 	ClientID() string
 	ClientSecret() string
 	OAuthTokenData() string
+	LogFilePath() string
+	LoggingEnabled() bool
 	fmt.Stringer
 }
 
 type configuration struct {
-	profileName  string
-	environment  string
-	clientID     string
-	clientSecret string
-	oAuthTokenData   string
+	profileName    string
+	environment    string
+	clientID       string
+	clientSecret   string
+	oAuthTokenData string
+	logFilePath    string
+	loggingEnabled bool
 }
 
 //ProfileName is the name of the profile being used to run the CLI
@@ -50,14 +55,30 @@ func (c *configuration) Environment() string {
 	return viper.GetString(fmt.Sprintf("%s.environment", c.profileName))
 }
 
+//LogFilePath is the path the CLI logs to if an override has been specified
+func (c *configuration) LogFilePath() string {
+	return viper.GetString(fmt.Sprintf("%s.log_file_path", c.profileName))
+}
+
+//LoggingEnabled shows whether logging is enabled or disabled for the CLI
+func (c *configuration) LoggingEnabled() bool {
+	return viper.GetBool(fmt.Sprintf("%s.logging_enabled", c.profileName))
+}
+
 func (c *configuration) String() string {
-	return fmt.Sprintf(`{"profileName": "%s", "environment": "%s", "clientName": "%s", "clientSecret": "%s"}`, c.ProfileName(), c.Environment(), c.ClientID(), c.ClientSecret())
+	return fmt.Sprintf(`{"profileName": "%s", "environment": "%s", "logFilePath": "%s", "loggingEnabled": "%v", "clientName": "%s", "clientSecret": "%s"}`, c.ProfileName(), c.Environment(), c.LogFilePath(), c.LoggingEnabled(), c.ClientID(), c.ClientSecret())
 }
 
 //GetConfig retrieves the config for the current profile
 func GetConfig(profileName string) (Configuration, error) {
 	if err := viper.ReadInConfig(); err != nil {
-		return nil, fmt.Errorf("Error reading config file, %s", err)
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			homeDir, _ := os.UserHomeDir()
+			configDir := fmt.Sprintf("%s/.gc/config.toml", homeDir)
+			return nil, fmt.Errorf(`Failed to load config file in "%s". Please use "gc profiles" command to configure the CLI profiles`, configDir)
+		} else {
+			return nil, fmt.Errorf("Error reading config file, %s", err)
+		}
 	}
 
 	profile := viper.GetViper().Get(profileName)
@@ -67,16 +88,24 @@ func GetConfig(profileName string) (Configuration, error) {
 	}
 
 	return &configuration{profileName: profileName,
-		clientID:         viper.GetString(fmt.Sprintf("%s.client_credentials", profileName)),
-		clientSecret:     viper.GetString(fmt.Sprintf("%s.client_secret", profileName)),
-		environment:      viper.GetString(fmt.Sprintf("%s.environment", profileName)),
-		oAuthTokenData:   viper.GetString(fmt.Sprintf("%s.oauth_token_data", profileName)),
+		clientID:       viper.GetString(fmt.Sprintf("%s.client_credentials", profileName)),
+		clientSecret:   viper.GetString(fmt.Sprintf("%s.client_secret", profileName)),
+		environment:    viper.GetString(fmt.Sprintf("%s.environment", profileName)),
+		oAuthTokenData: viper.GetString(fmt.Sprintf("%s.oauth_token_data", profileName)),
+		logFilePath:    viper.GetString(fmt.Sprintf("%s.log_file_path", profileName)),
+		loggingEnabled: viper.GetBool(fmt.Sprintf("%s.logging_enabled", profileName)),
 	}, nil
 }
 
 func ListConfigs() ([]configuration, error) {
 	if err := viper.ReadInConfig(); err != nil {
-		return nil, fmt.Errorf("Error reading config file, %s", err)
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			homeDir, _ := os.UserHomeDir()
+			configDir := fmt.Sprintf("%s/.gc/config.toml", homeDir)
+			return nil, fmt.Errorf(`Failed to load config file in "%s". Please use "gc profiles" command to configure the CLI profiles`, configDir)
+		} else {
+			return nil, fmt.Errorf("Error reading config file, %s", err)
+		}
 	}
 
 	settings := viper.GetViper().AllSettings()
@@ -87,11 +116,13 @@ func ListConfigs() ([]configuration, error) {
 	configurations := make([]configuration, 0)
 	for profileName, _ := range settings {
 		configurations = append(configurations, configuration{
-			profileName:      profileName,
-			clientID:         viper.GetString(fmt.Sprintf("%s.client_credentials", profileName)),
-			clientSecret:     viper.GetString(fmt.Sprintf("%s.client_secret", profileName)),
-			environment:      viper.GetString(fmt.Sprintf("%s.environment", profileName)),
-			oAuthTokenData:   viper.GetString(fmt.Sprintf("%s.oauth_token_data", profileName)),
+			profileName:    profileName,
+			clientID:       viper.GetString(fmt.Sprintf("%s.client_credentials", profileName)),
+			clientSecret:   viper.GetString(fmt.Sprintf("%s.client_secret", profileName)),
+			environment:    viper.GetString(fmt.Sprintf("%s.environment", profileName)),
+			oAuthTokenData: viper.GetString(fmt.Sprintf("%s.oauth_token_data", profileName)),
+			logFilePath:    viper.GetString(fmt.Sprintf("%s.log_file_path", profileName)),
+			loggingEnabled: viper.GetBool(fmt.Sprintf("%s.logging_enabled", profileName)),
 		})
 	}
 
@@ -99,19 +130,33 @@ func ListConfigs() ([]configuration, error) {
 }
 
 func SaveConfig(config Configuration) error {
-	return writeConfig(config, nil)
+	return writeConfig(config, nil, "", nil)
 }
 
 func UpdateOAuthToken(config Configuration, data *models.OAuthTokenData) error {
-	return writeConfig(config, data)
+	return writeConfig(config, data, "", nil)
 }
 
-func writeConfig(config Configuration, data *models.OAuthTokenData) error {
+func UpdateLogFilePath(config Configuration, filePath string) error {
+	return writeConfig(config, nil, filePath, nil)
+}
+
+func SetLoggingEnabled(config Configuration, loggingEnabled bool) error {
+	return writeConfig(config, nil, "", &loggingEnabled)
+}
+
+func writeConfig(config Configuration, data *models.OAuthTokenData, logFilePath string, loggingEnabled *bool) error {
 	viper.Set(fmt.Sprintf("%s.client_credentials", config.ProfileName()), config.ClientID())
 	viper.Set(fmt.Sprintf("%s.client_secret", config.ProfileName()), config.ClientSecret())
 	viper.Set(fmt.Sprintf("%s.environment", config.ProfileName()), config.Environment())
 	if data != nil {
 		viper.Set(fmt.Sprintf("%s.oauth_token_data", config.ProfileName()), data.String())
+	}
+	if logFilePath != "" {
+		viper.Set(fmt.Sprintf("%s.log_file_path", config.ProfileName()), logFilePath)
+	}
+	if loggingEnabled != nil {
+		viper.Set(fmt.Sprintf("%s.logging_enabled", config.ProfileName()), *loggingEnabled)
 	}
 	//Checking to see if the file does not exist.  It it doesnt we write out the config as default config.toml
 	if err := viper.ReadInConfig(); err != nil {

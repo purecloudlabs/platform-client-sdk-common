@@ -42,12 +42,9 @@ public class ApacheHttpClientConnectorProvider implements ApiClientConnectorProv
         }
 
         DetailLevel detailLevel = properties.getProperty(ApiClientConnectorProperty.DETAIL_LEVEL, DetailLevel.class, DetailLevel.MINIMAL);
-        SLF4JInterceptor interceptor = new SLF4JInterceptor(detailLevel);
 
         CloseableHttpClient client = HttpClients.custom()
                 .setDefaultRequestConfig(requestBuilder.build())
-                .addInterceptorFirst((HttpRequestInterceptor) interceptor)
-                .addInterceptorLast((HttpResponseInterceptor) interceptor)
                 .build();
 
         ExecutorService executorService = properties.getProperty(ApiClientConnectorProperty.ASYNC_EXECUTOR_SERVICE, ExecutorService.class, null);
