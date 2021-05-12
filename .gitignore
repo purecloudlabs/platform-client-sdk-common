@@ -8,6 +8,7 @@ localConfig.json
 localConfig.yml
 resources/sdk/*/scripts/local.sh
 resources/sdk/pureclouddotnet/extensions/Client/NotificationTopics.cs
+resources/sdk/purecloudjava/tests/.idea/
 *.pyc
 
 

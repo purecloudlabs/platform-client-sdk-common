@@ -6,8 +6,6 @@ import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.util.EntityUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,8 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 class ApacheHttpResponse implements ApiClientConnectorResponse {
-    private static final Logger LOG = LoggerFactory.getLogger(ApacheHttpResponse.class);
-
+    
     private final CloseableHttpResponse response;
 
     public ApacheHttpResponse(CloseableHttpResponse response) {
@@ -28,7 +25,7 @@ class ApacheHttpResponse implements ApiClientConnectorResponse {
                     response.setEntity(new BufferedHttpEntity(entity));
                 }
                 catch (Exception exception) {
-                    LOG.error("Failed to buffer HTTP entity.", exception);
+                    // no-op
                 }
             }
         }
