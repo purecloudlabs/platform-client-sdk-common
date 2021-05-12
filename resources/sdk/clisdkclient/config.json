@@ -97,7 +97,7 @@
           "type": "command",
           "command": "make",
           "cwd": "${SDK_REPO}",
-          "args":[ "test", "build" ],
+          "args":[ "build", "test" ],
           "failOnError": true
         },
         {

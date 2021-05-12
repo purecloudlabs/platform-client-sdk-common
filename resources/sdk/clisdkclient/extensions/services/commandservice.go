@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -112,8 +113,9 @@ func (c *commandService) Stream(uri string) (string, error) {
 
 	switch determinePaginationStyle(firstPage) {
 	case cursorPagination:
-		pagedURI := firstPage.NextUri
-		for ok := true; ok; ok = pagedURI != "" {
+		cursor := getCursor(firstPage)
+		pagedURI := updateCursorPagingURI(uri, cursor)
+		for ok := true; ok; ok = cursor != "" {
 			logger.Info("Paginating with URI: ", pagedURI)
 			c.traceProgress(pagedURI)
 			retryFunc := retry.Retry(pagedURI, restClient.Get)
@@ -129,7 +131,8 @@ func (c *commandService) Stream(uri string) (string, error) {
 			}
 
 			utils.Render(data)
-			pagedURI = pageData.NextUri
+			cursor = getCursor(pageData)
+			pagedURI = updateCursorPagingURI(pagedURI, cursor)
 		}
 		break
 	case entityPagination:
@@ -148,10 +151,9 @@ func (c *commandService) Stream(uri string) (string, error) {
 		}
 		break
 	case indexPagination:
-		//Appends the individual records from Resources into the array
 		pagedURI := uri
 		pageData := firstPage
-		for ok := true; ok; ok = len(pageData.Resources) > 0 {
+		for ok := true; ok; ok = len(getPageObjects(pageData)) > 0 {
 			pagedURI = updatePagingIndex(pagedURI, "startIndex", pageData.StartIndex)
 			logger.Info("Paginating with URI: ", pagedURI)
 			c.traceProgress(pagedURI)
@@ -167,7 +169,7 @@ func (c *commandService) Stream(uri string) (string, error) {
 				return "", err
 			}
 
-			if len(pageData.Resources) > 0 {
+			if len(getPageObjects(pageData)) > 0 {
 				utils.Render(data)
 			}
 		}
@@ -211,13 +213,13 @@ func (c *commandService) List(uri string) (string, error) {
 	//Looks up the rest of the pages
 	switch determinePaginationStyle(firstPage) {
 	case cursorPagination:
-		//Appends the individual records from Entities into the array
-		for _, val := range firstPage.Entities {
+		//Appends the individual records from page objects into the array
+		for _, val := range getPageObjects(firstPage) {
 			totalResults = append(totalResults, string(val))
 		}
-		// This will work for cursor pagination and most entityListing responses
-		pagedURI := firstPage.NextUri
-		for ok := true; ok; ok = pagedURI != "" {
+		cursor := getCursor(firstPage)
+		pagedURI := updateCursorPagingURI(uri, cursor)
+		for ok := true; ok; ok = cursor != "" {
 			logger.Info("Paginating with URI: ", pagedURI)
 			c.traceProgress(pagedURI)
 			retryFunc := retry.Retry(pagedURI, restClient.Get)
@@ -232,15 +234,16 @@ func (c *commandService) List(uri string) (string, error) {
 				return "", err
 			}
 
-			for _, val := range pageData.Entities {
+			for _, val := range getPageObjects(pageData) {
 				totalResults = append(totalResults, string(val))
 			}
-			pagedURI = pageData.NextUri
+			cursor = getCursor(pageData)
+			pagedURI = updateCursorPagingURI(pagedURI, cursor)
 		}
 		break
 	case entityPagination:
-		//Appends the individual records from Entities into the array
-		for _, val := range firstPage.Entities {
+		//Appends the individual records from page objects into the array
+		for _, val := range getPageObjects(firstPage) {
 			totalResults = append(totalResults, string(val))
 		}
 		pagedURI := uri
@@ -260,19 +263,19 @@ func (c *commandService) List(uri string) (string, error) {
 				return "", err
 			}
 
-			for _, val := range pageData.Entities {
+			for _, val := range getPageObjects(pageData) {
 				totalResults = append(totalResults, string(val))
 			}
 		}
 		break
 	case indexPagination:
-		//Appends the individual records from Resources into the array
-		for _, val := range firstPage.Resources {
+		//Appends the individual records from page objects into the array
+		for _, val := range getPageObjects(firstPage) {
 			totalResults = append(totalResults, string(val))
 		}
 		pagedURI := uri
 		pageData := firstPage
-		for ok := true; ok; ok = len(pageData.Resources) > 0 {
+		for ok := true; ok; ok = len(getPageObjects(pageData)) > 0 {
 			pagedURI = updatePagingIndex(pagedURI, "startIndex", pageData.StartIndex)
 			logger.Info("Paginating with URI: ", pagedURI)
 			c.traceProgress(pagedURI)
@@ -288,7 +291,7 @@ func (c *commandService) List(uri string) (string, error) {
 				return "", err
 			}
 
-			for _, val := range pageData.Resources {
+			for _, val := range getPageObjects(pageData) {
 				totalResults = append(totalResults, string(val))
 			}
 		}
@@ -311,8 +314,44 @@ func (c *commandService) List(uri string) (string, error) {
 	return finalJSONString, nil
 }
 
+func getCursor(entities *models.Entities) string {
+	if entities.Cursor != "" {
+		return entities.Cursor
+	}
+
+	return entities.Cursors.After
+}
+
+func getPageObjects(entities *models.Entities) []json.RawMessage {
+	if len(entities.Resources) > 0 {
+		return entities.Resources
+	}
+
+	if len(entities.Entities) > 0 {
+		return entities.Entities
+	}
+
+	return entities.Conversations
+}
+
+func updateCursorPagingURI(pagedURI, cursor string) string {
+	if strings.Contains(pagedURI, "cursor=") {
+		re := regexp.MustCompile("cursor=([^&]*)")
+		result := re.FindStringSubmatch(pagedURI)
+		pagedURI = strings.Replace(pagedURI, result[0], fmt.Sprintf("cursor=%v", url.QueryEscape(cursor)), 1)
+	} else {
+		if strings.Contains(pagedURI, "?") {
+			pagedURI = fmt.Sprintf("%s&cursor=%s", pagedURI, url.QueryEscape(cursor))
+		} else {
+			pagedURI = fmt.Sprintf("%s?cursor=%s", pagedURI, url.QueryEscape(cursor))
+		}
+	}
+
+	return pagedURI
+}
+
 func determinePaginationStyle(entities *models.Entities) paginationStyle {
-	if entities.NextUri != "" {
+	if entities.Cursor != "" || entities.Cursors.After != "" {
 		return cursorPagination
 	}
 
@@ -344,9 +383,9 @@ func updatePagingIndex(pagedURI, indexName string, index int) string {
 		pagedURI = strings.Replace(pagedURI, result[0], fmt.Sprintf("%s=%v", indexName, index), 1)
 	} else {
 		if strings.Contains(pagedURI, "?") {
-			pagedURI = fmt.Sprintf("%s&%s=%d", indexName, pagedURI, index)
+			pagedURI = fmt.Sprintf("%s&%s=%d", pagedURI, indexName, index)
 		} else {
-			pagedURI = fmt.Sprintf("%s?%s=%d", indexName, pagedURI, index)
+			pagedURI = fmt.Sprintf("%s?%s=%d", pagedURI, indexName, index)
 		}
 	}
 
@@ -482,7 +521,7 @@ func (c *commandService) traceStart(method, uri, data string) {
 func (c *commandService) traceProgress(pagedURI string) {
 	traceProgress, _ := c.cmd.Root().Flags().GetBool("indicateprogress")
 	if traceProgress {
-		logger.Tracef("Paginating with path: %v\n", pagedURI)
+		logger.Tracef("Paginating with URI: %v\n", pagedURI)
 	}
 }
 
