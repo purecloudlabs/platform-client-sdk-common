@@ -1,0 +1,12 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+urllib3 = ">= 1.15"
+six = ">= 1.10"
+certifi = "*"
+python-dateutil = "*"
