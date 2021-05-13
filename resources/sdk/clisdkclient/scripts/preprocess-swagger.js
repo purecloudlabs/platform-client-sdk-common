@@ -105,6 +105,8 @@ function createDefinitions(swagger) {
 	let definitions = {};
 
 	for (const path of Object.keys(swagger['paths'])) {
+		if (!path.startsWith("/api/v2")) continue;
+
 		const name = getName(path),
 			supercommand = getSuperCommand(path),
 			description = getDescription(path)
@@ -120,7 +122,7 @@ function createDefinitions(swagger) {
 }
 
 function separatePath(path) {
-	const pathParamRegex = /\{[a-zA-Z]*\}/g
+	const pathParamRegex = /\{[a-zA-Z0-9]*\}/g
 	const trailingSlashRegex = /\/$/g
 	path = path.replace(pathParamRegex, "")
 	path = processPath(path)
@@ -141,17 +143,17 @@ function processPath(path) {
 function getName(path) {
 	let names = separatePath(path)
 
-	return names[names.length -1]
+	return names[names.length -1].replace(/-/g, "")
 }
 
 function getSuperCommand(path) {
 	let names = separatePath(path)
 	names.pop()
-	return names.join(".")
+	return names.join(".").replace(/-/g, "")
 }
 
 function getDescription(path) {
-	return path.replace(/\{[a-zA-Z]*\}$/g, "")
+	return path.replace(/\{[a-zA-Z0-9]*\}$/g, "")
 		.replace(/\/$/g, "")
 }
 

@@ -36,8 +36,16 @@ func AddFlag(flags *pflag.FlagSet, paramType string, name string, value string, 
 		intValue, _ := strconv.Atoi(value)
 		flags.Int(name, intValue, usage)
 		break
+	case "float32":
+		floatValue, _ := strconv.ParseFloat(value, 32)
+		flags.Float32(name, float32(floatValue), usage)
+		break
+	case "float64":
+		floatValue, _ := strconv.ParseFloat(value, 64)
+		flags.Float64(name, floatValue, usage)
+		break
 	default:
-		logger.Fatal("Unknown parameter type. Support must be added for it.", paramType)
+		logger.Fatal("Unknown parameter type. Support must be added for it: ", paramType)
 	}
 }
 
@@ -79,6 +87,14 @@ func GetFlag(flags *pflag.FlagSet, paramType string, name string) string {
 	case "int":
 		flagInt, _ := flags.GetInt(name)
 		flag = strconv.Itoa(flagInt)
+		break
+	case "float32":
+		flagFloat, _ := flags.GetFloat32(name)
+		flag = strconv.FormatFloat(float64(flagFloat), 'E', -1, 32)
+		break
+	case "float64":
+		flagFloat, _ := flags.GetFloat64(name)
+		flag = strconv.FormatFloat(flagFloat, 'E', -1, 64)
 		break
 	default:
 		logger.Fatal("Unknown parameter type. Support must be added for it.", paramType)
@@ -147,8 +163,8 @@ func GenerateCustomDescription(description string, subcommandDescriptions ...str
 	}
 
 	paths := make([]string, 0)
-	trailingPathRegex := regexp.MustCompile(`\/.[A-Za-z]{0,}(\/*)$`)
-	trailingPathParamRegex := regexp.MustCompile(`\/{[A-Za-z]{0,}}$`)
+	trailingPathRegex := regexp.MustCompile(`\/.[A-Za-z0-9]{0,}(\/*)$`)
+	trailingPathParamRegex := regexp.MustCompile(`\/{[A-Za-z0-9]{0,}}$`)
 	for _, subcommandDescription := range newSubcommandDescriptions {
 		subcommandDescription = trailingPathRegex.ReplaceAllString(subcommandDescription, "")
 		for ok := true; ok; ok = strings.HasSuffix(subcommandDescription, "}") {
