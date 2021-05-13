@@ -1,5 +1,3 @@
-const winston = require('winston');
-
 const logLevels = {
 	levels: {
 		none: 0,
@@ -45,55 +43,84 @@ class Logger {
 		this.setLogger();
 	}
 
-	createNewLogger() {
-		this.logger = winston.createLogger({
-			levels: logLevels.levels,
-			level: this.log_level,
-		});
-	}
-
 	setLogger() {
-		this.createNewLogger();
-		if (this.log_file_path && this.log_file_path !== '') {
-			if (this.log_format === logFormatEnum.formats.JSON) {
-				this.logger.add(new winston.transports.File({ format: winston.format.json(), filename: this.log_file_path }));
-			} else {
-				this.logger.add(
-					new winston.transports.File({
-						format: winston.format.combine(
-							winston.format((info) => {
-								info.level = info.level.toUpperCase();
-								return info;
-							})(),
-							winston.format.simple()
-						),
-						filename: this.log_file_path,
-					})
-				);
+		if(typeof window === 'undefined') {
+			const winston = require('winston');
+			this.logger = winston.createLogger({
+				levels: logLevels.levels,
+				level: this.log_level,
+			});
+			if (this.log_file_path && this.log_file_path !== '') {
+				if (this.log_format === logFormatEnum.formats.JSON) {
+					this.logger.add(new winston.transports.File({ format: winston.format.json(), filename: this.log_file_path }));
+				} else {
+					this.logger.add(
+						new winston.transports.File({
+							format: winston.format.combine(
+								winston.format((info) => {
+									info.level = info.level.toUpperCase();
+									return info;
+								})(),
+								winston.format.simple()
+							),
+							filename: this.log_file_path,
+						})
+					);
+				}
 			}
-		}
-		if (this.log_to_console) {
-			if (this.log_format === logFormatEnum.formats.JSON) {
-				this.logger.add(new winston.transports.Console({ format: winston.format.json() }));
-			} else {
-				this.logger.add(
-					new winston.transports.Console({
-						format: winston.format.combine(
-							winston.format((info) => {
-								info.level = info.level.toUpperCase();
-								return info;
-							})(),
-							winston.format.simple()
-						),
-					})
-				);
+			if (this.log_to_console) {
+				if (this.log_format === logFormatEnum.formats.JSON) {
+					this.logger.add(new winston.transports.Console({ format: winston.format.json() }));
+				} else {
+					this.logger.add(
+						new winston.transports.Console({
+							format: winston.format.combine(
+								winston.format((info) => {
+									info.level = info.level.toUpperCase();
+									return info;
+								})(),
+								winston.format.simple()
+							),
+						})
+					);
+				}
 			}
 		}
 	}
 
 	log(level, statusCode, method, url, requestHeaders, responseHeaders, requestBody, responseBody) {
 		var content = this.formatLog(level, statusCode, method, url, requestHeaders, responseHeaders, requestBody, responseBody);
-		if (this.logger.transports.length > 0) this.logger.log(level, content);
+		if (typeof window !== 'undefined') {
+			var shouldLog = this.calculateLogLevel(level);
+			if (shouldLog > 0 && this.log_to_console === true) {
+				if(this.log_format === this.logFormatEnum.formats.JSON) {
+					console.log(content);
+				} else {
+			 		console.log(`${level.toUpperCase()}: ${content}`);
+				}
+			}
+		} else {
+			if (this.logger.transports.length > 0) this.logger.log(level, content);
+		}
+	}
+
+	calculateLogLevel(level) {
+		switch (this.log_level) {
+			case this.logLevelEnum.level.LError:
+				if (level !== this.logLevelEnum.level.LError) {
+					return -1;
+				}
+				return 1;
+			case this.logLevelEnum.level.LDebug:
+				if (level === this.logLevelEnum.level.LTrace) {
+					return -1;
+				}
+				return 1;
+			case this.logLevelEnum.level.LTrace:
+				return 1;
+			default:
+				return -1;
+		}
 	}
 
 	formatLog(level, statusCode, method, url, requestHeaders, responseHeaders, requestBody, responseBody) {
