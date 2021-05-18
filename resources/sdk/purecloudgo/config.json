@@ -61,14 +61,21 @@
       "publishRelease": false,
       "preRunScripts": [
         {
+          "type": "node",
+          "path": "postbuild-postrun.js",
+          "args": ["${SDK_REPO}"],
+          "failOnError": true
+        }
+      ],
+      "postRunScripts": [
+        {
           "type": "command",
           "command": "make",
       		"cwd": "${SDK_REPO}",
       		"args":[ "build", "test" ],
           "failOnError": true
         }
-      ],
-      "postRunScripts": []
+      ]
     }
   }
 }

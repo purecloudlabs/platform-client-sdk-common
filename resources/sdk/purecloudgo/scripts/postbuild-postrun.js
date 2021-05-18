@@ -8,6 +8,14 @@ try {
 	console.log('repoPath', repoPath);
 	console.log('buildDir', buildDir);
 
+	const dir = fs.opendirSync(repoPath);
+	let dirent;
+	while ((dirent = dir.readSync()) !== null) {
+		if (dirent.isDirectory() && dirent.name !== 'build')
+			fs.removeSync(path.join(repoPath, dirent.name))
+	}
+	dir.closeSync();
+
 	fs.copySync(buildDir, repoPath);
 	fs.removeSync(buildDir);
 } catch (err) {
