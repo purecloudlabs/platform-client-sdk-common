@@ -16,9 +16,9 @@ import (
 
 func init() {
 	note := "Note: The 'version' value from the command input will be ignored and the latest version value will be retrieved from the API instead"
-	addCmd.SetHelpTemplate(fmt.Sprintf("%s\nOperation:\n  %s %s\n\n%s\n", addCmd.UsageTemplate(), addMembersOperation.Method, addMembersOperation.Path, note))
-	addCmd.Flags().StringP("file", "f", "", "File name containing the JSON body")
-	groups_membersCmd.AddCommand(addCmd)
+	addCmd.SetUsageTemplate(fmt.Sprintf("%s\nOperation:\n  %s %s\n%s\n\n%s\n", addCmd.UsageTemplate(), "POST", "/api/v2/groups/{groupId}/members", utils.FormatPermissions([]string{  }), note))
+
+	createCmd = addCmd
 }
 
 type group struct {
@@ -43,8 +43,8 @@ var (
 
 var addCmd = &cobra.Command{
 	Use:   "add [groupId]",
-	Short: "Add members - POST method override",
-	Long:  `Add members - POST method override`,
+	Short: "Add members",
+	Long:  `Add members`,
 	Args:  utils.DetermineArgs([]string{"groupId"}),
 
 	Run: func(cmd *cobra.Command, args []string) {

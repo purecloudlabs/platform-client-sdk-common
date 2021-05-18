@@ -1,4 +1,4 @@
-package usage
+package usage_query
 
 import (
 	"encoding/json"
@@ -16,10 +16,7 @@ import (
 
 //Example of a custom API
 func init() {
-	queryUsageCmd.Flags().StringP("file", "f", "", "File name containing the JSON for creating a query")
-	queryUsageCmd.Flags().IntP("timeout", "t", 0, "Maximum time to wait for the results (X minutes) to complete.  The code will wait 5 seconds between each call")
-
-	usageCmd.AddCommand(queryUsageCmd)
+	createCmd = queryUsageCmd
 }
 
 var (
@@ -34,7 +31,7 @@ var (
 )
 
 var queryUsageCmd = &cobra.Command{
-	Use:   "customquery",
+	Use:   "create",
 	Short: "Creates a query for Genesys Cloud API Usage",
 	Long:  `Creates a query for Genesys Cloud API Usage`,
 	Args:  cobra.NoArgs,

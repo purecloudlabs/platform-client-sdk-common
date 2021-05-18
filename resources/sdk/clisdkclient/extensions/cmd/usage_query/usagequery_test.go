@@ -1,4 +1,4 @@
-package usage
+package usage_query
 
 import (
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"

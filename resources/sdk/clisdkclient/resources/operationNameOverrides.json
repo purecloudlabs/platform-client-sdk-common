@@ -265,6 +265,11 @@
 			"name": "modify"
 		}
 	},
+	"/api/v2/speechandtextanalytics/settings": {
+		"patch": {
+			"name": "patch"
+		}
+	},
 	"/api/v2/telephony/providers/edges/{edgeId}/logicalinterfaces": {
 		"get": {
 			"name": "getedgelogicalinterfaces"

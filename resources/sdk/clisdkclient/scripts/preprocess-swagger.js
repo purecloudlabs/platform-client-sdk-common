@@ -42,7 +42,7 @@ function processDefinitions(includedSwaggerPathObjects, resourceDefinitions, new
 				const successResponse = value.responses["200"]
 				if (successResponse) {
 					const schema = successResponse.schema['$ref'] || ''
-					if (canPanginate(schema, newSwagger)) {
+					if (canPaginate(schema, newSwagger)) {
 						value.operationId = "SWAGGER_OVERRIDE_list"
 						value.responses["200"].schema['$ref'] = "SWAGGER_OVERRIDE_list"
 					} else if (canList(path, successResponse.schema, newSwagger)) {
@@ -157,7 +157,7 @@ function getDescription(path) {
 		.replace(/\/$/g, "")
 }
 
-function canPanginate(schema, newSwagger) {
+function canPaginate(schema, newSwagger) {
 	if (schema === '') return false
 	const definitionName = schema.split("/").pop()
 
