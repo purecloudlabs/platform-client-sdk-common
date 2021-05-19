@@ -11,7 +11,7 @@ try {
 	const dir = fs.opendirSync(repoPath);
 	let dirent;
 	while ((dirent = dir.readSync()) !== null) {
-		if (dirent.isDirectory() && dirent.name !== 'build')
+		if (dirent.isDirectory() && dirent.name !== 'build' && !dirent.name.startsWith("."))
 			fs.removeSync(path.join(repoPath, dirent.name))
 	}
 	dir.closeSync();

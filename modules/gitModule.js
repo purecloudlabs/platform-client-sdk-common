@@ -58,14 +58,18 @@ Git.prototype.saveChanges = function(repo, localDir, message) {
 		}
 
 		repo = injectAuthToken(repo, this.authToken);
-		spawnProcess(['add', '-A'], localDir)
+		spawnProcess(['status'], localDir)
+			.then(() => {
+				return spawnProcess(['add', '-A'], localDir)
+			})
 			.then(() => {
 				var commitArgs = ['commit', '-m', message ? message : 'automated commit'];
 				return spawnProcess(commitArgs, localDir);
 			})
 			.then(() => {
 				// return spawnProcess(['push', `--repo=${repo}`], localDir);
-				console.log("saveChanges")
+				console.log("saveChanges");
+				return;
 			})
 			.then(() => deferred.resolve())
 			.catch((err) => deferred.reject(err));

@@ -507,7 +507,13 @@ function createRelease() {
 			};
 
 			// Create release
-			return githubApi.repos.releases.createRelease(createReleaseOptions);
+			// return githubApi.repos.releases.createRelease(createReleaseOptions);
+			return {
+				id: "test release id",
+				name: "test release name",
+				tag_name: "test release tag",
+				published_at: "test release"
+			}
 		})
 		.then((release) => {
 			log.info(`Created release #${release.id}, \
