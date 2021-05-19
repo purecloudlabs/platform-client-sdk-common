@@ -469,20 +469,20 @@ function createRelease() {
 		return deferred.promise;
 	}
 
-	if (_this.isNewVersion !== true) {
-		log.warn('Skipping github release creation! Build did not produce a new version.');
-		deferred.resolve();
-		return deferred.promise;
-	}
+	// if (_this.isNewVersion !== true) {
+	// 	log.warn('Skipping github release creation! Build did not produce a new version.');
+	// 	deferred.resolve();
+	// 	return deferred.promise;
+	// }
 
 	git
 		.saveChanges(_this.config.settings.sdkRepo.repo, getEnv('SDK_REPO'), _this.version.displayFull)
 		.then(() => {
-			if (_this.config.stageSettings.postbuild.publishRelease !== true) {
-				log.warn('Skipping github release creation! Set postbuild.publishRelease=true to release.');
-				deferred.resolve();
-				return deferred.promise;
-			}
+			// if (_this.config.stageSettings.postbuild.publishRelease !== true) {
+			// 	log.warn('Skipping github release creation! Set postbuild.publishRelease=true to release.');
+			// 	deferred.resolve();
+			// 	return deferred.promise;
+			// }
 
 			// Expected format: https://github.com/grouporuser/reponame
 			var repoParts = _this.config.settings.sdkRepo.repo.split('/');

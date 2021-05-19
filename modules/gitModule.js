@@ -64,7 +64,8 @@ Git.prototype.saveChanges = function(repo, localDir, message) {
 				return spawnProcess(commitArgs, localDir);
 			})
 			.then(() => {
-				return spawnProcess(['push', `--repo=${repo}`], localDir);
+				// return spawnProcess(['push', `--repo=${repo}`], localDir);
+				console.log("saveChanges")
 			})
 			.then(() => deferred.resolve())
 			.catch((err) => deferred.reject(err));
