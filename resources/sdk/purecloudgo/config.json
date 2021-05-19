@@ -53,7 +53,15 @@
     },
     "build": {
       "preRunScripts": [],
-      "compileScripts": [],
+      "compileScripts": [
+        {
+          "type": "command",
+          "command": "make",
+      		"cwd": "${SDK_REPO}/build",
+      		"args":[ "build", "test" ],
+          "failOnError": true
+        }
+      ],
       "postRunScripts": []
     },
     "postbuild": {
@@ -67,15 +75,7 @@
           "failOnError": true
         }
       ],
-      "postRunScripts": [
-        {
-          "type": "command",
-          "command": "make",
-      		"cwd": "${SDK_REPO}",
-      		"args":[ "build", "test" ],
-          "failOnError": true
-        }
-      ]
+      "postRunScripts": []
     }
   }
 }
