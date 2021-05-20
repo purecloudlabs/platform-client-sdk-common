@@ -150,9 +150,28 @@ Specify the connector in the builder:
 .withProperty(ApiClientConnectorProperty.CONNECTOR_PROVIDER, new OkHttpClientConnectorProvider())
 ```
 
-#### SDK Logging
+### SDK Logging
 
-Logging of API requests and responses can be controlled programatically by creating an instance of `ApiClient.LoggingConfiguration` and passing it to the `withLoggingConfiguration` builder method of the `APIClient`.
+SDK users can choose between SL4J or our logging implementation, which makes use of STDOUT and an optional log file.
+
+#### SL4J
+
+Logging can be provided through SL4J, which uses HTTP request and response interceptors for requests when using the Apache connector. SL4J also logs exceptions from the Apache connector.  
+To use SL4J, include a relevant SL4J library in the dependencies and SL4J configuration file.  
+
+To provide a custom request interceptor, provide an object implementing `org.apache.http.HttpRequestInterceptor` to the following APIClient builder method:
+```{"language":"java"}
+        .withHttpRequestInterceptor(requestInterceptor)
+```
+
+Use the following method to provide a custom response interceptor implementing `org.apache.http.HttpResponseInterceptor`:
+```{"language":"java"}
+        .withHttpResponseInterceptor(responseInterceptor)
+```
+
+#### Standard Logging Implementation
+
+Logging of API requests and responses can be controlled programmatically by creating an instance of `ApiClient.LoggingConfiguration` and passing it to the `withLoggingConfiguration` builder method of the `APIClient`.
 
 `LogLevel` values:
 1. trace (HTTP Method, URL, Request Body, HTTP Status Code, Request Headers, Response Headers)
@@ -192,17 +211,13 @@ A number of configuration parameters can be applied using a configuration file. 
 Example setting the configuration file:
 
 ```{"language": "java"}
-ApiClient apiClient = ApiClient.Builder.standard()
-                        .withConfigFilePath("/path/to/config")
-                        .build();
+        .withConfigFilePath("/path/to/config")
 ```
 
 The SDK will take an event-driven approach to monitor for config file changes and will apply changes in near real-time, regardless of whether a config file was present at start-up. To disable this behavior, set `autoReloadConfig` to false like so:  
 
 ```{"language": "java"}
-ApiClient apiClient = ApiClient.Builder.standard()
-                       .withAutoReloadConfig(false)
-                       .build();
+        .withAutoReloadConfig(false)
 ```
 INI and JSON formats are supported. See below for examples of configuration values in both formats:
 
