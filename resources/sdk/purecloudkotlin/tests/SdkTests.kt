@@ -209,6 +209,8 @@ class SdkTests {
             "cac1.pure.cloud" -> PureCloudRegionHosts.ca_central_1
             "apne2.pure.cloud" -> PureCloudRegionHosts.ap_northeast_2
             "euw2.pure.cloud" -> PureCloudRegionHosts.eu_west_2
+            "aps1.pure.cloud" -> PureCloudRegionHosts.ap_south_1
+            "use2.us-gov-pure.cloud" -> PureCloudRegionHosts.us_east_2
             else -> {
                 println("Not in PureCloudRegionHosts using string value")
                 null

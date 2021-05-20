@@ -17,10 +17,10 @@ const USER_NAME = 'JS SDK Tester';
 const USER_DEPARTMENT = 'Ministry of Testing';
 const USER_PROFILE_SKILL = 'Testmaster';
 
-describe('JS SDK for Node', function() {
+describe('JS SDK for Node', function () {
 	this.timeout(16000); // Ensure we don't timeout before the API returns a timeout (15s)
 
-	it ('should trace basic information', () => {
+	it('should trace basic information', () => {
 		PURECLOUD_ENVIRONMENT = setEnvironment();
 		console.log(`PURECLOUD_ENVIRONMENT=${PURECLOUD_ENVIRONMENT}`);
 		console.log(`PURECLOUD_CLIENT_ID=${PURECLOUD_CLIENT_ID}`);
@@ -39,17 +39,19 @@ describe('JS SDK for Node', function() {
 
 	it('should successfully authenticate', (done) => {
 		client.setEnvironment(PURECLOUD_ENVIRONMENT);
-		client.loginClientCredentialsGrant(PURECLOUD_CLIENT_ID, PURECLOUD_CLIENT_SECRET)
+		client
+			.loginClientCredentialsGrant(PURECLOUD_CLIENT_ID, PURECLOUD_CLIENT_SECRET)
 			.then(() => done())
 			.catch((err) => handleError(err, done));
 	});
 
 	it('should create a user', (done) => {
-		usersApi.postUsers({
-			name: USER_NAME,
-			email: USER_EMAIL,
-			password: guid() + '!@#$1234asdfASDF'
-		})
+		usersApi
+			.postUsers({
+				name: USER_NAME,
+				email: USER_EMAIL,
+				password: guid() + '!@#$1234asdfASDF',
+			})
 			.then((data) => {
 				USER_ID = data.id;
 				assert.strictEqual(data.name, USER_NAME);
@@ -61,10 +63,11 @@ describe('JS SDK for Node', function() {
 	});
 
 	it('should update the user', (done) => {
-		usersApi.patchUser(USER_ID, {
-			department: USER_DEPARTMENT,
-			version: 1
-		})
+		usersApi
+			.patchUser(USER_ID, {
+				department: USER_DEPARTMENT,
+				version: 1,
+			})
 			.then((data) => {
 				assert.strictEqual(data.id, USER_ID);
 				assert.strictEqual(data.name, USER_NAME);
@@ -77,7 +80,8 @@ describe('JS SDK for Node', function() {
 	});
 
 	it('should set profile skills on the user', (done) => {
-		usersApi.putUserProfileskills(USER_ID, [ USER_PROFILE_SKILL ])
+		usersApi
+			.putUserProfileskills(USER_ID, [USER_PROFILE_SKILL])
 			.then((data) => {
 				assert.strictEqual(data.length, 1);
 				assert.strictEqual(data[0], USER_PROFILE_SKILL);
@@ -87,7 +91,8 @@ describe('JS SDK for Node', function() {
 	});
 
 	it('should get the user', (done) => {
-		usersApi.getUser(USER_ID, { expand: ['profileSkills'] })
+		usersApi
+			.getUser(USER_ID, { expand: ['profileSkills'] })
 			.then((data) => {
 				assert.strictEqual(data.id, USER_ID);
 				assert.strictEqual(data.name, USER_NAME);
@@ -100,12 +105,12 @@ describe('JS SDK for Node', function() {
 	});
 
 	it('should delete the user', (done) => {
-		usersApi.deleteUser(USER_ID)
+		usersApi
+			.deleteUser(USER_ID)
 			.then(() => done())
 			.catch((err) => handleError(err, done));
 	});
 });
-
 
 function handleError(err, done) {
 	console.log(err);
@@ -130,30 +135,31 @@ function guid() {
 	return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
 }
 function setEnvironment() {
-    switch (PURECLOUD_ENVIRONMENT) {
-      case "mypurecloud.com":
-        return platformClient.PureCloudRegionHosts.us_east_1;
-      case "mypurecloud.ie":
-        return platformClient.PureCloudRegionHosts.eu_west_1;
-      case "mypurecloud.com.au":
-        return platformClient.PureCloudRegionHosts.ap_southeast_2;
-      case "mypurecloud.jp":
-        return platformClient.PureCloudRegionHosts.ap_northeast_1;
-      case "mypurecloud.de":
-        return platformClient.PureCloudRegionHosts.eu_central_1;
-      case "usw2.pure.cloud":
-        return platformClient.PureCloudRegionHosts.us_west_2;
-      case "cac1.pure.cloud":
-        return platformClient.PureCloudRegionHosts.ca_central_1;
-      case "apne2.pure.cloud":
-        return platformClient.PureCloudRegionHosts.ap_northeast_2;
-      case "euw2.pure.cloud":
-        return platformClient.PureCloudRegionHosts.eu_west_2;
-      default:
-        console.log(
-          "Value does not exist in PureCloudRegionHosts defaulting to PURECLOUD ENVIRONMENT value"
-        );
-        return PURECLOUD_ENVIRONMENT;
-    }
-  }
-  
+	switch (PURECLOUD_ENVIRONMENT) {
+		case 'mypurecloud.com':
+			return platformClient.PureCloudRegionHosts.us_east_1;
+		case 'mypurecloud.ie':
+			return platformClient.PureCloudRegionHosts.eu_west_1;
+		case 'mypurecloud.com.au':
+			return platformClient.PureCloudRegionHosts.ap_southeast_2;
+		case 'mypurecloud.jp':
+			return platformClient.PureCloudRegionHosts.ap_northeast_1;
+		case 'mypurecloud.de':
+			return platformClient.PureCloudRegionHosts.eu_central_1;
+		case 'usw2.pure.cloud':
+			return platformClient.PureCloudRegionHosts.us_west_2;
+		case 'cac1.pure.cloud':
+			return platformClient.PureCloudRegionHosts.ca_central_1;
+		case 'apne2.pure.cloud':
+			return platformClient.PureCloudRegionHosts.ap_northeast_2;
+		case 'euw2.pure.cloud':
+			return platformClient.PureCloudRegionHosts.eu_west_2;
+		case 'aps1.pure.cloud':
+			return platformClient.PureCloudRegionHosts.ap_south_1;
+		case 'use2.us-gov-pure.cloud':
+			return platformClient.PureCloudRegionHosts.us_east_2;
+		default:
+			console.log('Value does not exist in PureCloudRegionHosts defaulting to PURECLOUD ENVIRONMENT value');
+			return PURECLOUD_ENVIRONMENT;
+	}
+}
