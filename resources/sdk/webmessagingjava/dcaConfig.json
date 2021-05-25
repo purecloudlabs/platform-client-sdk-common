@@ -1,0 +1,104 @@
+{
+	"name": "Web Messaging SDK",
+	"envVars": {
+		"EXCLUDE_NOTIFICATIONS": true
+	},
+	"settings": {
+		"sdkRepo": {
+			"repo": "https://github.com/MyPureCloud/web-messaging-sdk-java.git",
+			"branch": "main"
+		},
+		"versionFile": "${SDK_REPO}/version.json",
+		"logLevel": "debug",
+		"extensionsDestination": "${SDK_REPO}/build/src/main/java/cloud/genesys/webmessaging/sdk",
+		"swagger": {
+			"internalSwaggerPath": "https://api.inindca.com/api/v2/docs/swaggerall",
+			"oldSwaggerPath": "${SDK_REPO}/swagger.json",
+			"newSwaggerPath": "https://s3.amazonaws.com/inin-dev-use1-purecloud-shared/webmessaging/swagger/swagger-latest.json",
+			"saveNewSwaggerPath": "${SDK_REPO}/swagger.json"
+		},
+		"swaggerCodegen": {
+			"resourceLanguage": "webmessagingjava",
+			"codegenLanguage": "webmessagingjava",
+			"jarPath": "${WORKSPACE}/swagger-codegen/modules/swagger-codegen-cli/target/swagger-codegen-cli.jar",
+			"configFile": "${SDK_TEMP}/config.json",
+			"extraGeneratorOptions": []
+		},
+		"releaseNoteTemplatePath": "${COMMON_ROOT}/resources/templates/githubSdkReleaseNotes.md",
+		"releaseNoteSummaryTemplatePath": "${COMMON_ROOT}/resources/templates/githubSdkReleaseNoteSummary.md",
+		"debugConfig": false,
+		"enableLoggerColor": false,
+		"mavenSettingsFilePath": "C:\\apache-maven-3.8.1\\conf\\settings.xml",
+		"mavenTarget": "package",
+		"apiHealthCheckUrl": "https://api.mypurecloud.com/api/v2/health/check"
+	},
+	"stageSettings": {
+		"prebuild": {
+			"preRunScripts": [],
+			"postRunScripts": [
+				{
+					"type": "node",
+					"path": "prebuild-postrun.js",
+					"args": [
+						{
+							"$ref": "#/settings/swaggerCodegen/configFile"
+						},
+						{
+							"$ref": "#/settings/versionFile"
+						},
+						"web-messaging-sdk"
+					],
+					"failOnError": true
+				},
+				{
+					"type": "node",
+					"path": "combine-swagger.js",
+					"args": [
+						{
+							"$ref": "#/settings/swagger/newSwaggerPath"
+						},
+						{
+							"$ref": "#/settings/swagger/internalSwaggerPath"
+						},
+						"${SDK_TEMP}/newSwagger.json"
+					],
+					"failOnError": true
+				}
+			]
+		},
+		"build": {
+			"preRunScripts": [],
+			"compileScripts": [
+				{
+					"type": "shell",
+					"path": "compile.sh",
+					"args": [
+						{ "$ref": "#/settings/mavenTarget" },
+						"${SDK_REPO}/build",
+						{ "$ref": "#/settings/mavenSettingsFilePath" },
+						"${DPGP_PASSPHRASE}"
+					],
+					"appendIsNewReleaseArg": true,
+					"failOnError": true
+				},
+				{
+					"type": "node",
+					"path": "generate-custom-markdown.js",
+					"args": [
+						"${SDK_REPO}/build/src/main/java/cloud/genesys/webmessaging/sdk/",
+						"WebMessagingClient",
+						"${SDK_REPO}/build/docs"
+					],
+					"failOnError": true
+				}
+			],
+			"postRunScripts": []
+		},
+		"postbuild": {
+			"gitCommit": false,
+			"publishRelease": false,
+			"preRunScripts": [],
+			"postRunScripts": []
+		}
+	}
+}
