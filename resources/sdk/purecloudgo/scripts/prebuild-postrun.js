@@ -10,6 +10,7 @@ try {
 		basePath: 'https://api.mypurecloud.com',
 		packageName: packageName || 'platform-client',
 		packageVersion: version.displayFull,
+		majorVersion: `v${version.major}`,
 		httpUserAgent: 'PureCloud SDK'
 	};
 
