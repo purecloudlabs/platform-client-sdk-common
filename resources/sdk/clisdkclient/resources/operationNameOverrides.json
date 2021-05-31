@@ -1,7 +1,7 @@
 {
 	"/api/v2/analytics/conversations/details": {
 		"get": {
-			"name": "getmultiple"
+			"name": "list"
 		}
 	},
 	"/api/v2/architect/prompts": {
@@ -32,16 +32,6 @@
 	"/api/v2/configuration/schemas/edges/vnext/{schemaCategory}/{schemaType}/{schemaId}/{extensionType}/{metadataId}": {
 		"get": {
 			"name": "getschemametadata"
-		}
-	},
-	"/api/v2/conversations/{conversationId}/participants/{participantId}/secureivrsessions": {
-		"get": {
-			"name": "getsecuresessions"
-		}
-	},
-	"/api/v2/conversations/{conversationId}/recordings": {
-		"get": {
-			"name": "getrecordings"
 		}
 	},
 	"/api/v2/authorization/roles/{roleId}": {
@@ -79,7 +69,7 @@
 	},
 	"/api/v2/dataextensions/coretypes": {
 		"get": {
-			"name": "gettypes"
+			"name": "list"
 		}
 	},
 	"/api/v2/externalcontacts/contacts": {
@@ -89,12 +79,12 @@
 	},
 	"/api/v2/externalcontacts/contacts/schemas": {
 		"get": {
-			"name": "getschemas"
+			"name": "list"
 		}
 	},
 	"/api/v2/externalcontacts/contacts/schemas/{schemaId}/versions": {
 		"get": {
-			"name": "getversions"
+			"name": "list"
 		}
 	},
 	"/api/v2/externalcontacts/organizations": {
@@ -109,12 +99,12 @@
 	},
 	"/api/v2/externalcontacts/organizations/schemas": {
 		"get": {
-			"name": "getschemas"
+			"name": "list"
 		}
 	},
 	"/api/v2/externalcontacts/organizations/schemas/{schemaId}/versions": {
 		"get": {
-			"name": "getversions"
+			"name": "list"
 		}
 	},
 	"/api/v2/externalcontacts/reversewhitepageslookup": {
@@ -134,37 +124,32 @@
 	},
 	"/api/v2/gamification/metrics": {
 		"get": {
-			"name": "getprofilemetrics"
+			"name": "list"
 		}
 	},
 	"/api/v2/gamification/metricdefinitions": {
 		"get": {
-			"name": "getalldefinitions"
+			"name": "list"
 		}
 	},
 	"/api/v2/gamification/profiles": {
 		"get": {
-			"name": "getallprofiles"
+			"name": "list"
 		}
 	},
 	"/api/v2/gamification/scorecards/users/{userId}/values/trends": {
 		"get": {
-			"name": "getusertrends"
+			"name": "list"
 		}
 	},
 	"/api/v2/gamification/templates": {
 		"get": {
-			"name": "getobjectivetemplates"
+			"name": "list"
 		}
 	},
 	"/api/v2/knowledge/knowledgebases/{knowledgeBaseId}/languages/{languageCode}/documents": {
 		"patch": {
 			"name": "updatecollection"
-		}
-	},
-	"/api/v2/license/definitions": {
-		"get": {
-			"name": "getdefinitions"
 		}
 	},
 	"/api/v2/notifications/channels/{channelId}/subscriptions": {
@@ -218,9 +203,6 @@
 		}
 	},
 	"/api/v2/routing/queues/{queueId}/users": {
-		"get": {
-			"name": "get"
-		},
 		"post": {
 			"name": "move"
 		},
@@ -229,9 +211,6 @@
 		}
 	},
 	"/api/v2/routing/queues/{queueId}/members": {
-		"get": {
-			"name": "get"
-		},
 		"post": {
 			"name": "move"
 		},
