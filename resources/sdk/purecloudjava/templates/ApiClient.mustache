@@ -137,7 +137,7 @@ public class ApiClient implements AutoCloseable {
         String configFilePath = builder.configFilePath;
         if (configFilePath == null || configFilePath.isEmpty()) {
             String homePath = System.getProperty("user.home");
-            configFilePath = Paths.get(home, ".genesyscloudjava", "config").toString();
+            configFilePath = Paths.get(homePath, ".genesyscloudjava", "config").toString();
         }
         this.configFilePath = configFilePath;
 
