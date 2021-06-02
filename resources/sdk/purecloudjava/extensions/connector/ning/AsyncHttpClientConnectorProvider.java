@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.net.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 
 public class AsyncHttpClientConnectorProvider implements ApiClientConnectorProvider {
     @Override
