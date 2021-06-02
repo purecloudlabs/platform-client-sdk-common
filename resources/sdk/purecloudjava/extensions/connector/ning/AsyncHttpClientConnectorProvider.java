@@ -10,8 +10,6 @@ import org.asynchttpclient.DefaultAsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClientConfig;
 import org.asynchttpclient.proxy.ProxyServerSelector;
 import org.asynchttpclient.util.ProxyUtils;
-import static org.asynchttpclient.Dsl.proxyServer;
-
 
 import java.io.IOException;
 import java.net.*;
