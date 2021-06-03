@@ -1335,6 +1335,10 @@ public class ApiClient implements AutoCloseable {
             this.logFormat = logFormat.trim();
         }
 
+        public void setLogFilePath(String logFilePath) {
+            this.logFilePath = logFilePath;
+        }
+
         public void setLogToConsole(boolean logToConsole) {
             this.logToConsole = logToConsole;
         }
