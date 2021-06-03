@@ -5,7 +5,7 @@ title: Guest Chat Client - Java
 ## Resources
 
 [![platform-client-v2](https://maven-badges.herokuapp.com/maven-central/com.mypurecloud/purecloud-guest-chat-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.mypurecloud/purecloud-guest-chat-client)
-[![Release Notes Badge](https://developer.mypurecloud.com/images/sdk-release-notes.png)](https://github.com/MyPureCloud/purecloud-guest-chat-client-java/blob/master/releaseNotes.md)
+[![Release Notes Badge](https://developer-content.genesys.cloud/images/sdk-release-notes.png)](https://github.com/MyPureCloud/purecloud-guest-chat-client-java/blob/master/releaseNotes.md)
 
 * **Documentation** https://developer.mypurecloud.com/api/rest/client-libraries/java-guest/
 * **Source** https://github.com/MyPureCloud/purecloud-guest-chat-client-java
