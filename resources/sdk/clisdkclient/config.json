@@ -56,8 +56,9 @@
               "$ref": "#/settings/swagger/newSwaggerPath"
             },
             "${SDK_TEMP}/newSwagger.json",
-            "${SDK_TEMP}/duplicateMappings.json",
-            "${SDK_TEMP}/topLevelCommands.json"
+            "${SDK_TEMP}/topLevelCommands.json",
+            "${SDK_TEMP}/resourceDefinitions.json",
+            "${COMMON_ROOT}/resources/sdk/clisdkclient/resources/operationNameOverrides.json"
           ],
           "failOnError": true
         }
@@ -72,9 +73,8 @@
           "path": "post-process.js",
           "args": [
             "${SDK_REPO}/build/gc/cmd/root.go",
-            "${SDK_TEMP}/duplicateMappings.json",
             "${SDK_TEMP}/topLevelCommands.json",
-            "${COMMON_ROOT}/resources/sdk/clisdkclient/resources/resourceDefinitions.json"
+            "${SDK_TEMP}/resourceDefinitions.json"
           ],
           "failOnError": true
         }
@@ -97,7 +97,7 @@
           "type": "command",
           "command": "make",
           "cwd": "${SDK_REPO}",
-          "args":[ "test", "build" ],
+          "args":[ "build", "test" ],
           "failOnError": true
         },
         {

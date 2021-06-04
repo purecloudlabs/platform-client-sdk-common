@@ -14,10 +14,11 @@ import (
 )
 
 var (
+	Description = utils.FormatUsageDescription("{{classVarName}}", {{#operation}}"{{notes}}", {{/operation}})
 	{{classVarName}}Cmd = &cobra.Command{
 		Use:   utils.FormatUsageDescription("{{classVarName}}"),
-		Short: utils.FormatUsageDescription("Manages Genesys Cloud {{classVarName}}", {{#operation}}"{{notes}}", {{/operation}}),
-		Long:  utils.FormatUsageDescription(`Manages Genesys Cloud {{classVarName}}`, {{#operation}}"{{notes}}", {{/operation}}),
+		Short: Description,
+		Long:  Description,
 	}
 	CommandService services.CommandService
 )
@@ -30,7 +31,8 @@ func Cmd{{classVarName}}() *cobra.Command { {{#operation}}
 	{{#queryParams}}utils.AddFlag({{operationId}}Cmd.Flags(), "{{{dataType}}}", "{{paramName}}", "{{#defaultValue}}{{{.}}}{{/defaultValue}}{{^defaultValue}}{{/defaultValue}}", "{{description}}{{#required}} - REQUIRED{{/required}}{{#allowableValues}} Valid values: {{#values}}{{.}}{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}}")
 	{{#hasMore}}{{/hasMore}}{{/queryParams}}{{operationId}}Cmd.SetUsageTemplate(fmt.Sprintf("%s\nOperation:\n  %s %s\n%s", {{operationId}}Cmd.UsageTemplate(), "{{httpMethod}}", "{{path}}", utils.FormatPermissions([]string{ {{#permissions}}"{{.}}", {{/permissions}} })))
 	utils.AddFileFlagIfUpsert({{operationId}}Cmd.Flags(), "{{httpMethod}}", `{{#bodyParam}}{{jsonSchema}}{{/bodyParam}}`)
-	{{#queryParams}}{{#required}}{{operationId}}Cmd.MarkFlagRequired("{{paramName}}"){{/required}}{{/queryParams}}
+	{{#queryParams}}{{#required}}{{operationId}}Cmd.MarkFlagRequired("{{paramName}}")
+	{{/required}}{{/queryParams}}
 	{{#responses}}{{#-first}}utils.AddPaginateFlagsIfListingResponse({{operationId}}Cmd.Flags(), "{{httpMethod}}", `{{jsonSchema}}`){{/-first}}{{/responses}}
 	{{classVarName}}Cmd.AddCommand({{operationId}}Cmd)
 	{{/operation}}
@@ -41,7 +43,7 @@ func Cmd{{classVarName}}() *cobra.Command { {{#operation}}
 var {{operationId}}Cmd = &cobra.Command{
 	Use:   "{{operationId}}{{#pathParams}} [{{paramName}}{{#hasMore}}{{/hasMore}}]{{/pathParams}}",
 	Short: "{{#summary}}{{summary}}{{/summary}}",
-	Long:  `{{#summary}}{{summary}}{{/summary}}`,
+	Long:  "{{#summary}}{{summary}}{{/summary}}",
 	Args:  utils.DetermineArgs([]string{ {{#pathParams}}"{{paramName}}", {{#hasMore}}{{/hasMore}}{{/pathParams}}}),
 
 	Run: func(cmd *cobra.Command, args []string) {

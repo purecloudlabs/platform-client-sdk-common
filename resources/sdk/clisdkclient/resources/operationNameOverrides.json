@@ -1,0 +1,326 @@
+{
+	"/api/v2/analytics/conversations/details": {
+		"get": {
+			"name": "list"
+		}
+	},
+	"/api/v2/architect/prompts": {
+		"delete": {
+			"name": "batchdelete"
+		}
+	},
+	"/api/v2/configuration/schemas/edges/vnext": {
+		"get": {
+			"name": "listschemacategories"
+		}
+	},
+	"/api/v2/configuration/schemas/edges/vnext/{schemaCategory}": {
+		"get": {
+			"name": "listcategoryschemas"
+		}
+	},
+	"/api/v2/configuration/schemas/edges/vnext/{schemaCategory}/{schemaType}":{
+		"get": {
+			"name": "getcategoryschemas"
+		}
+	},
+	"/api/v2/configuration/schemas/edges/vnext/{schemaCategory}/{schemaType}/{schemaId}": {
+		"get": {
+			"name": "getjsonschema"
+		}
+	},
+	"/api/v2/configuration/schemas/edges/vnext/{schemaCategory}/{schemaType}/{schemaId}/{extensionType}/{metadataId}": {
+		"get": {
+			"name": "getschemametadata"
+		}
+	},
+	"/api/v2/authorization/roles/{roleId}": {
+		"post": {
+			"name": "bulkgrant"
+		},
+		"patch": {
+			"name": "patch"
+		}
+	},
+	"/api/v2/chat/settings": {
+		"patch": {
+			"name": "patch"
+		}
+	},
+	"/api/v2/contentmanagement/documents/{documentId}": {
+		"post": {
+			"name": "update"
+		}
+	},
+	"/api/v2/conversations/{conversationId}/recordingmetadata": {
+		"get": {
+			"name": "conversationmetadata"
+		}
+	},
+	"/api/v2/conversations/{conversationId}/recordingmetadata/{recordingId}": {
+		"get": {
+			"name": "recordingmetadata"
+		}
+	},
+	"/api/v2/conversations/calls/{conversationId}": {
+		"post": {
+			"name": "placecallbackcall"
+		}
+	},
+	"/api/v2/dataextensions/coretypes": {
+		"get": {
+			"name": "list"
+		}
+	},
+	"/api/v2/externalcontacts/contacts": {
+		"get": {
+			"name": "search"
+		}
+	},
+	"/api/v2/externalcontacts/contacts/schemas": {
+		"get": {
+			"name": "list"
+		}
+	},
+	"/api/v2/externalcontacts/contacts/schemas/{schemaId}/versions": {
+		"get": {
+			"name": "list"
+		}
+	},
+	"/api/v2/externalcontacts/organizations": {
+		"get": {
+			"name": "search"
+		}
+	},
+	"/api/v2/externalcontacts/organizations/{externalOrganizationId}/contacts": {
+		"get": {
+			"name": "search"
+		}
+	},
+	"/api/v2/externalcontacts/organizations/schemas": {
+		"get": {
+			"name": "list"
+		}
+	},
+	"/api/v2/externalcontacts/organizations/schemas/{schemaId}/versions": {
+		"get": {
+			"name": "list"
+		}
+	},
+	"/api/v2/externalcontacts/reversewhitepageslookup": {
+		"get": {
+			"name": "search"
+		}
+	},
+	"/api/v2/flows/datatables/{datatableId}/import/jobs/{importJobId}": {
+		"get": {
+			"name": "getstateinformation"
+		}
+	},
+	"/api/v2/flows": {
+		"delete": {
+			"name": "batchdelete"
+		}
+	},
+	"/api/v2/gamification/metrics": {
+		"get": {
+			"name": "list"
+		}
+	},
+	"/api/v2/gamification/metricdefinitions": {
+		"get": {
+			"name": "list"
+		}
+	},
+	"/api/v2/gamification/profiles": {
+		"get": {
+			"name": "list"
+		}
+	},
+	"/api/v2/gamification/scorecards/users/{userId}/values/trends": {
+		"get": {
+			"name": "list"
+		}
+	},
+	"/api/v2/gamification/templates": {
+		"get": {
+			"name": "list"
+		}
+	},
+	"/api/v2/knowledge/knowledgebases/{knowledgeBaseId}/languages/{languageCode}/documents": {
+		"patch": {
+			"name": "updatecollection"
+		}
+	},
+	"/api/v2/notifications/channels/{channelId}/subscriptions": {
+		"post": {
+			"name": "subscribe"
+		}
+	},
+	"/api/v2/outbound/contactlists/{contactListId}/contacts": {
+		"delete": {
+			"name": "deletecontacts"
+		}
+	},
+	"/api/v2/outbound/contactlists": {
+		"delete": {
+			"name": "deletecontactlists"
+		}
+	},
+	"/api/v2/quality/forms/surveys/{formId}": {
+		"patch": {
+			"name": "disable"
+		}
+	},
+	"/api/v2/quality/keywordsets": {
+		"delete": {
+			"name": "deletekeywordsets"
+		}
+	},
+	"/api/v2/recording/crossplatform/mediaretentionpolicies": {
+		"delete": {
+			"name": "deletepolicies"
+		}
+	},
+	"/api/v2/recording/crossplatform/mediaretentionpolicies/{policyId}": {
+		"patch": {
+			"name": "patch"
+		}
+	},
+	"/api/v2/recording/mediaretentionpolicies": {
+		"delete": {
+			"name": "deletepolicies"
+		}
+	},
+	"/api/v2/recording/mediaretentionpolicies/{policyId}": {
+		"patch": {
+			"name": "patch"
+		}
+	},
+	"/api/v2/routing/sms/addresses/{addressId}": {
+		"get": {
+			"name": "get"
+		}
+	},
+	"/api/v2/routing/queues/{queueId}/users": {
+		"post": {
+			"name": "move"
+		},
+		"patch": {
+			"name": "activate"
+		}
+	},
+	"/api/v2/routing/queues/{queueId}/members": {
+		"post": {
+			"name": "move"
+		},
+		"patch": {
+			"name": "activate"
+		}
+	},
+	"/api/v2/scim/users/{userId}": {
+		"put": {
+			"name": "replace"
+		}
+	},
+	"/api/v2/scim/groups/{groupId}": {
+		"put": {
+			"name": "replace"
+		}
+	},
+	"/api/v2/scim/v2/groups/{groupId}": {
+		"put": {
+			"name": "replace"
+		},
+		"patch": {
+			"name": "modify"
+		}
+	},
+	"/api/v2/scim/v2/users/{userId}": {
+		"put": {
+			"name": "replace"
+		},
+		"patch": {
+			"name": "modify"
+		}
+	},
+	"/api/v2/speechandtextanalytics/settings": {
+		"patch": {
+			"name": "patch"
+		}
+	},
+	"/api/v2/telephony/providers/edges/{edgeId}/logicalinterfaces": {
+		"get": {
+			"name": "getedgelogicalinterfaces"
+		}
+	},
+	"/api/v2/telephony/providers/edges/phones/reboot": {
+		"post": {
+			"name": "rebootphones"
+		}
+	},
+	"/api/v2/telephony/providers/edges/phones/{phoneId}/reboot": {
+		"post": {
+			"name": "reboot"
+		}
+	},
+	"/api/v2/telephony/providers/edges/{edgeId}/lines/{lineId}": {
+		"get": {
+			"name": "getedgeline"
+		}
+	},
+	"/api/v2/telephony/providers/edges/{edgeId}/lines": {
+		"get": {
+			"name": "listedgelines"
+		}
+	},
+	"/api/v2/telephony/providers/edges/{edgeId}/trunks": {
+		"get": {
+			"name": "listedgetrunks"
+		}
+	},
+	"/api/v2/telephony/providers/edges/{edgeId}/physicalinterfaces": {
+		"get": {
+			"name": "listedgeinterfaces"
+		}
+	},
+	"/api/v2/users/{userId}/queues": {
+		"patch": {
+			"name": "joinset"
+		}
+	},
+	"/api/v2/users/{userId}/queues/{queueId}": {
+		"patch": {
+			"name": "join"
+		}
+	},
+	"/api/v2/users/{userId}/routingskills/bulk": {
+		"patch": {
+			"name": "bulkadd"
+		},
+		"put": {
+			"name": "bulkupdate"
+		}
+	},
+	"/api/v2/users/{userId}/callforwarding": {
+		"patch": {
+			"name": "patch"
+		}
+	},
+	"/api/v2/voicemail/messages": {
+		"post": {
+			"name": "copy"
+		},
+		"delete": {
+			"name": "deleteall"
+		}
+	},
+	"/api/v2/voicemail/messages/{messageId}": {
+		"patch": {
+			"name": "patch"
+		},
+		"put": {
+			"name": "put"
+		}
+	}
+}

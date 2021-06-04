@@ -1,4 +1,4 @@
-package members
+package groups_members
 
 import (
 	"encoding/json"
@@ -16,9 +16,9 @@ import (
 
 func init() {
 	note := "Note: The 'version' value from the command input will be ignored and the latest version value will be retrieved from the API instead"
-	addCmd.SetHelpTemplate(fmt.Sprintf("%s\nOperation:\n  %s %s\n\n%s\n", addCmd.UsageTemplate(), addMembersOperation.Method, addMembersOperation.Path, note))
-	utils.AddFileFlagIfUpsert(addCmd.Flags(), addMembersOperation.Method, "")
-	membersCmd.AddCommand(addCmd)
+	addCmd.SetUsageTemplate(fmt.Sprintf("%s\nOperation:\n  %s %s\n%s\n\n%s\n", addCmd.UsageTemplate(), "POST", "/api/v2/groups/{groupId}/members", utils.FormatPermissions([]string{  }), note))
+
+	createCmd = addCmd
 }
 
 type group struct {
