@@ -24,19 +24,20 @@ import java.util.regex.Pattern;
 {{/imports}}
 
 {{#operation}}
-public class {{requestClassname}} {
+public class {{classname}} {
     {{#allParams}}
 	private {{{dataType}}} {{paramName}};
-	public {{{dataType}}} get{{paramTitle}}() {
+
+	public {{{dataType}}} get{{#lambda.titlecase}}{{paramName}}{{/lambda.titlecase}}() {
 		return this.{{paramName}};
 	}
 
-	public void set{{paramTitle}}({{{dataType}}} {{paramName}}) {
+	public void set{{#lambda.titlecase}}{{paramName}}{{/lambda.titlecase}}({{{dataType}}} {{paramName}}) {
 		this.{{paramName}} = {{paramName}};
 	}
 
-	public {{requestClassname}} with{{paramTitle}}({{{dataType}}} {{paramName}}) {
-	    this.set{{paramTitle}}({{paramName}});
+	public {{classname}} with{{#lambda.titlecase}}{{paramName}}{{/lambda.titlecase}}({{{dataType}}} {{paramName}}) {
+	    this.set{{#lambda.titlecase}}{{paramName}}{{/lambda.titlecase}}({{paramName}});
 	    return this;
 	} {{#allowableValuesForEnum}}
 
@@ -83,7 +84,7 @@ public class {{requestClassname}} {
         this.customHeaders.put(name, value);
     }
 
-    public {{requestClassname}} withCustomHeader(String name, String value) {
+    public {{classname}} withCustomHeader(String name, String value) {
         this.addCustomHeader(name, value);
         return this;
     }
@@ -108,9 +109,9 @@ public class {{requestClassname}} {
                 .withBody({{paramName}})
         {{/bodyParam}}
                 .withCustomHeaders(customHeaders)
-                .withContentTypes({{#consumes}}"{{mediaType}}"{{#hasMore}}, {{/hasMore}}{{/consumes}})
-                .withAccepts({{#produces}}"{{mediaType}}"{{#hasMore}}, {{/hasMore}}{{/produces}})
-                .withAuthNames({{#authMethods}}"{{name}}"{{#hasMore}}, {{/hasMore}}{{/authMethods}})
+                .withContentTypes({{#consumes}}"{{mediaType}}"{{^-last}}, {{/-last}}{{/consumes}})
+                .withAccepts({{#produces}}"{{mediaType}}"{{^-last}}, {{/-last}}{{/produces}})
+                .withAuthNames({{#authMethods}}"{{name}}"{{^-last}}, {{/-last}}{{/authMethods}})
                 .build();
     }
 
@@ -126,40 +127,40 @@ public class {{requestClassname}} {
 	{{/hasRequiredParams}}
 
 	public static class Builder {
-		private final {{requestClassname}} request;
+		private final {{classname}} request;
 
 		private Builder() {
-			request = new {{requestClassname}}();
+			request = new {{classname}}();
 		}
 
 		{{#allParams}}
-		public Builder with{{paramTitle}}({{{dataType}}} {{paramName}}) {
-			request.set{{paramTitle}}({{paramName}});
+		public Builder with{{#lambda.titlecase}}{{paramName}}{{/lambda.titlecase}}({{{dataType}}} {{paramName}}) {
+			request.set{{#lambda.titlecase}}{{paramName}}{{/lambda.titlecase}}({{paramName}});
 			return this;
 		}{{#allowableValuesForEnum}}
 
-		{{#isContainer}}public Builder with{{paramTitle}}EnumValues(List<{{paramName}}Values> {{paramName}}) {
+		{{#isContainer}}public Builder with{{#lambda.titlecase}}{{paramName}}{{/lambda.titlecase}}EnumValues(List<{{paramName}}Values> {{paramName}}) {
 		    List<String> stringList = new ArrayList<>();
 	      for ({{paramName}}Values e : {{paramName}}) {
 	        stringList.add(e.toString());
 	      }
-	      request.set{{paramTitle}}(stringList);
+	      request.set{{#lambda.titlecase}}{{paramName}}{{/lambda.titlecase}}(stringList);
 		    return this;
-		}{{/isContainer}}{{^isContainer}}public Builder with{{paramTitle}}({{paramName}}Values {{paramName}}) {
-		    request.set{{paramTitle}}({{paramName}}.toString());
+		}{{/isContainer}}{{^isContainer}}public Builder with{{#lambda.titlecase}}{{paramName}}{{/lambda.titlecase}}({{paramName}}Values {{paramName}}) {
+		    request.set{{#lambda.titlecase}}{{paramName}}{{/lambda.titlecase}}({{paramName}}.toString());
 		    return this;
 		}{{/isContainer}}{{/allowableValuesForEnum}}
 		{{/allParams}}
 
 		{{#hasRequiredParams}}
 		public Builder withRequiredParams({{#requiredParams}}{{^-first}}, {{/-first}}{{{dataType}}} {{paramName}}{{/requiredParams}}) {
-{{#requiredParams}}			request.set{{paramTitle}}({{paramName}});
+{{#requiredParams}}			request.set{{#lambda.titlecase}}{{paramName}}{{/lambda.titlecase}}({{paramName}});
 			{{/requiredParams}}
 			return this;
 		}
 		{{/hasRequiredParams}}
 
-		public {{requestClassname}} build() {
+		public {{classname}} build() {
             {{#allParams}}{{#required}}
             // verify the required parameter '{{paramName}}' is set
             if (request.{{paramName}} == null) {
