@@ -17,7 +17,7 @@ import {{invokerPackage}}.Pair;
 {{/imports}}
 
 {{#operations}}{{#operation}}
-import {{package}}.request.{{requestClassname}};{{/operation}}{{/operations}}
+import {{package}}.request.{{#lambda.lowercase}}{{operationId}}{{/lambda.lowercase}}Request;{{/operation}}{{/operations}}
 
 import java.io.IOException;
 {{^fullJavaUtil}}
@@ -49,7 +49,7 @@ public class {{classname}}Async {
    * @param callback the action to perform when the request is completed
    * @return the future indication when the request has completed
    */
-  public Future<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> {{operationId}}Async({{requestClassname}} request, final AsyncApiCallback<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> callback) {
+  public Future<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> {{operationId}}Async({{#lambda.lowercase}}{{operationId}}{{/lambda.lowercase}}Request request, final AsyncApiCallback<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> callback) {
     try {
       final SettableFuture<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> future = SettableFuture.create();
       final boolean shouldThrowErrors = {{localVariablePrefix}}apiClient.getShouldThrowErrors();
