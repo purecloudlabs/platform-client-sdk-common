@@ -14,7 +14,7 @@ import {{invokerPackage}}.Pair;
 {{/imports}}
 
 {{#operations}}{{#operation}}
-import {{package}}.request.{{requestClassname}};{{/operation}}{{/operations}}
+import {{package}}.request.{{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}Request;{{/operation}}{{/operations}}
 
 import java.io.IOException;
 {{^fullJavaUtil}}
@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 {{/fullJavaUtil}}
 
-{{>generatedAnnotation}}
 {{#operations}}
 public class {{classname}} {
   private final ApiClient {{localVariablePrefix}}apiClient;
@@ -46,8 +45,8 @@ public class {{classname}} {
    * @throws ApiException if the request fails on the server
    * @throws IOException if the request fails to be processed
    */
-  public {{#returnType}}{{{returnType}}} {{/returnType}}{{^returnType}}void {{/returnType}}{{operationId}}({{#allParams}}{{{dataType}}} {{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}}) throws IOException, ApiException {
-    {{#returnType}}return {{/returnType}} {{operationId}}(create{{requestClassname}}({{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}}));
+  public {{#returnType}}{{{returnType}}} {{/returnType}}{{^returnType}}void {{/returnType}}{{operationId}}({{#allParams}}{{{dataType}}} {{paramName}}{{^-last}}, {{/-last}}{{/allParams}}) throws IOException, ApiException {
+    {{#returnType}}return {{/returnType}} {{operationId}}(create{{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}Request({{#allParams}}{{paramName}}{{^-last}}, {{/-last}}{{/allParams}}));
   }
 
   /**
@@ -57,13 +56,13 @@ public class {{classname}} {
    * @return {{{returnType}}}{{/returnType}}
    * @throws IOException if the request fails to be processed
    */
-  public ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> {{operationId}}WithHttpInfo({{#allParams}}{{{dataType}}} {{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}}) throws IOException {
-    return {{operationId}}(create{{requestClassname}}({{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}}).withHttpInfo());
+  public ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> {{operationId}}WithHttpInfo({{#allParams}}{{{dataType}}} {{paramName}}{{^-last}}, {{/-last}}{{/allParams}}) throws IOException {
+    return {{operationId}}(create{{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}Request({{#allParams}}{{paramName}}{{^-last}}, {{/-last}}{{/allParams}}).withHttpInfo());
   }
 
-  private {{requestClassname}} create{{requestClassname}}({{#allParams}}{{{dataType}}} {{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}}) {
-    return {{requestClassname}}.builder(){{#allParams}}
-            .with{{paramTitle}}({{paramName}})
+  private {{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}Request create{{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}Request({{#allParams}}{{{dataType}}} {{paramName}}{{^-last}}, {{/-last}}{{/allParams}}) {
+    return {{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}Request.builder(){{#allParams}}
+            .with{{#lambda.titlecase}}{{paramName}}{{/lambda.titlecase}}({{paramName}})
     {{/allParams}}
             .build();
   }
@@ -76,7 +75,7 @@ public class {{classname}} {
    * @throws ApiException if the request fails on the server
    * @throws IOException if the request fails to be processed
    */
-  public {{#returnType}}{{{returnType}}} {{/returnType}}{{^returnType}}void {{/returnType}}{{operationId}}({{requestClassname}} request) throws IOException, ApiException {
+  public {{#returnType}}{{{returnType}}} {{/returnType}}{{^returnType}}void {{/returnType}}{{operationId}}({{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}Request request) throws IOException, ApiException {
     try {
       ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> response = {{localVariablePrefix}}apiClient.invoke(request.withHttpInfo(), {{#returnType}}new TypeReference<{{{returnType}}}>() {}{{/returnType}}{{^returnType}}null{{/returnType}});
       {{#returnType}}return response.getBody();{{/returnType}}
