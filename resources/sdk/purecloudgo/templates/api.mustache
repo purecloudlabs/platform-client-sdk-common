@@ -121,7 +121,11 @@ func (a {{classname}}) {{nickname}}({{#allParams}}{{paramName}} {{{dataType}}}{{
 	} else if err == nil && response.Error != nil {
 		err = errors.New(response.ErrorMessage)
 	}{{#returnType}} else {
-		err = json.Unmarshal([]byte(response.RawBody), &successPayload)
+		if "{{{returnType}}}" == "string" {
+			copy(response.RawBody, &successPayload)
+		} else {
+			err = json.Unmarshal(response.RawBody, &successPayload)
+		}
 	}{{/returnType}}
 	return {{#returnType}}successPayload, {{/returnType}}response, err
 }
