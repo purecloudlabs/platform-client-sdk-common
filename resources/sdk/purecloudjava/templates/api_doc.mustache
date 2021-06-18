@@ -8,7 +8,7 @@ All URIs are relative to *{{basePath}}*
 
 | Method | Description |
 | ------------- | ------------- |
-{{#operations}}{{#operation}}| [**{{operationId}}**]({{classname}}.html#{{operationId}}) | {{#summary}}{{summary}}{{/summary}} |
+{{#operations}}{{#operation}}| [**{{operationId}}**]({{classname}}.html#{{operationId}}) | {{#summary}}{{{summary}}}{{/summary}} |
 {{/operation}}{{/operations}}{: class="table-striped"}
 
 {{#operations}}
@@ -21,9 +21,9 @@ All URIs are relative to *{{basePath}}*
 
 > {{#returnType}}{{#returnTypeIsPrimitive}}{{returnType}}{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}[{{returnType}}]({{returnBaseType}}.html){{/returnTypeIsPrimitive}}{{/returnType}}{{^returnType}}Void{{/returnType}} {{operationId}}({{#allParams}}{{{paramName}}}{{#hasMore}}, {{/hasMore}}{{/allParams}})
 
-{{summary}}{{#notes}}
+{{{summary}}}{{#notes}}
 
-{{notes}}{{/notes}}
+{{{notes}}}{{/notes}}
 
 Wraps {{&httpMethod}} {{&path}}  
 
