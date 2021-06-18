@@ -42,7 +42,6 @@ import {{invokerPackage}}.extensions.AuthResponse;
 import {{invokerPackage}}.Logger;
 import {{invokerPackage}}.LocalDateSerializer;
 
-{{>generatedAnnotation}}
 public class ApiClient implements AutoCloseable {
     private static final String DEFAULT_BASE_PATH = "{{basePath}}";
     private static final String DEFAULT_USER_AGENT = "{{#httpUserAgent}}{{.}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen{{/httpUserAgent}}/java";
