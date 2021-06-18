@@ -15,8 +15,9 @@
    */
  @JsonDeserialize(using = {{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}Deserializer.class)
   public enum {{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}} {
-    {{#allowableValues}}{{#enumVars}}{{{name}}}({{{value}}}){{^-last}},
-    {{/-last}}{{#-last}};{{/-last}}{{/enumVars}}{{/allowableValues}}
+    {{#allowableValues}}{{#enumVars.0}}{{#isString}}{{#values}}{{#lambda.prefixNumberWithUnderscore}}{{#lambda.replace}}{{#lambda.uppercase}}{{.}}{{/lambda.uppercase}}{{/lambda.replace}}{{/lambda.prefixNumberWithUnderscore}}("{{.}}"){{^-last}},
+    {{/-last}}{{#-last}};{{/-last}}{{/values}}{{/isString}}{{^isString}}{{#values}}{{#lambda.replace}}{{#lambda.prefixNumberWithWord}}{{#lambda.uppercase}}{{.}}{{/lambda.uppercase}}{{/lambda.prefixNumberWithWord}}{{/lambda.replace}}({{.}}){{^-last}},
+    {{/-last}}{{#-last}};{{/-last}}{{/values}}{{/isString}}{{/enumVars.0}}{{/allowableValues}}
 
     private {{datatype}} value;
 
