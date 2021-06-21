@@ -359,15 +359,16 @@ function buildImpl() {
 		command += 'java ';
 		command += `-DapiTests=${_this.config.settings.swaggerCodegen.generateApiTests} `;
 		command += `-DmodelTests=${_this.config.settings.swaggerCodegen.generateModelTests} `;
-		command += `${getEnv('JAVA_OPTS', '')} -XX:MaxPermSize=256M -Xmx1024M -DloggerPath=conf/log4j.properties `;
+		command += `${getEnv('JAVA_OPTS', '')} -Xmx2g -DloggerPath=conf/log4j.properties `;
 		// Swagger-codegen jar file
 		command += `-jar ${_this.config.settings.swaggerCodegen.jarPath} `;
 		// Swagger-codegen options
 		command += 'generate ';
 		command += `-i ${newSwaggerTempFile} `;
-		command += `-l ${_this.config.settings.swaggerCodegen.codegenLanguage} `;
+		command += `-g ${_this.config.settings.swaggerCodegen.codegenLanguage} `;
 		command += `-o ${outputDir} `;
 		command += `-c ${_this.config.settings.swaggerCodegen.configFile} `;
+		command += '--skip-validate-spec ';
 		// Don't append empty templates directory
 		if (getFileCount(_this.resourcePaths.templates) > 0) command += `-t ${_this.resourcePaths.templates} `;
 
