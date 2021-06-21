@@ -23,7 +23,7 @@ public class {{classname}}: Codable {
 {{/allVars}}
 
 {{#hasVars}}
-    public init({{#allVars}}{{name}}: {{{datatypeWithEnum}}}{{^required_ifSwaggerDocsGuaranteed}}?{{/required_ifSwaggerDocsGuaranteed}}{{#hasMore}}, {{/hasMore}}{{/allVars}}) {
+    public init({{#allVars}}{{name}}: {{{datatypeWithEnum}}}{{^required_ifSwaggerDocsGuaranteed}}?{{/required_ifSwaggerDocsGuaranteed}}{{^-last}}, {{/-last}}{{/allVars}}) {
         {{#allVars}}
         self.{{name}} = {{name}}
         {{/allVars}}
