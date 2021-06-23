@@ -22,6 +22,8 @@ All access to Genesys Cloud is provided via OAuth client credentials.  Security 
 
 If you are using the CLI in a pipeline or don't wish to set up a config file, see [environment variables](#environment-variables) and [parameter overrides](#parameter-overrides).  
 
+The "environment" value can be provided as the API base path such as `mypurecloud.com` or AWS region.
+
 To setup and configure your gc CLI run `gc profiles new` command and answer the questions.  If everything works correctly you should have a file created in your home directory called .gc/config.toml.  If for some reason you have problems with the `gc profiles new` command, you can manually create the config file by following the steps below.
 
 -  Create .gc directory in your home directory
@@ -46,10 +48,12 @@ client_secret="OAUTH CLIENT SECRET"
 The following environment variables can be used as overrides or alternatives to their corresponding config file values
 
 ```
-GC_ENVIRONMENT
-GC_CLIENT_ID
-GC_CLIENT_SECRET
+GENESYSCLOUD_REGION
+GENESYSCLOUD_OAUTHCLIENT_ID
+GENESYSCLOUD_OAUTHCLIENT_SECRET
 ```
+
+`GENESYSCLOUD_REGION` can refer to the API base path or AWS region
 
 ## Parameter overrides
 

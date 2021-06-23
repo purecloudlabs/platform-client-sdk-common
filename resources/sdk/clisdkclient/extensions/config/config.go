@@ -6,6 +6,8 @@ import (
 
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
 
+	"strings"
+
 	"github.com/spf13/viper"
 )
 
@@ -34,6 +36,19 @@ var (
 	Environment  string
 	ClientId     string
 	ClientSecret string
+	regionMappings = map[string]string{
+		"us-east-1":      "mypurecloud.com",
+		"eu-west-1":      "mypurecloud.ie",
+		"ap-southeast-2": "mypurecloud.com.au",
+		"ap-northeast-1": "mypurecloud.jp",
+		"eu-central-1":   "mypurecloud.de",
+		"us-west-2":      "usw2.pure.cloud",
+		"ca-central-1":   "cac1.pure.cloud",
+		"ap-northeast-2": "apne2.pure.cloud",
+		"eu-west-2":      "euw2.pure.cloud",
+		"ap-south-1":     "aps1.pure.cloud",
+		"us-east-2":      "use2.us-gov-pure.cloud",
+	}
 )
 
 //ProfileName is the name of the profile being used to run the CLI
@@ -67,10 +82,23 @@ func (c *configuration) OAuthTokenData() string {
 //Environment is the Genesys Cloud Environment the CLI will talk to
 func (c *configuration) Environment() string {
 	if Environment != "" {
-		return Environment
+		return MapEnvironment(Environment)
 	}
 
-	return viper.GetString(fmt.Sprintf("%s.environment", c.profileName))
+	return MapEnvironment(viper.GetString(fmt.Sprintf("%s.environment", c.profileName)))
+}
+
+func MapEnvironment(env string) string {
+	if env != "localhost" && !strings.Contains(env, ".") {
+		basePath, ok := regionMappings[env]
+		if !ok {
+			fmt.Println("Invalid AWS region:", env)
+			os.Exit(1)
+		}
+		return basePath
+	}
+
+	return env
 }
 
 //LogFilePath is the path the CLI logs to if an override has been specified
@@ -88,15 +116,15 @@ func (c *configuration) String() string {
 }
 
 func applyEnvironmentVariableOverrides() {
-	environment := os.Getenv("GC_ENVIRONMENT")
+	environment := os.Getenv("GENESYSCLOUD_REGION")
 	if environment != "" {
 		Environment = environment
 	}
-	clientId := os.Getenv("GC_CLIENT_ID")
+	clientId := os.Getenv("GENESYSCLOUD_OAUTHCLIENT_ID")
 	if clientId != "" {
 		ClientId = clientId
 	}
-	clientSecret := os.Getenv("GC_CLIENT_SECRET")
+	clientSecret := os.Getenv("GENESYSCLOUD_OAUTHCLIENT_SECRET")
 	if clientSecret != "" {
 		ClientSecret = clientSecret
 	}
@@ -198,7 +226,7 @@ func SetLoggingEnabled(c Configuration, loggingEnabled bool) error {
 
 func OverridesApplied() bool {
 	return ClientId != "" || ClientSecret != "" || Environment != "" ||
-		os.Getenv("GC_CLIENT_ID") != "" || os.Getenv("GC_CLIENT_SECRET") != "" || os.Getenv("GC_ENVIRONMENT") != ""
+		os.Getenv("GENESYSCLOUD_OAUTHCLIENT_ID") != "" || os.Getenv("GENESYSCLOUD_OAUTHCLIENT_SECRET") != "" || os.Getenv("GENESYSCLOUD_REGION") != ""
 }
 
 func updateConfig(c configuration, loggingEnabled *bool) error {
