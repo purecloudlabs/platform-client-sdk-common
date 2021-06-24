@@ -99,16 +99,6 @@
           "cwd": "${SDK_REPO}",
           "args":[ "build", "test" ],
           "failOnError": true
-        },
-        {
-          "type": "shell",
-          "path": "generate-docs.sh",
-          "cwd": "${SDK_REPO}",
-          "args":[ 
-            "/tmp/gc_docs",
-            "${SDK_TEMP}"
-           ],
-          "failOnError": true
         }
       ]
     }

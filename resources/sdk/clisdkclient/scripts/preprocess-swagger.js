@@ -33,6 +33,15 @@ try {
 	console.log(err);
 }
 
+function firstIndexOfCapital(str) {
+	for (i = 0; i < str.length; i++) {
+		if (str[i] === str[i].toUpperCase()) {
+			return i;
+		}
+	}
+	return -1;
+}
+
 function processDefinitions(includedSwaggerPathObjects, resourceDefinitions, newSwagger) {
 	let paths = {};
 	for (const path of Object.keys(includedSwaggerPathObjects)) {
@@ -43,13 +52,24 @@ function processDefinitions(includedSwaggerPathObjects, resourceDefinitions, new
 				if (successResponse) {
 					const schema = successResponse.schema['$ref'] || ''
 					if (canPaginate(schema, newSwagger)) {
-						value.operationId = "SWAGGER_OVERRIDE_list"
+						value.operationId = "list"
 						value.responses["200"].schema['$ref'] = "SWAGGER_OVERRIDE_list"
 					} else if (canList(path, successResponse.schema, newSwagger)) {
-						value.operationId = "SWAGGER_OVERRIDE_list"
+						value.operationId = "list"
 					}
 				}
 			}
+
+			if (value.operationId !== "list") {
+				value.operationId = value.operationId.substring(0, firstIndexOfCapital(value.operationId));
+			}
+			// post -> create
+			// patch or put -> update (will cause a clash if a resource has both, this would have to be resolved by overriding one or both operationIds)
+			value.operationId = value.operationId
+					.replace(/^post/g, "create")
+					.replace(/^patch|^put/g, "update");
+			value.operationId = value.operationId.replace(/s*$/g, "");
+
 
 			let commandName = resourceDefinitions[path].name || value.tags[0];
 			commandName = commandName.toLowerCase().replace(' ', '');
@@ -68,7 +88,7 @@ function processDefinitions(includedSwaggerPathObjects, resourceDefinitions, new
 		for (const method of Object.keys(includedSwaggerPathObjects[path])) {
 			if (!Object.keys(resourceDefinitions[path]).includes(method)) continue;
 			if (resourceDefinitions[path][method].name !== undefined) {
-				includedSwaggerPathObjects[path][method].operationId = `SWAGGER_OVERRIDE_${resourceDefinitions[path][method].name}`;
+				includedSwaggerPathObjects[path][method].operationId = `${resourceDefinitions[path][method].name}`;
 			}
 		}
 

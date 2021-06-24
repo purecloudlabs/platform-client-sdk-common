@@ -147,6 +147,11 @@
 			"name": "list"
 		}
 	},
+	"/api/v2/groups/{groupId}/members": {
+		"post": {
+			"name": "add"
+		}
+	},
 	"/api/v2/knowledge/knowledgebases/{knowledgeBaseId}/languages/{languageCode}/documents": {
 		"patch": {
 			"name": "updatecollection"
