@@ -70,6 +70,7 @@ function processDefinitions(includedSwaggerPathObjects, resourceDefinitions, new
 					.replace(/^patch|^put/g, "update");
 			value.operationId = value.operationId.replace(/s*$/g, "");
 
+			value['x-purecloud-category'] = value.tags[0];
 
 			let commandName = resourceDefinitions[path].name || value.tags[0];
 			commandName = commandName.toLowerCase().replace(' ', '');
