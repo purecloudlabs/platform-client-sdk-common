@@ -31,47 +31,6 @@ Requires {{permissionType}} permissions:
 * {{.}}
 {{/permissions}}
 
-{{#bodyParam}}{{#codegenModel}}
-### Request Body Schema
-
-<script type="text/javascript">
-	function copy{{classname}}Example() {
-		let temp = $("<textarea>");
-		$("body").append(temp);
-		temp.val($('#{{classname}}Example').text()).select();
-		document.execCommand("copy");
-		temp.remove();
-		return false;
-	}
-</script>
-
-{{classname}} <a href="#" onclick="return copy{{classname}}Example()">Copy</a>
-
-<div id="{{classname}}Example">
-
-```{"language":"json", "maxHeight": "250px"}
-{ {{#allVars}}
-  "{{baseName}}": {{#isPrimitiveType}}{{datatype}},{{/isPrimitiveType}}{{^isPrimitiveType}}{{^codegenModel}}{{complexType}},{{/codegenModel}}{{#codegenModel}}{ {{#allVars}}
-    "{{baseName}}": {{#isPrimitiveType}}{{datatype}},{{/isPrimitiveType}}{{^isPrimitiveType}}{{^codegenModel}}{{complexType}},{{/codegenModel}}{{#codegenModel}}{ {{#allVars}}
-      "{{baseName}}": {{#isPrimitiveType}}{{datatype}},{{/isPrimitiveType}}{{^isPrimitiveType}}{{^codegenModel}}{{complexType}},{{/codegenModel}}{{#codegenModel}}{ {{#allVars}}
-        "{{baseName}}": {{#isPrimitiveType}}{{datatype}},{{/isPrimitiveType}}{{^isPrimitiveType}}{{^codegenModel}}{{complexType}},{{/codegenModel}}{{#codegenModel}}{ {{#allVars}}
-          "{{baseName}}": {{#isPrimitiveType}}{{datatype}},{{/isPrimitiveType}}{{^isPrimitiveType}}{{^codegenModel}}{{complexType}},{{/codegenModel}}{{#codegenModel}}{ {{#allVars}}
-            "{{baseName}}": {{#isPrimitiveType}}{{datatype}},{{/isPrimitiveType}}{{^isPrimitiveType}}{{^codegenModel}}{{complexType}},{{/codegenModel}}{{#codegenModel}}{ {{#allVars}}
-              "{{baseName}}": {{#isPrimitiveType}}{{datatype}},{{/isPrimitiveType}}{{^isPrimitiveType}}{{^codegenModel}}{{complexType}},{{/codegenModel}}{{#codegenModel}}{ {{#allVars}}
-                "{{baseName}}": {{datatype}}, {{/allVars}}
-              }, {{/codegenModel}}{{/isPrimitiveType}} {{/allVars}}
-            }, {{/codegenModel}}{{/isPrimitiveType}} {{/allVars}}
-          }, {{/codegenModel}}{{/isPrimitiveType}} {{/allVars}}
-        }, {{/codegenModel}}{{/isPrimitiveType}} {{/allVars}}
-      }, {{/codegenModel}}{{/isPrimitiveType}} {{/allVars}}
-    }, {{/codegenModel}}{{/isPrimitiveType}} {{/allVars}}
-  }, {{/codegenModel}}{{/isPrimitiveType}} {{/allVars}}
-}
-```
-
-</div>
-{{/codegenModel}}{{/bodyParam}}
-
 ### Example Usage
 
 ```{"language":"javascript"}
