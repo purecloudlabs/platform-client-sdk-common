@@ -117,6 +117,7 @@ public class WebMessagingClient {
 
             @Override
             public void jwtResponse(JwtResponse jwtResponse, String rawMessage) {
+                jwt = jwtResponse.getJwt();
             }
 
             @Override
@@ -458,21 +459,21 @@ public class WebMessagingClient {
         }
 
         // Set JWT in SDK
-        apiClient.setJwt(getJwt());
+        apiClient.setAccessToken(jwt);
 
-        GetWebmessagingDeploymentSessionMessagesRequest request = GetWebmessagingDeploymentSessionMessagesRequest.builder()
+        GetWebmessagingMessagesRequest request = GetWebmessagingMessagesRequest.builder()
                 .withPageSize(100)
                 .build();
 
         WebMessagingApi webMessagingApi = new WebMessagingApi();
 
-        WebMessagingMessageEntityList messageEntityList = webMessagingApi.getWebmessagingDeploymentSessionMessages(request);
+        WebMessagingMessageEntityList messageEntityList = webMessagingApi.getWebmessagingMessages(request);
         List<WebMessagingMessage> list = messageEntityList.getEntities();
 
         int pageNumber = 2;
         do {
             request.setPageNumber(pageNumber++);
-            messageEntityList = webMessagingApi.getWebmessagingDeploymentSessionMessages(request);
+            messageEntityList = webMessagingApi.getWebmessagingMessages(request);
             list.addAll(messageEntityList.getEntities());
         } while (messageEntityList.getEntities().size() > 0);
 

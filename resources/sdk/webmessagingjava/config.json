@@ -14,7 +14,7 @@
 		"swagger": {
 			"internalSwaggerPath": "https://api.inindca.com/api/v2/docs/swaggerall",
 			"oldSwaggerPath": "${SDK_REPO}/swagger.json",
-			"newSwaggerPath": "https://s3.amazonaws.com/inin-dev-use1-purecloud-shared/webmessaging/swagger/swagger-latest.json",
+			"newSwaggerPath": "https://s3.amazonaws.com/inin-prod-use1-purecloud-shared/webmessaging/swagger/swagger-latest.json",
 			"saveNewSwaggerPath": "${SDK_REPO}/swagger.json"
 		},
 		"swaggerCodegen": {
