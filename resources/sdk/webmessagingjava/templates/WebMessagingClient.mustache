@@ -2,7 +2,7 @@ package {{invokerPackage}};
 
 import {{invokerPackage}}.model.*;
 import {{invokerPackage}}.api.WebMessagingApi;
-import {{invokerPackage}}.api.request.GetWebmessagingDeploymentSessionMessagesRequest;
+import {{invokerPackage}}.api.request.GetWebmessagingMessagesRequest;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -30,6 +30,7 @@ public class WebMessagingClient {
     private final String webSocketAddress;
     private WebSocket webSocket;
     private String token;
+    private String jwt;
     private String deploymentId;
     private String sessionId;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -104,6 +105,18 @@ public class WebMessagingClient {
 
             @Override
             public void uploadFailureEvent(UploadFailureEvent uploadFailureEvent, String rawMessage) {
+            }
+
+            @Override
+            public void connectionClosedEvent(ConnectionClosedEvent cnxClosedResponse, String rawMessage) {
+            }
+
+            @Override
+            public void sessionExpiredEvent(SessionExpiredEvent sessionExpiredResponse, String rawMessage) {
+            }
+
+            @Override
+            public void jwtResponse(JwtResponse jwtResponse, String rawMessage) {
             }
 
             @Override
@@ -238,9 +251,9 @@ public class WebMessagingClient {
     public void sendMessage(String message, String... attachmentIds) {
         try {
             SendMessageRequest sendMessageRequest = new SendMessageRequest();
-             sendMessageRequest.token(this.token);
-             sendMessageRequest.action(RequestTypeIncomingMessage.ONMESSAGE);
-             sendMessageRequest.message(new IncomingNormalizedMessage()
+            sendMessageRequest.token(this.token);
+            sendMessageRequest.action(RequestTypeIncomingMessage.ONMESSAGE);
+            sendMessageRequest.message(new IncomingNormalizedMessage()
                .type(NormalizedType.TEXT)
                .text(message));
             sendMessageRequest.attachmentIds(Arrays.asList(attachmentIds));
@@ -290,6 +303,19 @@ public class WebMessagingClient {
               .attachmentId(attachmentId);
 
             String payload = objectMapper.writeValueAsString(deleteAttachmentRequest);
+            webSocket.sendText(payload, true);
+        } catch (JsonProcessingException e) {
+            // no-op
+        }
+    }
+
+    public void getJwt() {
+        try {
+            GetJwtRequest getJwtRequest = new GetJwtRequest()
+              .token(this.token)
+              .action(RequestTypeGetJwt.GETJWT);
+
+            String payload = objectMapper.writeValueAsString(getJwtRequest);
             webSocket.sendText(payload, true);
         } catch (JsonProcessingException e) {
             // no-op
@@ -358,6 +384,21 @@ public class WebMessagingClient {
                     sessionListener.uploadFailureEvent((UploadFailureEvent) response, rawMessage);
                 }
                 break;
+            case "ConnectionClosedEvent":
+                for (SessionListener sessionListener : sessionListeners) {
+                    sessionListener.connectionClosedEvent((ConnectionClosedEvent) response, rawMessage);
+                }
+                break;
+            case "SessionExpiredEvent":
+                for (SessionListener sessionListener : sessionListeners) {
+                    sessionListener.sessionExpiredEvent((SessionExpiredEvent) response, rawMessage);
+                }
+                break;
+             case "JwtResponse":
+                for (SessionListener sessionListener : sessionListeners) {
+                    sessionListener.jwtResponse((JwtResponse) response, rawMessage);
+                }
+                break;           
             default:
                 for (SessionListener sessionListener : sessionListeners) {
                     sessionListener.unexpectedMessage(baseMessage, rawMessage);
@@ -415,9 +456,11 @@ public class WebMessagingClient {
         if (apiClient == null) {
             throw new WebMessagingException(new Exception("A conversation must be joined before the history can be retrieved"));
         }
+
+        // Set JWT in SDK
+        apiClient.setJwt(getJwt());
+
         GetWebmessagingDeploymentSessionMessagesRequest request = GetWebmessagingDeploymentSessionMessagesRequest.builder()
-                .withDeploymentId(deploymentId)
-                .withSessionId(sessionId)
                 .withPageSize(100)
                 .build();
 
@@ -506,6 +549,30 @@ public class WebMessagingClient {
          */
         public void uploadFailureEvent(UploadFailureEvent uploadFailureEvent, String rawMessage);
 
+        /**
+         * Raised for responses to url requests (type == BaseResponseType.RESPONSE, class = SessionResponse)
+         *
+         * @param connectionClosedEvent    The deserialized event
+         * @param rawMessage  The raw message payload JSON as a string
+         */    
+        public void connectionClosedEvent(ConnectionClosedEvent cnxClosedResponse, String rawMessage);
+
+        /**
+         * Raised for responses to url requests (type == BaseResponseType.RESPONSE, class = SessionResponse)
+         *
+         * @param sessionExpiredEvent    The deserialized event
+         * @param rawMessage  The raw message payload JSON as a string
+         */
+        public void sessionExpiredEvent(SessionExpiredEvent sessionExpiredResponse, String rawMessage);    
+
+        /**
+         * Raised for responses to url requests (type == BaseResponseType.RESPONSE, class = SessionResponse)
+         *
+         * @param jwtResponse    The deserialized event
+         * @param rawMessage  The raw message payload JSON as a string
+         */
+        public void jwtResponse(JwtResponse jwtResponse, String rawMessage);
+            
         /**
          * Raised for unmatched BaseResponseType
          *

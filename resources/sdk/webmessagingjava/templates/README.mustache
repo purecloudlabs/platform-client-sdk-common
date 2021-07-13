@@ -95,7 +95,7 @@ client.addSessionListener(sessionListener);
 // Connect to the websocket to join the conversation
 String deploymentId = "df2ad262-7fe2-4fb2-9a83-e34be463713a";
 String token = "31a7021f-5798-4b6f-9ca2-7303d91f3f73";
-String initialMessage = "Initial chat message";
+String initialMessage = "Initial webmessaging message";
 client.joinConversation(deploymentId, token, initialMessage);
 
 // Send a message to the conversation
