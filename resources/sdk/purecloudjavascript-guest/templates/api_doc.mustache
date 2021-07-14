@@ -128,7 +128,7 @@ apiInstance.{{{operationId}}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendo
 | Name | Type | Description  | Notes |
 | ------------- | ------------- | ------------- | ------------- |{{/-last}}{{/allParams}}
 {{#allParams}} **{{paramName}}** | **{{dataType}}** | {{description}} | {{^required}}[optional] {{/required}}{{#defaultValue}}[default to {{defaultValue}}]{{/defaultValue}}{{#allowableValues}}<br />**Values**: {{#values}}{{.}}{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}} |
-{{/allParams}}{: class="table table-striped"}
+{{#-last}}{: class="table table-striped"}{{/-last}}{{/allParams}}
 
 ### Return type
 
