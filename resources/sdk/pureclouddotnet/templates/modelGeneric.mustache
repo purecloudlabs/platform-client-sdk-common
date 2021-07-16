@@ -79,7 +79,11 @@
         /// <returns>JSON string presentation of the object</returns>
         public {{#parent}} new {{/parent}}string ToJson()
         {
-            return JsonConvert.SerializeObject(this, Formatting.Indented);
+            return JsonConvert.SerializeObject(this, new JsonSerializerSettings
+            {
+                MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
+                Formatting = Formatting.Indented
+            });
         }
 
         /// <summary>
