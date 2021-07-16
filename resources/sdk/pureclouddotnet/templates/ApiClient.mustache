@@ -25,7 +25,8 @@ namespace {{packageName}}.Client
     {
         private JsonSerializerSettings serializerSettings = new JsonSerializerSettings
         {
-            ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor
+            ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor,
+            MetadataPropertyHandling = MetadataPropertyHandling.Ignore
         };
 
         /// <summary>
