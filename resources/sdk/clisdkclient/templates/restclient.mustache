@@ -26,6 +26,7 @@ var (
 	ClientDo         = Client.Do
 	RestClient         *RESTClient
 	UpdateOAuthToken = config.UpdateOAuthToken
+	OverridesApplied = config.OverridesApplied
 )
 
 type RESTClient struct {
@@ -149,7 +150,7 @@ func Authorize(c config.Configuration) (models.OAuthTokenData, error) {
 	}
 
 	oAuthTokenData := &models.OAuthTokenData{}
-	if !config.OverridesApplied() && c.OAuthTokenData() != "" {
+	if !OverridesApplied() && c.OAuthTokenData() != "" {
 		err := json.Unmarshal([]byte(c.OAuthTokenData()), oAuthTokenData)
 		if err != nil {
 			return models.OAuthTokenData{}, err
@@ -232,7 +233,7 @@ func authorize(c config.Configuration) (models.OAuthTokenData, error) {
 		OAuthTokenExpiry: oAuthTokenExpiry.Format(time.RFC3339),
 	}
 
-	if !config.OverridesApplied() {
+	if !OverridesApplied() {
 		err = UpdateOAuthToken(c, oAuthTokenResponse)
 		if err != nil {
 			return *oAuthTokenResponse, err

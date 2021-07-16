@@ -182,10 +182,13 @@ function canPaginate(schema, newSwagger) {
 	if (schema === '') return false
 	const definitionName = schema.split("/").pop()
 
-	return newSwagger.definitions[definitionName].properties.pageNumber !== undefined 
-			|| newSwagger.definitions[definitionName].properties.cursor !== undefined
-			|| newSwagger.definitions[definitionName].properties.nextUri !== undefined
-			|| newSwagger.definitions[definitionName].properties.startIndex !== undefined
+	const properties = newSwagger.definitions[definitionName].properties
+	if (properties == undefined) return false
+
+	return properties.pageNumber !== undefined 
+			|| properties.cursor !== undefined
+			|| properties.nextUri !== undefined
+			|| properties.startIndex !== undefined
 }
 
 function canList(path, successResponse, newSwagger) {
@@ -196,8 +199,11 @@ function canList(path, successResponse, newSwagger) {
 	if (schema === '') return false
 
 	const definitionName = schema.split("/").pop()
+	const properties = newSwagger.definitions[definitionName].properties
+	if (properties == undefined) return false
+
 	return definitionName.endsWith("List")
-			|| newSwagger.definitions[definitionName].properties.entities !== undefined
+			|| properties.entities !== undefined
 }
 
 function overrideDefinitions(resourceDefinitions, overrides) {

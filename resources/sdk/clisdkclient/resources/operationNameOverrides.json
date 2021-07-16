@@ -172,6 +172,11 @@
 			"name": "deletecontactlists"
 		}
 	},
+	"/api/v2/organizations/limits/namespaces": {
+		"get": {
+			"name": "list"
+		}
+	},
 	"/api/v2/quality/forms/surveys/{formId}": {
 		"patch": {
 			"name": "disable"
