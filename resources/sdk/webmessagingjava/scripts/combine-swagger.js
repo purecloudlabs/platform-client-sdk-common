@@ -30,7 +30,8 @@ if (fs.existsSync(newSwaggerPath)) {
     console.log(`Invalid newSwaggerPath: ${newSwaggerPath}`)
 }
 
-const webmessagingPath = "/api/v2/webmessaging/deployments/{deploymentId}/sessions/{sessionId}/messages"
+
+const webmessagingPath = "/api/v2/webmessaging/messages"
 delete newSwagger["basePath"]
 newSwagger["host"] = "api.mypurecloud.com"
 newSwagger["paths"][webmessagingPath] = internalSwagger["paths"][webmessagingPath]
