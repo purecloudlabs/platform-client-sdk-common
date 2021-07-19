@@ -37,6 +37,8 @@ var (
 	ClientId     string
 	ClientSecret string
 	regionMappings = map[string]string{
+		"tca":            "inintca.com",
+		"dca":            "ininda.com",
 		"us-east-1":      "mypurecloud.com",
 		"eu-west-1":      "mypurecloud.ie",
 		"ap-southeast-2": "mypurecloud.com.au",
