@@ -916,11 +916,11 @@
       "integrity": "sha512-y6OAwoSIf7FyjMIv94u+b5rdheZEjzR63GTyZJm5qh4Bi+2YgwLCcI/fPFZkL5PSixOt6ZNKm+w+Hfp/Bciwow=="
     },
     "fs-extra": {
-      "version": "5.0.0",
-      "resolved": "https://registry.npmjs.org/fs-extra/-/fs-extra-5.0.0.tgz",
-      "integrity": "sha512-66Pm4RYbjzdyeuqudYqhFiNBbCIuI9kgRqLPSHIlXHidW8NIQtVdkM1yeZ4lXwuhbTETv3EUGMNHAAw6hiundQ==",
+      "version": "8.1.0",
+      "resolved": "https://registry.npmjs.org/fs-extra/-/fs-extra-8.1.0.tgz",
+      "integrity": "sha512-yhlQgA6mnOJUKOsRUFsgJdQCvkKhcz8tlZG5HBQfReYZy46OwLcY+Zia0mtdHsOo9y/hP+CxMN0TU9QxoOtG4g==",
       "requires": {
-        "graceful-fs": "^4.1.2",
+        "graceful-fs": "^4.2.0",
         "jsonfile": "^4.0.0",
         "universalify": "^0.1.0"
       }
@@ -960,9 +960,9 @@
       }
     },
     "github-api-promise": {
-      "version": "1.13.4",
-      "resolved": "https://registry.npmjs.org/github-api-promise/-/github-api-promise-1.13.4.tgz",
-      "integrity": "sha512-UF2n2XO/TQj+yQMwTE86EnBdTtl3TE63ij5auDIJ8TeJV74IsTlK30KI5uMXcPeOKP5lRroZUQrJBklLJAplqw==",
+      "version": "1.13.5",
+      "resolved": "https://registry.npmjs.org/github-api-promise/-/github-api-promise-1.13.5.tgz",
+      "integrity": "sha512-ESwTDnpoSaxvykyQBiKfNR7qyDLFftG+KO2V8P90+Ltq1EAvepLdoxYvPP5twD6pZP4G8EIQN7ZiVZ/rNJT3GA==",
       "requires": {
         "bluebird": "^3.5.1",
         "lodash": "^4.17.10",
