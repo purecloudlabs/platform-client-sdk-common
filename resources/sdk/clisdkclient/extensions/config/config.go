@@ -216,20 +216,26 @@ func UpdateOAuthToken(c Configuration, data *models.OAuthTokenData) error {
 	return updateConfig(configuration{
 		profileName: c.ProfileName(),
 		oAuthTokenData: data.String(),
-	}, nil)
+	}, nil, nil)
 }
 
 func UpdateLogFilePath(c Configuration, filePath string) error {
 	return updateConfig(configuration{
 		profileName: c.ProfileName(),
 		logFilePath: filePath,
-	},nil)
+	},nil, nil)
 }
 
 func SetLoggingEnabled(c Configuration, loggingEnabled bool) error {
 	return updateConfig(configuration{
 		profileName: c.ProfileName(),
-	}, &loggingEnabled)
+	}, &loggingEnabled, nil)
+}
+
+func SetExperimentalEnabled(c Configuration, experimentalEnabled bool) error {
+	return updateConfig(configuration{
+		profileName: c.ProfileName(),
+	}, nil, &experimentalEnabled)
 }
 
 func OverridesApplied() bool {
@@ -237,7 +243,7 @@ func OverridesApplied() bool {
 		os.Getenv("GENESYSCLOUD_OAUTHCLIENT_ID") != "" || os.Getenv("GENESYSCLOUD_OAUTHCLIENT_SECRET") != "" || os.Getenv("GENESYSCLOUD_REGION") != ""
 }
 
-func updateConfig(c configuration, loggingEnabled *bool) error {
+func updateConfig(c configuration, loggingEnabled *bool, experimentalEnabled *bool) error {
 	if c.clientID != "" {
 		viper.Set(fmt.Sprintf("%s.client_credentials", c.profileName), c.clientID)
 	}
@@ -255,6 +261,9 @@ func updateConfig(c configuration, loggingEnabled *bool) error {
 	}
 	if loggingEnabled != nil {
 		viper.Set(fmt.Sprintf("%s.logging_enabled", c.profileName), *loggingEnabled)
+	}
+	if experimentalEnabled != nil {
+		viper.Set(fmt.Sprintf("%s.experimental_enabled", c.profileName), *experimentalEnabled)
 	}
 
 	return viper.WriteConfig()

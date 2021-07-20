@@ -48,5 +48,6 @@ func setExperimental(cmd *cobra.Command, experimentalEnabled bool) {
 		// logger.Fatal(err)
 		fmt.Println(err)
 	}
+
 	fmt.Printf("Name: %v, experimentalEnabled: %v /n", c, experimentalEnabled)
 }
