@@ -14,6 +14,7 @@ type MockClientConfig struct {
 	OAuthTokenDataFunc func() string
 	LogFilePathFunc    func() string
 	LoggingEnabledFunc func() bool
+	ExperimentalEnabledFunc func() bool
 }
 
 var UpdatedAccessToken string
@@ -46,8 +47,12 @@ func (m *MockClientConfig) LoggingEnabled() bool {
 	return m.LoggingEnabledFunc()
 }
 
+func (m *MockClientConfig) ExperimentalEnabled() bool {
+	return m.ExperimentalEnabledFunc()
+}
+
 func (m *MockClientConfig) String() string {
-	return fmt.Sprintf("\n-------------\nProfile Name: %s\nEnvironment: %s\nLogging Enabled: %v\nLog File Path: %s\nClient ID: %s\nClient Secret: %s\n--------------\n", m.ProfileName(), m.Environment(), m.LoggingEnabled(), m.LogFilePath(), m.ClientID(), m.ClientSecret())
+	return fmt.Sprintf("\n-------------\nProfile Name: %s\nEnvironment: %s\nExperimental Enabled: %v\nLogging Enabled: %v\nLog File Path: %s\nClient ID: %s\nClient Secret: %s\n--------------\n", m.ProfileName(), m.Environment(), m.ExperimentalEnabled(), m.LoggingEnabled(), m.LogFilePath(), m.ClientID(), m.ClientSecret())
 }
 
 func UpdateOAuthToken(_ config.Configuration, oauthTokenData *models.OAuthTokenData) error {
