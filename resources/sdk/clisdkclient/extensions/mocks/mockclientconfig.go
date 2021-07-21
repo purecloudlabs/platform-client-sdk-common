@@ -52,7 +52,7 @@ func (m *MockClientConfig) ExperimentalFeaturesEnabled() bool {
 }
 
 func (m *MockClientConfig) String() string {
-	return fmt.Sprintf("\n-------------\nProfile Name: %s\nEnvironment: %s\nExperimental Enabled: %v\nLogging Enabled: %v\nLog File Path: %s\nClient ID: %s\nClient Secret: %s\n--------------\n", m.ProfileName(), m.Environment(), m.ExperimentalFeaturesEnabled(), m.LoggingEnabled(), m.LogFilePath(), m.ClientID(), m.ClientSecret())
+	return fmt.Sprintf("\n-------------\nProfile Name: %s\nEnvironment: %s\nExperimental Features Enabled: %v\nLogging Enabled: %v\nLog File Path: %s\nClient ID: %s\nClient Secret: %s\n--------------\n", m.ProfileName(), m.Environment(), m.ExperimentalFeaturesEnabled(), m.LoggingEnabled(), m.LogFilePath(), m.ClientID(), m.ClientSecret())
 }
 
 func UpdateOAuthToken(_ config.Configuration, oauthTokenData *models.OAuthTokenData) error {
