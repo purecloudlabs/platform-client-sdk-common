@@ -15,7 +15,6 @@ var experimentalCmd = &cobra.Command{
 func Cmdexperimental() *cobra.Command {
 	experimentalCmd.AddCommand(enableCmd)
 	experimentalCmd.AddCommand(disableCmd)
-
 	return experimentalCmd
 }
 
@@ -45,9 +44,11 @@ func setExperimental(cmd *cobra.Command, experimentalEnabled bool) {
 	profileName, _ := cmd.Root().Flags().GetString("profile")
 	c, err := config.GetConfig(profileName)
 	if err != nil {
-		// logger.Fatal(err)
 		fmt.Println(err)
 	}
 
-	fmt.Printf("Name: %v, experimentalEnabled: %v /n", c, experimentalEnabled)
+	err = config.SetExperimentalFeaturesEnabled(c, experimentalEnabled)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
