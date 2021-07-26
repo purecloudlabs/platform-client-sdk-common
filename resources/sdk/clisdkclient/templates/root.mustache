@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
@@ -10,6 +11,7 @@ import (
 	"flag"
 	"fmt"
 	"strings"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/cmd/dummy_command"
 	{{addImports}}
 	"os"
 )
@@ -68,6 +70,10 @@ func init() {
 
 	rootCmd.AddCommand(versionCmd)
 	{{addCommands}}
+
+    if config.GetDummyFeatureEnabled(getProfileName(os.Args)) {
+        rootCmd.AddCommand(dummy_command.Cmddummy_command())
+    }
 
 	if os.Getenv("GenerateGcDocs") != "" {
 		if _, err := os.Stat("/tmp/gc_docs"); os.IsNotExist(err) {

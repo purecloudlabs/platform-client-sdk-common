@@ -7,14 +7,14 @@ import (
 )
 
 type MockClientConfig struct {
-	ProfileNameFunc    func() string
-	EnvironmentFunc    func() string
-	ClientIDFunc       func() string
-	ClientSecretFunc   func() string
-	OAuthTokenDataFunc func() string
-	LogFilePathFunc    func() string
-	LoggingEnabledFunc func() bool
-	ExperimentalEnabledFunc func() bool
+	ProfileNameFunc         func() string
+	EnvironmentFunc         func() string
+	ClientIDFunc            func() string
+	ClientSecretFunc        func() string
+	OAuthTokenDataFunc      func() string
+	LogFilePathFunc         func() string
+	LoggingEnabledFunc      func() bool
+	DummyFeatureEnabledFunc func() bool
 }
 
 var UpdatedAccessToken string
@@ -47,12 +47,12 @@ func (m *MockClientConfig) LoggingEnabled() bool {
 	return m.LoggingEnabledFunc()
 }
 
-func (m *MockClientConfig) ExperimentalFeaturesEnabled() bool {
-	return m.ExperimentalEnabledFunc()
+func (m *MockClientConfig) DummyFeatureEnabled() bool {
+	return m.DummyFeatureEnabledFunc()
 }
 
 func (m *MockClientConfig) String() string {
-	return fmt.Sprintf("\n-------------\nProfile Name: %s\nEnvironment: %s\nExperimental Features Enabled: %v\nLogging Enabled: %v\nLog File Path: %s\nClient ID: %s\nClient Secret: %s\n--------------\n", m.ProfileName(), m.Environment(), m.ExperimentalFeaturesEnabled(), m.LoggingEnabled(), m.LogFilePath(), m.ClientID(), m.ClientSecret())
+	return fmt.Sprintf("\n-------------\nProfile Name: %s\nEnvironment: %s\nLogging Enabled: %v\nDummy Feature Enabled: %v\nLog File Path: %s\nClient ID: %s\nClient Secret: %s\n--------------\n", m.ProfileName(), m.Environment(), m.LoggingEnabled(), m.DummyFeatureEnabled(), m.LogFilePath(), m.ClientID(), m.ClientSecret())
 }
 
 func UpdateOAuthToken(_ config.Configuration, oauthTokenData *models.OAuthTokenData) error {

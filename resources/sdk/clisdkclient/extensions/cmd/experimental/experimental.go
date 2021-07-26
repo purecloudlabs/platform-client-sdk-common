@@ -6,6 +6,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	allExperimentalFeatures []string
+	featureCommands         = []string{"dummy_command"}
+)
+
 var experimentalCmd = &cobra.Command{
 	Use:   "experimental",
 	Short: "Manages the experimental features for the CLI",
@@ -15,40 +20,69 @@ var experimentalCmd = &cobra.Command{
 func Cmdexperimental() *cobra.Command {
 	experimentalCmd.AddCommand(enableCmd)
 	experimentalCmd.AddCommand(disableCmd)
+	experimentalCmd.AddCommand(listExperimentalFeaturesCmd)
 	return experimentalCmd
 }
 
-var enableCmd = &cobra.Command {
-	Use: "enable",
-	Short: "Enables experimental features",
-	Long: `Enables experimental features`,
-	Args: cobra.NoArgs,
+var enableCmd = &cobra.Command{
+	Use:   "enable [feature]",
+	Short: "Enables specified experimental feature",
+	Long:  `Enables specified experimental feature`,
+	Args:  cobra.ExactArgs(1),
 
 	Run: func(cmd *cobra.Command, args []string) {
-		setExperimental(cmd, true)
+		setFeature(cmd, args[0], true)
 	},
 }
 
-var disableCmd = &cobra.Command {
-	Use: "disable",
-	Short: "Disables experimental features",
-	Long: `Disables experimental features`,
-	Args: cobra.NoArgs,
+var disableCmd = &cobra.Command{
+	Use:   "disable [feature]",
+	Short: "Disables specified experimental feature",
+	Long:  `Disables specified experimental feature`,
+	Args:  cobra.ExactArgs(1),
 
 	Run: func(cmd *cobra.Command, args []string) {
-		setExperimental(cmd, false)
+		setFeature(cmd, args[0], false)
 	},
 }
 
-func setExperimental(cmd *cobra.Command, experimentalEnabled bool) {
+var listExperimentalFeaturesCmd = &cobra.Command{
+	Use:   "list",
+	Short: "Lists all experimental features",
+	Long:  `Lists all experimental features`,
+	Args:  cobra.NoArgs,
+
+	Run: func(cmd *cobra.Command, args []string) {
+		listAllFeatures()
+	},
+}
+
+func listAllFeatures() {
+	if allExperimentalFeatures == nil {
+		fmt.Println("No experimental features have been added yet.")
+	} else {
+		for _, f := range allExperimentalFeatures {
+			fmt.Println(f)
+		}
+	}
+}
+
+func setFeature(cmd *cobra.Command, featureCommand string, enabled bool) {
 	profileName, _ := cmd.Root().Flags().GetString("profile")
 	c, err := config.GetConfig(profileName)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	err = config.SetExperimentalFeaturesEnabled(c, experimentalEnabled)
-	if err != nil {
-		fmt.Println(err)
+	switch featureCommand {
+	case "dummy_command":
+		err = config.SetDummyFeatureEnabled(c, enabled)
+		if err != nil {
+			fmt.Println(err)
+		}
+		return
 	}
+
+	fmt.Printf("Feature '%v' does not exist. All available experimental features are listed below:\n", featureCommand)
+	listAllFeatures()
 }
