@@ -3,12 +3,8 @@ package experimental
 import (
 	"fmt"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/experimental_features"
 	"github.com/spf13/cobra"
-)
-
-var (
-	allExperimentalFeatures []string
-	featureCommands         = []string{"dummy_command"}
 )
 
 var experimentalCmd = &cobra.Command{
@@ -53,56 +49,22 @@ var listExperimentalFeaturesCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 
 	Run: func(cmd *cobra.Command, args []string) {
-		listAllFeatures(cmd)
+		profileName, _ := cmd.Root().Flags().GetString("profile")
+		experimental_features.ListAllFeatures(profileName)
 	},
-}
-
-func listAllFeatures(cmd *cobra.Command) {
-	if allExperimentalFeatures == nil {
-		fmt.Println("No experimental features have been added yet.")
-	} else {
-		for _, f := range allExperimentalFeatures {
-			printFeatureDescription(cmd, f)
-		}
-	}
-}
-
-func printFeatureDescription(cmd *cobra.Command, feature string) {
-	profileName, _ := cmd.Root().Flags().GetString("profile")
-	switch feature {
-	// this case is just for future reference - it can be removed after more features have been added
-	case "dummy_command":
-		fmt.Printf("dummy_command - %v - Does nothing.\n", classifyFeatureAvailability(config.GetDummyFeatureEnabled(profileName)))
-		break
-	default:
-		fmt.Printf("Command description unimplemented - '%v'\n", feature)
-	}
-}
-
-func classifyFeatureAvailability(enabled bool) string {
-	if enabled {
-		return "enabled"
-	} else {
-		return "disabled"
-	}
 }
 
 func setFeature(cmd *cobra.Command, featureCommand string, enabled bool) {
 	profileName, _ := cmd.Root().Flags().GetString("profile")
-	c, err := config.GetConfig(profileName)
-	if err != nil {
-		fmt.Println(err)
-	}
 
-	switch featureCommand {
-	case "dummy_command":
-		err = config.SetDummyFeatureEnabled(c, enabled)
-		if err != nil {
-			fmt.Println(err)
-		}
+	if !experimental_features.IsValidCommand(featureCommand) {
+		fmt.Printf("Command '%v' does not exist. All experimental features are listed below:\n", featureCommand)
+		experimental_features.ListAllFeatures(profileName)
 		return
 	}
 
-	fmt.Printf("Feature '%v' does not exist. All available experimental features are listed below:\n", featureCommand)
-	listAllFeatures(cmd)
+	err := config.SetExperimentalFeature(profileName, featureCommand, enabled)
+	if err != nil {
+		fmt.Println(err)
+	}
 }

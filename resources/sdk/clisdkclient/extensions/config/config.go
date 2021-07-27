@@ -19,19 +19,17 @@ type Configuration interface {
 	OAuthTokenData() string
 	LogFilePath() string
 	LoggingEnabled() bool
-	DummyFeatureEnabled() bool
 	fmt.Stringer
 }
 
 type configuration struct {
-	profileName         string
-	environment         string
-	clientID            string
-	clientSecret        string
-	oAuthTokenData      string
-	logFilePath         string
-	loggingEnabled      bool
-	dummyFeatureEnabled bool
+	profileName    string
+	environment    string
+	clientID       string
+	clientSecret   string
+	oAuthTokenData string
+	logFilePath    string
+	loggingEnabled bool
 }
 
 var (
@@ -113,12 +111,8 @@ func (c *configuration) LoggingEnabled() bool {
 	return viper.GetBool(fmt.Sprintf("%s.logging_enabled", c.profileName))
 }
 
-func (c *configuration) DummyFeatureEnabled() bool {
-	return viper.GetBool(fmt.Sprintf("%s.dummy_feature_enabled", c.profileName))
-}
-
 func (c *configuration) String() string {
-	return fmt.Sprintf(`{"profileName": "%s", "environment": "%s", "logFilePath": "%s", "loggingEnabled": "%v", "dummyFeatureEnabled": "%v", "clientName": "%s", "clientSecret": "%s"}`, c.ProfileName(), c.Environment(), c.LogFilePath(), c.LoggingEnabled(), c.DummyFeatureEnabled(), c.ClientID(), c.ClientSecret())
+	return fmt.Sprintf(`{"profileName": "%s", "environment": "%s", "logFilePath": "%s", "loggingEnabled": "%v", "clientName": "%s", "clientSecret": "%s"}`, c.ProfileName(), c.Environment(), c.LogFilePath(), c.LoggingEnabled(), c.ClientID(), c.ClientSecret())
 }
 
 func applyEnvironmentVariableOverrides() {
@@ -165,13 +159,12 @@ func GetConfig(profileName string) (Configuration, error) {
 	}
 
 	return &configuration{profileName: profileName,
-		clientID:            viper.GetString(fmt.Sprintf("%s.client_credentials", profileName)),
-		clientSecret:        viper.GetString(fmt.Sprintf("%s.client_secret", profileName)),
-		environment:         viper.GetString(fmt.Sprintf("%s.environment", profileName)),
-		oAuthTokenData:      viper.GetString(fmt.Sprintf("%s.oauth_token_data", profileName)),
-		logFilePath:         viper.GetString(fmt.Sprintf("%s.log_file_path", profileName)),
-		loggingEnabled:      viper.GetBool(fmt.Sprintf("%s.logging_enabled", profileName)),
-		dummyFeatureEnabled: viper.GetBool(fmt.Sprintf("%s.dummy_feature_enabled", profileName)),
+		clientID:       viper.GetString(fmt.Sprintf("%s.client_credentials", profileName)),
+		clientSecret:   viper.GetString(fmt.Sprintf("%s.client_secret", profileName)),
+		environment:    viper.GetString(fmt.Sprintf("%s.environment", profileName)),
+		oAuthTokenData: viper.GetString(fmt.Sprintf("%s.oauth_token_data", profileName)),
+		logFilePath:    viper.GetString(fmt.Sprintf("%s.log_file_path", profileName)),
+		loggingEnabled: viper.GetBool(fmt.Sprintf("%s.logging_enabled", profileName)),
 	}, nil
 }
 
@@ -194,14 +187,13 @@ func ListConfigs() ([]configuration, error) {
 	configurations := make([]configuration, 0)
 	for profileName, _ := range settings {
 		configurations = append(configurations, configuration{
-			profileName:         profileName,
-			clientID:            viper.GetString(fmt.Sprintf("%s.client_credentials", profileName)),
-			clientSecret:        viper.GetString(fmt.Sprintf("%s.client_secret", profileName)),
-			environment:         viper.GetString(fmt.Sprintf("%s.environment", profileName)),
-			oAuthTokenData:      viper.GetString(fmt.Sprintf("%s.oauth_token_data", profileName)),
-			logFilePath:         viper.GetString(fmt.Sprintf("%s.log_file_path", profileName)),
-			loggingEnabled:      viper.GetBool(fmt.Sprintf("%s.logging_enabled", profileName)),
-			dummyFeatureEnabled: viper.GetBool(fmt.Sprintf("%s.dummy_feature_enabled", profileName)),
+			profileName:    profileName,
+			clientID:       viper.GetString(fmt.Sprintf("%s.client_credentials", profileName)),
+			clientSecret:   viper.GetString(fmt.Sprintf("%s.client_secret", profileName)),
+			environment:    viper.GetString(fmt.Sprintf("%s.environment", profileName)),
+			oAuthTokenData: viper.GetString(fmt.Sprintf("%s.oauth_token_data", profileName)),
+			logFilePath:    viper.GetString(fmt.Sprintf("%s.log_file_path", profileName)),
+			loggingEnabled: viper.GetBool(fmt.Sprintf("%s.logging_enabled", profileName)),
 		})
 	}
 
@@ -209,42 +201,40 @@ func ListConfigs() ([]configuration, error) {
 }
 
 func SaveConfig(c Configuration) error {
-	return writeConfig(c, nil, "", nil, nil)
+	return writeConfig(c, nil, "", nil)
 }
 
 func UpdateOAuthToken(c Configuration, data *models.OAuthTokenData) error {
 	return updateConfig(configuration{
 		profileName:    c.ProfileName(),
 		oAuthTokenData: data.String(),
-	}, nil, nil)
+	}, nil)
 }
 
 func UpdateLogFilePath(c Configuration, filePath string) error {
 	return updateConfig(configuration{
 		profileName: c.ProfileName(),
 		logFilePath: filePath,
-	}, nil, nil)
+	}, nil)
 }
 
 func SetLoggingEnabled(c Configuration, loggingEnabled bool) error {
 	return updateConfig(configuration{
 		profileName: c.ProfileName(),
-	}, &loggingEnabled, nil)
+	}, &loggingEnabled)
 }
 
-func SetDummyFeatureEnabled(c Configuration, dummyFeatureEnabled bool) error {
-	return updateConfig(configuration{
-		profileName: c.ProfileName(),
-	}, nil, &dummyFeatureEnabled)
+func SetExperimentalFeature(profileName string, featureName string, enabled bool) error {
+	viper.Set(fmt.Sprintf("%s.%s_enabled", profileName, featureName), enabled)
+	return viper.WriteConfig()
 }
 
-func GetDummyFeatureEnabled(profileName string) bool {
-	c, err := GetConfig(profileName)
+func GetExperimentalFeature(profileName string, featureName string) bool {
+	err := viper.ReadInConfig()
 	if err != nil {
-		fmt.Println(err)
 		return false
 	}
-	return c.DummyFeatureEnabled()
+	return viper.GetBool(fmt.Sprintf("%s.%s_enabled", profileName, featureName))
 }
 
 func OverridesApplied() bool {
@@ -252,7 +242,7 @@ func OverridesApplied() bool {
 		os.Getenv("GENESYSCLOUD_OAUTHCLIENT_ID") != "" || os.Getenv("GENESYSCLOUD_OAUTHCLIENT_SECRET") != "" || os.Getenv("GENESYSCLOUD_REGION") != ""
 }
 
-func updateConfig(c configuration, loggingEnabled *bool, dummyFeatureEnabled *bool) error {
+func updateConfig(c configuration, loggingEnabled *bool) error {
 	if c.clientID != "" {
 		viper.Set(fmt.Sprintf("%s.client_credentials", c.profileName), c.clientID)
 	}
@@ -271,14 +261,11 @@ func updateConfig(c configuration, loggingEnabled *bool, dummyFeatureEnabled *bo
 	if loggingEnabled != nil {
 		viper.Set(fmt.Sprintf("%s.logging_enabled", c.profileName), *loggingEnabled)
 	}
-	if dummyFeatureEnabled != nil {
-		viper.Set(fmt.Sprintf("%s.dummy_feature_enabled", c.profileName), *dummyFeatureEnabled)
-	}
 
 	return viper.WriteConfig()
 }
 
-func writeConfig(c Configuration, data *models.OAuthTokenData, logFilePath string, loggingEnabled *bool, dummyFeatureEnabled *bool) error {
+func writeConfig(c Configuration, data *models.OAuthTokenData, logFilePath string, loggingEnabled *bool) error {
 	viper.Set(fmt.Sprintf("%s.client_credentials", c.ProfileName()), c.ClientID())
 	viper.Set(fmt.Sprintf("%s.client_secret", c.ProfileName()), c.ClientSecret())
 	viper.Set(fmt.Sprintf("%s.environment", c.ProfileName()), c.Environment())
@@ -290,9 +277,6 @@ func writeConfig(c Configuration, data *models.OAuthTokenData, logFilePath strin
 	}
 	if loggingEnabled != nil {
 		viper.Set(fmt.Sprintf("%s.logging_enabled", c.ProfileName()), *loggingEnabled)
-	}
-	if dummyFeatureEnabled != nil {
-		viper.Set(fmt.Sprintf("%s.dummy_feature_enabled", c.ProfileName()), *dummyFeatureEnabled)
 	}
 
 	//Checking to see if the file does not exist.  It it doesnt we write out the config as default config.toml
