@@ -9,11 +9,16 @@ echo "BUILD_DIR=$BUILD_DIR"
 echo "MAVEN_SETTINGS_FILE=$MAVEN_SETTINGS_FILE"
 echo "IS_NEW_RELEASE=$IS_NEW_RELEASE"
 
+cat $MAVEN_SETTINGS_FILE
+exit 1
+
 # Verify settings
 if [ ! -z "$MAVEN_SETTINGS_FILE" ]
 then
 	MAVEN_SETTINGS_FILE="--settings $MAVEN_SETTINGS_FILE"
 fi
+
+
 
 if [ ! -z "$DPGP_PASSPHRASE" ]
 then
