@@ -74,3 +74,6 @@ typings/
 
 # dotenv environment variables file
 .env
+
+# User/project-specific configurations
+.idea/
