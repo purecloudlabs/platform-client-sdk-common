@@ -193,6 +193,7 @@ function processName(name) {
 function processRoot(rootDir, rootFileName, resourceDefinitions, topLevelCommands) {
 	let exclusionList = new Set();
 	exclusionList.add(rootFileName);
+	exclusionList.add("dummy_command.go");
 	for (const resourceDefinition of Object.values(resourceDefinitions)) {
 		if (resourceDefinition.supercommand !== undefined) {
 			const supercommandlist = resourceDefinition.supercommand.split('.');
