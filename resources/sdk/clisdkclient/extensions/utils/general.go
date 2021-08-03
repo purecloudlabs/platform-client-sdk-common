@@ -15,8 +15,10 @@ import (
 
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
 
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/data_format"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"sigs.k8s.io/yaml"
 )
 
 func AddFlag(flags *pflag.FlagSet, paramType string, name string, value string, usage string) {
@@ -113,9 +115,9 @@ func FormatUsageDescription(inputs ...string) string {
 
 	// Some command names are separated by underscores. We only want the last name
 	name := strings.Split(messages[0], "_")
-	message := name[len(name) - 1]
-	message = strings.Replace(message, "testfile" , "test", -1)
-	message = strings.Replace(message, "documentationfile" , "documentation", -1)
+	message := name[len(name)-1]
+	message = strings.Replace(message, "testfile", "test", -1)
+	message = strings.Replace(message, "documentationfile", "documentation", -1)
 	if len(messages) == 1 {
 		return message
 	}
@@ -212,9 +214,9 @@ func GenerateDevCentreLink(method, category, path string) string {
 
 	linkString := "Documentation:\n"
 	linkString += fmt.Sprintf("  https://developer.genesys.cloud/api/rest/v2/%v/#%v%v\n",
-						category,
-						strings.ToLower(method),
-						path)
+		category,
+		strings.ToLower(method),
+		path)
 
 	return linkString
 }
@@ -255,10 +257,10 @@ func ConvertStdInString() string {
 		}
 	}
 
-	return string(inputBuffer.Bytes())
+	return ConvertToJSON(string(inputBuffer.Bytes()))
 }
 
-func ConvertFileJSON(fileName string) string {
+func ConvertFile(fileName string) string {
 	jsonFile, err := os.Open(fileName)
 
 	if err != nil {
@@ -269,19 +271,20 @@ func ConvertFileJSON(fileName string) string {
 	defer jsonFile.Close()
 
 	fileContent, _ := ioutil.ReadAll(jsonFile)
-	return string(fileContent)
+
+	return ConvertToJSON(string(fileContent))
 }
 
 // ResolveInputData is used to determine where the Put, Patch and Delete Post data should be read from
 func ResolveInputData(cmd *cobra.Command) string {
 	fileName, _ := cmd.Flags().GetString("file")
 	if fileName != "" {
-		return ConvertFileJSON(fileName)
+		return ConvertFile(fileName)
 	}
 	for _, command := range cmd.Commands() {
 		fileName, _ := command.Flags().GetString("file")
 		if fileName != "" {
-			return ConvertFileJSON(fileName)
+			return ConvertFile(fileName)
 		}
 	}
 
@@ -304,4 +307,15 @@ func MilliSecondsToNanoSeconds(milliSeconds int64) time.Duration {
 
 func SecondsToNanoSeconds(seconds int) time.Duration {
 	return MilliSecondsToNanoSeconds(int64(seconds)) * 1000
+}
+
+func ConvertToJSON(data string) string {
+	if data_format.InputFormat == "json" {
+		return data
+	}
+	result, err := yaml.YAMLToJSON([]byte(data))
+	if err != nil {
+		fmt.Printf("err: %v\n\n", err)
+	}
+	return string(result)
 }
