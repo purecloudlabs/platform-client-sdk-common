@@ -36,7 +36,7 @@ func processWSMessage(c *websocket.Conn, done chan struct{}, heartbeatSuppressed
 }
 
 func isWebSocketHeartbeat(message string) bool {
-	return strings.Contains(string(message), "WebSocket Heartbeat") && strings.Contains(string(message), "channel.metadata")
+	return strings.Contains(message, "WebSocket Heartbeat") && strings.Contains(message, "channel.metadata")
 }
 
 //waitForWSClose waits for an operating system interrupt to stop the websocket and cleanly close it down.

@@ -3,12 +3,16 @@ package cmd
 import (
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
 
 	"flag"
 	"fmt"
+	"strings"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/cmd/dummy_command"
 	{{addImports}}
 	"os"
 )
@@ -69,6 +73,10 @@ func init() {
 	rootCmd.AddCommand(versionCmd)
 	{{addCommands}}
 
+    if config.GetExperimentalFeature(getProfileName(os.Args), models.DummyCommand.String()) {
+        rootCmd.AddCommand(dummy_command.Cmddummy_command())
+    }
+
 	if os.Getenv("GenerateGcDocs") != "" {
 		if _, err := os.Stat("/tmp/gc_docs"); os.IsNotExist(err) {
 			err = os.Mkdir("/tmp/gc_docs", 0755)
@@ -81,4 +89,22 @@ func init() {
 			}
 		}
 	}
+}
+
+func getProfileName(args []string) string {
+	name := ""
+	for i, s := range args {
+		if (s == "-p" || s == "--profile") && i < len(args)-1 {
+			return args[i+1]
+		}
+		if strings.HasPrefix(s, "--profile=") {
+			name = strings.Replace(s, "--profile=", "", -1)
+		} else if strings.HasPrefix(s, "-p=") {
+			name = strings.Replace(s, "-p=", "", -1)
+		}
+	}
+	if name == "" {
+		return "DEFAULT"
+	}
+	return name
 }
