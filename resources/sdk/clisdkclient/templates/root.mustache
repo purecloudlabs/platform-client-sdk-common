@@ -3,12 +3,16 @@ package cmd
 import (
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
 
 	"flag"
 	"fmt"
+	"strings"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/cmd/dummy_command"
 	{{addImports}}
 	"os"
 )
@@ -33,7 +37,6 @@ var versionCmd = &cobra.Command{
 		fmt.Println("{{packageVersion}}")
 	},
 }
-
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
@@ -42,35 +45,28 @@ func Execute() {
 		logger.Fatal(fmt.Sprintf("%v\n", err.Error()))
 	}
 }
-
 func initViperConfig() {
 	homeDir, _ := os.UserHomeDir()
 	viper.SetConfigName("config")                       // name of config file (without extension)
 	viper.SetConfigType("toml")                         // REQUIRED if the config file does not have the extension in the name
 	viper.AddConfigPath(fmt.Sprintf("%s/.gc", homeDir)) // call multiple times to add many search paths
 	viper.AddConfigPath(".")                            // optionally look for config in the working directory
-
 	viper.SetEnvPrefix("gc")
 	viper.AutomaticEnv()
 }
-
 func init() {
 	cobra.OnInitialize()
 	initViperConfig()
-
 	rootCmd.PersistentFlags().StringVarP(&profileName, "profile", "p", "DEFAULT", "Name of the profile to use for configuring the cli")
 	rootCmd.PersistentFlags().BoolP("indicateprogress", "i", false, "Trace progress indicators to stderr")
-
 	rootCmd.PersistentFlags().StringVar(&config.Environment, "environment", "", "environment override. E.g. mypurecloud.com.au or ap-southeast-2")
 	rootCmd.PersistentFlags().StringVar(&config.ClientId, "clientid", "", "clientId override")
 	rootCmd.PersistentFlags().StringVar(&config.ClientSecret, "clientsecret", "", "clientSecret override")
-
-	rootCmd.PersistentFlags().StringVar(&data_format.InputFormat, "inputformat", "json", "file input format")
-	rootCmd.PersistentFlags().StringVar(&data_format.OutputFormat, "outputformat", "json", "file output format")
-
 	rootCmd.AddCommand(versionCmd)
 	{{addCommands}}
-
+    if config.GetExperimentalFeature(getProfileName(os.Args), models.DummyCommand.String()) {
+        rootCmd.AddCommand(dummy_command.Cmddummy_command())
+    }
 	if os.Getenv("GenerateGcDocs") != "" {
 		if _, err := os.Stat("/tmp/gc_docs"); os.IsNotExist(err) {
 			err = os.Mkdir("/tmp/gc_docs", 0755)
@@ -83,4 +79,21 @@ func init() {
 			}
 		}
 	}
+}
+func getProfileName(args []string) string {
+	name := ""
+	for i, s := range args {
+		if (s == "-p" || s == "--profile") && i < len(args)-1 {
+			return args[i+1]
+		}
+		if strings.HasPrefix(s, "--profile=") {
+			name = strings.Replace(s, "--profile=", "", -1)
+		} else if strings.HasPrefix(s, "-p=") {
+			name = strings.Replace(s, "-p=", "", -1)
+		}
+	}
+	if name == "" {
+		return "DEFAULT"
+	}
+	return name
 }
