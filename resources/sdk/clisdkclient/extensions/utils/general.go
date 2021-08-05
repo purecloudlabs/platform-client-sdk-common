@@ -314,15 +314,9 @@ func convertToJSON(data string) string {
 	if strings.EqualFold("json", data_format.InputFormat) && isJSON(data) {
 		return data
 	}
-	if strings.EqualFold("yaml", data_format.InputFormat) && isJSON(data) {
-		logger.Fatal("file type does not match input format..")
-	}
-	if strings.EqualFold("json", data_format.InputFormat) && !isJSON(data) {
-		logger.Fatal("file type does not match input format..")
-	}
 	result, err := yaml.YAMLToJSON([]byte(data))
 	if err != nil {
-		logger.Fatal(err)
+		logger.Fatal(fmt.Printf("err: %v\n", err))
 	}
 	return string(result)
 }

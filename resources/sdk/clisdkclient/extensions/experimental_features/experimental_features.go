@@ -2,8 +2,9 @@ package experimental_features
 
 import (
 	"fmt"
-	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
+
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
 )
 
 var (
@@ -18,6 +19,9 @@ func IsValidCommand(command string) bool {
 	}
 	// Temporary clause to maintain dummy_command as valid without listing it in ListAllFeatures
 	if command == "dummy_command" {
+		return true
+	}
+	if command == "alternative_formats" {
 		return true
 	}
 	return false

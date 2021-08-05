@@ -15,9 +15,9 @@ func Render(data string) {
 	if strings.EqualFold("yaml", data_format.OutputFormat) && isJSON(data) {
 		result, err := yaml.JSONToYAML([]byte(data))
 		if err != nil {
-			logger.Fatal(err)
+			logger.Fatal(fmt.Printf("err: %v\n", err))
 		}
-		fmt.Println(string(result))
+		fmt.Printf("%s", result)
 		return
 	}
 	result := pretty.Pretty([]byte(data))
