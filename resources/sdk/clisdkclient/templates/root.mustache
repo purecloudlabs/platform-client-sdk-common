@@ -69,10 +69,10 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&config.Environment, "environment", "", "environment override. E.g. mypurecloud.com.au or ap-southeast-2")
 	rootCmd.PersistentFlags().StringVar(&config.ClientId, "clientid", "", "clientId override")
 	rootCmd.PersistentFlags().StringVar(&config.ClientSecret, "clientsecret", "", "clientSecret override")
-	
+
 	if config.GetExperimentalFeature(getProfileName(os.Args), models.AlternativeFormats.String()) {
-		rootCmd.PersistentFlags().StringVar(&data_format.InputFormat, "inputformat", "json", "data input format")
-		rootCmd.PersistentFlags().StringVar(&data_format.OutputFormat, "outputformat", "json", "data output format")
+		rootCmd.PersistentFlags().StringVar(&data_format.InputFormat, "inputformat", "JSON", "Data input format. Possible values: YAML, JSON")
+		rootCmd.PersistentFlags().StringVar(&data_format.OutputFormat, "outputformat", "JSON", "Data output format. Possible values: YAML, JSON")
 	}
 
 	rootCmd.AddCommand(versionCmd)
