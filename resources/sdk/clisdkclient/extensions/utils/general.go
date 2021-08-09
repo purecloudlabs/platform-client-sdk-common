@@ -311,14 +311,14 @@ func SecondsToNanoSeconds(seconds int) time.Duration {
 }
 
 func convertToJSON(data string) string {
-	if strings.EqualFold("json", data_format.InputFormat) && isJSON(data) {
-		return data
+	if strings.EqualFold("yaml", data_format.InputFormat) {
+		result, err := yaml.YAMLToJSON([]byte(data))
+		if err != nil {
+			logger.Fatalf("Error converting YAML to JSON: %v\n", err)
+		}
+		return string(result)
 	}
-	result, err := yaml.YAMLToJSON([]byte(data))
-	if err != nil {
-		logger.Fatal(fmt.Printf("err: %v\n", err))
-	}
-	return string(result)
+	return data
 }
 
 func isJSON(str string) bool {

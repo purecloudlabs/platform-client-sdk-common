@@ -7,9 +7,7 @@ import (
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
 )
 
-var (
-	allCommands []models.ExperimentalFeature
-)
+var allCommands = [...]models.ExperimentalFeature{models.AlternativeFormats}
 
 func IsValidCommand(command string) bool {
 	for _, c := range allCommands {
@@ -21,14 +19,12 @@ func IsValidCommand(command string) bool {
 	if command == "dummy_command" {
 		return true
 	}
-	if command == "alternative_formats" {
-		return true
-	}
+
 	return false
 }
 
 func ListAllFeatures(profileName string) {
-	if allCommands == nil {
+	if len(allCommands) == 0 {
 		fmt.Println("No experimental features have been deployed yet.")
 		return
 	}

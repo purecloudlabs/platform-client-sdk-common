@@ -15,7 +15,7 @@ func Render(data string) {
 	if strings.EqualFold("yaml", data_format.OutputFormat) && isJSON(data) {
 		result, err := yaml.JSONToYAML([]byte(data))
 		if err != nil {
-			logger.Fatal(fmt.Printf("err: %v\n", err))
+			logger.Fatalf("Error converting JSON to YAML: %v\n", err)
 		}
 		fmt.Printf("%s", result)
 		return
