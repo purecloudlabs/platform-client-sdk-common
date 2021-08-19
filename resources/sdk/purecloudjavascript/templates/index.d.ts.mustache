@@ -1,5 +1,4 @@
 import {{moduleName}} = require('{{projectName}}');
-import Configuration from './src/purecloud-platform-client-v2/configuration';
 
 declare module '{{projectName}}' {
 	export const ApiClient: ApiClientClass;
@@ -37,6 +36,34 @@ declare class ProxyConfig {
 	host: string;
 	port: number;
 	protocol: string;
+}
+
+declare class Configuration {
+	instance: Configuration;
+	configPath: string;
+	refresh_access_token: boolean;
+	refresh_token_wait_max: number;
+	live_reload_config: boolean;
+	host: string;
+	environment: string;
+	basePath: string;
+	authUrl: string;
+	logger: Logger;
+	config: any;
+	setEnvironment(environment: string): void;
+}
+
+declare class Logger {
+	log_level: string;
+	log_format: string;
+	log_file_path: string;
+	log_to_console: boolean;
+	log_response_body: boolean;
+	log_request_body: boolean;
+	logLevels: any;
+	logLevelEnum: any;
+	logFormatEnum: any;
+	setLogger(): void;
 }
 {{#apiInfo}}
 {{#apis}}{{#operations}}
