@@ -1,0 +1,66 @@
+package models
+{{#models}}
+import ({{#imports}}
+    "{{import}}"{{/imports}}
+    "encoding/json"
+    "strconv"
+    "strings"
+)
+{{#model}}
+
+var (
+    {{classname}}Marshalled = false
+)
+
+// This struct is here to use the useless readonly properties so that their required imports don't throw an unused error (time, etc.)
+type {{classname}}Dud struct { {{#vars}}
+    {{#isReadOnly}}{{name}} {{{datatype}}} `json:"{{baseName}}"`{{/isReadOnly}}
+
+{{/vars}}}
+
+// {{classname}}{{#description}} - {{{description}}}{{/description}}
+type {{classname}} struct { {{#vars}}
+    {{^isReadOnly}}// {{name}}{{#description}} - {{{description}}}{{/description}}
+    {{name}} {{{datatype}}} `json:"{{baseName}}"`{{/isReadOnly}}
+
+{{/vars}}}
+
+// String returns a JSON representation of the model
+func (o *{{classname}}) String() string {
+    {{#vars}}
+    {{^isReadOnly}}
+    {{#vendorExtensions}}{{#x-datatypeWithDefaults}} o.{{name}} = {{{x-datatypeWithDefaults}}} {{/x-datatypeWithDefaults}}{{/vendorExtensions}}
+    {{/isReadOnly}}
+    {{/vars}}
+
+    j, _ := json.Marshal(o)
+    str, _ := strconv.Unquote(strings.Replace(strconv.Quote(string(j)), `\\u`, `\u`, -1))
+
+    return str
+}
+
+func (u *{{classname}}) MarshalJSON() ([]byte, error) {
+    type Alias {{classname}}
+
+    if {{classname}}Marshalled {
+        return []byte("{}"), nil
+    }
+    {{classname}}Marshalled = true
+
+    return json.Marshal(&struct { {{#vars}}
+        {{^isReadOnly}}{{name}} {{{datatype}}} `json:"{{baseName}}"`{{/isReadOnly}}
+        {{/vars}}
+        *Alias
+    }{
+        {{#vars}}
+
+        {{^isReadOnly}}{{#vendorExtensions}}{{#x-datatypeWithDefaults}}
+        {{name}}: {{{x-datatypeWithDefaults}}},
+        {{/x-datatypeWithDefaults}}{{/vendorExtensions}}{{/isReadOnly}}
+
+        {{/vars}}
+        Alias: (*Alias)(u),
+    })
+}
+
+{{/model}}{{/models}}
