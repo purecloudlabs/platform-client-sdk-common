@@ -203,9 +203,8 @@ function processRoot(rootDir, rootFileName, resourceDefinitions, topLevelCommand
 					exclusionList.add(resourceDefinition.name);
 			}
 			for (const command of supercommandlist) {
-				if (!topLevelCommands.includes(command)) {
+				if (!topLevelCommands.includes(command) && command !== "profiles")
 					exclusionList.add(command);
-				}
 			}
 		}
 	}

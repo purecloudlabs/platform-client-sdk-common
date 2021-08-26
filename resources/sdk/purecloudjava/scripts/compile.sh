@@ -1,5 +1,3 @@
-set -x
-
 BUILD_MODE=$1 # package/verify/deploy/deploy:deploy
 BUILD_DIR=$2
 MAVEN_SETTINGS_FILE=$3
@@ -12,12 +10,6 @@ echo "BUILD_DIR=$BUILD_DIR"
 echo "MAVEN_SETTINGS_FILE=$MAVEN_SETTINGS_FILE"
 echo "SKIP_TESTS=$SKIP_TESTS"
 echo "IS_NEW_RELEASE=$IS_NEW_RELEASE"
-
-echo $JAVA_HOME
-ls /var/build/tools/hudson.model.JDK/
-ls /var/build/tools/hudson.model.JDK/OpenJDK_11/
-ls /var/build/tools/hudson.model.JDK/OpenJDK_11/jdk-11.0.7+10/
-ls $JAVA_HOME
 
 # Verify settings
 if [ ! -z "$MAVEN_SETTINGS_FILE" ]
