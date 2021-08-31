@@ -8,7 +8,10 @@ import (
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
 )
 
-var TemplateFile string
+var (
+	TemplateFile string
+	TemplateStr  string
+)
 
 func ConvertJsonToMap(data string) map[string]interface{} {
 	var result map[string]interface{}
@@ -22,6 +25,11 @@ func ConvertJsonToMap(data string) map[string]interface{} {
 func ProcessTemplateFile(mp map[string]interface{}) string {
 	path := []string{TemplateFile}
 	tmpl := myMust(template.ParseFiles(path...))
+	return Process(tmpl, mp)
+}
+
+func ProcessTemplateStr(mp map[string]interface{}) string {
+	tmpl := myMust(template.New("tmpl").Parse(TemplateStr))
 	return Process(tmpl, mp)
 }
 

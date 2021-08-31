@@ -146,7 +146,8 @@ func init() {
 	}
 
 	if config.GetExperimentalFeature(getProfileName(os.Args), models.TransformData.String()) {
-		rootCmd.PersistentFlags().StringVar(&transform_data.TemplateFile, "transform", "", "Provide a Go template file for transforming output data")
+		rootCmd.PersistentFlags().StringVar(&transform_data.TemplateFile, "templatefile", "", "Provide a Go template file for transforming output data")
+		rootCmd.PersistentFlags().StringVar(&transform_data.TemplateStr, "templatestr", "", "Provide a Go template string for transforming output data")
 	}
 
 	rootCmd.AddCommand(versionCmd)

@@ -27,6 +27,12 @@ func Render(data string) {
 		fmt.Println(res)
 		return
 	}
+	if transform_data.TemplateStr != "" {
+		mp := transform_data.ConvertJsonToMap(data)
+		res := transform_data.ProcessTemplateStr(mp)
+		fmt.Println(res)
+		return
+	}
 	result := pretty.Pretty([]byte(data))
 	fmt.Printf("%s", result)
 }

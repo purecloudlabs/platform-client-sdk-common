@@ -19,7 +19,7 @@ func (f ExperimentalFeature) Description() string {
 	case AlternativeFormats:
 		return "Send and receive data as YAML"
 	case TransformData:
-		return "Transform output data with a Go template file"
+		return "Transform output data with a Go template"
 	default:
 		return ""
 	}
