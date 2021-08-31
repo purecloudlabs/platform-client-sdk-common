@@ -144,6 +144,10 @@ func init() {
 		rootCmd.PersistentFlags().StringVar(&data_format.OutputFormat, "outputformat", "JSON", "Data output format. Possible values: YAML, JSON")
 	}
 
+	if config.GetExperimentalFeature(getProfileName(os.Args), models.TransformData.String()) {
+		rootCmd.PersistentFlags().StringVar(&transform_data.TemplateFile, "transform", "", "Provide a Go template file for transforming output data")
+	}
+
 	rootCmd.AddCommand(versionCmd)
 	{{addCommands}}
 

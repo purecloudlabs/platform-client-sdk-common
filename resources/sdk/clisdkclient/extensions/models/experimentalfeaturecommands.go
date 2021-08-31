@@ -5,6 +5,7 @@ type ExperimentalFeature string
 const (
 	DummyCommand       ExperimentalFeature = "dummy_command"
 	AlternativeFormats ExperimentalFeature = "alternative_formats"
+	TransformData      ExperimentalFeature = "transform_data"
 )
 
 func (f ExperimentalFeature) String() string {
@@ -17,6 +18,8 @@ func (f ExperimentalFeature) Description() string {
 		return "Dummy command description..."
 	case AlternativeFormats:
 		return "Send and receive data as YAML"
+	case TransformData:
+		return "Transform output data with a Go template file"
 	default:
 		return ""
 	}
