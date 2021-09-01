@@ -1,0 +1,7 @@
+---
+interval: 2021-07-13T23:00:00.000Z/2021-07-19T23:00:00.000Z
+order: asc
+orderBy: conversationStart
+paging:
+  pageSize: 25
+  pageNumber: 1

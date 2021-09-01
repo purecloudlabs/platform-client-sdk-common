@@ -25,15 +25,15 @@ func ConvertJsonToMap(data string) map[string]interface{} {
 func ProcessTemplateFile(mp map[string]interface{}) string {
 	path := []string{TemplateFile}
 	tmpl := myMust(template.ParseFiles(path...))
-	return Process(tmpl, mp)
+	return process(tmpl, mp)
 }
 
 func ProcessTemplateStr(mp map[string]interface{}) string {
 	tmpl := myMust(template.New("tmpl").Parse(TemplateStr))
-	return Process(tmpl, mp)
+	return process(tmpl, mp)
 }
 
-func Process(t *template.Template, vars interface{}) string {
+func process(t *template.Template, vars interface{}) string {
 	var tmplBytes bytes.Buffer
 	err := t.Execute(&tmplBytes, vars)
 	if err != nil {
