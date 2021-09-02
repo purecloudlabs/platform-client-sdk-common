@@ -222,6 +222,91 @@ To disable an experimental feature:
 gc experimental disable [feature_name]
 ```
 
+## Alternative Formats
+
+To use the Alternative Formats feature, first enable the feature with:
+
+```
+gc experimental enable alternative_formats
+```
+
+Once enabled, we can pass a supported value (e.g `YAML` or `JSON`) to the `--inputformat` flag or to the `--outputformat` flag.
+
+To input `YAML` data:
+
+```
+--inputformat=yaml
+```
+To output `YAML` data:
+
+```
+--outputformat=yaml
+```
+
+**Note:** The `--inputformat` and `--outputformat` flags are not case sensitive. Writing `--inputformat=yaml` is the same as writing `--inputformat=YAML`.
+
+**Note:** If you do not pass a value to the `--inputformat` flag or to the `--outputformat` flag their value will default to `JSON`.
+
+### Input Format
+
+If you want to input a `YAML` file when making a request, simply include the `--inputformat=yaml` command and pass the file to the `--file` flag.
+
+**Example Request:**  
+
+```
+gc analytics conversations details query create --file=./query.yaml --inputformat=yaml
+```
+
+### Output Format
+
+If you want to format your response as `YAML`, simply include the `--outputformat=yaml` command.
+
+**Example Request:**  
+
+```
+gc users get f3dc94ca-acec-4ee4-a07e-ca7503ddbd62 --outputformat=yaml
+```
+
+## Transform Data
+
+To use the Transform Data feature, first enable the feature with:
+
+```
+gc experimental enable transform_data
+```
+Once enabled, we can pass either a `Go` template file to the `--templatefile` flag or a `Go` template string to the `--templatestr` flag.
+
+To input a `Go` template file:
+
+```
+--templatefile=./tmpl.gotmpl
+```
+
+To input a `Go` template string:
+
+```
+--templatestr='your_go_template_string'
+```
+
+### Template File
+
+If you want to input a `Go` template file to transform output data, simply pass the template file path to the `--templatefile` flag when making a request.
+
+**Example Request:**
+
+```
+gc users get f3dc94ca-acec-4ee4-a07e-ca7503ddbd62 --templatefile=./tmpl.gotmpl
+```
+### Template String
+
+If you want to input a `Go` template string to transform output data, simply pass your template string to the `--templatestr` flag surrounded by single quotes.
+
+**Example Request:**
+
+```
+gc users get f3dc94ca-acec-4ee4-a07e-ca7503ddbd62 --templatestr='your_go_template_string'
+```
+
 # Examples
 
 To create users you can pass in JSON via stdin or via the -f file path command.  So for example, to create the user in [gc/examples-json/create-user.json](https://github.com/MyPureCloud/platform-client-sdk-cli/blob/main/build/gc/example-json/create-user.json) you would issue the following commands:
