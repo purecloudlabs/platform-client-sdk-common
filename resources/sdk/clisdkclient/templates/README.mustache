@@ -201,7 +201,9 @@ Running any API operation command followed by '--help' will print out the follow
 
 # Experimental Features
 
-Experimental features are features which may not be fully fleshed out yet. The features may be removed or have their interface changed at any time.  
+Experimental CLI features were released in version 18.0.0 of the Genesys Cloud CLI. Experimental features allow us to release ideas around the CLI early and give customers an opportunity to give feedback on the feature before the work on them is finalised. Experimental features are tied to the CLI binary, so, when we release an experimental feature or promote an experimental feature, you will need to download the CLI binary that matches the release or promotion of that feature.
+
+**Note:** Experimental features are subject to change at any time. 
 
 
 To see the list of experimental features, run the following command:
@@ -222,6 +224,8 @@ To disable an experimental feature:
 gc experimental disable [feature_name]
 ```
 
+**Note:** By default, experimental features are turned off. To use an experimental feature you must explicitly enable the feature.
+
 ## Alternative Formats
 
 To use the Alternative Formats feature, first enable the feature with:
@@ -231,6 +235,8 @@ gc experimental enable alternative_formats
 ```
 
 Once enabled, we can pass a supported value (e.g `YAML` or `JSON`) to the `--inputformat` flag or to the `--outputformat` flag.
+
+**Note:** If you do not pass a value to the `--inputformat` flag or to the `--outputformat` flag their value will default to `JSON`.
 
 To input `YAML` data:
 
@@ -244,8 +250,6 @@ To output `YAML` data:
 ```
 
 **Note:** The `--inputformat` and `--outputformat` flags are not case sensitive. Writing `--inputformat=yaml` is the same as writing `--inputformat=YAML`.
-
-**Note:** If you do not pass a value to the `--inputformat` flag or to the `--outputformat` flag their value will default to `JSON`.
 
 ### Input Format
 
@@ -312,7 +316,7 @@ gc users get f3dc94ca-acec-4ee4-a07e-ca7503ddbd62 --templatestr='your_go_templat
 
 An example `Go` template file for transforming output data to `CSV` format.
 
-**Note:** To write a Go template, you must know the structure of the data in advance.
+**Note:** To write a `Go` template, you must know the structure of the data in advance.
 
 `tmpl.gotmpl`
 
@@ -328,7 +332,9 @@ id: {{.id}},name: {{.name}},division:
     {{- end -}}
     email: {{.email}},
     {{- range .primaryContactInfo -}}
-        address: {{.address}},mediaType: {{.mediaType}},type: {{.type}},
+        {{- range $key, $val := . -}}
+            {{$key}}: {{$val}},
+        {{- end -}}
     {{- end -}}
     addresses:
     {{- range .addresses -}}
@@ -337,12 +343,12 @@ id: {{.id}},name: {{.name}},division:
     state: {{.state}}, username: {{.username}}, version: {{.version}},acdAutoAnswer: {{.acdAutoAnswer}}, selfUri: {{.selfUri}},
 {{- end -}}
 ```
-To get a list of all users in `CSV` format:
+
+To get a list of all users and transform the output to `CSV` format by using a `Go` template:
 
 ```
 gc users list -a --templatefile=./tmpl.gotmpl
 ```
-
 
 # Examples
 
