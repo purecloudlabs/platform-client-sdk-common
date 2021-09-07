@@ -14,22 +14,26 @@ import (
 type Configuration interface {
 	ProfileName() string
 	Environment() string
+	RedirectURI() string
 	ClientID() string
 	ClientSecret() string
 	OAuthTokenData() string
+	CodeAuthorizationCode() string
 	LogFilePath() string
 	LoggingEnabled() bool
 	fmt.Stringer
 }
 
 type configuration struct {
-	profileName    string
-	environment    string
-	clientID       string
-	clientSecret   string
-	oAuthTokenData string
-	logFilePath    string
-	loggingEnabled bool
+	profileName           string
+	environment           string
+	redirectURI           string
+	clientID              string
+	clientSecret          string
+	oAuthTokenData        string
+	codeAuthorizationCode string
+	logFilePath           string
+	loggingEnabled        bool
 }
 
 var (
@@ -79,6 +83,14 @@ func (c *configuration) OAuthTokenData() string {
 	return viper.GetString(fmt.Sprintf("%s.oauth_token_data", c.profileName))
 }
 
+func (c *configuration) RedirectURI() string {
+	return viper.GetString(fmt.Sprintf("%s.redirect_uri", c.profileName))
+}
+
+func (c *configuration) CodeAuthorizationCode() string {
+	return viper.GetString(fmt.Sprintf("%s.code_authorization_code", c.profileName))
+}
+
 //Environment is the Genesys Cloud Environment the CLI will talk to
 func (c *configuration) Environment() string {
 	if Environment != "" {
@@ -112,7 +124,7 @@ func (c *configuration) LoggingEnabled() bool {
 }
 
 func (c *configuration) String() string {
-	return fmt.Sprintf(`{"profileName": "%s", "environment": "%s", "logFilePath": "%s", "loggingEnabled": "%v", "clientName": "%s", "clientSecret": "%s"}`, c.ProfileName(), c.Environment(), c.LogFilePath(), c.LoggingEnabled(), c.ClientID(), c.ClientSecret())
+	return fmt.Sprintf(`{"profileName": "%s", "environment": "%s", "logFilePath": "%s", "loggingEnabled": "%v", "redirectURI": "%v", "clientName": "%s", "clientSecret": "%s"}`, c.ProfileName(), c.Environment(), c.LogFilePath(), c.LoggingEnabled(), c.RedirectURI(), c.ClientID(), c.ClientSecret())
 }
 
 func applyEnvironmentVariableOverrides() {
@@ -159,12 +171,14 @@ func GetConfig(profileName string) (Configuration, error) {
 	}
 
 	return &configuration{profileName: profileName,
-		clientID:       viper.GetString(fmt.Sprintf("%s.client_credentials", profileName)),
-		clientSecret:   viper.GetString(fmt.Sprintf("%s.client_secret", profileName)),
-		environment:    viper.GetString(fmt.Sprintf("%s.environment", profileName)),
-		oAuthTokenData: viper.GetString(fmt.Sprintf("%s.oauth_token_data", profileName)),
-		logFilePath:    viper.GetString(fmt.Sprintf("%s.log_file_path", profileName)),
-		loggingEnabled: viper.GetBool(fmt.Sprintf("%s.logging_enabled", profileName)),
+		clientID:              viper.GetString(fmt.Sprintf("%s.client_credentials", profileName)),
+		clientSecret:          viper.GetString(fmt.Sprintf("%s.client_secret", profileName)),
+		environment:           viper.GetString(fmt.Sprintf("%s.environment", profileName)),
+		oAuthTokenData:        viper.GetString(fmt.Sprintf("%s.oauth_token_data", profileName)),
+		redirectURI:           viper.GetString(fmt.Sprintf("%s.redirect_uri", profileName)),
+		codeAuthorizationCode: viper.GetString(fmt.Sprintf("%s.code_authorization_code", profileName)),
+		logFilePath:           viper.GetString(fmt.Sprintf("%s.log_file_path", profileName)),
+		loggingEnabled:        viper.GetBool(fmt.Sprintf("%s.logging_enabled", profileName)),
 	}, nil
 }
 
@@ -187,13 +201,15 @@ func ListConfigs() ([]configuration, error) {
 	configurations := make([]configuration, 0)
 	for profileName, _ := range settings {
 		configurations = append(configurations, configuration{
-			profileName:    profileName,
-			clientID:       viper.GetString(fmt.Sprintf("%s.client_credentials", profileName)),
-			clientSecret:   viper.GetString(fmt.Sprintf("%s.client_secret", profileName)),
-			environment:    viper.GetString(fmt.Sprintf("%s.environment", profileName)),
-			oAuthTokenData: viper.GetString(fmt.Sprintf("%s.oauth_token_data", profileName)),
-			logFilePath:    viper.GetString(fmt.Sprintf("%s.log_file_path", profileName)),
-			loggingEnabled: viper.GetBool(fmt.Sprintf("%s.logging_enabled", profileName)),
+			profileName:           profileName,
+			clientID:              viper.GetString(fmt.Sprintf("%s.client_credentials", profileName)),
+			clientSecret:          viper.GetString(fmt.Sprintf("%s.client_secret", profileName)),
+			environment:           viper.GetString(fmt.Sprintf("%s.environment", profileName)),
+			oAuthTokenData:        viper.GetString(fmt.Sprintf("%s.oauth_token_data", profileName)),
+			redirectURI:           viper.GetString(fmt.Sprintf("%s.redirect_uri", profileName)),
+			codeAuthorizationCode: viper.GetString(fmt.Sprintf("%s.code_authorization_code", profileName)),
+			logFilePath:           viper.GetString(fmt.Sprintf("%s.log_file_path", profileName)),
+			loggingEnabled:        viper.GetBool(fmt.Sprintf("%s.logging_enabled", profileName)),
 		})
 	}
 
@@ -224,6 +240,32 @@ func SetLoggingEnabled(c Configuration, loggingEnabled bool) error {
 	}, &loggingEnabled)
 }
 
+func SetRedirectURI(profileName string, url string) error {
+	viper.Set(fmt.Sprintf("%s.redirect_uri", profileName), url)
+	return viper.WriteConfig()
+}
+
+func GetRedirectURI(profileName string) string {
+	err := viper.ReadInConfig()
+	if err != nil {
+		return ""
+	}
+	return viper.GetString(fmt.Sprintf("%s.redirect_uri", profileName))
+}
+
+func SetCodeAuthorizationCode(profileName string, code string) error {
+	viper.Set(fmt.Sprintf("%s.code_authorization_code", profileName), code)
+	return viper.WriteConfig()
+}
+
+func GetCodeAuthorizationCode(profileName string) string {
+	err := viper.ReadInConfig()
+	if err != nil {
+		return ""
+	}
+	return viper.GetString(fmt.Sprintf("%s.code_authorization_code", profileName))
+}
+
 func SetExperimentalFeature(profileName string, featureName string, enabled bool) error {
 	viper.Set(fmt.Sprintf("%s.%s_enabled", profileName, featureName), enabled)
 	return viper.WriteConfig()
@@ -252,6 +294,9 @@ func updateConfig(c configuration, loggingEnabled *bool) error {
 	if c.environment != "" {
 		viper.Set(fmt.Sprintf("%s.environment", c.profileName), c.environment)
 	}
+	if c.redirectURI != "" {
+		viper.Set(fmt.Sprintf("%s.redirect_uri", c.profileName), c.redirectURI)
+	}
 	if c.oAuthTokenData != "" {
 		viper.Set(fmt.Sprintf("%s.oauth_token_data", c.profileName), c.oAuthTokenData)
 	}
@@ -273,6 +318,7 @@ func writeConfig(c Configuration, data *models.OAuthTokenData, logFilePath strin
 	viper.Set(fmt.Sprintf("%s.client_credentials", c.ProfileName()), c.ClientID())
 	viper.Set(fmt.Sprintf("%s.client_secret", c.ProfileName()), c.ClientSecret())
 	viper.Set(fmt.Sprintf("%s.environment", c.ProfileName()), c.Environment())
+	viper.Set(fmt.Sprintf("%s.redirect_uri", c.ProfileName()), c.RedirectURI())
 	if data != nil {
 		viper.Set(fmt.Sprintf("%s.oauth_token_data", c.ProfileName()), data.String())
 	}

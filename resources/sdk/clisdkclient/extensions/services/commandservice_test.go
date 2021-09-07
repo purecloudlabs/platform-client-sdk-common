@@ -257,6 +257,14 @@ func mockGetConfig(profileName string) (config.Configuration, error) {
 		return false
 	}
 
+	mockConfig.RedirectURIFunc = func() string {
+		return ""
+	}
+
+	mockConfig.CodeAuthorizationCodeFunc = func() string {
+		return ""
+	}
+
 	mockConfig.ClientIDFunc = func() string {
 		return utils.GenerateGuid()
 	}
