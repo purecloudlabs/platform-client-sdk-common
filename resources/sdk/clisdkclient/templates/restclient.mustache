@@ -2,23 +2,27 @@ package restclient
 
 import (
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
-	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
-	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/retry"
-	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
-	"net/http"
-	"time"
+    "github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
+    "github.com/mypurecloud/platform-client-sdk-cli/build/gc/retry"
+    "github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
+    "net/http"
+    "os/exec"
+    "runtime"
+    "sync"
+    "time"
+    "log"
 
-	"bytes"
-	"encoding/base64"
-	"encoding/json"
-	"fmt"
-	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
-	"io/ioutil"
-	"net/url"
-	"strings"
+    "bytes"
+    "encoding/base64"
+    "encoding/json"
+    "fmt"
+    "github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
+    "io/ioutil"
+    "net/url"
+    "strings"
 
-	"github.com/hashicorp/go-retryablehttp"
-	"github.com/tidwall/pretty"
+    "github.com/hashicorp/go-retryablehttp"
+    "github.com/tidwall/pretty"
 )
 
 var (
@@ -27,6 +31,7 @@ var (
 	RestClient         *RESTClient
 	UpdateOAuthToken = config.UpdateOAuthToken
 	OverridesApplied = config.OverridesApplied
+	codeAuthCode       string
 )
 
 type RESTClient struct {
@@ -176,6 +181,20 @@ func ReAuthenticate(c config.Configuration) (models.OAuthTokenData, error) {
 }
 
 func authorize(c config.Configuration) (models.OAuthTokenData, error) {
+	if c.RedirectURI() != "" {
+        var waitGroup sync.WaitGroup
+        waitGroup.Add(2)
+
+        go startCodeAuthServer(&waitGroup, c.RedirectURI())
+        go openBrowserForLogin(&waitGroup, c.ClientID(), c.RedirectURI(), c.Environment())
+        waitGroup.Wait()
+
+        err := config.SetCodeAuthorizationCode(c.ProfileName(), codeAuthCode)
+        if err != nil {
+            return models.OAuthTokenData{}, err
+        }
+    }
+
 	loginURI, _ := url.Parse(fmt.Sprintf("https://login.%s/oauth/token", c.Environment()))
 
 	request := &retryablehttp.Request{
@@ -199,7 +218,14 @@ func authorize(c config.Configuration) (models.OAuthTokenData, error) {
 
 	//Setting up the form data
 	form := url.Values{}
-	form["grant_type"] = []string{"client_credentials"}
+	if c.RedirectURI() != "" {
+		form["grant_type"] = []string{"authorization_code"}
+		form["code"] = []string{codeAuthCode}
+		form["redirect_uri"] = []string{c.RedirectURI()}
+	} else {
+		form["grant_type"] = []string{"client_credentials"}
+	}
+
 	request.Body = ioutil.NopCloser(strings.NewReader(form.Encode()))
 
 	//Executing the request
@@ -241,6 +267,51 @@ func authorize(c config.Configuration) (models.OAuthTokenData, error) {
 	}
 
 	return *oAuthTokenResponse, nil
+}
+
+func startCodeAuthServer(wg *sync.WaitGroup, uri string) {
+	address := strings.Replace(uri, "http://localhost", "", -1)
+	port := address[0:5]
+	path := strings.Replace(address, port, "", -1)
+	authCode := ""
+
+	getAuthCode := func(w http.ResponseWriter, r *http.Request) {
+		authCode = r.URL.Query().Get("code")
+		if authCode != "" {
+			codeAuthCode = authCode
+			w.Write([]byte("Success! You may now return to the CLI."))
+			wg.Done()
+			return
+		}
+	}
+
+	http.HandleFunc(path, getAuthCode)
+	log.Fatal(http.ListenAndServe(port, nil))
+}
+
+func openBrowserForLogin(wg *sync.WaitGroup, clientID string, redirectURI string, environment string) {
+	params := url.Values{}
+	params.Add("client_id", clientID)
+	params.Add("response_type", "code")
+	params.Add("redirect_uri", redirectURI)
+	loginURL := fmt.Sprintf("https://login.%v/oauth/authorize?%v", environment, params.Encode())
+
+	var err error
+	switch runtime.GOOS {
+	case "linux":
+		err = exec.Command("xdg-open", loginURL).Start()
+	case "windows":
+		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", loginURL).Start()
+	case "darwin":
+		err = exec.Command("open", loginURL).Start()
+	default:
+		err = fmt.Errorf("unsupported platform")
+	}
+	if err != nil {
+	    logger.Fatal(err)
+	}
+
+	wg.Done()
 }
 
 //NewRESTClient is a constructor function to build an APIClient

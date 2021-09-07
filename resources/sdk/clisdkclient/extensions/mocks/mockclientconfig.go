@@ -7,13 +7,15 @@ import (
 )
 
 type MockClientConfig struct {
-	ProfileNameFunc    func() string
-	EnvironmentFunc    func() string
-	ClientIDFunc       func() string
-	ClientSecretFunc   func() string
-	OAuthTokenDataFunc func() string
-	LogFilePathFunc    func() string
-	LoggingEnabledFunc func() bool
+	ProfileNameFunc           func() string
+	EnvironmentFunc           func() string
+	ClientIDFunc              func() string
+	ClientSecretFunc          func() string
+	OAuthTokenDataFunc        func() string
+	RedirectURIFunc           func() string
+	CodeAuthorizationCodeFunc func() string
+	LogFilePathFunc           func() string
+	LoggingEnabledFunc        func() bool
 }
 
 var UpdatedAccessToken string
@@ -38,6 +40,14 @@ func (m *MockClientConfig) OAuthTokenData() string {
 	return m.OAuthTokenDataFunc()
 }
 
+func (m *MockClientConfig) RedirectURI() string {
+	return m.RedirectURIFunc()
+}
+
+func (m *MockClientConfig) CodeAuthorizationCode() string {
+	return m.CodeAuthorizationCodeFunc()
+}
+
 func (m *MockClientConfig) LogFilePath() string {
 	return m.LogFilePathFunc()
 }
@@ -47,7 +57,7 @@ func (m *MockClientConfig) LoggingEnabled() bool {
 }
 
 func (m *MockClientConfig) String() string {
-	return fmt.Sprintf("\n-------------\nProfile Name: %s\nEnvironment: %s\nLogging Enabled: %v\nLog File Path: %s\nClient ID: %s\nClient Secret: %s\n--------------\n", m.ProfileName(), m.Environment(), m.LoggingEnabled(), m.LogFilePath(), m.ClientID(), m.ClientSecret())
+	return fmt.Sprintf("\n-------------\nProfile Name: %s\nEnvironment: %s\nLogging Enabled: %v\nLog File Path: %s\nRedirect URI: %s\nCode Authorization Code: %s\nClient ID: %s\nClient Secret: %s\n--------------\n", m.ProfileName(), m.Environment(), m.LoggingEnabled(), m.LogFilePath(), m.RedirectURI(), m.CodeAuthorizationCode(), m.ClientID(), m.ClientSecret())
 }
 
 func UpdateOAuthToken(_ config.Configuration, oauthTokenData *models.OAuthTokenData) error {
