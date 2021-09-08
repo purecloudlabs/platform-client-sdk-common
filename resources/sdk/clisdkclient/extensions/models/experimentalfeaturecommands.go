@@ -17,7 +17,7 @@ func (f ExperimentalFeature) Description() string {
 	case DummyCommand:
 		return "Dummy command description..."
 	case AlternativeFormats:
-		return "Send and receive data as YAML"
+		return "Send and receive data as alternative format to JSON"
 	case TransformData:
 		return "Transform output data with a Go template"
 	default:
