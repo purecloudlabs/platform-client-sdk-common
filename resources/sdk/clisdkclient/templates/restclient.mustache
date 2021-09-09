@@ -167,12 +167,12 @@ func Authorize(c config.Configuration) (models.OAuthTokenData, error) {
 		logger.Info("Authorizing because token has expired")
 	}
 
-	return authorize(c)
+	return authorize(c, false)
 }
 
 //ReAuthenticate re-authenticates the user using the client credentials in their profile.
 func ReAuthenticate(c config.Configuration) (models.OAuthTokenData, error) {
-	oAuthToken, err := authorize(c)
+	oAuthToken, err := authorize(c, true)
 	if err == nil {
 		RestClient.token = oAuthToken.AccessToken
 	}
@@ -180,16 +180,11 @@ func ReAuthenticate(c config.Configuration) (models.OAuthTokenData, error) {
 	return oAuthToken, err
 }
 
-func authorize(c config.Configuration) (models.OAuthTokenData, error) {
-	if c.RedirectURI() != "" {
-        var waitGroup sync.WaitGroup
-        waitGroup.Add(2)
+func authorize(c config.Configuration, isRefresh bool) (models.OAuthTokenData, error) {
+    usingAuthorizationCode := !isRefresh && c.RedirectURI() != ""
 
-        go startCodeAuthServer(&waitGroup, c.RedirectURI())
-        go openBrowserForLogin(&waitGroup, c.ClientID(), c.RedirectURI(), c.Environment())
-        waitGroup.Wait()
-
-        err := config.SetCodeAuthorizationCode(c.ProfileName(), codeAuthCode)
+    if usingAuthorizationCode {
+        err := performAuthCodeLogin(c)
         if err != nil {
             return models.OAuthTokenData{}, err
         }
@@ -218,13 +213,18 @@ func authorize(c config.Configuration) (models.OAuthTokenData, error) {
 
 	//Setting up the form data
 	form := url.Values{}
-	if c.RedirectURI() != "" {
-		form["grant_type"] = []string{"authorization_code"}
-		form["code"] = []string{codeAuthCode}
-		form["redirect_uri"] = []string{c.RedirectURI()}
-	} else {
-		form["grant_type"] = []string{"client_credentials"}
-	}
+	if isRefresh {
+		form["grant_type"] = []string{"refresh_token"}
+		var oauthToken models.OAuthToken
+		_ = json.Unmarshal([]byte(c.OAuthTokenData()), &oauthToken)
+		form["refresh_token"] = []string{oauthToken.RefreshToken}
+    } else if usingAuthorizationCode {
+        form["grant_type"] = []string{"authorization_code"}
+        form["code"] = []string{codeAuthCode}
+        form["redirect_uri"] = []string{c.RedirectURI()}
+    } else {
+        form["grant_type"] = []string{"client_credentials"}
+    }
 
 	request.Body = ioutil.NopCloser(strings.NewReader(form.Encode()))
 
@@ -267,6 +267,21 @@ func authorize(c config.Configuration) (models.OAuthTokenData, error) {
 	}
 
 	return *oAuthTokenResponse, nil
+}
+
+func performAuthCodeLogin(c config.Configuration) error {
+	var waitGroup sync.WaitGroup
+	waitGroup.Add(2)
+
+	go startCodeAuthServer(&waitGroup, c.RedirectURI())
+	go openBrowserForLogin(&waitGroup, c.ClientID(), c.RedirectURI(), c.Environment())
+	waitGroup.Wait()
+
+	err := config.SetCodeAuthorizationCode(c.ProfileName(), codeAuthCode)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func startCodeAuthServer(wg *sync.WaitGroup, uri string) {
