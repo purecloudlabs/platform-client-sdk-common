@@ -2,27 +2,27 @@ package restclient
 
 import (
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
-    "github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
-    "github.com/mypurecloud/platform-client-sdk-cli/build/gc/retry"
-    "github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
-    "net/http"
-    "os/exec"
-    "runtime"
-    "sync"
-    "time"
-    "log"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/retry"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
+	"net/http"
+	"os/exec"
+	"runtime"
+	"sync"
+	"time"
+	"log"
 
-    "bytes"
-    "encoding/base64"
-    "encoding/json"
-    "fmt"
-    "github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
-    "io/ioutil"
-    "net/url"
-    "strings"
+	"bytes"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
+	"io/ioutil"
+	"net/url"
+	"strings"
 
-    "github.com/hashicorp/go-retryablehttp"
-    "github.com/tidwall/pretty"
+	"github.com/hashicorp/go-retryablehttp"
+	"github.com/tidwall/pretty"
 )
 
 var (
@@ -166,13 +166,16 @@ func Authorize(c config.Configuration) (models.OAuthTokenData, error) {
 		}
 		logger.Info("Authorizing because token has expired")
 	}
-
+	if c.CodeAuthorizationCode() != "" {
+		// Use refresh token
+		return authorize(c, true)
+	}
 	return authorize(c, false)
 }
 
 //ReAuthenticate re-authenticates the user using the client credentials in their profile.
 func ReAuthenticate(c config.Configuration) (models.OAuthTokenData, error) {
-	oAuthToken, err := authorize(c, true)
+	oAuthToken, err := authorize(c, false)
 	if err == nil {
 		RestClient.token = oAuthToken.AccessToken
 	}
@@ -182,13 +185,12 @@ func ReAuthenticate(c config.Configuration) (models.OAuthTokenData, error) {
 
 func authorize(c config.Configuration, isRefresh bool) (models.OAuthTokenData, error) {
     usingAuthorizationCode := !isRefresh && c.RedirectURI() != ""
-
-    if usingAuthorizationCode {
-        err := performAuthCodeLogin(c)
-        if err != nil {
-            return models.OAuthTokenData{}, err
-        }
-    }
+	if usingAuthorizationCode {
+		err := performAuthCodeLogin(c)
+		if err != nil {
+			return models.OAuthTokenData{}, err
+		}
+	}
 
 	loginURI, _ := url.Parse(fmt.Sprintf("https://login.%s/oauth/token", c.Environment()))
 
@@ -214,17 +216,17 @@ func authorize(c config.Configuration, isRefresh bool) (models.OAuthTokenData, e
 	//Setting up the form data
 	form := url.Values{}
 	if isRefresh {
-		form["grant_type"] = []string{"refresh_token"}
 		var oauthToken models.OAuthToken
 		_ = json.Unmarshal([]byte(c.OAuthTokenData()), &oauthToken)
+		form["grant_type"] = []string{"refresh_token"}
 		form["refresh_token"] = []string{oauthToken.RefreshToken}
-    } else if usingAuthorizationCode {
-        form["grant_type"] = []string{"authorization_code"}
-        form["code"] = []string{codeAuthCode}
-        form["redirect_uri"] = []string{c.RedirectURI()}
-    } else {
-        form["grant_type"] = []string{"client_credentials"}
-    }
+	} else if usingAuthorizationCode {
+		form["grant_type"] = []string{"authorization_code"}
+		form["code"] = []string{codeAuthCode}
+		form["redirect_uri"] = []string{c.RedirectURI()}
+	} else {
+		form["grant_type"] = []string{"client_credentials"}
+	}
 
 	request.Body = ioutil.NopCloser(strings.NewReader(form.Encode()))
 

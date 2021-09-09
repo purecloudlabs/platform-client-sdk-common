@@ -70,7 +70,7 @@ func requestUserInput() config.Configuration {
 		name = "DEFAULT"
 	}
 
-	fmt.Printf("Environment [mypurecloud.com]: ")
+	fmt.Print("Environment [mypurecloud.com]: ")
 	fmt.Scanln(&environment)
 
 	if environment == "" {
@@ -78,7 +78,7 @@ func requestUserInput() config.Configuration {
 	}
 
 	for true {
-		fmt.Printf("Are you using client credentials? [Y/N]: ")
+		fmt.Print("Are you using client credentials? [Y/N]: ")
 		fmt.Scanln(&authChoice)
 		if authChoice == "" || strings.ToUpper(authChoice) == "Y" {
 			redirectURI = ""
@@ -92,7 +92,7 @@ func requestUserInput() config.Configuration {
 	}
 
 	for true {
-		fmt.Printf("Client ID: ")
+		fmt.Print("Client ID: ")
 		fmt.Scanln(&clientID)
 		if len(strings.TrimSpace(clientID)) != 0 {
 			break
@@ -100,7 +100,7 @@ func requestUserInput() config.Configuration {
 	}
 
 	for true {
-		fmt.Printf("Client Secret: ")
+		fmt.Print("Client Secret: ")
 		fmt.Scanln(&clientSecret)
 		if len(strings.TrimSpace(clientSecret)) != 0 {
 			break
