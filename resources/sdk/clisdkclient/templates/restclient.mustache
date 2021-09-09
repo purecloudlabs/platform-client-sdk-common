@@ -245,15 +245,17 @@ func authorize(c config.Configuration) (models.OAuthTokenData, error) {
 
 //NewRESTClient is a constructor function to build an APIClient
 func NewRESTClient(config config.Configuration) *RESTClient {
-	if RestClient == nil {
+	if RestClient == nil && config.AccessToken() == "" {
 		oAuthToken, err := Authorize(config)
 		if err != nil {
 			logger.Fatal(err)
 		}
 
 		RestClient = &RESTClient{environment: config.Environment(), token: oAuthToken.AccessToken}
+		return RestClient
 	}
 
+	RestClient = &RESTClient{environment: config.Environment(), token: config.AccessToken()}
 	return RestClient
 }
 
