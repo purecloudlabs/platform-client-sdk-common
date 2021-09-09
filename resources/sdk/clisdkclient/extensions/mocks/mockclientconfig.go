@@ -53,7 +53,7 @@ func (m *MockClientConfig) LoggingEnabled() bool {
 }
 
 func (m *MockClientConfig) String() string {
-	return fmt.Sprintf("\n-------------\nProfile Name: %s\nEnvironment: %s\nLogging Enabled: %v\nLog File Path: %s\nClient ID: %s\nClient Secret: %s\nAccess Token: %s\n--------------\n", m.ProfileName(), m.Environment(), m.LoggingEnabled(), m.LogFilePath(), m.ClientID(), m.ClientSecret(), c.AccessToken())
+	return fmt.Sprintf("\n-------------\nProfile Name: %s\nEnvironment: %s\nLogging Enabled: %v\nLog File Path: %s\nClient ID: %s\nClient Secret: %s\nAccess Token: %s\n--------------\n", m.ProfileName(), m.Environment(), m.LoggingEnabled(), m.LogFilePath(), m.ClientID(), m.ClientSecret(), m.AccessToken())
 }
 
 func UpdateOAuthToken(_ config.Configuration, oauthTokenData *models.OAuthTokenData) error {
