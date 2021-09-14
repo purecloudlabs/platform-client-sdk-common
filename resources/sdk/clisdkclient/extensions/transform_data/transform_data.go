@@ -33,12 +33,12 @@ func ConvertJsonToMap(data string) interface{} {
 
 func ProcessTemplateFile(mp interface{}) string {
 	path := []string{TemplateFile}
-	tmpl := myMust(template.ParseFiles(path...))
+	tmpl := handleParse(template.ParseFiles(path...))
 	return process(tmpl, mp)
 }
 
 func ProcessTemplateStr(mp interface{}) string {
-	tmpl := myMust(template.New("tmpl").Parse(TemplateStr))
+	tmpl := handleParse(template.New("tmpl").Parse(TemplateStr))
 	return process(tmpl, mp)
 }
 
@@ -51,9 +51,11 @@ func process(t *template.Template, vars interface{}) string {
 	return tmplBytes.String()
 }
 
-// myMust() provides the same functionality as https://cs.opensource.google/go/go/+/refs/tags/go1.17:src/text/template/helper.go;l=23;drc=4f1b0a44cb46f3df28f5ef82e5769ebeac1bc493
-// but does not "panic" and print the stack trace, instead it logs and error message and exits the application if the template syntax is not valid
-func myMust(t *template.Template, err error) *template.Template {
+// handleParse() provides similar functionality to Must() from the text/template package
+// https://cs.opensource.google/go/go/+/refs/tags/go1.17:src/text/template/helper.go;l=23;drc=4f1b0a44cb46f3df28f5ef82e5769ebeac1bc493
+// but does not "panic" and print the stack trace if there is an error, instead it prints an error message and exits the application if the template syntax is not valid
+// otherwise, it returns the template
+func handleParse(t *template.Template, err error) *template.Template {
 	if err != nil {
 		logger.Fatalf("Error invalid syntax in %v\n", err)
 	}
