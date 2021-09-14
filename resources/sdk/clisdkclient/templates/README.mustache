@@ -199,9 +199,11 @@ Running any API operation command followed by '--help' will print out the follow
 * Permissions (where applicable)
 * Documentation. e.g. https://developer.genesys.cloud/api/rest/v2/users/#post-api-v2-users
 
-# Experimental features
+# Experimental Features
 
-Experimental features are features which may not be fully fleshed out yet. The features may be removed or have their interface changed at any time.  
+Experimental CLI features were released in version 18.0.0 of the Genesys Cloud CLI. Experimental features allow us to release ideas around the CLI early and give customers an opportunity to give feedback on the features before the work on them is finalized. Experimental features are tied to the CLI binary, so when we release an experimental feature or promote an experimental feature, you will need to download the CLI binary that matches the release or promotion of that feature.
+
+**Note:** Experimental CLI features are subject to breaking and non-breaking changes at any time.
 
 
 To see the list of experimental features, run the following command:
@@ -221,6 +223,137 @@ To disable an experimental feature:
 ```
 gc experimental disable [feature_name]
 ```
+
+**Note:** By default, experimental features are turned off. To use an experimental feature you must explicitly enable the feature.
+
+## Alternative Formats
+
+To use the Alternative Formats feature, first enable the feature with:
+
+```
+gc experimental enable alternative_formats
+```
+
+Once enabled, we can pass a supported value (e.g `YAML` or `JSON`) to the `--inputformat` flag or to the `--outputformat` flag.
+
+**Note:** If you do not pass a value to the `--inputformat` flag or to the `--outputformat` flag their value will default to `JSON`.
+
+To input `YAML` data:
+
+```
+--inputformat=yaml
+```
+To output `YAML` data:
+
+```
+--outputformat=yaml
+```
+
+**Note:** The `--inputformat` and `--outputformat` flags are not case sensitive. Writing `--inputformat=yaml` is the same as writing `--inputformat=YAML`.
+
+### Input Format
+
+If you want to input a `YAML` file when making a request, simply include the `--inputformat=yaml` command and pass the file path to the `--file` flag.
+
+**Example Request:**  
+
+```
+gc analytics conversations details query create --file=./query.yaml --inputformat=yaml
+```
+
+### Output Format
+
+If you want to format your response as `YAML`, simply include the `--outputformat=yaml` command.
+
+**Example Request:**  
+
+```
+gc users get f3dc94ca-acec-4ee4-a07e-ca7503ddbd62 --outputformat=yaml
+```
+
+## Transform Data
+
+**Note:** The Transform Data feature uses `Go` templates for transforming output data. Checkout Go's template package [text/template](https://pkg.go.dev/text/template) for more info.
+
+To use the Transform Data feature, first enable the feature with:
+
+```
+gc experimental enable transform_data
+```
+Once enabled, we can pass either a `Go` template file to the `--transform` flag or a `Go` template string to the `--transformstr` flag.
+
+To input a `Go` template file:
+
+```
+--transform=./tmpl.gotmpl
+```
+
+To input a `Go` template string:
+
+```
+--transformstr='your_go_template_string'
+```
+
+### Template File
+
+If you want to input a `Go` template file to transform output data, simply pass the template file path to the `--transform` flag when making a request.
+
+**Example Request:**
+
+```
+gc users get f3dc94ca-acec-4ee4-a07e-ca7503ddbd62 --transform=./tmpl.gotmpl
+```
+### Template String
+
+If you want to input a `Go` template string to transform output data, simply pass your template string to the `--transformstr` flag surrounded by single quotes.
+
+**Example Request:**
+
+```
+gc users get f3dc94ca-acec-4ee4-a07e-ca7503ddbd62 --transformstr='your_go_template_string'
+```
+### Transforming Output Data To CSV Format
+
+An example `Go` template file for transforming output data to `CSV` format.
+
+**Note:** To write a `Go` template, you must know the structure of the data in advance.
+
+`tmpl.gotmpl`
+
+```go
+{{- range . -}}
+id: {{.id}},name: {{.name}},division: 
+    {{- range $key, $val := .division -}}
+        {{$key}}: {{$val}},
+    {{- end -}}
+    chat:
+    {{- range $key, $val := .chat -}}
+        {{$key}}: {{$val}},
+    {{- end -}}
+    email: {{.email}},
+    {{- range .primaryContactInfo -}}
+        {{- range $key, $val := . -}}
+            {{$key}}: {{$val}},
+        {{- end -}}
+    {{- end -}}
+    addresses:
+    {{- range .addresses -}}
+        {{.}},
+    {{- end -}}
+    state: {{.state}},username: {{.username}},version: {{.version}},acdAutoAnswer: {{.acdAutoAnswer}},selfUri: {{.selfUri}},
+{{- end -}}
+```
+
+To get a list of all users and transform the output to `CSV` format by using a `Go` template, run the following command:
+
+```
+gc users list -a --transform=./tmpl.gotmpl
+```
+
+## Additional Resources
+
+1. Checkout the [Alternative Formats](https://developer.genesys.cloud/blog/2021-08-31-new-experimental-cli-feature-alternative-formats/) blog post for further reading.
+2. See Go's [template package](https://pkg.go.dev/text/template) documentation for more info on Go templates.
 
 # Examples
 
