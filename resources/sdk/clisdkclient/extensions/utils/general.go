@@ -277,20 +277,28 @@ func ConvertFile(fileName string) string {
 	return convertToJSON(string(fileContent))
 }
 
-func readDirectory(dirName string) []string {
+func readDirectory(dirName string) string {
 	files, err := ioutil.ReadDir(dirName)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Fatal(fmt.Sprintf("Unable to open directory %s.", dirName), err)
 	}
 
-	arr := []string{}
+	jsonStr := "["
 
-	for _, file := range files {
-		fileName := "./gc/users-test-data/" + file.Name()
-		arr = append(arr, ConvertFile(fileName))
+	for i, file := range files {
+		strLen := len(dirName)
+		fileName := dirName + file.Name()
+		if dirName[strLen-1] != '/' {
+			fileName = dirName + "/" + file.Name()
+		}
+		if i == len(files)-1 {
+			jsonStr += ConvertFile(fileName) + "]"
+		} else {
+			jsonStr += ConvertFile(fileName) + ",\n"
+		}
 	}
 
-	return arr
+	return jsonStr
 }
 
 // ResolveInputData is used to determine where the Put, Patch and Delete Post data should be read from
@@ -301,8 +309,13 @@ func ResolveInputData(cmd *cobra.Command) string {
 	}
 	for _, command := range cmd.Commands() {
 		fileName, _ := command.Flags().GetString("file")
+		dirName, _ := command.Flags().GetString("directory")
 		if fileName != "" {
 			return ConvertFile(fileName)
+		}
+		if dirName != "" {
+			fmt.Println(readDirectory(dirName))
+			return readDirectory(dirName)
 		}
 	}
 
