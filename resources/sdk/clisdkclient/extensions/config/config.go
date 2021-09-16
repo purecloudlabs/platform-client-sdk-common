@@ -240,30 +240,9 @@ func SetLoggingEnabled(c Configuration, loggingEnabled bool) error {
 	}, &loggingEnabled)
 }
 
-func SetRedirectURI(profileName string, url string) error {
-	viper.Set(fmt.Sprintf("%s.redirect_uri", profileName), url)
-	return viper.WriteConfig()
-}
-
-func GetRedirectURI(profileName string) string {
-	err := viper.ReadInConfig()
-	if err != nil {
-		return ""
-	}
-	return viper.GetString(fmt.Sprintf("%s.redirect_uri", profileName))
-}
-
 func SetCodeAuthorizationCode(profileName string, code string) error {
 	viper.Set(fmt.Sprintf("%s.code_authorization_code", profileName), code)
 	return viper.WriteConfig()
-}
-
-func GetCodeAuthorizationCode(profileName string) string {
-	err := viper.ReadInConfig()
-	if err != nil {
-		return ""
-	}
-	return viper.GetString(fmt.Sprintf("%s.code_authorization_code", profileName))
 }
 
 func SetExperimentalFeature(profileName string, featureName string, enabled bool) error {

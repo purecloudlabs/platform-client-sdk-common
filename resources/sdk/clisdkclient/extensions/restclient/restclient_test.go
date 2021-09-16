@@ -3,6 +3,7 @@ package restclient
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -32,8 +33,7 @@ type apiClientTest struct {
 
 func TestAuthorize(t *testing.T) {
 	UpdateOAuthToken = mocks.UpdateOAuthToken
-
-	mockConfig := buildMockConfig("DEFAULT", "mypurecloud.com", "", utils.GenerateGuid(), utils.GenerateGuid(), "")
+	mockConfig := buildMockConfig("DEFAULT", "mypurecloud.com", "", "", utils.GenerateGuid(), utils.GenerateGuid(), "")
 	accessToken := "aJdvugb8k1kwnOovm2qX6LXTctJksYvdzcoXPrRDi-nL1phQhcKRN-bjcflq7CUDOmUCQv5OWuBSkPQr0peWhw"
 	setRestClientDoMockForAuthorize(t, *mockConfig, accessToken)
 
@@ -45,8 +45,8 @@ func TestAuthorize(t *testing.T) {
 		t.Errorf("OAuth Access Token incorrect, got: %s, want: %s.", oauthData.AccessToken, accessToken)
 	}
 
-	// Check that the same token is returned when the the expiry time stamp is in the future
-	mockConfig = buildMockConfig(mockConfig.ProfileName(), mockConfig.Environment(), mockConfig.RedirectURI(), mockConfig.ClientID(), mockConfig.ClientSecret(), oauthData.String())
+	// Check that the same token is returned when the expiry time stamp is in the future
+	mockConfig = buildMockConfig(mockConfig.ProfileName(), mockConfig.Environment(), mockConfig.RedirectURI(), mockConfig.CodeAuthorizationCode(), mockConfig.ClientID(), mockConfig.ClientSecret(), oauthData.String())
 	oauthData, err = Authorize(mockConfig)
 	if err != nil {
 		t.Fatalf("err should be nil, got: %s", err)
@@ -55,10 +55,9 @@ func TestAuthorize(t *testing.T) {
 		t.Errorf("OAuth Access Token incorrect, got: %s, want: %s.", oauthData.AccessToken, accessToken)
 	}
 
-	// Check that a new token is retrieved when the the expiry time stamp is in the past
+	// Check that a new token is retrieved when the expiry time stamp is in the past
 	oauthData.OAuthTokenExpiry = time.Now().AddDate(0, 0, -1).Format(time.RFC3339)
-	accessToken = "aJdvugb8k1kwnOovm2qX6LXTctJksYvdzcoXPrRDi-nL1phQhcKRN-bjcflq7CUDOmUCQv5OWuBSkPQr0peWhw"
-	mockConfig = buildMockConfig(mockConfig.ProfileName(), mockConfig.Environment(), mockConfig.RedirectURI(), mockConfig.ClientID(), mockConfig.ClientSecret(), oauthData.String())
+	mockConfig = buildMockConfig(mockConfig.ProfileName(), mockConfig.Environment(), mockConfig.RedirectURI(), mockConfig.CodeAuthorizationCode(), mockConfig.ClientID(), mockConfig.ClientSecret(), oauthData.String())
 	oauthData, err = Authorize(mockConfig)
 	if err != nil {
 		t.Fatalf("err should be nil, got: %s", err)
@@ -66,6 +65,67 @@ func TestAuthorize(t *testing.T) {
 	if oauthData.AccessToken != accessToken {
 		t.Errorf("OAuth Access Token incorrect, got: %s, want: %s.", oauthData.AccessToken, accessToken)
 	}
+}
+
+func TestAuthorizeWithCodeGrant(t *testing.T) {
+	UpdateOAuthToken = mocks.UpdateOAuthToken
+	authCode := "nnxy4893ync839nru4893nr849rn489432cn"
+	mockConfig := buildMockConfig("DEFAULT", "mypurecloud.com", "", "", utils.GenerateGuid(), utils.GenerateGuid(), "")
+	accessToken := "aJdvugb8k1kwnOovm2qX6LXTctJksYvdzcoXPrRDi-nL1phQhcKRN-bjcflq7CUDOmUCQv5OWuBSkPQr0peWhw"
+	setRestClientDoMockForAuthorize(t, *mockConfig, accessToken)
+	oauthData, err := Authorize(mockConfig)
+
+	// Check that the refresh token is used to retrieve a new token when the expiry time stamp is in the past
+	// & the CodeAuthorizationCode field is not empty
+	oauthData.OAuthTokenExpiry = time.Now().AddDate(0, 0, -1).Format(time.RFC3339)
+	oauthData.RefreshToken = "qHT1gLAcgrhJu8vlmRt1gAigSoqqHT1gLAcggrhJu8vlmRt1gAigSoqqHTgrhJugtZX_SLC8W"
+	mockConfig = buildMockConfig(mockConfig.ProfileName(), mockConfig.Environment(), mockConfig.RedirectURI(), authCode, mockConfig.ClientID(), mockConfig.ClientSecret(), oauthData.String())
+	oauthData, err = Authorize(mockConfig)
+
+	if err != nil {
+		t.Fatalf("err should be nil, got: %s", err)
+	}
+	if authMethod != Refresh {
+		t.Errorf("Authorization method should be: %v, got: %v.", Refresh, authMethod)
+	}
+	if oauthData.AccessToken != accessToken {
+		t.Errorf("OAuth Access Token incorrect, got: %s, want: %s.", oauthData.AccessToken, accessToken)
+	}
+
+	// Check that the Auth Code Grant method is used to retrieve a new token when redirectURI is not empty and codeAuthCode is empty
+	oauthData.OAuthTokenExpiry = time.Now().AddDate(0, 0, -1).Format(time.RFC3339)
+	oauthData.RefreshToken = "qHT1gLAcgrhJu8vlmRt1gAigSoqqHT1gLAcggrhJu8vlmRt1gAigSoqqHTgrhJugtZX_SLC8W"
+	redirectURI := "http://localhost:8000/cli-redirect"
+	mockConfig = buildMockConfig(mockConfig.ProfileName(), mockConfig.Environment(), redirectURI, "", mockConfig.ClientID(), mockConfig.ClientSecret(), oauthData.String())
+
+	// change the functionality of internal functions
+	setCodeAuthCodeInConfig = func(c config.Configuration) {}
+	openBrowserForLogin = func(c config.Configuration) {}
+	startLocalServer = func(uri string, authChannel chan string, responseChannel chan string) {
+		// mimic channel behaviour
+		authChannel <- authCode
+		_ = <-responseChannel
+		responseChannel <- "Done"
+	}
+
+	oauthData, err = Authorize(mockConfig)
+
+	if err != nil {
+		t.Fatalf("err should be nil, got: %s", err)
+	}
+	if authMethod != AuthorizationCodeGrant {
+		t.Errorf("Authorization method should be: %v, got: %v.", AuthorizationCodeGrant, authMethod)
+	}
+	if oauthData.AccessToken != accessToken {
+		t.Errorf("OAuth Access Token incorrect, got: %s, want: %s.", oauthData.AccessToken, accessToken)
+	}
+
+	// reset the functions
+	defer func() {
+		openBrowserForLogin = openBrowserForLoginFunc
+		startLocalServer = startLocalServerFunc
+		setCodeAuthCodeInConfig = setCodeAuthCodeInConfigFunc
+	}()
 }
 
 func TestLowLevelRestClient(t *testing.T) {
@@ -138,7 +198,7 @@ func TestHighLevelRestClient(t *testing.T) {
 	}
 }
 
-func buildMockConfig(profileName string, environment string, redirectURI string, clientID string, clientSecret string, oauthTokenData string) *mocks.MockClientConfig {
+func buildMockConfig(profileName string, environment string, redirectURI string, codeAuthCode string, clientID string, clientSecret string, oauthTokenData string) *mocks.MockClientConfig {
 	mockConfig := &mocks.MockClientConfig{}
 
 	mockConfig.ProfileNameFunc = func() string {
@@ -158,7 +218,7 @@ func buildMockConfig(profileName string, environment string, redirectURI string,
 	}
 
 	mockConfig.CodeAuthorizationCodeFunc = func() string {
-		return ""
+		return codeAuthCode
 	}
 
 	mockConfig.LoggingEnabledFunc = func() bool {

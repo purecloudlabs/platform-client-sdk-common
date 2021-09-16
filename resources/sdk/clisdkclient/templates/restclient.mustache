@@ -5,12 +5,11 @@ import (
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/retry"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
+	"log"
 	"net/http"
 	"os/exec"
 	"runtime"
-	"sync"
 	"time"
-	"log"
 
 	"bytes"
 	"encoding/base64"
@@ -26,18 +25,37 @@ import (
 )
 
 var (
-	Client             retryablehttp.Client
-	ClientDo         = Client.Do
-	RestClient         *RESTClient
-	UpdateOAuthToken = config.UpdateOAuthToken
-	OverridesApplied = config.OverridesApplied
-	codeAuthCode       string
+	Client                  retryablehttp.Client
+	ClientDo                = Client.Do
+	RestClient              *RESTClient
+	UpdateOAuthToken        = config.UpdateOAuthToken
+	OverridesApplied        = config.OverridesApplied
+	codeAuthCode            string
+	responseStatus          = ""
+	authMethod              = ClientCredentials
+	openBrowserForLogin     = openBrowserForLoginFunc
+	startLocalServer        = startLocalServerFunc
+	setCodeAuthCodeInConfig = setCodeAuthCodeInConfigFunc
 )
 
 type RESTClient struct {
 	environment string
 	token       string
 }
+
+type httpErrorModel struct {
+	Error            string `json:"error"`
+	Description      string `json:"description"`
+	ErrorDescription string `json:"error_description"`
+}
+
+type AuthorizationMethod string
+
+const (
+	Refresh                AuthorizationMethod = "Refresh"
+	AuthorizationCodeGrant AuthorizationMethod = "AuthorizationCodeGrant"
+	ClientCredentials      AuthorizationMethod = "ClientCredentials"
+)
 
 //Get executes an HTTP Get
 func (r *RESTClient) Get(uri string) (string, error) {
@@ -166,16 +184,21 @@ func Authorize(c config.Configuration) (models.OAuthTokenData, error) {
 		}
 		logger.Info("Authorizing because token has expired")
 	}
+
 	if c.CodeAuthorizationCode() != "" {
 		// Use refresh token
-		return authorize(c, true)
+		authMethod = Refresh
+	} else if c.RedirectURI() != "" {
+		authMethod = AuthorizationCodeGrant
+	} else {
+		authMethod = ClientCredentials
 	}
-	return authorize(c, false)
+	return authorize(c)
 }
 
 //ReAuthenticate re-authenticates the user using the client credentials in their profile.
 func ReAuthenticate(c config.Configuration) (models.OAuthTokenData, error) {
-	oAuthToken, err := authorize(c, false)
+	oAuthToken, err := authorize(c)
 	if err == nil {
 		RestClient.token = oAuthToken.AccessToken
 	}
@@ -183,17 +206,75 @@ func ReAuthenticate(c config.Configuration) (models.OAuthTokenData, error) {
 	return oAuthToken, err
 }
 
-func authorize(c config.Configuration, isRefresh bool) (models.OAuthTokenData, error) {
-    usingAuthorizationCode := !isRefresh && c.RedirectURI() != ""
-	if usingAuthorizationCode {
-		err := performAuthCodeLogin(c)
-		if err != nil {
-			return models.OAuthTokenData{}, err
-		}
+func authorize(c config.Configuration) (models.OAuthTokenData, error) {
+	authChannel := make(chan string)
+	respChannel := make(chan string)
+
+	if authMethod == AuthorizationCodeGrant {
+		go startLocalServer(c.RedirectURI(), authChannel, respChannel)
+		openBrowserForLogin(c)
+
+		codeAuthCode = <- authChannel
 	}
 
 	loginURI, _ := url.Parse(fmt.Sprintf("https://login.%s/oauth/token", c.Environment()))
+	request := buildHttpRequest(c, loginURI)
 
+	//Executing the request
+	resp, err := ClientDo(request)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	defer resp.Body.Close()
+
+	oAuthTokenResponse := &models.OAuthTokenData{}
+	// Read Response Body
+	responseData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return *oAuthTokenResponse, err
+	}
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		httpError := models.HttpStatusError{Verb: http.MethodPost, Path: loginURI.Path, StatusCode: resp.StatusCode, Headers: resp.Header, Body: fmt.Sprintf("%s", pretty.Pretty(responseData))}
+
+		if authMethod == AuthorizationCodeGrant {
+			var err httpErrorModel
+			_ = json.Unmarshal([]byte(httpError.Error()), &err)
+			responseStatus = err.Error
+			// send the error type to the local server for display
+			respChannel <- responseStatus
+			_ = <- respChannel
+		}
+
+		return *oAuthTokenResponse, httpError
+	} else if authMethod == AuthorizationCodeGrant {
+		respChannel <- "Success"
+		_ = <- respChannel
+		setCodeAuthCodeInConfig(c)
+	}
+
+	oAuthToken := &models.OAuthToken{}
+	err = json.Unmarshal(responseData, &oAuthToken)
+	if err != nil {
+		return *oAuthTokenResponse, err
+	}
+	oAuthTokenExpiry := time.Now().Add(utils.SecondsToNanoSeconds(oAuthToken.ExpiresIn))
+	oAuthTokenResponse = &models.OAuthTokenData{
+		OAuthToken:       *oAuthToken,
+		OAuthTokenExpiry: oAuthTokenExpiry.Format(time.RFC3339),
+	}
+
+	if !OverridesApplied() {
+		err = UpdateOAuthToken(c, oAuthTokenResponse)
+		if err != nil {
+			return *oAuthTokenResponse, err
+		}
+	}
+	return *oAuthTokenResponse, nil
+}
+
+func buildHttpRequest(c config.Configuration, loginURI *url.URL) *retryablehttp.Request {
 	request := &retryablehttp.Request{
 		Request: &http.Request{
 			URL:    loginURI,
@@ -215,103 +296,63 @@ func authorize(c config.Configuration, isRefresh bool) (models.OAuthTokenData, e
 
 	//Setting up the form data
 	form := url.Values{}
-	if isRefresh {
+	switch authMethod {
+	case Refresh:
 		var oauthToken models.OAuthToken
 		_ = json.Unmarshal([]byte(c.OAuthTokenData()), &oauthToken)
 		form["grant_type"] = []string{"refresh_token"}
 		form["refresh_token"] = []string{oauthToken.RefreshToken}
-	} else if usingAuthorizationCode {
+	case AuthorizationCodeGrant:
 		form["grant_type"] = []string{"authorization_code"}
 		form["code"] = []string{codeAuthCode}
 		form["redirect_uri"] = []string{c.RedirectURI()}
-	} else {
+	default:
 		form["grant_type"] = []string{"client_credentials"}
 	}
 
 	request.Body = ioutil.NopCloser(strings.NewReader(form.Encode()))
-
-	//Executing the request
-	resp, err := ClientDo(request)
-	if err != nil {
-		logger.Fatal(err)
-	}
-
-	defer resp.Body.Close()
-
-	oAuthTokenResponse := &models.OAuthTokenData{}
-	// Read Response Body
-	responseData, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return *oAuthTokenResponse, err
-	}
-
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		httpError := models.HttpStatusError{Verb: http.MethodPost, Path: loginURI.Path, StatusCode: resp.StatusCode, Headers: resp.Header, Body: fmt.Sprintf("%s", pretty.Pretty(responseData))}
-		return *oAuthTokenResponse, httpError
-	}
-
-	oAuthToken := &models.OAuthToken{}
-	err = json.Unmarshal(responseData, &oAuthToken)
-	if err != nil {
-		return *oAuthTokenResponse, err
-	}
-	oAuthTokenExpiry := time.Now().Add(utils.SecondsToNanoSeconds(oAuthToken.ExpiresIn))
-	oAuthTokenResponse = &models.OAuthTokenData{
-		OAuthToken:       *oAuthToken,
-		OAuthTokenExpiry: oAuthTokenExpiry.Format(time.RFC3339),
-	}
-
-	if !OverridesApplied() {
-		err = UpdateOAuthToken(c, oAuthTokenResponse)
-		if err != nil {
-			return *oAuthTokenResponse, err
-		}
-	}
-
-	return *oAuthTokenResponse, nil
+	return request
 }
 
-func performAuthCodeLogin(c config.Configuration) error {
-	var waitGroup sync.WaitGroup
-	waitGroup.Add(2)
-
-	go startCodeAuthServer(&waitGroup, c.RedirectURI())
-	go openBrowserForLogin(&waitGroup, c.ClientID(), c.RedirectURI(), c.Environment())
-	waitGroup.Wait()
-
-	err := config.SetCodeAuthorizationCode(c.ProfileName(), codeAuthCode)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func startCodeAuthServer(wg *sync.WaitGroup, uri string) {
+// Starts the local server at the redirect URI
+func startLocalServerFunc(uri string, authChannel chan string, responseChannel chan string) {
 	address := strings.Replace(uri, "http://localhost", "", -1)
 	port := address[0:5]
 	path := strings.Replace(address, port, "", -1)
-	authCode := ""
+	authWebPage := models.AuthorizationWebPage{}
 
-	getAuthCode := func(w http.ResponseWriter, r *http.Request) {
-		authCode = r.URL.Query().Get("code")
+	handleProcess := func(w http.ResponseWriter, r *http.Request) {
+		// Get code from redirect uri path
+		authCode := r.URL.Query().Get("code")
 		if authCode != "" {
-			codeAuthCode = authCode
-			w.Write([]byte("Success! You may now return to the CLI."))
-			wg.Done()
+			// Pass auth code back up the channel to be set in the config file
+			authChannel <- authCode
+			close(authChannel)
+		}
+		// Take in the response error (invalid_client, etc.) and write the appropriate html info at the redirect uri
+		res := <- responseChannel
+		if res != "" {
+			_, err := fmt.Fprintf(w, authWebPage.GetResponsePage(res))
+			if err != nil {
+				logger.Fatal(err)
+			}
+			// Return confirmation message to ensure sequential execution
+			responseChannel <- "Done"
+			close(responseChannel)
 			return
 		}
 	}
 
-	http.HandleFunc(path, getAuthCode)
+	http.HandleFunc(path, handleProcess)
 	log.Fatal(http.ListenAndServe(port, nil))
 }
 
-func openBrowserForLogin(wg *sync.WaitGroup, clientID string, redirectURI string, environment string) {
+func openBrowserForLoginFunc(c config.Configuration) {
 	params := url.Values{}
-	params.Add("client_id", clientID)
+	params.Add("client_id", c.ClientID())
 	params.Add("response_type", "code")
-	params.Add("redirect_uri", redirectURI)
-	loginURL := fmt.Sprintf("https://login.%v/oauth/authorize?%v", environment, params.Encode())
+	params.Add("redirect_uri", c.RedirectURI())
+	loginURL := fmt.Sprintf("https://login.%v/oauth/authorize?%v", c.Environment(), params.Encode())
 
 	var err error
 	switch runtime.GOOS {
@@ -327,8 +368,13 @@ func openBrowserForLogin(wg *sync.WaitGroup, clientID string, redirectURI string
 	if err != nil {
 	    logger.Fatal(err)
 	}
+}
 
-	wg.Done()
+func setCodeAuthCodeInConfigFunc(c config.Configuration) {
+	err := config.SetCodeAuthorizationCode(c.ProfileName(), codeAuthCode)
+	if err != nil {
+		logger.Fatal(err)
+	}
 }
 
 //NewRESTClient is a constructor function to build an APIClient
