@@ -20,7 +20,7 @@ func GetRetryConfiguration() *RetryConfiguration {
 
 type RequestLogHook func(*http.Request, int)
 
-func RetryWithData(uri string, data string, httpCall func(uri string, data string) (string, error)) func(retryConfig *RetryConfiguration) (string, error) {
+func RetryWithData(uri string, data []string, httpCall func(uri string, data string) (string, error)) func(retryConfig *RetryConfiguration) (string, error) {
 	return func(retryConfig *RetryConfiguration) (string, error) {
 		if retryConfig == nil {
 			retryConfig = &RetryConfiguration{
@@ -31,10 +31,22 @@ func RetryWithData(uri string, data string, httpCall func(uri string, data strin
 		}
 		retryConfiguration = retryConfig
 
-		response, err := httpCall(uri, data)
-		retryConfiguration = nil
+		var response string = "["
+		var er error
+		for i := 0; i < len(data); i++ {
+			res, err := httpCall(uri, data[i])
+			retryConfiguration = nil
+			if err != nil {
+				er = err
+			}
+			if i == len(data)-1 {
+				response += res + "]"
+			} else {
+				response += res + ",\n"
+			}
+		}
 
-		return response, err
+		return response, er
 	}
 }
 
