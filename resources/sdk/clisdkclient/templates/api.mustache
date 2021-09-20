@@ -7,6 +7,7 @@ import (
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/retry"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/services"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
 	"github.com/spf13/cobra"
 	"net/url"
 	"strings"
@@ -47,11 +48,23 @@ var {{operationId}}Cmd = &cobra.Command{
 	Args:  utils.DetermineArgs([]string{ {{#pathParams}}"{{paramName}}", {{#hasMore}}{{/hasMore}}{{/pathParams}}}),
 
 	Run: func(cmd *cobra.Command, args []string) {
+		_ = models.Entities{}
+
+		printReqBody, _ := cmd.Flags().GetBool("printrequestbody")
+		if printReqBody {
+			{{#allParams}}{{#vendorExtensions}}{{#x-baseType}}
+			reqModel := models.{{x-baseType}}{}
+			utils.Render(reqModel.String())
+			{{/x-baseType}}{{/vendorExtensions}}{{/allParams}}
+			return
+		}
+
 		queryParams := make(map[string]string)
 
 		path := "{{path}}"{{#pathParams}}
 		{{paramName}}, args := args[0], args[1:]
 		path = strings.Replace(path, "{{=[[ ]]=}}{[[baseName]]}[[={{ }}=]]", fmt.Sprintf("%v", {{paramName}}), -1){{/pathParams}}
+
 
 		{{#hasQueryParams}}{{#queryParams}}{{paramName}} := utils.GetFlag(cmd.Flags(), "{{{dataType}}}", "{{paramName}}")
 		if {{paramName}} != "" {
