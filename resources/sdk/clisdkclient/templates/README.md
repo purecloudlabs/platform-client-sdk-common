@@ -43,7 +43,6 @@ client_secret="OAUTH CLIENT SECRET"
 [test_pro_2]
 environment="mypurecloud.com"
 access_token="OAUTH ACCESS TOKEN"
-
 ```
 
 **Note:** You can setup up multiple profiles.  The default profile is what will be used by the CLI by default.  You can use a different profile by passing in a `-p=profile_name` flag on the CLI.
