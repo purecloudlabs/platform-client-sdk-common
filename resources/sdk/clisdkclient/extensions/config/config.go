@@ -139,7 +139,7 @@ func applyEnvironmentVariableOverrides() {
 	if clientSecret != "" && ClientSecret == "" {
 		ClientSecret = clientSecret
 	}
-	accessToken := os.Getenv("GENESYS_CLOUD_ACCESS_TOKEN")
+	accessToken := os.Getenv("GENESYSCLOUD_ACCESS_TOKEN")
 	if accessToken != "" && AccessToken == "" {
 		AccessToken = accessToken
 	}
@@ -283,7 +283,7 @@ func GetExperimentalFeature(profileName string, featureName string) bool {
 
 func OverridesApplied() bool {
 	return ClientId != "" || ClientSecret != "" || Environment != "" || AccessToken != "" ||
-		os.Getenv("GENESYSCLOUD_OAUTHCLIENT_ID") != "" || os.Getenv("GENESYSCLOUD_OAUTHCLIENT_SECRET") != "" || os.Getenv("GENESYSCLOUD_REGION") != "" || os.Getenv("GENESYS_CLOUD_ACCESS_TOKEN") != ""
+		os.Getenv("GENESYSCLOUD_OAUTHCLIENT_ID") != "" || os.Getenv("GENESYSCLOUD_OAUTHCLIENT_SECRET") != "" || os.Getenv("GENESYSCLOUD_REGION") != "" || os.Getenv("GENESYSCLOUD_ACCESS_TOKEN") != ""
 }
 
 func updateConfig(c configuration, loggingEnabled *bool) error {

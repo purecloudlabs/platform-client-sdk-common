@@ -74,7 +74,7 @@ func requestUserInput() config.Configuration {
 	}
 
 	fmt.Printf("Please provide either an Access Token, Client Credentials (Client ID and Client Secret) or both\n")
-	fmt.Printf("Note: If you provide an Access Token, this will be used over Client Credentials")
+	fmt.Printf("Note: If you provide an Access Token, this will be used over Client Credentials\n")
 	for {
 		fmt.Printf("Access Token: ")
 		fmt.Scanln(&accessToken)
