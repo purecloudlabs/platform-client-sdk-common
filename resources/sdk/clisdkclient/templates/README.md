@@ -35,10 +35,15 @@ environment="mypurecloud.com"
 client_credentials="OAUTH CLIENT CREDENTIAL GRANT"
 client_secret="OAUTH CLIENT SECRET"
 
-[test]
+[test_pro_1]
 environment="mypurecloud.com"
 client_credentials="OAUTH CLIENT CREDENTIAL GRANT"
 client_secret="OAUTH CLIENT SECRET"
+
+[test_pro_2]
+environment="mypurecloud.com"
+access_token="OAUTH ACCESS TOKEN"
+
 ```
 
 **Note:** You can setup up multiple profiles.  The default profile is what will be used by the CLI by default.  You can use a different profile by passing in a `-p=profile_name` flag on the CLI.
@@ -51,6 +56,7 @@ The following environment variables can be used as overrides or alternatives to 
 GENESYSCLOUD_REGION
 GENESYSCLOUD_OAUTHCLIENT_ID
 GENESYSCLOUD_OAUTHCLIENT_SECRET
+GENESYSCLOUD_ACCESS_TOKEN
 ```
 
 `GENESYSCLOUD_REGION` can refer to the API base path or AWS region
@@ -63,6 +69,7 @@ The following flags can be used as overrides or alternatives to their correspond
 --environment
 --clientid
 --clientsecret
+--accesstoken
 ```
 
 # Using the CLI
