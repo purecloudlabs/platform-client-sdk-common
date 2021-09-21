@@ -31,22 +31,34 @@ func RetryWithData(uri string, data []string, httpCall func(uri string, data str
 		}
 		retryConfiguration = retryConfig
 
+		// if there is only one item in the array (req body), then just return the response object
+		if len(data) == 1 {
+			res, err := httpCall(uri, data[0])
+			return res, err
+		}
+
+		// if there is more than one item in the array (req bodies), the response will be an array of response objects
 		var response string = "["
-		var er error
-		for i := 0; i < len(data); i++ {
-			res, err := httpCall(uri, data[i])
+		for i, reqBody := range data {
+			res, err := httpCall(uri, reqBody)
 			retryConfiguration = nil
 			if err != nil {
-				er = err
-			}
-			if i == len(data)-1 {
-				response += res + "]"
+				if i == len(data)-1 {
+					response += err.Error() + "]"
+				} else {
+					response += err.Error() + ","
+				}
 			} else {
-				response += res + ",\n"
+				if i == len(data)-1 {
+					response += res + "]"
+				} else {
+					response += res + ","
+				}
 			}
 		}
 
-		return response, er
+		// returning response and nil error as the error objects will be concatenated onto the response (if there are any)
+		return response, nil
 	}
 }
 

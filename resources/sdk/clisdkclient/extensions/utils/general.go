@@ -65,6 +65,7 @@ func AddFileFlagIfUpsert(flags *pflag.FlagSet, method string, jsonSchema string)
 	case http.MethodPut:
 		flags.StringP("file", "f", "", "File name containing the JSON body")
 		flags.BoolP("printrequestbody", "b", false, "Print the request body format of the API.")
+		flags.StringP("directory", "d", "", "Directory path containing JSON files")
 	}
 }
 
@@ -283,40 +284,41 @@ func readDirectory(dirName string) []string {
 		logger.Fatal(fmt.Sprintf("Unable to open directory %s.", dirName), err)
 	}
 
-	arr := []string{}
+	data := []string{}
 
 	for _, file := range files {
-		strLen := len(dirName)
 		fileName := dirName + file.Name()
-		if dirName[strLen-1] != '/' {
+		if dirName[len(dirName)-1] != '/' {
 			fileName = dirName + "/" + file.Name()
 		}
-		arr = append(arr, ConvertFile(fileName))
+		data = append(data, ConvertFile(fileName))
 	}
 
-	return arr
+	return data
 }
 
 // ResolveInputData is used to determine where the Put, Patch and Delete Post data should be read from
 func ResolveInputData(cmd *cobra.Command) []string {
 	fileName, _ := cmd.Flags().GetString("file")
+	dirName, _ := cmd.Flags().GetString("directory")
 	if fileName != "" {
-		//return ConvertFile(fileName)
+		return []string{ConvertFile(fileName)}
+	}
+	if dirName != "" {
+		return readDirectory(dirName)
 	}
 	for _, command := range cmd.Commands() {
 		fileName, _ := command.Flags().GetString("file")
 		dirName, _ := command.Flags().GetString("directory")
 		if fileName != "" {
-			//return ConvertFile(fileName)
+			return []string{ConvertFile(fileName)}
 		}
 		if dirName != "" {
-			fmt.Println(readDirectory(dirName))
 			return readDirectory(dirName)
 		}
 	}
 
-	//return ConvertStdInString()
-	return []string{}
+	return []string{ConvertStdInString()}
 }
 
 func GenerateGuid() string {
