@@ -447,6 +447,11 @@ func (c *commandService) upsert(method string, uri string, payload string) (stri
 }
 
 func reAuthenticateIfNecessary(config config.Configuration, err error) error {
+	// do not re-authenticate if we have an access_token as we want to use the access token over client credentials
+	if config.AccessToken() != "" {
+		return err
+	}
+
 	if hasReAuthenticated {
 		logger.Warn("Have already re-authenticated. Will not authenticate again")
 		return err
