@@ -330,7 +330,7 @@ id: {{.id}},name: {{.name}},division:
     {{- range $key, $val := .chat -}}
         {{$key}}: {{$val}},
     {{- end -}}
-    email: {{.email}},
+    email: {{.email}},primaryContactInfo:
     {{- range .primaryContactInfo -}}
         {{- range $key, $val := . -}}
             {{$key}}: {{$val}},
@@ -338,7 +338,9 @@ id: {{.id}},name: {{.name}},division:
     {{- end -}}
     addresses:
     {{- range .addresses -}}
-        {{.}},
+        {{- range $key, $val := . -}}
+		    {{$key}}: {{$val}},
+	    {{- end -}}
     {{- end -}}
     state: {{.state}},username: {{.username}},version: {{.version}},acdAutoAnswer: {{.acdAutoAnswer}},selfUri: {{.selfUri}},
 {{- end -}}
