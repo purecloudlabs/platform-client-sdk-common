@@ -230,12 +230,12 @@ func SetExperimentalFeature(profileName string, featureName string, enabled bool
 }
 
 func SetInputFormat(profileName string, format string) error {
-	viper.Set(fmt.Sprintf("%v.input_format", profileName), format)
+	viper.Set(fmt.Sprintf("%s.input_format", profileName), format)
 	return viper.WriteConfig()
 }
 
 func SetOutputFormat(profileName string, format string) error {
-	viper.Set(fmt.Sprintf("%v.output_format", profileName), format)
+	viper.Set(fmt.Sprintf("%s.output_format", profileName), format)
 	return viper.WriteConfig()
 }
 
