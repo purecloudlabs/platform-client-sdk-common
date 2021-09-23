@@ -320,7 +320,7 @@ An example `Go` template file for transforming output data to `CSV` format.
 
 `tmpl.gotmpl`
 
-```go
+```
 {{- range . -}}
 id: {{.id}},name: {{.name}},division: 
     {{- range $key, $val := .division -}}
@@ -339,8 +339,8 @@ id: {{.id}},name: {{.name}},division:
     addresses:
     {{- range .addresses -}}
         {{- range $key, $val := . -}}
-		    {{$key}}: {{$val}},
-	    {{- end -}}
+            {{$key}}: {{$val}},
+        {{- end -}}
     {{- end -}}
     state: {{.state}},username: {{.username}},version: {{.version}},acdAutoAnswer: {{.acdAutoAnswer}},selfUri: {{.selfUri}},
 {{- end -}}
