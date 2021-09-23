@@ -256,9 +256,7 @@ func NewRESTClient(config config.Configuration) *RESTClient {
 	}
 
 	if RestClient == nil && config.AccessToken() != "" {
-		fmt.Println("not in authorize block we have an access token")
 		RestClient = &RESTClient{environment: config.Environment(), token: config.AccessToken()}
-
 	}
 
 	return RestClient

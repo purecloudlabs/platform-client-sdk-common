@@ -269,5 +269,9 @@ func mockGetConfig(profileName string) (config.Configuration, error) {
 		return ""
 	}
 
+	mockConfig.AccessTokenFunc = func() string {
+		return ""
+	}
+
 	return mockConfig, nil
 }
