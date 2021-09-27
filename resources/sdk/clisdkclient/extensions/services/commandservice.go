@@ -449,7 +449,7 @@ func (c *commandService) upsert(method string, uri string, payload string) (stri
 func reAuthenticateIfNecessary(config config.Configuration, err error) error {
 	// do not re-authenticate with client credentials if we have an access_token as we want to use the access token over client credentials
 	if config.AccessToken() != "" {
-		logger.Fatal("Unauthorized. Your Access Token has either expired or is not valid. Please authenticate.\n")
+		//logger.Fatal("Unauthorized. Your Access Token has either expired or is not valid. Please authenticate.\n")
 		return err
 	}
 

@@ -139,6 +139,31 @@ func TestReAuthentication(t *testing.T) {
 	}
 }
 
+func TestReAuthenticationWithAccessToken(t *testing.T) {
+	restclient.OverridesApplied = mocks.OverridesApplied
+	configGetConfig = mockGetConfigWithAccessToken
+
+	c := commandService{
+		cmd: &cobra.Command{},
+	}
+
+	tc := apiClientTest{
+		targetStatusCode:   http.StatusUnauthorized,
+		expectedStatusCode: http.StatusUnauthorized,
+		// expectedResponse is an empty string because when making a reuest, if there is an err returned from commandservice.reauthenticateIfNecessary(),
+		// (which in our case there will be, because we do not want to re-authenticate if we have an access token)
+		// the empty string and error are returned from the caller (commandservice.upsert())
+		expectedResponse: ``,
+	}
+
+	// so the expected value from this GET request is the empty string and we do not care about the error returned
+	value, _ := c.Get("")
+
+	if value != tc.expectedResponse {
+		t.Errorf("Did not get the right value, got: %s, want: %s.", value, tc.expectedResponse)
+	}
+}
+
 //setRestClientDoMockForRetry sets the restclient.ClientDo method for the commandservice Retry test
 func setRestClientDoMockForRetry(tc apiClientTest, numberOfFailedCalls int) {
 	numCalls := 0
@@ -237,7 +262,7 @@ func mockNewRESTClient(_ config.Configuration) *restclient.RESTClient {
 	return restclient.RestClient
 }
 
-//mockGetConfig returns a mock MockClientConfig object
+//mockGetConfig returns a mock MockClientConfig object with client credentials
 func mockGetConfig(profileName string) (config.Configuration, error) {
 	mockConfig := &mocks.MockClientConfig{}
 
@@ -271,6 +296,48 @@ func mockGetConfig(profileName string) (config.Configuration, error) {
 
 	mockConfig.AccessTokenFunc = func() string {
 		return ""
+	}
+
+	return mockConfig, nil
+}
+
+//mockGetConfigWithAccessToken returns a mock MockClientConfig object with an access token
+func mockGetConfigWithAccessToken(profileName string) (config.Configuration, error) {
+	mockConfig := &mocks.MockClientConfig{}
+
+	mockConfig.ProfileNameFunc = func() string {
+		return profileName
+	}
+
+	mockConfig.EnvironmentFunc = func() string {
+		return "mypurecloud.com"
+	}
+
+	mockConfig.LogFilePathFunc = func() string {
+		return ""
+	}
+
+	mockConfig.LoggingEnabledFunc = func() bool {
+		return false
+	}
+
+	mockConfig.ClientIDFunc = func() string {
+		return ""
+	}
+
+	mockConfig.ClientSecretFunc = func() string {
+		return ""
+	}
+
+	mockConfig.OAuthTokenDataFunc = func() string {
+		return ""
+	}
+
+	mockConfig.AccessTokenFunc = func() string {
+		// we will only try to re-authenticate if there is an error returned from a request (e.g 401 unauthorized)
+		// so it does not matter what the token is as long as it is a "bad" token
+		// meaning, we will only enter commandservice.reauthticateIfNecessary() if the token has gone "bad"
+		return "XNiJQrSf2YQmJODySCxG6HaVIE2lfZfJ35Y4JDh5L9YEBJOTG3p6szRyUvWVM7pDmziPHHcq9NW7e0KxN_lb6w" // this is a "bad" token for testing purposes
 	}
 
 	return mockConfig, nil
