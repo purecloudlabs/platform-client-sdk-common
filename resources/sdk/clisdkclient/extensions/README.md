@@ -236,8 +236,6 @@ gc experimental enable alternative_formats
 
 Once enabled, we can pass a supported value (e.g `YAML` or `JSON`) to the `--inputformat` flag or to the `--outputformat` flag.
 
-**Note:** If you do not pass a value to the `--inputformat` flag or to the `--outputformat` flag their value will default to `JSON`.
-
 To input `YAML` data:
 
 ```
@@ -270,6 +268,33 @@ If you want to format your response as `YAML`, simply include the `--outputforma
 ```
 gc users get f3dc94ca-acec-4ee4-a07e-ca7503ddbd62 --outputformat=yaml
 ```
+
+<br>
+Additionally, the desired input and output formats can be pinned in the configuration file to avoid providing the above flags in every API call.
+
+To set the output format to YAML or JSON, run:
+
+```
+gc alternativeformats setoutput [format]
+```
+
+And similarly, to set the input format:
+
+```
+gc alternativeformats setinput [format]
+```
+
+The following commands can be used to check which data formats are set in the configurations:
+
+```
+gc alternativeformats getinput
+```
+
+```
+gc alternativeformats getoutput
+```
+
+**Note:** Where no data format is specified, the default is always JSON.
 
 ## Transform Data
 

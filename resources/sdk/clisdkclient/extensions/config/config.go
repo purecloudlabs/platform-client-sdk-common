@@ -229,6 +229,32 @@ func SetExperimentalFeature(profileName string, featureName string, enabled bool
 	return viper.WriteConfig()
 }
 
+func SetInputFormat(profileName string, format string) error {
+	viper.Set(fmt.Sprintf("%s.input_format", profileName), format)
+	return viper.WriteConfig()
+}
+
+func SetOutputFormat(profileName string, format string) error {
+	viper.Set(fmt.Sprintf("%s.output_format", profileName), format)
+	return viper.WriteConfig()
+}
+
+func GetInputFormat(profileName string) (string, error) {
+	err := viper.ReadInConfig()
+	if err != nil {
+		return "", err
+	}
+	return viper.GetString(fmt.Sprintf("%s.input_format", profileName)), nil
+}
+
+func GetOutputFormat(profileName string) (string, error) {
+	err := viper.ReadInConfig()
+	if err != nil {
+		return "", err
+	}
+	return viper.GetString(fmt.Sprintf("%s.output_format", profileName)), nil
+}
+
 func GetExperimentalFeature(profileName string, featureName string) bool {
 	err := viper.ReadInConfig()
 	if err != nil {
