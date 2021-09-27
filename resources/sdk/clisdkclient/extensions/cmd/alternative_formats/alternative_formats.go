@@ -79,7 +79,7 @@ var setOutputFormatCmd = &cobra.Command{
 			if err != nil {
 				logger.Fatal(err)
 			}
-			fmt.Printf("Preffered output format set to %s in configurations.\n", strings.ToUpper(args[0]))
+			fmt.Printf("Preferred output format set to %s in configurations.\n", strings.ToUpper(args[0]))
 		}
 	},
 }
@@ -97,7 +97,7 @@ var setInputFormatCmd = &cobra.Command{
 			if err != nil {
 				logger.Fatal(err)
 			}
-			fmt.Printf("Preffered input format set to %s in configurations.\n", strings.ToUpper(args[0]))
+			fmt.Printf("Preferred input format set to %s in configurations.\n", strings.ToUpper(args[0]))
 		}
 	},
 }
