@@ -447,18 +447,17 @@ func (c *commandService) upsert(method string, uri string, payload string) (stri
 }
 
 func reAuthenticateIfNecessary(config config.Configuration, err error) error {
-	// do not re-authenticate with client credentials if we have an access_token as we want to use the access token over client credentials
-	if config.AccessToken() != "" {
-		//logger.Fatal("Unauthorized. Your Access Token has either expired or is not valid. Please authenticate.\n")
-		return err
-	}
-
 	if hasReAuthenticated {
 		logger.Warn("Have already re-authenticated. Will not authenticate again")
 		return err
 	}
 
 	if e, ok := err.(models.HttpStatusError); ok && e.StatusCode == http.StatusUnauthorized {
+		// do not re-authenticate with client credentials if we have an access_token
+		if config.AccessToken() != "" {
+			logger.Warn("Unauthorized. Your Access Token has either expired or is not valid. Please authenticate.")
+			return err
+		}
 		logger.Info("Received HTTP 401 error, re-authenticating")
 		_, err = restclient.ReAuthenticate(config)
 		if err != nil {

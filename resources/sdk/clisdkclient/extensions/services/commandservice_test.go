@@ -147,20 +147,17 @@ func TestReAuthenticationWithAccessToken(t *testing.T) {
 		cmd: &cobra.Command{},
 	}
 
-	tc := apiClientTest{
-		targetStatusCode:   http.StatusUnauthorized,
-		expectedStatusCode: http.StatusUnauthorized,
-		// expectedResponse is an empty string because when making a reuest, if there is an err returned from commandservice.reauthenticateIfNecessary(),
-		// (which in our case there will be, because we do not want to re-authenticate if we have an access token)
-		// the empty string and error are returned from the caller (commandservice.upsert())
-		expectedResponse: ``,
-	}
+	// expectedResponse is the empty string because when making a reuest with a "bad" access token, a 401 error is returned and commandservice.reauthenticateIfNecessary() is called
+	// and if there is an err returned from commandservice.reauthenticateIfNecessary(),
+	// (which in our case there will be, because we do not want to re-authenticate if we have an access token, we just want to return an error)
+	// the empty string and error are returned from the caller (e.g commandservice.upsert() or commandservice.Get())
+	expectedResponse := ""
 
 	// so the expected value from this GET request is the empty string and we do not care about the error returned
 	value, _ := c.Get("")
 
-	if value != tc.expectedResponse {
-		t.Errorf("Did not get the right value, got: %s, want: %s.", value, tc.expectedResponse)
+	if value != expectedResponse {
+		t.Errorf("Did not get the right value, got: %s, want: %s.", value, expectedResponse)
 	}
 }
 
