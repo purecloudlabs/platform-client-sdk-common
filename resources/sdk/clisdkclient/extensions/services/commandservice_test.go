@@ -110,6 +110,32 @@ func TestRetryWithData(t *testing.T) {
 	}
 }
 
+func TestReAuthenticationWithAccessToken(t *testing.T) {
+	restclient.OverridesApplied = mocks.OverridesApplied
+	configGetConfig = mockGetConfigWithAccessToken
+
+	c := commandService{
+		cmd: &cobra.Command{},
+	}
+
+	// expectedResponse is the empty string because when making a reuest with a "bad" access token (e.g in commandservice.Get()), a 401 error is returned and commandservice.reauthenticateIfNecessary() is called,
+	// when we have an access token in config we will return an error from commandservice.reauthenticateIfNecessary() and not continue to reauthenticate,
+	// when an error is returned from commandservice.reauthenticateIfNecessary(), the empty string and error are returned from the caller (e.g commandservice.upsert() or commandservice.Get())
+	tc := apiClientTest{
+		targetStatusCode:   http.StatusUnauthorized,
+		expectedStatusCode: http.StatusUnauthorized,
+		expectedResponse:   ``,
+	}
+	setRestClientDoMockForReAuthenticate(tc)
+
+	// so the expected value from this GET request, when we have an access token in config, is the empty string and we do not care about the error returned
+	value, _ := c.Get("")
+
+	if value != tc.expectedResponse {
+		t.Errorf("Did not get the right value, got: %s, want: %s.", value, tc.expectedResponse)
+	}
+}
+
 func TestReAuthentication(t *testing.T) {
 	restclient.OverridesApplied = mocks.OverridesApplied
 	restclient.UpdateOAuthToken = mocks.UpdateOAuthToken
@@ -136,28 +162,6 @@ func TestReAuthentication(t *testing.T) {
 	}
 	if mocks.UpdatedAccessToken != tc.expectedAccessToken {
 		t.Errorf("The access token was not updated as expected, got: %s, want: %s.", mocks.UpdatedAccessToken, tc.expectedAccessToken)
-	}
-}
-
-func TestReAuthenticationWithAccessToken(t *testing.T) {
-	restclient.OverridesApplied = mocks.OverridesApplied
-	configGetConfig = mockGetConfigWithAccessToken
-
-	c := commandService{
-		cmd: &cobra.Command{},
-	}
-
-	// expectedResponse is the empty string because when making a reuest with a "bad" access token, a 401 error is returned and commandservice.reauthenticateIfNecessary() is called
-	// and if there is an err returned from commandservice.reauthenticateIfNecessary(),
-	// (which in our case there will be, because we do not want to re-authenticate if we have an access token, we just want to return an error)
-	// the empty string and error are returned from the caller (e.g commandservice.upsert() or commandservice.Get())
-	expectedResponse := ""
-
-	// so the expected value from this GET request is the empty string and we do not care about the error returned
-	value, _ := c.Get("")
-
-	if value != expectedResponse {
-		t.Errorf("Did not get the right value, got: %s, want: %s.", value, expectedResponse)
 	}
 }
 
@@ -331,9 +335,6 @@ func mockGetConfigWithAccessToken(profileName string) (config.Configuration, err
 	}
 
 	mockConfig.AccessTokenFunc = func() string {
-		// we will only try to re-authenticate if there is an error returned from a request (e.g 401 unauthorized)
-		// so it does not matter what the token is as long as it is a "bad" token
-		// meaning, we will only enter commandservice.reauthticateIfNecessary() if the token has gone "bad"
 		return "XNiJQrSf2YQmJODySCxG6HaVIE2lfZfJ35Y4JDh5L9YEBJOTG3p6szRyUvWVM7pDmziPHHcq9NW7e0KxN_lb6w" // this is a "bad" token for testing purposes
 	}
 
