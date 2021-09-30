@@ -420,6 +420,24 @@ To perform a delete:
 gc users delete [userId]
 ```
 
+To create or update multiple objects, you can pass a directory path to the `--directory` flag or to the `-d` short flag containing JSON files, where each file is a request body for either creating or updating data.
+
+For example, creating multiple user objects:
+
+`./users-directory`
+
+```
+user-1.json // each file is a request body for creating a user
+user-2.json
+user-3.json
+```
+
+To create multiple users, run the following command:
+
+```
+gc users create -d ./users-directory
+```
+
 # Additional Tools
 Since this is a CLI, the output from the tool can be passed to other command tools and scripts.  Two of the most common helpful tools are:
 

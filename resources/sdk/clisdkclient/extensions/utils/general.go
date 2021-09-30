@@ -281,10 +281,13 @@ func ConvertFile(fileName string) string {
 func readDirectory(dirName string) []string {
 	files, err := ioutil.ReadDir(dirName)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("Unable to open directory %s.", dirName), err)
+		logger.Fatal(fmt.Sprintf("Error reading %s: ", dirName), err)
+	}
+	if len(files) == 0 {
+		logger.Fatal(fmt.Sprintf("Error reading %s: no files in directory\n", dirName))
 	}
 
-	data := []string{}
+	var data []string
 
 	for _, file := range files {
 		fileName := dirName + file.Name()
