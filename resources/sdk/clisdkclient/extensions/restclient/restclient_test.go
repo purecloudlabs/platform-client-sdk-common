@@ -165,6 +165,10 @@ func buildMockConfig(profileName string, environment string, clientID string, cl
 		return clientSecret
 	}
 
+	mockConfig.RedirectURIFunc = func() string {
+		return ""
+	}
+
 	mockConfig.OAuthTokenDataFunc = func() string {
 		return oauthTokenData
 	}

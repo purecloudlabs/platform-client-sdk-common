@@ -16,6 +16,7 @@ type Configuration interface {
 	Environment() string
 	ClientID() string
 	ClientSecret() string
+	RedirectURI() string
 	OAuthTokenData() string
 	LogFilePath() string
 	LoggingEnabled() bool
@@ -27,6 +28,7 @@ type configuration struct {
 	environment    string
 	clientID       string
 	clientSecret   string
+	redirectURI    string
 	oAuthTokenData string
 	logFilePath    string
 	loggingEnabled bool
@@ -74,6 +76,10 @@ func (c *configuration) ClientSecret() string {
 	return viper.GetString(fmt.Sprintf("%s.client_secret", c.profileName))
 }
 
+func (c *configuration) RedirectURI() string {
+	return viper.GetString(fmt.Sprintf("%s.redirect_uri", c.profileName))
+}
+
 //OAuthTokenData is the raw OAuth token data returned from the login API call combined with the access token expiry timestamp
 func (c *configuration) OAuthTokenData() string {
 	return viper.GetString(fmt.Sprintf("%s.oauth_token_data", c.profileName))
@@ -112,7 +118,7 @@ func (c *configuration) LoggingEnabled() bool {
 }
 
 func (c *configuration) String() string {
-	return fmt.Sprintf(`{"profileName": "%s", "environment": "%s", "logFilePath": "%s", "loggingEnabled": "%v", "clientName": "%s", "clientSecret": "%s"}`, c.ProfileName(), c.Environment(), c.LogFilePath(), c.LoggingEnabled(), c.ClientID(), c.ClientSecret())
+	return fmt.Sprintf(`{"profileName": "%s", "environment": "%s", "logFilePath": "%s", "loggingEnabled": "%v", "clientName": "%s", "clientSecret": "%s", "redirectURI": "%s"}`, c.ProfileName(), c.Environment(), c.LogFilePath(), c.LoggingEnabled(), c.ClientID(), c.ClientSecret(), c.RedirectURI())
 }
 
 func applyEnvironmentVariableOverrides() {
@@ -161,6 +167,7 @@ func GetConfig(profileName string) (Configuration, error) {
 	return &configuration{profileName: profileName,
 		clientID:       viper.GetString(fmt.Sprintf("%s.client_credentials", profileName)),
 		clientSecret:   viper.GetString(fmt.Sprintf("%s.client_secret", profileName)),
+		redirectURI:    viper.GetString(fmt.Sprintf("%s.redirect_uri", profileName)),
 		environment:    viper.GetString(fmt.Sprintf("%s.environment", profileName)),
 		oAuthTokenData: viper.GetString(fmt.Sprintf("%s.oauth_token_data", profileName)),
 		logFilePath:    viper.GetString(fmt.Sprintf("%s.log_file_path", profileName)),
@@ -190,6 +197,7 @@ func ListConfigs() ([]configuration, error) {
 			profileName:    profileName,
 			clientID:       viper.GetString(fmt.Sprintf("%s.client_credentials", profileName)),
 			clientSecret:   viper.GetString(fmt.Sprintf("%s.client_secret", profileName)),
+			redirectURI:    viper.GetString(fmt.Sprintf("%s.redirect_uri", profileName)),
 			environment:    viper.GetString(fmt.Sprintf("%s.environment", profileName)),
 			oAuthTokenData: viper.GetString(fmt.Sprintf("%s.oauth_token_data", profileName)),
 			logFilePath:    viper.GetString(fmt.Sprintf("%s.log_file_path", profileName)),
@@ -275,6 +283,9 @@ func updateConfig(c configuration, loggingEnabled *bool) error {
 	if c.clientSecret != "" {
 		viper.Set(fmt.Sprintf("%s.client_secret", c.profileName), c.clientSecret)
 	}
+	if c.redirectURI != "" {
+		viper.Set(fmt.Sprintf("%s.redirect_uri", c.profileName), c.redirectURI)
+	}
 	if c.environment != "" {
 		viper.Set(fmt.Sprintf("%s.environment", c.profileName), c.environment)
 	}
@@ -298,6 +309,7 @@ func updateConfig(c configuration, loggingEnabled *bool) error {
 func writeConfig(c Configuration, data *models.OAuthTokenData, logFilePath string, loggingEnabled *bool) error {
 	viper.Set(fmt.Sprintf("%s.client_credentials", c.ProfileName()), c.ClientID())
 	viper.Set(fmt.Sprintf("%s.client_secret", c.ProfileName()), c.ClientSecret())
+	viper.Set(fmt.Sprintf("%s.redirect_uri", c.ProfileName()), c.RedirectURI())
 	viper.Set(fmt.Sprintf("%s.environment", c.ProfileName()), c.Environment())
 	if data != nil {
 		viper.Set(fmt.Sprintf("%s.oauth_token_data", c.ProfileName()), data.String())

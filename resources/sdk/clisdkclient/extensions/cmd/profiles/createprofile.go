@@ -5,15 +5,15 @@ import (
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/mocks"
-	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/restclient"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/restclient"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-func constructConfig(profileName string, environment string, clientID string, clientSecret string) config.Configuration {
+func constructConfig(profileName string, environment string, clientID string, clientSecret string, redirectURI string) config.Configuration {
 	c := &mocks.MockClientConfig{}
 
 	c.ProfileNameFunc = func() string {
@@ -40,6 +40,10 @@ func constructConfig(profileName string, environment string, clientID string, cl
 		return clientSecret
 	}
 
+	c.RedirectURIFunc = func() string {
+		return redirectURI
+	}
+
 	c.OAuthTokenDataFunc = func() string {
 		return ""
 	}
@@ -52,6 +56,8 @@ func requestUserInput() config.Configuration {
 	var environment string
 	var clientID string
 	var clientSecret string
+	var authChoice string
+	var redirectURI string
 
 	fmt.Print("Profile Name [DEFAULT]: ")
 	fmt.Scanln(&name)
@@ -65,6 +71,20 @@ func requestUserInput() config.Configuration {
 
 	if environment == "" {
 		environment = "mypurecloud.com"
+	}
+
+	for true {
+		fmt.Print("Are you using client credentials? [Y/N]: ")
+		fmt.Scanln(&authChoice)
+		if authChoice == "" || strings.ToUpper(authChoice) == "Y" {
+			redirectURI = ""
+			break
+		}
+		if strings.ToUpper(authChoice) == "N" {
+			redirectURI = requestRedirectURI()
+			fmt.Printf("Redirect URI: %v\n", redirectURI)
+			break
+		}
 	}
 
 	for true {
@@ -83,7 +103,32 @@ func requestUserInput() config.Configuration {
 		}
 	}
 
-	return constructConfig(name, environment, clientID, clientSecret)
+	return constructConfig(name, environment, clientID, clientSecret, redirectURI)
+}
+
+func requestRedirectURI() string {
+	var inputPort string
+	var inputPath string
+	redirectURI := "http://localhost:"
+	defaultPort := "8000"
+	defaultPath := "cli-redirect"
+
+	fmt.Printf("Redirect URI port [%v]: ", defaultPort)
+	fmt.Scanln(&inputPort)
+	if inputPort != "" {
+		redirectURI += inputPort
+	} else {
+		redirectURI += defaultPort
+	}
+
+	fmt.Printf("Redirect URI path [%v]: ", defaultPath)
+	fmt.Scanln(&inputPath)
+	if inputPath == "" {
+		inputPath = defaultPath
+	}
+	redirectURI = fmt.Sprintf("%v/%v", redirectURI, inputPath)
+
+	return redirectURI
 }
 
 func overrideConfig(name string) bool {
