@@ -1,24 +1,27 @@
 package restclient
 
 import (
-	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
-	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
-	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/retry"
-	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
-	"net/http"
-	"time"
+    "github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
+    "github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
+    "github.com/mypurecloud/platform-client-sdk-cli/build/gc/retry"
+    "github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
+    "log"
+    "net/http"
+    "os/exec"
+    "runtime"
+    "time"
 
-	"bytes"
-	"encoding/base64"
-	"encoding/json"
-	"fmt"
-	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
-	"io/ioutil"
-	"net/url"
-	"strings"
+    "bytes"
+    "encoding/base64"
+    "encoding/json"
+    "fmt"
+    "github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
+    "io/ioutil"
+    "net/url"
+    "strings"
 
-	"github.com/hashicorp/go-retryablehttp"
-	"github.com/tidwall/pretty"
+    "github.com/hashicorp/go-retryablehttp"
+    "github.com/tidwall/pretty"
 )
 
 var (
@@ -176,6 +179,18 @@ func ReAuthenticate(c config.Configuration) (models.OAuthTokenData, error) {
 }
 
 func authorize(c config.Configuration) (models.OAuthTokenData, error) {
+    authChannel := make(chan string)
+    var accessToken string
+
+    // Using implicit grant
+    if c.RedirectURI() != "" {
+        go startLocalServerFunc(c.RedirectURI(), authChannel)
+        openBrowserForLoginFunc(c)
+        accessToken = <- authChannel
+    }
+
+    fmt.Printf("Access Token: %s\n", accessToken)
+
 	loginURI, _ := url.Parse(fmt.Sprintf("https://login.%s/oauth/token", c.Environment()))
 
 	request := &retryablehttp.Request{
@@ -241,6 +256,42 @@ func authorize(c config.Configuration) (models.OAuthTokenData, error) {
 	}
 
 	return *oAuthTokenResponse, nil
+}
+
+// Starts the local server at the redirect URI
+func startLocalServerFunc(uri string, authChannel chan string) {
+    address := strings.Replace(uri, "http://localhost", "", -1)
+    port := address[0:5]
+    path := strings.Replace(address, port, "", -1)
+
+    handleProcess := func(w http.ResponseWriter, r *http.Request) {
+        // Parse fragment "access_token" from url
+    }
+
+    http.HandleFunc(path, handleProcess)
+    log.Fatal(http.ListenAndServe(port, nil))
+}
+
+func openBrowserForLoginFunc(c config.Configuration) {
+    params := url.Values{}
+    params.Add("client_id", c.ClientID())
+    params.Add("response_type", "token")
+    params.Add("redirect_uri", c.RedirectURI())
+    loginURL := fmt.Sprintf("https://login.%v/oauth/authorize?%v", c.Environment(), params.Encode())
+    var err error
+    switch runtime.GOOS {
+    case "linux":
+        err = exec.Command("xdg-open", loginURL).Start()
+    case "windows":
+        err = exec.Command("rundll32", "url.dll,FileProtocolHandler", loginURL).Start()
+    case "darwin":
+        err = exec.Command("open", loginURL).Start()
+    default:
+        err = fmt.Errorf("unsupported platform")
+    }
+    if err != nil {
+        logger.Fatal(err)
+    }
 }
 
 //NewRESTClient is a constructor function to build an APIClient
