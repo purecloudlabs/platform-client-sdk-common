@@ -1,0 +1,46 @@
+<html>
+<head>
+    <title>Implicit Login</title>
+
+    <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
+    <script src="//cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+    <script>
+        const CLIENT_ID = {{.ClientID}};
+        const ENVIRONMENT = {{.Environment}};
+        const REDIRECT_URI = {{.RedirectURI}};
+
+        function getParameterByName(name) {
+            name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+            var regex = new RegExp("[\\#&]" + name + "=([^&#]*)"),
+                results = regex.exec(location.hash);
+            return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+        }
+
+        if(window.location.hash) {
+            console.log(location.hash);
+
+            $.ajax({
+                url: "/access_token/" + getParameterByName('access_token') + "/expires_in/" + getParameterByName('expires_in') + "/token_type/" + getParameterByName('token_type'),
+                type: "GET",
+                success: function(data) { }
+            });
+
+            location.hash=''
+        } else {
+            var queryStringData = {
+                response_type : "token",
+                client_id : CLIENT_ID,
+                redirect_uri : REDIRECT_URI
+            }
+            var fullPath = "https://login." + ENVIRONMENT + "/oauth/authorize?" + jQuery.param(queryStringData);
+            window.location.replace(fullPath);
+        }
+    </script>
+
+    </head>
+    <body>
+        <div>
+            <p>Authentication complete.</p>
+        </div>
+    </body>
+</html>

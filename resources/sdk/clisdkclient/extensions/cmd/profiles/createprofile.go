@@ -9,7 +9,6 @@ import (
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/mocks"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/restclient"
-	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -105,7 +104,7 @@ func requestUserInput() config.Configuration {
 				}
 			}
 		}
-
+		
 		fmt.Printf("Client ID: ")
 		fmt.Scanln(&clientID)
 		fmt.Printf("Client Secret: ")

@@ -5,7 +5,12 @@ import (
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/retry"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
+	"html/template"
+	"log"
 	"net/http"
+	"os/exec"
+	"runtime"
+	"strconv"
 	"time"
 
 	"bytes"
@@ -22,16 +27,24 @@ import (
 )
 
 var (
-	Client             retryablehttp.Client
-	ClientDo         = Client.Do
-	RestClient         *RESTClient
-	UpdateOAuthToken = config.UpdateOAuthToken
-	OverridesApplied = config.OverridesApplied
+	Client              retryablehttp.Client
+	ClientDo            = Client.Do
+	RestClient          *RESTClient
+	UpdateOAuthToken    = config.UpdateOAuthToken
+	OverridesApplied    = config.OverridesApplied
+	openBrowserForLogin = openBrowserForLoginFunc
+	startLocalServer    = startLocalServerFunc
 )
 
 type RESTClient struct {
 	environment string
 	token       string
+}
+
+type ImplicitCredentials struct {
+	RedirectURI string
+	Environment string
+	ClientID    string
 }
 
 //Get executes an HTTP Get
@@ -176,6 +189,32 @@ func ReAuthenticate(c config.Configuration) (models.OAuthTokenData, error) {
 }
 
 func authorize(c config.Configuration) (models.OAuthTokenData, error) {
+	authChannel := make(chan []string)
+
+	// Using implicit grant
+	if c.RedirectURI() != "" {
+		go startLocalServer(c, authChannel)
+		openBrowserForLogin(c.RedirectURI())
+
+		responseData := <- authChannel
+
+		accessToken := responseData[0]
+		expiresIn, err := strconv.Atoi(responseData[1])
+		tokenType := responseData[2]
+
+		if err != nil {
+			logger.Fatal(err)
+		}
+
+		oAuthToken := models.OAuthToken{
+			AccessToken: accessToken,
+			ExpiresIn:   expiresIn,
+			TokenType:   tokenType,
+		}
+
+		return createOAuthTokenResponse(c, oAuthToken)
+	}
+
 	loginURI, _ := url.Parse(fmt.Sprintf("https://login.%s/oauth/token", c.Environment()))
 
 	request := &retryablehttp.Request{
@@ -227,20 +266,98 @@ func authorize(c config.Configuration) (models.OAuthTokenData, error) {
 	if err != nil {
 		return *oAuthTokenResponse, err
 	}
+	return createOAuthTokenResponse(c, *oAuthToken)
+}
+
+func createOAuthTokenResponse(c config.Configuration, oAuthToken models.OAuthToken) (models.OAuthTokenData, error)  {
+	oAuthTokenResponse := &models.OAuthTokenData{}
 	oAuthTokenExpiry := time.Now().Add(utils.SecondsToNanoSeconds(oAuthToken.ExpiresIn))
+
 	oAuthTokenResponse = &models.OAuthTokenData{
-		OAuthToken:       *oAuthToken,
+		OAuthToken:       oAuthToken,
 		OAuthTokenExpiry: oAuthTokenExpiry.Format(time.RFC3339),
 	}
 
 	if !OverridesApplied() {
-		err = UpdateOAuthToken(c, oAuthTokenResponse)
+		err := UpdateOAuthToken(c, oAuthTokenResponse)
 		if err != nil {
 			return *oAuthTokenResponse, err
 		}
 	}
 
 	return *oAuthTokenResponse, nil
+}
+
+func outputHTML(w http.ResponseWriter, filename string, data interface{}) {
+	t, _ := template.ParseFiles(filename)
+	if err := t.Execute(w, data); err != nil {
+		logger.Fatal(err)
+	}
+}
+
+// Starts the local server at the redirect URI
+func startLocalServerFunc(c config.Configuration, authChannel chan []string) {
+	implicitFile := "./resources/sdk/clisdkclient/static/implicit.html"
+	address := strings.Replace(c.RedirectURI(), "http://localhost", "", -1)
+	port := address[0:5]
+	path := strings.Replace(address, port, "", -1)
+	if path == "" {
+		path = "/"
+	}
+
+	implicitCreds := ImplicitCredentials{
+		RedirectURI: c.RedirectURI(),
+		Environment: c.Environment(),
+		ClientID: c.ClientID(),
+	}
+
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		outputHTML(w, implicitFile, implicitCreds)
+		url := r.URL.String()
+
+		if strings.HasPrefix(url, "/access_token/") {
+			resData := getImplicitResponseDataFromURL(url)
+			authChannel <- resData
+			close(authChannel)
+			return
+		}
+	}
+
+	http.HandleFunc(path, handler)
+	log.Fatal(http.ListenAndServe(port, nil))
+}
+
+// parse data from url in the format '/access_token/12345/expires_in/299/token_type/bearer'
+func getImplicitResponseDataFromURL(url string) []string {
+	var data []string
+	splitURL := strings.Split(url, "/")
+	for i, v := range splitURL {
+		if v == "access_token" {
+			data = append(data, splitURL[i + 1])
+		} else if v == "expires_in" {
+			data = append(data, splitURL[i + 1])
+		} else if v == "token_type" {
+			data = append(data, splitURL[i + 1])
+		}
+	}
+	return data
+}
+
+func openBrowserForLoginFunc(loginURL string) {
+	var err error
+	switch runtime.GOOS {
+	case "linux":
+		err = exec.Command("xdg-open", loginURL).Start()
+	case "windows":
+		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", loginURL).Start()
+	case "darwin":
+		err = exec.Command("open", loginURL).Start()
+	default:
+		err = fmt.Errorf("unsupported platform")
+	}
+	if err != nil {
+		logger.Fatal(err)
+	}
 }
 
 //NewRESTClient is a constructor function to build an APIClient
