@@ -5,7 +5,6 @@ import (
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/retry"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
-	"html/template"
 	"log"
 	"net/http"
 	"os/exec"
@@ -288,16 +287,8 @@ func createOAuthTokenResponse(c config.Configuration, oAuthToken models.OAuthTok
 	return *oAuthTokenResponse, nil
 }
 
-func outputHTML(w http.ResponseWriter, filename string, data interface{}) {
-	t, _ := template.ParseFiles(filename)
-	if err := t.Execute(w, data); err != nil {
-		logger.Fatal(err)
-	}
-}
-
 // Starts the local server at the redirect URI
 func startLocalServerFunc(c config.Configuration, authChannel chan []string) {
-	implicitFile := "./resources/sdk/clisdkclient/static/implicit.html"
 	address := strings.Replace(c.RedirectURI(), "http://localhost", "", -1)
 	port := address[0:5]
 	path := strings.Replace(address, port, "", -1)
@@ -305,18 +296,16 @@ func startLocalServerFunc(c config.Configuration, authChannel chan []string) {
 		path = "/"
 	}
 
-	implicitCreds := ImplicitCredentials{
-		RedirectURI: c.RedirectURI(),
-		Environment: c.Environment(),
-		ClientID: c.ClientID(),
-	}
+	implicitWebpage := models.ImplicitWebpage{}
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		outputHTML(w, implicitFile, implicitCreds)
-		url := r.URL.String()
+		_, err := fmt.Fprintf(w, implicitWebpage.GetImplicitWebpage(c.ClientID(), c.Environment(), c.RedirectURI()))
+		if err != nil {
+			logger.Fatal(err)
+		}
 
-		if strings.HasPrefix(url, "/access_token/") {
-			resData := getImplicitResponseDataFromURL(url)
+		if strings.HasPrefix(r.URL.String(), "/access_token/") {
+			resData := getImplicitResponseDataFromURL(r.URL.String())
 			authChannel <- resData
 			close(authChannel)
 			return

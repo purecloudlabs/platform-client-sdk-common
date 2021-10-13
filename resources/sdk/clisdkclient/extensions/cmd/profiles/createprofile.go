@@ -104,11 +104,34 @@ func requestUserInput() config.Configuration {
 				}
 			}
 		}
-		
-		fmt.Printf("Client ID: ")
-		fmt.Scanln(&clientID)
-		fmt.Printf("Client Secret: ")
-		fmt.Scanln(&clientSecret)
+
+		if accessToken != "" {
+			fmt.Printf("Client ID (Optional): ")
+			fmt.Scanln(&clientID)
+		} else {
+			for true {
+				fmt.Printf("Client ID: ")
+				fmt.Scanln(&clientID)
+				if len(strings.TrimSpace(clientID)) != 0 {
+					break
+				}
+			}
+		}
+
+		// if using implicit grant or access token - no need for the client secret
+		if redirectURI != "" || accessToken != "" {
+			fmt.Printf("Client Secret (Optional): ")
+			fmt.Scanln(&clientSecret)
+		} else {
+			for true {
+				fmt.Printf("Client Secret: ")
+				fmt.Scanln(&clientSecret)
+				if len(strings.TrimSpace(clientSecret)) != 0 {
+					break
+				}
+			}
+		}
+
 		// users should only be allowed to continue if they provide an access token
 		if len(strings.TrimSpace(accessToken)) != 0 && len(strings.TrimSpace(clientID)) == 0 && len(strings.TrimSpace(clientSecret)) == 0 {
 			clientID = ""
@@ -120,6 +143,9 @@ func requestUserInput() config.Configuration {
 			break
 			// or both
 		} else if len(strings.TrimSpace(accessToken)) != 0 && len(strings.TrimSpace(clientID)) != 0 && len(strings.TrimSpace(clientSecret)) != 0 {
+			break
+			// Implicit login
+		} else if len(strings.TrimSpace(redirectURI)) != 0 && len(strings.TrimSpace(clientID)) != 0 {
 			break
 			// otherwise
 		} else {
