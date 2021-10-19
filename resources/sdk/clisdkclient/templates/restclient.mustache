@@ -1,12 +1,14 @@
 package restclient
 
 import (
+	"errors"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/retry"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
 	"log"
 	"net/http"
+
 	"os/exec"
 	"runtime"
 	"strconv"
@@ -38,12 +40,6 @@ var (
 type RESTClient struct {
 	environment string
 	token       string
-}
-
-type ImplicitCredentials struct {
-	RedirectURI string
-	Environment string
-	ClientID    string
 }
 
 //Get executes an HTTP Get
@@ -188,27 +184,17 @@ func ReAuthenticate(c config.Configuration) (models.OAuthTokenData, error) {
 }
 
 func authorize(c config.Configuration) (models.OAuthTokenData, error) {
-	authChannel := make(chan []string)
+	authChannel := make(chan models.OAuthToken)
 
 	// Using implicit grant
 	if c.RedirectURI() != "" {
 		go startLocalServer(c, authChannel)
 		openBrowserForLogin(c.RedirectURI())
 
-		responseData := <- authChannel
-
-		accessToken := responseData[0]
-		expiresIn, err := strconv.Atoi(responseData[1])
-		tokenType := responseData[2]
-
-		if err != nil {
-			logger.Fatal(err)
-		}
-
-		oAuthToken := models.OAuthToken{
-			AccessToken: accessToken,
-			ExpiresIn:   expiresIn,
-			TokenType:   tokenType,
+		oAuthToken := <-authChannel
+		if oAuthToken.Error != "" {
+			oAuthTokenResponse := &models.OAuthTokenData{}
+			return *oAuthTokenResponse, errors.New(oAuthToken.Error)
 		}
 
 		return createOAuthTokenResponse(c, oAuthToken)
@@ -288,7 +274,7 @@ func createOAuthTokenResponse(c config.Configuration, oAuthToken models.OAuthTok
 }
 
 // Starts the local server at the redirect URI
-func startLocalServerFunc(c config.Configuration, authChannel chan []string) {
+func startLocalServerFunc(c config.Configuration, authChannel chan models.OAuthToken) {
 	address := strings.Replace(c.RedirectURI(), "http://localhost", "", -1)
 	port := address[0:5]
 	path := strings.Replace(address, port, "", -1)
@@ -296,40 +282,58 @@ func startLocalServerFunc(c config.Configuration, authChannel chan []string) {
 		path = "/"
 	}
 
+	var oAuthToken models.OAuthToken
 	implicitWebpage := models.ImplicitWebpage{}
+	// Set initial web page as one containing the js to perform implicit login
+	initialPage := implicitWebpage.GetImplicitWebpage(c.ClientID(), c.Environment(), c.RedirectURI())
+	activePage := initialPage
 
-	handler := func(w http.ResponseWriter, r *http.Request) {
-		_, err := fmt.Fprintf(w, implicitWebpage.GetImplicitWebpage(c.ClientID(), c.Environment(), c.RedirectURI()))
+	http.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
+		_, err := fmt.Fprintf(w, activePage)
 		if err != nil {
 			logger.Fatal(err)
 		}
 
-		if strings.HasPrefix(r.URL.String(), "/access_token/") {
-			resData := getImplicitResponseDataFromURL(r.URL.String())
-			authChannel <- resData
+		// If no longer on displaying initial page -
+		// Give time for response page to print and close channel + server
+		if activePage != initialPage {
+			time.Sleep(4 * time.Second)
+			authChannel <- oAuthToken
 			close(authChannel)
 			return
 		}
-	}
 
-	http.HandleFunc(path, handler)
+		if strings.Contains(r.URL.String(), "/error/") || strings.Contains(r.URL.String(), "/access_token/") {
+			oAuthToken = getImplicitResponseDataFromURL(r.URL.String())
+			result := oAuthToken.Error
+			if result == "" {
+				result = "success"
+			}
+			activePage = implicitWebpage.GetResponsePage(result)
+		}
+	})
+
 	log.Fatal(http.ListenAndServe(port, nil))
 }
 
 // parse data from url in the format '/access_token/12345/expires_in/299/token_type/bearer'
-func getImplicitResponseDataFromURL(url string) []string {
-	var data []string
+func getImplicitResponseDataFromURL(url string) models.OAuthToken {
+	var response models.OAuthToken
 	splitURL := strings.Split(url, "/")
 	for i, v := range splitURL {
+		if v == "error" {
+			response.Error = splitURL[i+1]
+			break
+		}
 		if v == "access_token" {
-			data = append(data, splitURL[i + 1])
+			response.AccessToken = splitURL[i+1]
 		} else if v == "expires_in" {
-			data = append(data, splitURL[i + 1])
+			response.ExpiresIn, _ = strconv.Atoi(splitURL[i+1])
 		} else if v == "token_type" {
-			data = append(data, splitURL[i + 1])
+			response.TokenType = splitURL[i+1]
 		}
 	}
-	return data
+	return response
 }
 
 func openBrowserForLoginFunc(loginURL string) {
