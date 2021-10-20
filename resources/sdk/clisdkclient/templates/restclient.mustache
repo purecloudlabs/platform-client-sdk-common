@@ -284,7 +284,7 @@ func startLocalServerFunc(c config.Configuration, authChannel chan models.OAuthT
 
 	var oAuthToken models.OAuthToken
 	implicitWebpage := models.ImplicitWebpage{}
-	// Set initial web page as one containing the js to perform implicit login
+	// Set initial web page as one containing the javascript to perform implicit login
 	initialPage := implicitWebpage.GetImplicitWebpage(c.ClientID(), c.Environment(), c.RedirectURI())
 	activePage := initialPage
 
@@ -294,8 +294,9 @@ func startLocalServerFunc(c config.Configuration, authChannel chan models.OAuthT
 			logger.Fatal(err)
 		}
 
-		// If no longer on displaying initial page -
-		// Give time for response page to print and close channel + server
+		// If no longer displaying initial page -
+		// Give time for initialPage to refresh on the browser thereby printing the response page,
+		// Then close channel & server
 		if activePage != initialPage {
 			time.Sleep(4 * time.Second)
 			authChannel <- oAuthToken
@@ -305,11 +306,7 @@ func startLocalServerFunc(c config.Configuration, authChannel chan models.OAuthT
 
 		if strings.Contains(r.URL.String(), "/error/") || strings.Contains(r.URL.String(), "/access_token/") {
 			oAuthToken = getImplicitResponseDataFromURL(r.URL.String())
-			result := oAuthToken.Error
-			if result == "" {
-				result = "success"
-			}
-			activePage = implicitWebpage.GetResponsePage(result)
+			activePage = implicitWebpage.GetResponsePage(oAuthToken.Error)
 		}
 	})
 
