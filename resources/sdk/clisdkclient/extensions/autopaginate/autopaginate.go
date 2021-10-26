@@ -27,7 +27,7 @@ var enableAutopaginateCmd = &cobra.Command{
 		if err != nil {
 			logger.Fatal(err)
 		}
-		fmt.Printf("Autopaginate set to %t in configuration file.\n", enable)
+		fmt.Print("Autopagination enabled.\n")
 	},
 }
 
@@ -44,12 +44,33 @@ var disableAutopaginateCmd = &cobra.Command{
 		if err != nil {
 			logger.Fatal(err)
 		}
-		fmt.Printf("Autopaginate set to %t in configuration file.\n", disable)
+		fmt.Print("Autopagination disabled.\n")
+	},
+}
+
+var checkAutopaginateCmd = &cobra.Command{
+	Use:   "status",
+	Short: "Check autopaginate status.",
+	Long:  `Check autopaginate status in config.`,
+	Args:  utils.DetermineArgs([]string{ }),
+
+	Run: func(cmd *cobra.Command, args []string) {
+		profileName, _ := cmd.Root().Flags().GetString("profile")
+		status, err := config.GetAutopaginate(profileName)
+		if err != nil {
+			logger.Fatal(err)
+		}
+		if status {
+			fmt.Print("Autopagination is currently enabled.\n")
+		} else {
+			fmt.Print("Autopagination is currently disabled.\n")
+		}
 	},
 }
 
 func CmdAutopaginate() *cobra.Command {
 	autopaginateCmd.AddCommand(enableAutopaginateCmd)
 	autopaginateCmd.AddCommand(disableAutopaginateCmd)
+	autopaginateCmd.AddCommand(checkAutopaginateCmd)
 	return autopaginateCmd
 }
