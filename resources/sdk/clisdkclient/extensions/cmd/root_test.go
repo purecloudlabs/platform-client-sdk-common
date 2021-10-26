@@ -1,6 +1,9 @@
 package cmd
 
-import "testing"
+import (
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
+	"testing"
+)
 
 func TestVersionsAreEqual(t *testing.T) {
 	var tests = []struct {
@@ -40,7 +43,7 @@ func TestGetProfileName(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		got := getProfileName(test.input)
+		got := utils.GetProfileName(test.input)
 		if got != test.expected {
 			t.Errorf("TEST FAILED - Expected: %v, Got: %v", test.expected, got)
 		}

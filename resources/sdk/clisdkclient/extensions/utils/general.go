@@ -357,3 +357,21 @@ func isJSON(str string) bool {
 	var js json.RawMessage
 	return json.Unmarshal([]byte(str), &js) == nil
 }
+
+func GetProfileName(args []string) string {
+	name := ""
+	for i, s := range args {
+		if (s == "-p" || s == "--profile") && i < len(args)-1 {
+			return args[i+1]
+		}
+		if strings.HasPrefix(s, "--profile=") {
+			name = strings.Replace(s, "--profile=", "", -1)
+		} else if strings.HasPrefix(s, "-p=") {
+			name = strings.Replace(s, "-p=", "", -1)
+		}
+	}
+	if name == "" {
+		return "DEFAULT"
+	}
+	return name
+}

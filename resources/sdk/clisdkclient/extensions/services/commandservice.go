@@ -3,8 +3,10 @@ package services
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/autopaginate"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -482,8 +484,9 @@ func (c *commandService) DetermineAction(httpMethod string, uri string, flags *p
 		}
 		// These flags will be false if they're not available on the command (simple GETs) or if they haven't been set on a paginatable command
 		autoPaginate, _ := flags.GetBool("autopaginate")
+		autoPaginateInConfig, _ := config.GetAutopaginate(utils.GetProfileName(os.Args))
 		stream, _ := flags.GetBool("stream")
-		if !autoPaginate && !stream {
+		if !autoPaginate && !stream && !autoPaginateInConfig {
 			return retry.Retry(uri, c.Get)
 		}
 		// Stream if the user just sets stream or stream and autopaginate

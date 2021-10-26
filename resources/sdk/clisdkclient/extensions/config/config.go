@@ -281,6 +281,19 @@ func IsExperimentalFeatureEnabled(profileName string, featureName string) bool {
 	return viper.GetBool(fmt.Sprintf("%s.%s_enabled", profileName, featureName))
 }
 
+func SetAutopaginate(profileName string, enable bool) error {
+	viper.Set(fmt.Sprintf("%s.autopaginate", profileName), enable)
+	return viper.WriteConfig()
+}
+
+func GetAutopaginate(profileName string) (bool, error) {
+	err := viper.ReadInConfig()
+	if err != nil {
+		return false, err
+	}
+	return viper.GetBool(fmt.Sprintf("%s.autopaginate", profileName)), nil
+}
+
 func OverridesApplied() bool {
 	return ClientId != "" || ClientSecret != "" || Environment != "" || AccessToken != "" ||
 		os.Getenv("GENESYSCLOUD_OAUTHCLIENT_ID") != "" || os.Getenv("GENESYSCLOUD_OAUTHCLIENT_SECRET") != "" || os.Getenv("GENESYSCLOUD_REGION") != "" || os.Getenv("GENESYSCLOUD_ACCESS_TOKEN") != ""
