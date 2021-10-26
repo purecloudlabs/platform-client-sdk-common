@@ -3,7 +3,6 @@ package services
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/autopaginate"
 	"net/http"
 	"net/url"
 	"os"
