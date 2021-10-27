@@ -68,7 +68,7 @@ var checkAutopaginateCmd = &cobra.Command{
 	},
 }
 
-func CmdAutopaginate() *cobra.Command {
+func Cmdautopaginate() *cobra.Command {
 	autopaginateCmd.AddCommand(enableAutopaginateCmd)
 	autopaginateCmd.AddCommand(disableAutopaginateCmd)
 	autopaginateCmd.AddCommand(checkAutopaginateCmd)

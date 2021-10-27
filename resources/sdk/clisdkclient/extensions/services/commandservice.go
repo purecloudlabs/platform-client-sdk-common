@@ -53,6 +53,7 @@ var (
 	restclientNewRESTClient = restclient.NewRESTClient
 	// This will be set if the application silently re-authenticates for a 401 error
 	hasReAuthenticated bool
+	doAutoPagination bool
 )
 
 //NewCommandService initializes a new command Service object
@@ -312,6 +313,10 @@ func (c *commandService) List(uri string) (string, error) {
 
 	c.traceEnd()
 
+	// when List() is finished we need to set the doAutoPagination variable back to false
+	// this is done so each subsequent request will not end up "Listing"
+	setDoAutoPaginationToFalse()
+
 	return finalJSONString, nil
 }
 
@@ -474,25 +479,47 @@ func reAuthenticateIfNecessary(config config.Configuration, err error) error {
 	return nil
 }
 
+// sets doAutoPagination varibale in commandservice.go to true, this is called when running a "list" command
+func SetDoAutoPaginationToTrue() {
+	if !doAutoPagination {
+		doAutoPagination = true
+	}
+}
+// sets doAutoPagination varibale in commandservice.go to false, this is called when List() is finished
+func setDoAutoPaginationToFalse() {
+	if doAutoPagination {
+		doAutoPagination = false
+	}
+}
+
 func (c *commandService) DetermineAction(httpMethod string, uri string, flags *pflag.FlagSet) func(retryConfiguration *retry.RetryConfiguration) (string, error) {
 	logger.InitLogger(c.cmd)
 	switch httpMethod {
 	case http.MethodGet:
-		if flags == nil {
+
+		// if there are no flags and doAutoPagination has not been set
+		if flags == nil && !doAutoPagination {
+			// then just do a simple GET request
 			return retry.Retry(uri, c.Get)
 		}
+
 		// These flags will be false if they're not available on the command (simple GETs) or if they haven't been set on a paginatable command
 		autoPaginate, _ := flags.GetBool("autopaginate")
-		autoPaginateInConfig, _ := config.GetAutopaginate(utils.GetProfileName(os.Args))
 		stream, _ := flags.GetBool("stream")
-		if !autoPaginate && !stream && !autoPaginateInConfig {
+
+		// if autopaginate flag, stream flag and doAutoPagination variable have not been set
+		if !autoPaginate && !stream && !doAutoPagination {
 			return retry.Retry(uri, c.Get)
 		}
+
 		// Stream if the user just sets stream or stream and autopaginate
 		if stream {
 			return retry.Retry(uri, c.Stream)
 		}
+
+		// otherwise list
 		return retry.Retry(uri, c.List)
+
 	case http.MethodPatch:
 		if flags.Lookup("file") == nil || flags.Lookup("directory") == nil {
 			return retry.RetryWithData(uri, []string{""}, c.Patch)
