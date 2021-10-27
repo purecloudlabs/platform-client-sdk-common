@@ -332,5 +332,13 @@
 		"put": {
 			"name": "put"
 		}
+	},
+	"/api/v2/voicemail/userpolicies/{userId}": {
+		"put": {
+			"name": "put"
+		},
+		"patch": {
+			"name": "update"
+		}
 	}
 }
