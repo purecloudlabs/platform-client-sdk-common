@@ -82,7 +82,8 @@ var {{operationId}}Cmd = &cobra.Command{
 		}
 
         // get the value of autopaginate in config (true or false)
-        autoPaginationInConfig, _ := config.GetAutopaginate(utils.GetProfileName(os.Args))
+        profileName, _ := cmd.Root().Flags().GetString("profile")
+        autoPaginationInConfig, _ := config.GetAutoPaginationEnabled(profileName)
         // only set the doAutoPaginate variable in commandservice.go if autopaginate has been enabled - gc autopaginate enable
         const opId = "{{operationId}}"
         const listOpId = "list"

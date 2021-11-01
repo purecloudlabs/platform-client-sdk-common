@@ -478,13 +478,12 @@ func reAuthenticateIfNecessary(config config.Configuration, err error) error {
 	return nil
 }
 
-// sets doAutoPagination varibale in commandservice.go to true, this is called when running a "list" command
 func SetDoAutoPaginationToTrue() {
 	if !doAutoPagination {
 		doAutoPagination = true
 	}
 }
-// sets doAutoPagination varibale in commandservice.go to false, this is called when List() is finished
+
 func setDoAutoPaginationToFalse() {
 	if doAutoPagination {
 		doAutoPagination = false
@@ -503,15 +502,15 @@ func (c *commandService) DetermineAction(httpMethod string, uri string, flags *p
 		}
 
 		// These flags will be false if they're not available on the command (simple GETs) or if they haven't been set on a paginatable command
-		autoPaginate, _ := flags.GetBool("autopaginate")
+		autoPaginate, _ := flags.GetBool("autopagination")
 		stream, _ := flags.GetBool("stream")
 
-		// if autopaginate flag, stream flag and doAutoPagination variable have not been set
+		// if autopagination flag, stream flag and doAutoPagination variable have not been set
 		if !autoPaginate && !stream && !doAutoPagination {
 			return retry.Retry(uri, c.Get)
 		}
 
-		// Stream if the user just sets stream or stream and autopaginate
+		// Stream if the user just sets stream or stream and autopagination
 		if stream {
 			return retry.Retry(uri, c.Stream)
 		}
