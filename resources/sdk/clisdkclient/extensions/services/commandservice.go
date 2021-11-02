@@ -3,15 +3,12 @@ package services
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/services"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/spf13/pflag"
 
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
@@ -31,7 +28,7 @@ type CommandService interface {
 	Patch(uri string, payload string) (string, error)
 	Put(uri string, payload string) (string, error)
 	Delete(uri string) (string, error)
-	DetermineAction(httpMethod string, uri string, flags *pflag.FlagSet) func(retryConfiguration *retry.RetryConfiguration) (string, error)
+	DetermineAction(httpMethod string, uri string, cmd *cobra.Command, opId string) func(retryConfiguration *retry.RetryConfiguration) (string, error)
 }
 
 type commandService struct {
@@ -53,7 +50,6 @@ var (
 	restclientNewRESTClient = restclient.NewRESTClient
 	// This will be set if the application silently re-authenticates for a 401 error
 	hasReAuthenticated bool
-	doAutoPagination bool
 )
 
 //NewCommandService initializes a new command Service object
@@ -313,10 +309,6 @@ func (c *commandService) List(uri string) (string, error) {
 
 	c.traceEnd()
 
-	// when List() is finished we need to set the doAutoPagination variable back to false
-	// this is done so each subsequent request will not end up "Listing"
-	setDoAutoPaginationToFalse()
-
 	return finalJSONString, nil
 }
 
@@ -479,32 +471,21 @@ func reAuthenticateIfNecessary(config config.Configuration, err error) error {
 	return nil
 }
 
-func SetDoAutoPaginationToTrue() {
-	if !doAutoPagination {
-		doAutoPagination = true
-	}
-}
-
-func setDoAutoPaginationToFalse() {
-	if doAutoPagination {
-		doAutoPagination = false
-	}
-}
-
-func (c *commandService) DetermineAction(httpMethod string, uri string, cmd *cobra.Command, operationId string) func(retryConfiguration *retry.RetryConfiguration) (string, error) {
+func (c *commandService) DetermineAction(httpMethod string, uri string, cmd *cobra.Command, opId string) func(retryConfiguration *retry.RetryConfiguration) (string, error) {
 	flags := cmd.Flags()
 	logger.InitLogger(c.cmd)
 	switch httpMethod {
 	case http.MethodGet:
 
+		var doAutoPagination bool
+		const listOpId = "list"
 		profileName, _ := cmd.Root().Flags().GetString("profile")
 		autoPaginationInConfig, _ := config.GetAutoPaginationEnabled(profileName)
-		const listOpId = "list"
-		if autoPaginationInConfig && operationId == listOpId {
-			return retry.Retry(uri, c.List)
+		if autoPaginationInConfig && opId == listOpId {
+			doAutoPagination = true
 		}
 
-		if flags == nil {
+		if flags == nil && !doAutoPagination {
 			return retry.Retry(uri, c.Get)
 		}
 
@@ -512,7 +493,7 @@ func (c *commandService) DetermineAction(httpMethod string, uri string, cmd *cob
 		autoPaginate, _ := flags.GetBool("autopagination")
 		stream, _ := flags.GetBool("stream")
 
-		if !autoPaginate && !stream {
+		if !autoPaginate && !stream && !doAutoPagination {
 			return retry.Retry(uri, c.Get)
 		}
 

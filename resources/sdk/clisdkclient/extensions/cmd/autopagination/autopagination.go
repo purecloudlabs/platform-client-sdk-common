@@ -51,9 +51,9 @@ var checkAutoPaginationCmd = &cobra.Command{
 			logger.Fatal(err)
 		}
 		if status {
-			fmt.Print("Autopagination is currently enabled.\n")
+			fmt.Print("Auto-pagination is currently enabled.\n")
 		} else {
-			fmt.Print("Autopagination is currently disabled.\n")
+			fmt.Print("Auto-pagination is currently disabled.\n")
 		}
 	},
 }

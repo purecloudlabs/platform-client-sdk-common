@@ -129,7 +129,29 @@ gc notifications channels listen [CHANNEL_ID] --nohearbeat
 ```
 
 # Pagination
-As of version `3.0.0` the default behaviour will be to *not* automatically paginate any paginatable resources. To automatically paginate, you must pass the `--autopaginate` or `-a` flag. In addition, there is a new `--stream` or `-s` flag for paginatable resources. This will paginate through the results and print them one page at a time leaving the page information intact.
+As of version `3.0.0` the default behaviour will be to *not* automatically paginate any paginatable resources. 
+To automatically paginate, you must pass the `--autopaginate` or `-a` flag. 
+
+Alternatively, you can set auto-pagination in your configuration file.
+
+To enable auto-pagination, run the following command:
+
+```
+gc autopagination enable
+```
+
+To disable auto-pagination:
+
+```
+gc autopagination disable
+```
+
+To check if auto-pagination in config is enabled or disabled:
+
+```
+gc autopagination status
+```
+In addition, there is a new `--stream` or `-s` flag for paginatable resources. This will paginate through the results and print them one page at a time leaving the page information intact.
 
 # Autocompletion
 
