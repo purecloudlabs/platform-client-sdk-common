@@ -79,8 +79,8 @@ var {{operationId}}Cmd = &cobra.Command{
 		}
 
         const opId = "{{operationId}}"
-
-		retryFunc := CommandService.DetermineAction("{{httpMethod}}", urlString, cmd, opId)
+        const httpMethod = "{{httpMethod}}"
+		retryFunc := CommandService.DetermineAction(httpMethod, urlString, cmd, opId)
 		// TODO read from config file
 		retryConfig := &retry.RetryConfiguration{
 			RetryWaitMin: 5 * time.Second,

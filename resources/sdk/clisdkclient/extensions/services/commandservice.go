@@ -490,7 +490,7 @@ func (c *commandService) DetermineAction(httpMethod string, uri string, cmd *cob
 		}
 
 		// These flags will be false if they're not available on the command (simple GETs) or if they haven't been set on a paginatable command
-		autoPaginate, _ := flags.GetBool("autopagination")
+		autoPaginate, _ := flags.GetBool("autopaginate")
 		stream, _ := flags.GetBool("stream")
 
 		if !autoPaginate && !stream && !doAutoPagination {

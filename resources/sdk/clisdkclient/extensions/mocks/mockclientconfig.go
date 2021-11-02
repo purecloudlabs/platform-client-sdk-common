@@ -8,14 +8,14 @@ import (
 )
 
 type MockClientConfig struct {
-	ProfileNameFunc    func() string
-	EnvironmentFunc    func() string
-	ClientIDFunc       func() string
-	ClientSecretFunc   func() string
-	OAuthTokenDataFunc func() string
-	AccessTokenFunc    func() string
-	LogFilePathFunc    func() string
-	LoggingEnabledFunc func() bool
+	ProfileNameFunc           func() string
+	EnvironmentFunc           func() string
+	ClientIDFunc              func() string
+	ClientSecretFunc          func() string
+	OAuthTokenDataFunc        func() string
+	AccessTokenFunc           func() string
+	LogFilePathFunc           func() string
+	LoggingEnabledFunc        func() bool
 	AutoPaginationEnabledFunc func() bool
 }
 

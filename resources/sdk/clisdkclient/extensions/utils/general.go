@@ -71,7 +71,7 @@ func AddFileFlagIfUpsert(flags *pflag.FlagSet, method string, jsonSchema string)
 
 func AddPaginateFlagsIfListingResponse(flags *pflag.FlagSet, method, jsonSchema string) {
 	if method == http.MethodGet && strings.Contains(jsonSchema, "SWAGGER_OVERRIDE_list") {
-		flags.BoolP("autopagination", "a", false, "Automatically paginate through the results stripping page information")
+		flags.BoolP("autopaginate", "a", false, "Automatically paginate through the results stripping page information")
 		flags.BoolP("stream", "s", false, "Paginate and stream data as it is being processed leaving page information intact")
 	}
 }

@@ -25,14 +25,14 @@ type Configuration interface {
 }
 
 type configuration struct {
-	profileName    string
-	environment    string
-	clientID       string
-	clientSecret   string
-	oAuthTokenData string
-	accessToken    string
-	logFilePath    string
-	loggingEnabled bool
+	profileName           string
+	environment           string
+	clientID              string
+	clientSecret          string
+	oAuthTokenData        string
+	accessToken           string
+	logFilePath           string
+	loggingEnabled        bool
 	autoPaginationEnabled bool
 }
 
@@ -182,13 +182,13 @@ func GetConfig(profileName string) (Configuration, error) {
 	}
 
 	return &configuration{profileName: profileName,
-		clientID:       viper.GetString(fmt.Sprintf("%s.client_credentials", profileName)),
-		clientSecret:   viper.GetString(fmt.Sprintf("%s.client_secret", profileName)),
-		environment:    viper.GetString(fmt.Sprintf("%s.environment", profileName)),
-		oAuthTokenData: viper.GetString(fmt.Sprintf("%s.oauth_token_data", profileName)),
-		accessToken:    viper.GetString(fmt.Sprintf("%s.access_token", profileName)),
-		logFilePath:    viper.GetString(fmt.Sprintf("%s.log_file_path", profileName)),
-		loggingEnabled: viper.GetBool(fmt.Sprintf("%s.logging_enabled", profileName)),
+		clientID:              viper.GetString(fmt.Sprintf("%s.client_credentials", profileName)),
+		clientSecret:          viper.GetString(fmt.Sprintf("%s.client_secret", profileName)),
+		environment:           viper.GetString(fmt.Sprintf("%s.environment", profileName)),
+		oAuthTokenData:        viper.GetString(fmt.Sprintf("%s.oauth_token_data", profileName)),
+		accessToken:           viper.GetString(fmt.Sprintf("%s.access_token", profileName)),
+		logFilePath:           viper.GetString(fmt.Sprintf("%s.log_file_path", profileName)),
+		loggingEnabled:        viper.GetBool(fmt.Sprintf("%s.logging_enabled", profileName)),
 		autoPaginationEnabled: viper.GetBool(fmt.Sprintf("%s.auto_pagination_enabled", profileName)),
 	}, nil
 }
@@ -212,14 +212,14 @@ func ListConfigs() ([]configuration, error) {
 	configurations := make([]configuration, 0)
 	for profileName, _ := range settings {
 		configurations = append(configurations, configuration{
-			profileName:    profileName,
-			clientID:       viper.GetString(fmt.Sprintf("%s.client_credentials", profileName)),
-			clientSecret:   viper.GetString(fmt.Sprintf("%s.client_secret", profileName)),
-			environment:    viper.GetString(fmt.Sprintf("%s.environment", profileName)),
-			oAuthTokenData: viper.GetString(fmt.Sprintf("%s.oauth_token_data", profileName)),
-			accessToken:    viper.GetString(fmt.Sprintf("%s.access_token", profileName)),
-			logFilePath:    viper.GetString(fmt.Sprintf("%s.log_file_path", profileName)),
-			loggingEnabled: viper.GetBool(fmt.Sprintf("%s.logging_enabled", profileName)),
+			profileName:           profileName,
+			clientID:              viper.GetString(fmt.Sprintf("%s.client_credentials", profileName)),
+			clientSecret:          viper.GetString(fmt.Sprintf("%s.client_secret", profileName)),
+			environment:           viper.GetString(fmt.Sprintf("%s.environment", profileName)),
+			oAuthTokenData:        viper.GetString(fmt.Sprintf("%s.oauth_token_data", profileName)),
+			accessToken:           viper.GetString(fmt.Sprintf("%s.access_token", profileName)),
+			logFilePath:           viper.GetString(fmt.Sprintf("%s.log_file_path", profileName)),
+			loggingEnabled:        viper.GetBool(fmt.Sprintf("%s.logging_enabled", profileName)),
 			autoPaginationEnabled: viper.GetBool(fmt.Sprintf("%s.auto_pagination_enabled", profileName)),
 		})
 	}

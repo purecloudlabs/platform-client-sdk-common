@@ -18,7 +18,7 @@ var enableAutoPaginationCmd = &cobra.Command{
 	Use:   "enable",
 	Short: "Permanently enable autopagination.",
 	Long:  `Permanently enable autopagination.`,
-	Args:  utils.DetermineArgs([]string{ }),
+	Args:  utils.DetermineArgs([]string{}),
 
 	Run: func(cmd *cobra.Command, args []string) {
 		const enabled = true
@@ -30,7 +30,7 @@ var disableAutoPaginationCmd = &cobra.Command{
 	Use:   "disable",
 	Short: "Permanently disable autopagination.",
 	Long:  `Permanently disable autopagination.`,
-	Args:  utils.DetermineArgs([]string{ }),
+	Args:  utils.DetermineArgs([]string{}),
 
 	Run: func(cmd *cobra.Command, args []string) {
 		const disabled = false
@@ -42,7 +42,7 @@ var checkAutoPaginationCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Check autopagination status in config.",
 	Long:  "Check autopagination status in config.",
-	Args:  utils.DetermineArgs([]string{ }),
+	Args:  utils.DetermineArgs([]string{}),
 
 	Run: func(cmd *cobra.Command, args []string) {
 		profileName, _ := cmd.Root().Flags().GetString("profile")
