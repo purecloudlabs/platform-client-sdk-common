@@ -8,14 +8,14 @@ import (
 )
 
 var autoPaginationCmd = &cobra.Command{
-	Use:   "autopaginationion",
-	Short: "autopaginationion",
+	Use:   "autopagination",
+	Short: "autopagination",
 	Long:  `automatic pagination`,
 }
 
 var enableAutoPaginationCmd = &cobra.Command{
 	Use:   "enable",
-	Short: "Permanently enable autopaginationion.",
+	Short: "Permanently enable autopagination.",
 	Long:  `Permanently enable autopagination.`,
 	Args:  utils.DetermineArgs([]string{ }),
 
@@ -27,7 +27,7 @@ var enableAutoPaginationCmd = &cobra.Command{
 
 var disableAutoPaginationCmd = &cobra.Command{
 	Use:   "disable",
-	Short: "Permanently disable autopaginationion.",
+	Short: "Permanently disable autopagination.",
 	Long:  `Permanently disable autopagination.`,
 	Args:  utils.DetermineArgs([]string{ }),
 
