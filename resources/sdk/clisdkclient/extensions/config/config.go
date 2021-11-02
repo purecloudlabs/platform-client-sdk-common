@@ -130,7 +130,7 @@ func (c *configuration) AutoPaginationEnabled() bool {
 }
 
 func (c *configuration) String() string {
-	return fmt.Sprintf(`{"profileName": "%s", "environment": "%s", "logFilePath": "%s", "loggingEnabled": "%v", "clientName": "%s", "clientSecret": "%s", "accessToken": "%s", "autoPaginationEnabled": "%s"}`, c.ProfileName(), c.Environment(), c.LogFilePath(), c.LoggingEnabled(), c.ClientID(), c.ClientSecret(), c.AccessToken(), c.AutoPaginationEnabled())
+	return fmt.Sprintf(`{"profileName": "%s", "environment": "%s", "logFilePath": "%s", "loggingEnabled": "%v", "clientName": "%s", "clientSecret": "%s", "accessToken": "%s", "autoPaginationEnabled": "%v"}`, c.ProfileName(), c.Environment(), c.LogFilePath(), c.LoggingEnabled(), c.ClientID(), c.ClientSecret(), c.AccessToken(), c.AutoPaginationEnabled())
 }
 
 func applyEnvironmentVariableOverrides() {

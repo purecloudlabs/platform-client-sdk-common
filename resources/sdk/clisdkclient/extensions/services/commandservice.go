@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/services"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -490,14 +491,20 @@ func setDoAutoPaginationToFalse() {
 	}
 }
 
-func (c *commandService) DetermineAction(httpMethod string, uri string, flags *pflag.FlagSet) func(retryConfiguration *retry.RetryConfiguration) (string, error) {
+func (c *commandService) DetermineAction(httpMethod string, uri string, cmd *cobra.Command, operationId string) func(retryConfiguration *retry.RetryConfiguration) (string, error) {
+	flags := cmd.Flags()
 	logger.InitLogger(c.cmd)
 	switch httpMethod {
 	case http.MethodGet:
 
-		// if there are no flags and doAutoPagination has not been set
-		if flags == nil && !doAutoPagination {
-			// then just do a simple GET request
+		profileName, _ := cmd.Root().Flags().GetString("profile")
+		autoPaginationInConfig, _ := config.GetAutoPaginationEnabled(profileName)
+		const listOpId = "list"
+		if autoPaginationInConfig && operationId == listOpId {
+			return retry.Retry(uri, c.List)
+		}
+
+		if flags == nil {
 			return retry.Retry(uri, c.Get)
 		}
 
@@ -505,8 +512,7 @@ func (c *commandService) DetermineAction(httpMethod string, uri string, flags *p
 		autoPaginate, _ := flags.GetBool("autopagination")
 		stream, _ := flags.GetBool("stream")
 
-		// if autopagination flag, stream flag and doAutoPagination variable have not been set
-		if !autoPaginate && !stream && !doAutoPagination {
+		if !autoPaginate && !stream {
 			return retry.Retry(uri, c.Get)
 		}
 
@@ -515,7 +521,6 @@ func (c *commandService) DetermineAction(httpMethod string, uri string, flags *p
 			return retry.Retry(uri, c.Stream)
 		}
 
-		// otherwise list
 		return retry.Retry(uri, c.List)
 
 	case http.MethodPatch:

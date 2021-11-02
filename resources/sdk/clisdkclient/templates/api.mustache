@@ -66,7 +66,6 @@ var {{operationId}}Cmd = &cobra.Command{
 		{{paramName}}, args := args[0], args[1:]
 		path = strings.Replace(path, "{{=[[ ]]=}}{[[baseName]]}[[={{ }}=]]", fmt.Sprintf("%v", {{paramName}}), -1){{/pathParams}}
 
-
 		{{#hasQueryParams}}{{#queryParams}}{{paramName}} := utils.GetFlag(cmd.Flags(), "{{{dataType}}}", "{{paramName}}")
 		if {{paramName}} != "" {
 			queryParams["{{paramName}}"] = {{paramName}}
@@ -80,19 +79,8 @@ var {{operationId}}Cmd = &cobra.Command{
 			urlString = strings.TrimSuffix(urlString, "&")
 		}
 
-        // get the value of autopaginate in config (true or false)
-        profileName, _ := cmd.Root().Flags().GetString("profile")
-        autoPaginationInConfig, _ := config.GetAutoPaginationEnabled(profileName)
-        // only set the doAutoPaginate variable in commandservice.go if autopaginate has been enabled - gc autopaginate enable
         const opId = "{{operationId}}"
-        const listOpId = "list"
-        if autoPaginationInConfig && opId == listOpId {
-            // then we will set the doAutoPagination variable in commandservice.go to true
-            // this is done so we know that the GET request in Commandservice.DertermineAction() will be "List"
-            services.SetDoAutoPaginationToTrue()
-        }
-
-		retryFunc := CommandService.DetermineAction("{{httpMethod}}", urlString, cmd.Flags())
+		retryFunc := CommandService.DetermineAction("{{httpMethod}}", urlString, cmd, opId)
 		// TODO read from config file
 		retryConfig := &retry.RetryConfiguration{
 			RetryWaitMin: 5 * time.Second,
