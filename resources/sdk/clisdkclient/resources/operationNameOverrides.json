@@ -254,6 +254,11 @@
 			"name": "modify"
 		}
 	},
+	"/api/v2/speechandtextanalytics/sentimentfeedback/{sentimentFeedbackId}": {
+        "delete": {
+            "name": "deletebyid"
+        }
+    },
 	"/api/v2/speechandtextanalytics/settings": {
 		"patch": {
 			"name": "patch"
