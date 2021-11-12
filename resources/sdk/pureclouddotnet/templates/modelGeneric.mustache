@@ -25,6 +25,13 @@
         {{/isEnum}}
         {{/vars}}
     {{#hasRequired}}
+
+        // {{#vars}}
+        // vars
+        // {{#isReadOnly}}
+        // isReadOnly
+        // {{/isReadOnly}}
+        // {{/vars}}
         /// <summary>
         /// Initializes a new instance of the <see cref="{{classname}}" /> class.
         /// </summary>
@@ -104,17 +111,17 @@
             if (other == null)
                 return false;
 
-            return true{{#vars}}{{#isNotContainer}} &&
+            return true{{#vars}}{{^isContainer}} &&
                 (
                     this.{{name}} == other.{{name}} ||
                     this.{{name}} != null &&
                     this.{{name}}.Equals(other.{{name}})
-                ){{/isNotContainer}}{{^isNotContainer}} &&
+                ){{/isContainer}}{{#isContainer}} &&
                 (
                     this.{{name}} == other.{{name}} ||
                     this.{{name}} != null &&
                     this.{{name}}.SequenceEqual(other.{{name}})
-                ){{/isNotContainer}}{{/vars}}{{^vars}} && false{{/vars}};
+                ){{/isContainer}}{{/vars}}{{^vars}} && false{{/vars}};
         }
 
         /// <summary>
