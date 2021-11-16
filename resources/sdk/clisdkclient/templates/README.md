@@ -238,13 +238,7 @@ The `Alternative Formats` feature allows you to specify the input and output for
 
 **Note:** The default format for the `CLI` is `JSON`.
 
-To use the `Alternative Formats` feature, first enable the feature with:
-
-```
-gc experimental enable alternative_formats
-```
-
-Once enabled, you can pass a supported value (e.g `YAML` or `JSON`) to the `--inputformat` flag or to the `--outputformat` flag.
+To use the `Alternative Formats` feature, pass a supported value (e.g `YAML` or `JSON`) to the `--inputformat` flag or to the `--outputformat` flag.
 
 To input `YAML` data:
 
@@ -317,13 +311,7 @@ The `Transform Data` feature uses `Go` templates for transforming output data. T
 
 **Note:**  You may also use [sprig template functions](http://masterminds.github.io/sprig/) with the Transform Data feature.
 
-To use the `Transform Data` feature, first enable the feature with:
-
-```
-gc experimental enable transform_data
-```
-
-Once enabled, you can pass either a `Go` template file to the `--transform` flag or a "raw" template string to the `--transformstr` flag.
+To use the `Transform Data` feature, you can pass either a `Go` template file to the `--transform` flag or a "raw" template string to the `--transformstr` flag.
 
 To input a `Go` template file:
 
