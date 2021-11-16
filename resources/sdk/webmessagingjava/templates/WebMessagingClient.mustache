@@ -184,6 +184,7 @@ public class WebMessagingClient {
      * Configures a new session with a randomly generated session token
      *
      * @param deploymentId     The ID of the Web Messaging deployment
+     * @param origin           Represents the origin of the request. You can restrict access in Messenger Deployments
      */
     public void configureSession(String deploymentId, String origin) {
         configureSession(deploymentId, UUID.randomUUID().toString(), origin);
@@ -194,6 +195,7 @@ public class WebMessagingClient {
      *
      * @param deploymentId     The ID of the Web Messaging deployment
      * @param token            The session token
+     * @param origin           Represents the origin of the request. You can restrict access in Messenger Deployments
      */
     public void configureSession(String deploymentId,  String token, String origin) {
         try {
@@ -220,6 +222,7 @@ public class WebMessagingClient {
    * Configures a new authenticated session with a randomly generated session token
    *
    * @param deploymentId     The ID of the Web Messaging deployment
+   * @param origin           Represents the origin of the request. You can restrict access in Messenger Deployments
    * @param data             The session OAuthParams for configuring Authenticated Session
    */
   public void configureAuthenticatedSession(String deploymentId, String origin, OAuthParams data) {
@@ -231,6 +234,7 @@ public class WebMessagingClient {
    *
    * @param deploymentId     The ID of the Web Messaging deployment
    * @param token            The session token
+   * @param origin           Represents the origin of the request. You can restrict access in Messenger Deployments
    * @param data             The session OAuthParams for configuring Authenticated Session
    */
   public void configureAuthenticatedSession(String deploymentId,  String token, String origin, OAuthParams data) {
