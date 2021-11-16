@@ -6,22 +6,25 @@
     {
         {{#vars}}
         {{#isEnum}}
+        //vars
 {{>modelInnerEnum}}
         {{/isEnum}}
         {{#items.isEnum}}
         {{#items}}
+        //items
 {{>modelInnerEnum}}
         {{/items}}
         {{/items.isEnum}}
         {{/vars}}
         {{#vars}}
         {{#isEnum}}
+        // vars isEnum
         /// <summary>
         /// {{^description}}Gets or Sets {{{name}}}{{/description}}{{#description}}{{{description}}}{{/description}}
         /// </summary>{{#description}}
         /// <value>{{{description}}}</value>{{/description}}
         [DataMember(Name="{{baseName}}", EmitDefaultValue={{emitDefaultValue}})]
-        public {{{datatypeWithEnum}}}{{#isEnum}}?{{/isEnum}} {{name}} { get; set; }
+        public {{{datatypeWithEnum}}}? {{name}} { get; set; }
         {{/isEnum}}
         {{/vars}}
     {{#hasRequired}}
@@ -41,7 +44,7 @@
         /// <summary>
         /// Initializes a new instance of the <see cref="{{classname}}" /> class.
         /// </summary>{{#vars}}{{^isReadOnly}}
-        /// <param name="{{name}}">{{#description}}{{description}}{{/description}}{{^description}}{{name}}{{/description}}{{#required}} (required){{/required}}{{#defaultValue}} (default to {{defaultValue}}){{/defaultValue}}.</param>{{/isReadOnly}}{{/vars}}
+        /// <param name="{{name}}">{{#description}}{{{description}}}{{/description}}{{^description}}{{name}}{{/description}}{{#required}} (required){{/required}}{{#defaultValue}} (default to {{defaultValue}}){{/defaultValue}}.</param>{{/isReadOnly}}{{/vars}}
         public {{classname}}({{#vars}}{{^isReadOnly}}{{{datatypeWithEnum}}}{{#isEnum}}?{{/isEnum}} {{name}} = null{{/isReadOnly}}{{#hasMoreNonReadOnly}}, {{/hasMoreNonReadOnly}}{{/vars}})
         {
             {{#vars}}{{^isReadOnly}}{{#defaultValue}}// use default value if no "{{name}}" provided
@@ -57,15 +60,19 @@
         }
         
         {{#vars}}
+
         {{^isEnum}}
+
         /// <summary>
-        /// {{^description}}Gets or Sets {{{name}}}{{/description}}{{#description}}{{description}}{{/description}}
+        /// {{^description}}Gets or Sets {{{name}}}{{/description}}{{#description}}{{{description}}}{{/description}}
         /// </summary>{{#description}}
-        /// <value>{{description}}</value>{{/description}}
+        /// <value>{{{description}}}</value>{{/description}}
         [DataMember(Name="{{baseName}}", EmitDefaultValue={{emitDefaultValue}})]
         public {{{datatypeWithEnum}}} {{name}} { get; {{#isReadOnly}}private {{/isReadOnly}}set; }
         {{/isEnum}}
+
         {{/vars}}
+
         /// <summary>
         /// Returns the string presentation of the object
         /// </summary>
@@ -74,8 +81,10 @@
         {
             var sb = new StringBuilder();
             sb.Append("class {{classname}} {\n");
+
             {{#vars}}
-            sb.Append("  {{name}}: ").Append({{name}}).Append("\n");{{/vars}}
+            sb.Append("  {{name}}: ").Append({{name}}).Append("\n");
+            {{/vars}}
             sb.Append("}\n");
             return sb.ToString();
         }
@@ -86,7 +95,11 @@
         /// <returns>JSON string presentation of the object</returns>
         public {{#parent}} new {{/parent}}string ToJson()
         {
-            return JsonConvert.SerializeObject(this, Formatting.Indented);
+            return JsonConvert.SerializeObject(this, new JsonSerializerSettings
+            {
+                MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
+                Formatting = Formatting.Indented
+            });
         }
 
         /// <summary>
@@ -138,6 +151,7 @@
                 {{#vars}}
                 if (this.{{name}} != null)
                     hash = hash * 59 + this.{{name}}.GetHashCode();
+
                 {{/vars}}
                 return hash;
             }

@@ -1,4 +1,4 @@
-exit 0
+# exit 0
 BUILD_DIR=$1
 COMMON_DIR=$2
 ROOT_NAMESPACE=$3
