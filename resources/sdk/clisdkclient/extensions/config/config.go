@@ -273,7 +273,7 @@ func GetOutputFormat(profileName string) (string, error) {
 	return viper.GetString(fmt.Sprintf("%s.output_format", profileName)), nil
 }
 
-func GetExperimentalFeature(profileName string, featureName string) bool {
+func IsExperimentalFeatureEnabled(profileName string, featureName string) bool {
 	err := viper.ReadInConfig()
 	if err != nil {
 		return false

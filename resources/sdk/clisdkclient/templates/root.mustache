@@ -142,29 +142,25 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&config.ClientSecret, "clientsecret", "", "clientSecret override")
 	rootCmd.PersistentFlags().StringVar(&config.AccessToken, "accesstoken", "", "accessToken override")
 
-	if config.GetExperimentalFeature(getProfileName(os.Args), models.AlternativeFormats.String()) {
-		rootCmd.PersistentFlags().StringVar(&data_format.InputFormat, "inputformat", "", "Data input format. Supported formats: YAML, JSON")
-		rootCmd.PersistentFlags().StringVar(&data_format.OutputFormat, "outputformat", "", "Data output format. Supported formats: YAML, JSON")
+	rootCmd.PersistentFlags().StringVar(&transform_data.TemplateFile, "transform", "", "Provide a Go template file for transforming output data")
+	rootCmd.PersistentFlags().StringVar(&transform_data.TemplateStr, "transformstr", "", "Provide a Go template string for transforming output data")
 
-		if data_format.OutputFormat == "" {
-			data_format.OutputFormat, _ = config.GetOutputFormat(getProfileName(os.Args))
-		}
-		if data_format.InputFormat == "" {
-			data_format.InputFormat, _ = config.GetInputFormat(getProfileName(os.Args))
-		}
+	rootCmd.PersistentFlags().StringVar(&data_format.InputFormat, "inputformat", "", "Data input format. Supported formats: YAML, JSON")
+	rootCmd.PersistentFlags().StringVar(&data_format.OutputFormat, "outputformat", "", "Data output format. Supported formats: YAML, JSON")
 
-		rootCmd.AddCommand(alternative_formats.Cmdalternative_formats())
+	if data_format.OutputFormat == "" {
+		data_format.OutputFormat, _ = config.GetOutputFormat(getProfileName(os.Args))
+	}
+	if data_format.InputFormat == "" {
+		data_format.InputFormat, _ = config.GetInputFormat(getProfileName(os.Args))
 	}
 
-	if config.GetExperimentalFeature(getProfileName(os.Args), models.TransformData.String()) {
-		rootCmd.PersistentFlags().StringVar(&transform_data.TemplateFile, "transform", "", "Provide a Go template file for transforming output data")
-		rootCmd.PersistentFlags().StringVar(&transform_data.TemplateStr, "transformstr", "", "Provide a Go template string for transforming output data")
-	}
+	rootCmd.AddCommand(alternative_formats.Cmdalternative_formats())
 
 	rootCmd.AddCommand(versionCmd)
 	{{addCommands}}
 
-	if config.GetExperimentalFeature(getProfileName(os.Args), models.DummyCommand.String()) {
+	if config.IsExperimentalFeatureEnabled(getProfileName(os.Args), models.DummyCommand.String()) {
 		rootCmd.AddCommand(dummy_command.Cmddummy_command())
 	}
 
