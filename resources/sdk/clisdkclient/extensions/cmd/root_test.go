@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
 	"testing"
 )
 
