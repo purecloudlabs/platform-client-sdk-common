@@ -43,7 +43,7 @@ func TestGetProfileName(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		got := utils.GetProfileName(test.input)
+		got := getProfileName(test.input)
 		if got != test.expected {
 			t.Errorf("TEST FAILED - Expected: %v, Got: %v", test.expected, got)
 		}
