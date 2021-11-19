@@ -264,6 +264,11 @@
 			"name": "patch"
 		}
 	},
+	"/api/v2/speechandtextanalytics/sentimentfeedback": {
+		"delete": {
+			"name": "deleteallsentimentfeedback"
+		}
+	},
 	"/api/v2/telephony/providers/edges/{edgeId}/logicalinterfaces": {
 		"get": {
 			"name": "getedgelogicalinterfaces"
