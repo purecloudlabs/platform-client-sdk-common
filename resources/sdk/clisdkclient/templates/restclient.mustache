@@ -6,6 +6,7 @@ import (
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/retry"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/restclient/tls"
 	"log"
 	"net/http"
 
@@ -35,6 +36,7 @@ var (
 	OverridesApplied    = config.OverridesApplied
 	openBrowserForLogin = openBrowserForLoginFunc
 	startLocalServer    = startLocalServerFunc
+	httpsPort           = ":10443"
 )
 
 type RESTClient struct {
@@ -282,6 +284,9 @@ func startLocalServerFunc(c config.Configuration, authChannel chan models.OAuthT
 		path = "/"
 	}
 
+	// Generate a self-signed X.509 certificate for a TLS server
+	tls.GenerateCerts("localhost")
+
 	var oAuthToken models.OAuthToken
 	implicitWebpage := models.ImplicitWebpage{}
 	// Set initial web page as one containing the javascript to perform implicit login
@@ -310,7 +315,12 @@ func startLocalServerFunc(c config.Configuration, authChannel chan models.OAuthT
 		}
 	})
 
-	log.Fatal(http.ListenAndServe(port, nil))
+	go http.ListenAndServe(port, http.HandlerFunc(redirectToSecureHttp))
+	log.Fatal(http.ListenAndServeTLS(httpsPort, "cert.pem", "key.pem", nil))
+}
+
+func redirectToSecureHttp(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "https://127.0.0.1" + httpsPort + r.RequestURI, http.StatusMovedPermanently)
 }
 
 // parse data from url in the format '/access_token/12345/expires_in/299/token_type/bearer'

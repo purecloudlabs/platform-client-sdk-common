@@ -77,3 +77,7 @@ typings/
 
 # User/project-specific configurations
 .idea/
+
+# HTTPS certs generated for CLI implicit login
+key.pem
+cert.pem
