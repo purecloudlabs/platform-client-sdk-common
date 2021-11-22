@@ -13,7 +13,7 @@
     "extensionsDestination": "${SDK_REPO}/build/platformclientv2/",
     "swagger": {
       "oldSwaggerPath": "${SDK_REPO}/swagger.json",
-      "newSwaggerPath": "${WORKSPACE}/platform-client-sdk-common/new_swagger.js",
+      "newSwaggerPath": "https://api.mypurecloud.com/api/v2/docs/swagger",
       "saveNewSwaggerPath": "${SDK_REPO}/swagger.json"
     },
     "swaggerCodegen": {
