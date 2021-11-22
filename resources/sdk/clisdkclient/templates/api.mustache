@@ -65,7 +65,6 @@ var {{operationId}}Cmd = &cobra.Command{
 		{{paramName}}, args := args[0], args[1:]
 		path = strings.Replace(path, "{{=[[ ]]=}}{[[baseName]]}[[={{ }}=]]", fmt.Sprintf("%v", {{paramName}}), -1){{/pathParams}}
 
-
 		{{#hasQueryParams}}{{#queryParams}}{{paramName}} := utils.GetFlag(cmd.Flags(), "{{{dataType}}}", "{{paramName}}")
 		if {{paramName}} != "" {
 			queryParams["{{paramName}}"] = {{paramName}}
@@ -79,7 +78,9 @@ var {{operationId}}Cmd = &cobra.Command{
 			urlString = strings.TrimSuffix(urlString, "&")
 		}
 
-		retryFunc := CommandService.DetermineAction("{{httpMethod}}", urlString, cmd.Flags())
+		const opId = "{{operationId}}"
+		const httpMethod = "{{httpMethod}}"
+		retryFunc := CommandService.DetermineAction(httpMethod, urlString, cmd, opId)
 		// TODO read from config file
 		retryConfig := &retry.RetryConfiguration{
 			RetryWaitMin: 5 * time.Second,
