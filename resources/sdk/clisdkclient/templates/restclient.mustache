@@ -11,6 +11,7 @@ import (
 	"net/http"
 
 	"os/exec"
+	"os"
 	"runtime"
 	"strconv"
 	"time"
@@ -285,7 +286,10 @@ func startLocalServerFunc(c config.Configuration, authChannel chan models.OAuthT
 	}
 
 	// Generate a self-signed X.509 certificate for a TLS server
-	tls.GenerateCerts("localhost")
+	err := tls.GenerateCerts()
+	if err != nil {
+		logger.Fatal(err)
+	}
 
 	var oAuthToken models.OAuthToken
 	implicitWebpage := models.ImplicitWebpage{}
@@ -316,7 +320,7 @@ func startLocalServerFunc(c config.Configuration, authChannel chan models.OAuthT
 	})
 
 	go http.ListenAndServe(port, http.HandlerFunc(redirectToSecureHttp))
-	log.Fatal(http.ListenAndServeTLS(httpsPort, "cert.pem", "key.pem", nil))
+	log.Fatal(http.ListenAndServeTLS(httpsPort, os.TempDir() + "cert.pem", os.TempDir() + "key.pem", nil))
 }
 
 func redirectToSecureHttp(w http.ResponseWriter, r *http.Request) {
