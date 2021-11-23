@@ -37,7 +37,7 @@ func New{{classname}}WithConfig(config *Configuration) *{{classname}} {
 // {{summary}}{{/summary}}{{#notes}}
 //
 // {{notes}}{{/notes}}
-func (a {{classname}}) {{nickname}}({{#allParams}}{{paramName}} {{{dataType}}}{{#hasMore}}, {{/hasMore}}{{/allParams}}) ({{#returnType}}{{^isListContainer}}*{{/isListContainer}}{{{returnType}}}, {{/returnType}}*APIResponse, error) {
+func (a {{classname}}) {{nickname}}({{#allParams}}{{paramName}} {{{dataType}}}{{^-last}}, {{/-last}}{{/allParams}}) ({{#returnType}}{{^isListContainer}}*{{/isListContainer}}{{{returnType}}}, {{/returnType}}*APIResponse, error) {
 	var httpMethod = "{{httpMethod}}"
 	// create path and map variables
 	path := a.Configuration.BasePath + "{{path}}"{{#pathParams}}
