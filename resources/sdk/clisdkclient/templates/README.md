@@ -24,7 +24,10 @@ If you are using the CLI in a pipeline or don't wish to set up a config file, se
 
 The "environment" value can be provided as the API base path such as `mypurecloud.com` or AWS region.
 
-To setup and configure your gc CLI run `gc profiles new` command and answer the questions.  If everything works correctly you should have a file created in your home directory called .gc/config.toml.  If for some reason you have problems with the `gc profiles new` command, you can manually create the config file by following the steps below.
+To setup and configure your gc CLI run `gc profiles new` command and answer the questions. If you choose not to use client credentials, you will be asked to enter a port number for the redirect URI that will be used to validate the client implicitly through a web browser. 
+For this, a secure HTTP connection is established using a self-signed certificate, which means you will need to select **Advanced > Proceed to 127.0.0.1** in the browser window.
+
+If everything works correctly you should have a file created in your home directory called .gc/config.toml.  If for some reason you have problems with the `gc profiles new` command, you can manually create the config file by following the steps below.
 
 -  Create .gc directory in your home directory
 -  Create a config.toml file in this directory.
