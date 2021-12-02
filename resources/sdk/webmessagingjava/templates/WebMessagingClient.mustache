@@ -247,12 +247,12 @@ public class WebMessagingClient {
       }
 
       // Create configuration request
-      ConfigureSessionAuthenticatedRequest configureSessionAuthenticatedRequest = new ConfigureSessionAuthenticatedRequest();
-      configureSessionAuthenticatedRequest.setAction(RequestTypeConfigureSessionAuthenticated.CONFIGURESESSIONAUTHENTICATED);
-      configureSessionAuthenticatedRequest.setDeploymentId(deploymentId);
-      configureSessionAuthenticatedRequest.setToken(token);
-      configureSessionAuthenticatedRequest.setData(data);
-      String payload = objectMapper.writeValueAsString(configureSessionAuthenticatedRequest);
+      ConfigureAuthenticatedSessionRequest configureAuthenticatedSessionRequest = new ConfigureAuthenticatedSessionRequest();
+      configureAuthenticatedSessionRequest.setAction(RequestTypeConfigureAuthenticatedSessionRequest.CONFIGUREAUTHENTICATEDSESSION);
+      configureAuthenticatedSessionRequest.setDeploymentId(deploymentId);
+      configureAuthenticatedSessionRequest.setToken(token);
+      configureAuthenticatedSessionRequest.setData(data);
+      String payload = objectMapper.writeValueAsString(configureAuthenticatedSessionRequest);
 
       webSocket.sendText(payload, true);
     } catch (JsonProcessingException e) {
