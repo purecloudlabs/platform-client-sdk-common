@@ -333,8 +333,6 @@ The `Transform Data` feature uses `Go` templates for transforming output data. T
 
 **Note:**  You may also use [sprig template functions](http://masterminds.github.io/sprig/) with the Transform Data feature.
 
-To use the `Transform Data` feature, you can pass either a `Go` template file to the `--transform` flag or a "raw" template string to the `--transformstr` flag.
-
 To input a `Go` template file:
 
 ```

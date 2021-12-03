@@ -5,13 +5,18 @@ import (
 	"encoding/json"
 	"github.com/Masterminds/sprig"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
+	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"text/template"
 )
 
 var (
 	TemplateFile string
 	TemplateStr  string
+
+	fileName string
 )
 
 func ConvertJsonToMap(data string) interface{} {
@@ -42,8 +47,18 @@ func convertArrayOfObjectsToMap(data string) []map[string]interface{} {
 
 func ProcessTemplateFile(mp interface{}) string {
 	path := []string{TemplateFile}
-	name := filepath.Base(path[0])
-	tmpl := handleParse(template.New(name).Funcs(sprig.TxtFuncMap()).ParseFiles(path...))
+	fileName = filepath.Base(path[0])
+
+	if strings.Contains(TemplateFile, "github") {
+		err := pullRemoteFileToTmpDir(TemplateFile)
+		if err != nil {
+			logger.Fatalf("Failed to pull remote file. Error: %v\n", err)
+		}
+		TemplateFile = os.TempDir() + fileName
+		path = []string{TemplateFile}
+	}
+
+	tmpl := handleParse(template.New(fileName).Funcs(sprig.TxtFuncMap()).ParseFiles(path...))
 	return process(tmpl, mp)
 }
 
@@ -70,4 +85,47 @@ func handleParse(t *template.Template, err error) *template.Template {
 		logger.Fatalf("Error parsing: %v\n", err)
 	}
 	return t
+}
+
+func pullRemoteFileToTmpDir(url string) error {
+	rawURL := getFullUrlToRawFile(url)
+	var cmd *exec.Cmd
+
+	// curl request to pull file to current directory
+	cmd = exec.Command("curl", "-LJO", rawURL)
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	// copy file to temporary directory
+	cmd = exec.Command("cp", fileName, os.TempDir())
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	// remove file from current directory
+	cmd = exec.Command("rm", fileName)
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func getFullUrlToRawFile(url string) string {
+	rawURL := url
+
+	if !strings.Contains(rawURL, "https://") {
+		rawURL = "https://" + rawURL
+	}
+
+	if !strings.Contains(rawURL, "raw.githubusercontent.com") {
+		rawURL = strings.Replace(rawURL, "github.com", "raw.githubusercontent.com", 1)
+		rawURL = strings.Replace(rawURL, "blob/", "", 1)
+	}
+
+	return rawURL
 }
