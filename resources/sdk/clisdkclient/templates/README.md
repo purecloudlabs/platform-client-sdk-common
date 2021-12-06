@@ -333,10 +333,18 @@ The `Transform Data` feature uses `Go` templates for transforming output data. T
 
 **Note:**  You may also use [sprig template functions](http://masterminds.github.io/sprig/) with the Transform Data feature.
 
-To input a `Go` template file:
+To input a local `Go` template file:
 
 ```
 --transform=./tmpl.gotmpl
+```
+
+To input a `Go` template file stored in a remote GitHub repository, any of the following approaches are acceptable:
+```
+--transform=https://github.com/foobar/path/to/file.gotmpl
+--transform=github.com/foobar/path/to/file.gotmpl
+--transform=https://raw.githubusercontent.com/foobar/path/to/file.gotmpl
+--transform=raw.githubusercontent.com/foobar/path/to/file.gotmpl
 ```
 
 To input a `Go` template string:
