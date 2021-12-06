@@ -207,10 +207,10 @@ func TestSetProfileSkills(t *testing.T) {
 		t.Error(response.Error)
 	} else {
 		// Validate response
-		if len(skills) != 1 {
+		if len(*skills) != 1 {
 			t.Errorf("Skills array contained the wrong number of elements. Expected 1: %v", skills)
-		} else if skills[0] != config.userProfileSkill {
-			t.Errorf("Skill did not match. Expected %v, actual: %v", config.userProfileSkill, skills[0])
+		} else if (*skills)[0] != config.userProfileSkill {
+			t.Errorf("Skill did not match. Expected %v, actual: %v", config.userProfileSkill, (*skills)[0])
 		}
 	}
 }
