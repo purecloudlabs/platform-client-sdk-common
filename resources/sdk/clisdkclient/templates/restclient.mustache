@@ -191,6 +191,13 @@ func authorize(c config.Configuration) (models.OAuthTokenData, error) {
 
 	// Using implicit grant
 	if c.RedirectURI() != "" {
+		if c.SecureLoginEnabled() {
+			// Generate a self-signed X.509 certificate for a TLS server
+			err := tls.GenerateCerts()
+			if err != nil {
+				logger.Fatal(err)
+			}
+		}
 		go startLocalServer(c, authChannel)
 		openBrowserForLogin(c.RedirectURI())
 
@@ -285,12 +292,6 @@ func startLocalServerFunc(c config.Configuration, authChannel chan models.OAuthT
 		path = "/"
 	}
 
-	// Generate a self-signed X.509 certificate for a TLS server
-	err := tls.GenerateCerts()
-	if err != nil {
-		logger.Fatal(err)
-	}
-
 	var oAuthToken models.OAuthToken
 	implicitWebpage := models.ImplicitWebpage{}
 	// Set initial web page as one containing the javascript to perform implicit login
@@ -319,11 +320,16 @@ func startLocalServerFunc(c config.Configuration, authChannel chan models.OAuthT
 		}
 	})
 
-	go http.ListenAndServe(port, http.HandlerFunc(redirectToSecureHttp))
-	log.Fatal(http.ListenAndServeTLS(httpsPort, os.TempDir() + "cert.pem", os.TempDir() + "key.pem", nil))
+	if c.SecureLoginEnabled() {
+		go http.ListenAndServe(port, http.HandlerFunc(redirectToSecureHttp))
+		log.Fatal(http.ListenAndServeTLS(httpsPort, os.TempDir() + "cert.pem", os.TempDir() + "key.pem", nil))
+	} else {
+		log.Fatal(http.ListenAndServe(port, nil))
+	}
 }
 
 func redirectToSecureHttp(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
 	http.Redirect(w, r, "https://127.0.0.1" + httpsPort + r.RequestURI, http.StatusMovedPermanently)
 }
 

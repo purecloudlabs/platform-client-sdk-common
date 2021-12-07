@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func constructConfig(profileName string, environment string, clientID string, clientSecret string, redirectURI string, accessToken string) config.Configuration {
+func constructConfig(profileName string, environment string, clientID string, clientSecret string, redirectURI string, secureLoginEnabled bool, accessToken string) config.Configuration {
 	c := &mocks.MockClientConfig{}
 
 	c.ProfileNameFunc = func() string {
@@ -49,6 +49,10 @@ func constructConfig(profileName string, environment string, clientID string, cl
 		return redirectURI
 	}
 
+	c.SecureLoginEnabledFunc = func() bool {
+		return secureLoginEnabled
+	}
+
 	c.OAuthTokenDataFunc = func() string {
 		return ""
 	}
@@ -68,6 +72,7 @@ func requestUserInput() config.Configuration {
 	var accessToken string
 	var authChoice string
 	var redirectURI string
+	var secureLoginEnabled bool
 
 	fmt.Print("Profile Name [DEFAULT]: ")
 	fmt.Scanln(&name)
@@ -98,6 +103,18 @@ func requestUserInput() config.Configuration {
 					break
 				}
 				if strings.ToUpper(authChoice) == "N" {
+					authChoice = ""
+					for true {
+						fmt.Print("Would you like to open a secure HTTP connection? [Y/N]: ")
+						fmt.Scanln(&authChoice)
+						if strings.ToUpper(authChoice) == "Y" {
+							secureLoginEnabled = true
+							break
+						} else if strings.ToUpper(authChoice) == "N" {
+							secureLoginEnabled = false
+							break
+						}
+					}
 					redirectURI = requestRedirectURI()
 					fmt.Printf("Redirect URI: %s\n", redirectURI)
 					break
@@ -154,7 +171,7 @@ func requestUserInput() config.Configuration {
 		}
 	}
 
-	return constructConfig(name, environment, clientID, clientSecret, redirectURI, accessToken)
+	return constructConfig(name, environment, clientID, clientSecret, redirectURI, secureLoginEnabled, accessToken)
 }
 
 func requestRedirectURI() string {

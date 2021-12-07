@@ -20,6 +20,7 @@ type Configuration interface {
 	OAuthTokenData() string
 	AccessToken() string
 	LogFilePath() string
+	SecureLoginEnabled() bool
 	LoggingEnabled() bool
 	AutoPaginationEnabled() bool
 	fmt.Stringer
@@ -30,6 +31,7 @@ type configuration struct {
 	environment           string
 	clientID              string
 	clientSecret          string
+	secureLoginEnabled    bool
 	redirectURI           string
 	oAuthTokenData        string
 	accessToken           string
@@ -89,6 +91,10 @@ func (c *configuration) AccessToken() string {
 	return viper.GetString(fmt.Sprintf("%s.access_token", c.profileName))
 }
 
+func (c *configuration) SecureLoginEnabled() bool {
+	return viper.GetBool(fmt.Sprintf("%s.secure_login_enabled", c.profileName))
+}
+
 func (c *configuration) RedirectURI() string {
 	return viper.GetString(fmt.Sprintf("%s.redirect_uri", c.profileName))
 }
@@ -136,7 +142,7 @@ func (c *configuration) AutoPaginationEnabled() bool {
 }
 
 func (c *configuration) String() string {
-	return fmt.Sprintf(`{"profileName": "%s", "environment": "%s", "logFilePath": "%s", "loggingEnabled": "%v", "clientName": "%s", "clientSecret": "%s", "redirectURI": "%s", "accessToken": "%s", "autoPaginationEnabled": "%v"}`, c.ProfileName(), c.Environment(), c.LogFilePath(), c.LoggingEnabled(), c.ClientID(), c.ClientSecret(), c.RedirectURI(), c.AccessToken(), c.AutoPaginationEnabled())
+	return fmt.Sprintf(`{"profileName": "%s", "environment": "%s", "logFilePath": "%s", "loggingEnabled": "%v", "clientName": "%s", "clientSecret": "%s", "secureLoginEnabled": "%v", "redirectURI": "%s", "accessToken": "%s", "autoPaginationEnabled": "%v"}`, c.ProfileName(), c.Environment(), c.LogFilePath(), c.LoggingEnabled(), c.ClientID(), c.ClientSecret(), c.SecureLoginEnabled(), c.RedirectURI(), c.AccessToken(), c.AutoPaginationEnabled())
 }
 
 func applyEnvironmentVariableOverrides() {
@@ -197,6 +203,7 @@ func GetConfig(profileName string) (Configuration, error) {
 		logFilePath:           viper.GetString(fmt.Sprintf("%s.log_file_path", profileName)),
 		loggingEnabled:        viper.GetBool(fmt.Sprintf("%s.logging_enabled", profileName)),
 		autoPaginationEnabled: viper.GetBool(fmt.Sprintf("%s.auto_pagination_enabled", profileName)),
+		secureLoginEnabled:    viper.GetBool(fmt.Sprintf("%s.secure_login_enabled", profileName)),
 	}, nil
 }
 
@@ -229,6 +236,7 @@ func ListConfigs() ([]configuration, error) {
 			logFilePath:           viper.GetString(fmt.Sprintf("%s.log_file_path", profileName)),
 			loggingEnabled:        viper.GetBool(fmt.Sprintf("%s.logging_enabled", profileName)),
 			autoPaginationEnabled: viper.GetBool(fmt.Sprintf("%s.auto_pagination_enabled", profileName)),
+			secureLoginEnabled:    viper.GetBool(fmt.Sprintf("%s.secure_login_enabled", profileName)),
 		})
 	}
 
@@ -243,20 +251,20 @@ func UpdateOAuthToken(c Configuration, data *models.OAuthTokenData) error {
 	return updateConfig(configuration{
 		profileName:    c.ProfileName(),
 		oAuthTokenData: data.String(),
-	}, nil, nil)
+	}, nil, nil, nil)
 }
 
 func UpdateLogFilePath(c Configuration, filePath string) error {
 	return updateConfig(configuration{
 		profileName: c.ProfileName(),
 		logFilePath: filePath,
-	}, nil, nil)
+	}, nil, nil, nil)
 }
 
 func SetLoggingEnabled(c Configuration, loggingEnabled bool) error {
 	return updateConfig(configuration{
 		profileName: c.ProfileName(),
-	}, &loggingEnabled, nil)
+	}, &loggingEnabled, nil, nil)
 }
 
 func SetExperimentalFeature(profileName string, featureName string, enabled bool) error {
@@ -301,7 +309,7 @@ func IsExperimentalFeatureEnabled(profileName string, featureName string) bool {
 func SetAutoPaginationEnabled(c Configuration, autoPaginationEnabled bool) error {
 	return updateConfig(configuration{
 		profileName: c.ProfileName(),
-	}, nil, &autoPaginationEnabled)
+	}, nil, &autoPaginationEnabled, nil)
 }
 
 func GetAutoPaginationEnabled(profileName string) (bool, error) {
@@ -317,7 +325,7 @@ func OverridesApplied() bool {
 		os.Getenv("GENESYSCLOUD_OAUTHCLIENT_ID") != "" || os.Getenv("GENESYSCLOUD_OAUTHCLIENT_SECRET") != "" || os.Getenv("GENESYSCLOUD_REGION") != "" || os.Getenv("GENESYSCLOUD_ACCESS_TOKEN") != ""
 }
 
-func updateConfig(c configuration, loggingEnabled *bool, autoPaginationEnabled *bool) error {
+func updateConfig(c configuration, loggingEnabled *bool, autoPaginationEnabled *bool, secureLoginEnabled *bool) error {
 	if c.clientID != "" {
 		viper.Set(fmt.Sprintf("%s.client_credentials", c.profileName), c.clientID)
 	}
@@ -345,6 +353,9 @@ func updateConfig(c configuration, loggingEnabled *bool, autoPaginationEnabled *
 	if autoPaginationEnabled != nil {
 		viper.Set(fmt.Sprintf("%s.auto_pagination_enabled", c.profileName), *autoPaginationEnabled)
 	}
+	if secureLoginEnabled != nil {
+		viper.Set(fmt.Sprintf("%s.secure_login_enabled", c.profileName), *secureLoginEnabled)
+	}
 
 	if viper.ConfigFileUsed() == "" {
 		return nil
@@ -359,6 +370,7 @@ func writeConfig(c Configuration, data *models.OAuthTokenData, logFilePath strin
 	viper.Set(fmt.Sprintf("%s.redirect_uri", c.ProfileName()), c.RedirectURI())
 	viper.Set(fmt.Sprintf("%s.environment", c.ProfileName()), c.Environment())
 	viper.Set(fmt.Sprintf("%s.access_token", c.ProfileName()), c.AccessToken())
+	viper.Set(fmt.Sprintf("%s.secure_login_enabled", c.ProfileName()), c.SecureLoginEnabled())
 	if data != nil {
 		viper.Set(fmt.Sprintf("%s.oauth_token_data", c.ProfileName()), data.String())
 	}

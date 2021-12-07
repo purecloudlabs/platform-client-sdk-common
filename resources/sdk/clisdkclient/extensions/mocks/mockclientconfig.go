@@ -18,6 +18,7 @@ type MockClientConfig struct {
 	LogFilePathFunc           func() string
 	LoggingEnabledFunc        func() bool
 	AutoPaginationEnabledFunc func() bool
+	SecureLoginEnabledFunc    func() bool
 }
 
 var UpdatedAccessToken string
@@ -58,12 +59,16 @@ func (m *MockClientConfig) LoggingEnabled() bool {
 	return m.LoggingEnabledFunc()
 }
 
+func (m *MockClientConfig) SecureLoginEnabled() bool {
+	return m.SecureLoginEnabledFunc()
+}
+
 func (m *MockClientConfig) AutoPaginationEnabled() bool {
 	return m.AutoPaginationEnabledFunc()
 }
 
 func (m *MockClientConfig) String() string {
-	return fmt.Sprintf("\n-------------\nProfile Name: %s\nEnvironment: %s\nLogging Enabled: %v\nLog File Path: %s\nClient ID: %s\nClient Secret: %s\nRedirect URI: %s\nAccess Token: %s\nAutoPagination Enabled: %v\n--------------\n", m.ProfileName(), m.Environment(), m.LoggingEnabled(), m.LogFilePath(), m.ClientID(), m.ClientSecret(), m.RedirectURI(), m.AccessToken(), m.AutoPaginationEnabled())
+	return fmt.Sprintf("\n-------------\nProfile Name: %s\nEnvironment: %s\nLogging Enabled: %v\nLog File Path: %s\nClient ID: %s\nClient Secret: %s\nRedirect URI: %s\nSecure Login Enabled: %v\nAccess Token: %s\nAutoPagination Enabled: %v\n--------------\n", m.ProfileName(), m.Environment(), m.LoggingEnabled(), m.LogFilePath(), m.ClientID(), m.ClientSecret(), m.RedirectURI(), m.SecureLoginEnabled(), m.AccessToken(), m.AutoPaginationEnabled())
 }
 
 func UpdateOAuthToken(_ config.Configuration, oauthTokenData *models.OAuthTokenData) error {
