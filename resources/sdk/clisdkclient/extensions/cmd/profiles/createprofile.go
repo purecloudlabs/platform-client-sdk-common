@@ -14,6 +14,21 @@ import (
 	"github.com/spf13/viper"
 )
 
+type GrantType string
+
+const (
+	None              GrantType = "0"
+	ClientCredentials           = "1"
+	ImplicitGrant               = "2"
+)
+
+func isValidGrantType(t GrantType) bool {
+	if t == None || t == ClientCredentials || t == ImplicitGrant {
+		return true
+	}
+	return false
+}
+
 func constructConfig(profileName string, environment string, clientID string, clientSecret string, redirectURI string, secureLoginEnabled bool, accessToken string) config.Configuration {
 	c := &mocks.MockClientConfig{}
 
@@ -72,7 +87,8 @@ func requestUserInput() config.Configuration {
 	var accessToken string
 	var authChoice string
 	var redirectURI string
-	var secureLoginEnabled bool
+	var grantType GrantType
+	secureLoginEnabled := false
 
 	fmt.Print("Profile Name [DEFAULT]: ")
 	fmt.Scanln(&name)
@@ -88,90 +104,78 @@ func requestUserInput() config.Configuration {
 		environment = "mypurecloud.com"
 	}
 
-	fmt.Printf("Please provide either an Access Token, Client Credentials (Client ID and Client Secret) or both\n")
-	fmt.Printf("Note: If you provide an Access Token, this will be used over Client Credentials\n")
+	fmt.Print("Note: If you provide an access token, this will take precedence over any authorization grant type.\n")
+	fmt.Print("Access Token (Optional): ")
+	fmt.Scanln(&accessToken)
+
 	for true {
-		fmt.Printf("Access Token: ")
-		fmt.Scanln(&accessToken)
+		fmt.Print("Select your authorization grant type.\n")
+		fmt.Print("\t0. None\n\t1. Client Credentials\n\t2. Implicit Grant\nGrant Type: ")
+		fmt.Scanln(&grantType)
 
-		if len(strings.TrimSpace(accessToken)) == 0 {
-			for true {
-				fmt.Print("Are you using client credentials? [Y/N]: ")
-				fmt.Scanln(&authChoice)
-				if authChoice == "" || strings.ToUpper(authChoice) == "Y" {
-					redirectURI = ""
-					break
-				}
-				if strings.ToUpper(authChoice) == "N" {
-					authChoice = ""
-					for true {
-						fmt.Print("Would you like to open a secure HTTP connection? [Y/N]: ")
-						fmt.Scanln(&authChoice)
-						if strings.ToUpper(authChoice) == "Y" {
-							secureLoginEnabled = true
-							break
-						} else if strings.ToUpper(authChoice) == "N" {
-							secureLoginEnabled = false
-							break
-						}
-					}
-					redirectURI = requestRedirectURI()
-					fmt.Printf("Redirect URI: %s\n", redirectURI)
-					break
-				}
-			}
+		if accessToken == "" && grantType == None {
+			fmt.Print("If you have not provided an access token, you must select a grant type.\n")
+			continue
 		}
-
-		if accessToken != "" {
-			fmt.Printf("Client ID (Optional): ")
-			fmt.Scanln(&clientID)
-		} else {
-			for true {
-				fmt.Printf("Client ID: ")
-				fmt.Scanln(&clientID)
-				if len(strings.TrimSpace(clientID)) != 0 {
-					break
-				}
-			}
+		if isValidGrantType(grantType) {
+			break
 		}
+	}
 
-		// if using implicit grant or access token - no need for the client secret
-		if redirectURI != "" || accessToken != "" {
-			fmt.Printf("Client Secret (Optional): ")
-			fmt.Scanln(&clientSecret)
-		} else {
-			for true {
-				fmt.Printf("Client Secret: ")
-				fmt.Scanln(&clientSecret)
-				if len(strings.TrimSpace(clientSecret)) != 0 {
-					break
-				}
+	clientID, clientSecret = requestClientCreds(accessToken, grantType)
+
+	if grantType == ImplicitGrant {
+		redirectURI = requestRedirectURI()
+		fmt.Printf("Redirect URI: %s\n", redirectURI)
+		for true {
+			fmt.Print("Would you like to open a secure HTTP connection? [Y/N]: ")
+			fmt.Scanln(&authChoice)
+			if strings.ToUpper(authChoice) == "Y" {
+				secureLoginEnabled = true
+				break
+			} else if strings.ToUpper(authChoice) == "N" {
+				secureLoginEnabled = false
+				break
 			}
-		}
-
-		// users should only be allowed to continue if they provide an access token
-		if len(strings.TrimSpace(accessToken)) != 0 && len(strings.TrimSpace(clientID)) == 0 && len(strings.TrimSpace(clientSecret)) == 0 {
-			clientID = ""
-			clientSecret = ""
-			break
-			// or if they provide client credentials
-		} else if len(strings.TrimSpace(accessToken)) == 0 && len(strings.TrimSpace(clientID)) != 0 && len(strings.TrimSpace(clientSecret)) != 0 {
-			accessToken = ""
-			break
-			// or both
-		} else if len(strings.TrimSpace(accessToken)) != 0 && len(strings.TrimSpace(clientID)) != 0 && len(strings.TrimSpace(clientSecret)) != 0 {
-			break
-			// Implicit login
-		} else if len(strings.TrimSpace(redirectURI)) != 0 && len(strings.TrimSpace(clientID)) != 0 {
-			break
-			// otherwise
-		} else {
-			fmt.Printf("Please provide either an Access Token, Client Credentials (Client ID and Client Secret) or both\n")
-			fmt.Printf("Note: If you provide an Access Token, this will be used over Client Credentials\n")
 		}
 	}
 
 	return constructConfig(name, environment, clientID, clientSecret, redirectURI, secureLoginEnabled, accessToken)
+}
+
+func requestClientCreds(accessToken string, grantType GrantType) (string, string) {
+	id := ""
+	secret := ""
+
+	if grantType == ClientCredentials {
+		if accessToken != "" {
+			fmt.Print("Client ID: ")
+			fmt.Scanln(&id)
+
+			fmt.Print("Client Secret: ")
+			fmt.Scanln(&secret)
+		} else {
+			for id == "" {
+				fmt.Print("Client ID: ")
+				fmt.Scanln(&id)
+			}
+			for secret == "" {
+				fmt.Print("Client Secret: ")
+				fmt.Scanln(&secret)
+			}
+		}
+	} else if grantType == ImplicitGrant {
+		// Implicit Grant
+		for id == "" {
+			fmt.Print("Client ID: ")
+			fmt.Scanln(&id)
+		}
+
+		fmt.Print("Client Secret (Optional): ")
+		fmt.Scanln(&secret)
+	}
+
+	return id, secret
 }
 
 func requestRedirectURI() string {
