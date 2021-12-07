@@ -2,7 +2,6 @@ package transform_data
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -173,23 +172,4 @@ func TestGetRawPathFromURL(t *testing.T) {
 			t.Errorf("The correct raw URL was not generated. \nExpected: %s\nGot: %s", expectedResult, result)
 		}
 	}
-}
-
-func TestPullTemplateFileFromRemoteRepo(t *testing.T) {
-	fileName = "basic.gotmpl"
-	url := "https://raw.githubusercontent.com/charliecon/cli-transforms/master/users/" + fileName
-
-	err := pullRemoteFileToTmpDir(url)
-	if err != nil {
-		t.Errorf("Error should be nil, got: %v\n", err)
-	}
-
-	// Check to see that the file was written to os.TempDir()
-	if _, err = os.Stat(os.TempDir() + fileName); os.IsNotExist(err) {
-		t.Fatalf("File %s should exist in %s but does not. Error: %s", fileName, os.TempDir(), err)
-	}
-
-	defer func() {
-		_ = os.Remove(os.TempDir() + fileName)
-	}()
 }

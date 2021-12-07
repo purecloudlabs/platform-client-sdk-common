@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"github.com/Masterminds/sprig"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
-	"os"
-	"os/exec"
+	"io/ioutil"
+	"log"
+	"net/http"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -50,12 +51,20 @@ func ProcessTemplateFile(mp interface{}) string {
 	fileName = filepath.Base(path[0])
 
 	if strings.Contains(TemplateFile, "github") {
-		err := pullRemoteFileToTmpDir(TemplateFile)
+		rawURL := getFullUrlToRawFile(TemplateFile)
+
+		resp, err := http.Get(rawURL)
 		if err != nil {
-			logger.Fatalf("Failed to pull remote file. Error: %v\n", err)
+			logger.Fatal(err)
 		}
-		TemplateFile = os.TempDir() + fileName
-		path = []string{TemplateFile}
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		TemplateStr = string(body)
+		return ProcessTemplateStr(mp)
 	}
 
 	tmpl := handleParse(template.New(fileName).Funcs(sprig.TxtFuncMap()).ParseFiles(path...))
@@ -85,34 +94,6 @@ func handleParse(t *template.Template, err error) *template.Template {
 		logger.Fatalf("Error parsing: %v\n", err)
 	}
 	return t
-}
-
-func pullRemoteFileToTmpDir(url string) error {
-	rawURL := getFullUrlToRawFile(url)
-	var cmd *exec.Cmd
-
-	// curl request to pull file to current directory
-	cmd = exec.Command("curl", "-LJO", rawURL)
-	err := cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	// copy file to temporary directory
-	cmd = exec.Command("cp", fileName, os.TempDir())
-	err = cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	// remove file from current directory
-	cmd = exec.Command("rm", fileName)
-	err = cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func getFullUrlToRawFile(url string) string {
