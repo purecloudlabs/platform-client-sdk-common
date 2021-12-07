@@ -6,35 +6,26 @@
     {
         {{#vars}}
         {{#isEnum}}
-        //vars
 {{>modelInnerEnum}}
         {{/isEnum}}
         {{#items.isEnum}}
         {{#items}}
-        //items
 {{>modelInnerEnum}}
         {{/items}}
         {{/items.isEnum}}
         {{/vars}}
         {{#vars}}
         {{#isEnum}}
-        // vars isEnum
         /// <summary>
         /// {{^description}}Gets or Sets {{{name}}}{{/description}}{{#description}}{{{description}}}{{/description}}
         /// </summary>{{#description}}
         /// <value>{{{description}}}</value>{{/description}}
         [DataMember(Name="{{baseName}}", EmitDefaultValue={{emitDefaultValue}})]
-        public {{{datatypeWithEnum}}}? {{name}} { get; set; }
+        public {{{datatypeWithEnum}}}? {{name}} { get; {{#isReadOnly}}private {{/isReadOnly}}set; }
         {{/isEnum}}
         {{/vars}}
     {{#hasRequired}}
 
-        // {{#vars}}
-        // vars
-        // {{#isReadOnly}}
-        // isReadOnly
-        // {{/isReadOnly}}
-        // {{/vars}}
         /// <summary>
         /// Initializes a new instance of the <see cref="{{classname}}" /> class.
         /// </summary>
@@ -45,7 +36,7 @@
         /// Initializes a new instance of the <see cref="{{classname}}" /> class.
         /// </summary>{{#vars}}{{^isReadOnly}}
         /// <param name="{{name}}">{{#description}}{{{description}}}{{/description}}{{^description}}{{name}}{{/description}}{{#required}} (required){{/required}}{{#defaultValue}} (default to {{defaultValue}}){{/defaultValue}}.</param>{{/isReadOnly}}{{/vars}}
-        public {{classname}}({{#vars}}{{^isReadOnly}}{{{datatypeWithEnum}}}{{#isEnum}}?{{/isEnum}} {{name}} = null{{/isReadOnly}}{{#hasMoreNonReadOnly}}, {{/hasMoreNonReadOnly}}{{/vars}})
+        public {{classname}}({{#vars}}{{^isReadOnly}}{{{datatypeWithEnum}}}{{#isEnum}}?{{/isEnum}} {{name}} = null{{/isReadOnly}}{{#hasMoreNonReadOnly}}{{^isReadOnly}}, {{/isReadOnly}}{{/hasMoreNonReadOnly}}{{/vars}})
         {
             {{#vars}}{{^isReadOnly}}{{#defaultValue}}// use default value if no "{{name}}" provided
             if ({{name}} == null)

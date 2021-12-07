@@ -3,11 +3,6 @@
         /// </summary>{{#description}}
         /// <value>{{{description}}}</value>{{/description}}
         [JsonConverter(typeof(UpgradeSdkEnumConverter))]
-        // enumClass
-        // {{#datatypeWithEnum}}{{{.}}}{{/datatypeWithEnum}}
-        // {{#datatypeWithEnum}}{{{.}}}{{/datatypeWithEnum}}
-        // {{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}
-        // {{^datatypeWithEnum}}{{{classname}}}{{/datatypeWithEnum}}
         public enum {{#datatypeWithEnum}}{{{.}}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}
         {
             /// <summary>
