@@ -173,3 +173,37 @@ func TestGetRawPathFromURL(t *testing.T) {
 		}
 	}
 }
+
+func TestIsValidGitHubURL(t *testing.T) {
+	var matched bool
+
+	validURLs := []string{
+		"https://raw.githubusercontent.com/joebloggs/joesrepo/master/path/tothe/template.gotmpl",
+		"https://raw.githubusercontent.com/foobar/reponame/dev/filename.gotmpl",
+	}
+
+	invalidURLs := []string{
+		"ttps://raw.githubusercontent.com/joebloggs/joesrepo/master/path/tothe/template.gotmpl",
+		"https://raw.githubusercontent.com/foobar/dev/filename.gotmpl",
+		"https://raw.githubusercontent.com/foobar/reponame/dev/filename.txt",
+		"https://raw.githubusercontent.comfoobar/reponame/dev/filename.txt",
+		"https://aw.githubusercontent.com/foobar/reponame/dev/filename.gotmpl",
+		"https://raw.githubusercontent.com/foobar/reponame/dev/path/.gotmpl",
+	}
+
+	for k, u := range validURLs {
+		matched = isValidGitHubURL(u)
+
+		if !matched {
+			t.Errorf("Regexp failed when it should have passed on url at index %v.\n", k)
+		}
+	}
+
+	for k, u := range invalidURLs {
+		matched  = isValidGitHubURL(u)
+
+		if matched {
+			t.Errorf("Regexp passed when it should have failed on url at index %v.\n", k)
+		}
+	}
+}

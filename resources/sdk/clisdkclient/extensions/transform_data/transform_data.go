@@ -3,12 +3,14 @@ package transform_data
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/Masterminds/sprig"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 )
@@ -16,8 +18,6 @@ import (
 var (
 	TemplateFile string
 	TemplateStr  string
-
-	fileName string
 )
 
 func ConvertJsonToMap(data string) interface{} {
@@ -47,26 +47,28 @@ func convertArrayOfObjectsToMap(data string) []map[string]interface{} {
 }
 
 func ProcessTemplateFile(mp interface{}) string {
-	path := []string{TemplateFile}
-	fileName = filepath.Base(path[0])
-
 	if strings.Contains(TemplateFile, "github") {
 		rawURL := getFullUrlToRawFile(TemplateFile)
+		if isValidGitHubURL(rawURL) {
+			resp, err := http.Get(rawURL)
+			if err != nil {
+				logger.Fatalf("Error downloading template file: %v\n", err)
+			}
 
-		resp, err := http.Get(rawURL)
-		if err != nil {
-			logger.Fatal(err)
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			TemplateStr = string(body)
+			return ProcessTemplateStr(mp)
+		} else {
+			fmt.Println("The provided GitHub URL may be invalid.")
 		}
-
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		TemplateStr = string(body)
-		return ProcessTemplateStr(mp)
 	}
 
+	path := []string{TemplateFile}
+	fileName := filepath.Base(path[0])
 	tmpl := handleParse(template.New(fileName).Funcs(sprig.TxtFuncMap()).ParseFiles(path...))
 	return process(tmpl, mp)
 }
@@ -94,6 +96,11 @@ func handleParse(t *template.Template, err error) *template.Template {
 		logger.Fatalf("Error parsing: %v\n", err)
 	}
 	return t
+}
+
+func isValidGitHubURL(url string) bool {
+	matched, _ := regexp.MatchString(`https://raw\.githubusercontent\.com/.+[^/]/.+[^/]/.+[^/]/.+[^/]\.gotmpl`, url)
+	return matched
 }
 
 func getFullUrlToRawFile(url string) string {
