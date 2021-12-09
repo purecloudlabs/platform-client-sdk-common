@@ -292,6 +292,16 @@ public class WebMessagingClient {
      * Sends a message to the conversation
      *
      * @param message The text to send
+     * @param attachmentIds The Id of the attachments being sent with the message
+     */
+    public void sendMessage(String message, String... attachmentIds) {
+        sendMessage(message, null, attachmentIds);
+    }
+
+    /**
+     * Sends a message to the conversation with customAttributes
+     *
+     * @param message The text to send
      * @param customAttributes Key Value Pair that allows custom data to be sent with a message
      * @param attachmentIds The Id of the attachments being sent with the message
      */
