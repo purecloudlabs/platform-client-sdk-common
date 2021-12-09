@@ -292,8 +292,10 @@ public class WebMessagingClient {
      * Sends a message to the conversation
      *
      * @param message The text to send
+     * @param customAttributes Key Value Pair that allows custom data to be sent with a message
+     * @param attachmentIds The Id of the attachments being sent with the message
      */
-    public void sendMessage(String message, String... attachmentIds) {
+    public void sendMessage(String message, Map<String, String> customAttributes, String... attachmentIds,) {
         try {
             SendMessageRequest sendMessageRequest = new SendMessageRequest();
             sendMessageRequest.token(this.token);
@@ -301,6 +303,13 @@ public class WebMessagingClient {
             sendMessageRequest.message(new IncomingNormalizedMessage()
                .type(NormalizedType.TEXT)
                .text(message));
+            if (customAttributes != null) {
+                BaseMessagingChannel baseMessagingChannel = new BaseMessagingChannel();
+                BaseChannelMetadata baseChannelMetadata = new BaseChannelMetadata();
+                baseChannelMetadata.customAttributes(customAttributes);
+                baseMessagingChannel.metadata(baseChannelMetadata);
+                sendMessageRequest.channel(baseMessagingChannel);
+            }
             sendMessageRequest.attachmentIds(Arrays.asList(attachmentIds));
             String payload = objectMapper.writeValueAsString(sendMessageRequest);
 
