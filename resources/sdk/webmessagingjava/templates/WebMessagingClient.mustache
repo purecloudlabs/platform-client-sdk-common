@@ -295,7 +295,7 @@ public class WebMessagingClient {
      * @param customAttributes Key Value Pair that allows custom data to be sent with a message
      * @param attachmentIds The Id of the attachments being sent with the message
      */
-    public void sendMessage(String message, Map<String, String> customAttributes, String... attachmentIds,) {
+    public void sendMessage(String message, Map<String, String> customAttributes, String... attachmentIds) {
         try {
             SendMessageRequest sendMessageRequest = new SendMessageRequest();
             sendMessageRequest.token(this.token);
