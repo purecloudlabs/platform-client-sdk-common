@@ -37,7 +37,6 @@ var (
 	OverridesApplied    = config.OverridesApplied
 	openBrowserForLogin = openBrowserForLoginFunc
 	startLocalServer    = startLocalServerFunc
-	httpsPort           = ":10443"
 )
 
 type RESTClient struct {
@@ -195,7 +194,7 @@ func authorize(c config.Configuration) (models.OAuthTokenData, error) {
 			// Generate a self-signed X.509 certificate for a TLS server
 			err := tls.GenerateCerts()
 			if err != nil {
-				logger.Fatal(err)
+				logger.Fatalf("Error generating self-signed certificate: %v\n", err)
 			}
 		}
 		go startLocalServer(c, authChannel)
@@ -285,7 +284,13 @@ func createOAuthTokenResponse(c config.Configuration, oAuthToken models.OAuthTok
 
 // Starts the local server at the redirect URI
 func startLocalServerFunc(c config.Configuration, authChannel chan models.OAuthToken) {
-	address := strings.Replace(c.RedirectURI(), "http://localhost", "", -1)
+	var host string
+	if c.SecureLoginEnabled() {
+		host = "https://localhost"
+	} else {
+		host = "http://localhost"
+	}
+	address := strings.Replace(c.RedirectURI(), host, "", -1)
 	port := address[0:5]
 	path := strings.Replace(address, port, "", -1)
 	if path == "" {
@@ -321,16 +326,10 @@ func startLocalServerFunc(c config.Configuration, authChannel chan models.OAuthT
 	})
 
 	if c.SecureLoginEnabled() {
-		go http.ListenAndServe(port, http.HandlerFunc(redirectToSecureHttp))
-		log.Fatal(http.ListenAndServeTLS(httpsPort, os.TempDir() + "cert.pem", os.TempDir() + "key.pem", nil))
+		log.Fatal(http.ListenAndServeTLS(port, os.TempDir() + "cert.pem", os.TempDir() + "key.pem", nil))
 	} else {
 		log.Fatal(http.ListenAndServe(port, nil))
 	}
-}
-
-func redirectToSecureHttp(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-Control", "no-store")
-	http.Redirect(w, r, "https://127.0.0.1" + httpsPort + r.RequestURI, http.StatusMovedPermanently)
 }
 
 // parse data from url in the format '/access_token/12345/expires_in/299/token_type/bearer'

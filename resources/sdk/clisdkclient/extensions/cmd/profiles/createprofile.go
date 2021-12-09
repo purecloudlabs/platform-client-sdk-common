@@ -125,10 +125,8 @@ func requestUserInput() config.Configuration {
 	clientID, clientSecret = requestClientCreds(accessToken, grantType)
 
 	if grantType == ImplicitGrant {
-		redirectURI = requestRedirectURI()
-		fmt.Printf("Redirect URI: %s\n", redirectURI)
 		for true {
-			fmt.Print("Would you like to open a secure HTTP connection? [Y/N]: ")
+			fmt.Print("Would you like to use a secure HTTP connection? [Y/N]: ")
 			fmt.Scanln(&authChoice)
 			if strings.ToUpper(authChoice) == "Y" {
 				secureLoginEnabled = true
@@ -138,6 +136,8 @@ func requestUserInput() config.Configuration {
 				break
 			}
 		}
+		redirectURI = requestRedirectURI(secureLoginEnabled)
+		fmt.Printf("Redirect URI: %s\n", redirectURI)
 	}
 
 	return constructConfig(name, environment, clientID, clientSecret, redirectURI, secureLoginEnabled, accessToken)
@@ -178,10 +178,16 @@ func requestClientCreds(accessToken string, grantType GrantType) (string, string
 	return id, secret
 }
 
-func requestRedirectURI() string {
+func requestRedirectURI(secure bool) string {
 	var inputPort string
-	redirectURI := "http://localhost:"
+	var redirectURI string
 	defaultPort := "8080"
+
+	if secure {
+		redirectURI = "https://localhost:"
+	} else {
+		redirectURI = "http://localhost:"
+	}
 
 	fmt.Printf("Redirect URI port [%s]: ", defaultPort)
 	fmt.Scanln(&inputPort)
