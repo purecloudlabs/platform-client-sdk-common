@@ -30,7 +30,7 @@ echo '<?xml version="1.0" encoding="utf-8"?>'\
 '		<title>PureCloud Platform Client</title>'\
 '		<summary>A .NET library to interface with the PureCloud Public API</summary>'\
 '		<projectUrl>https://github.com/MyPureCloud/platform-client-sdk-dotnet</projectUrl>'\
-'		<copyright>Copyright © Genesys 2017</copyright>'\
+'		<copyright>Copyright © Genesys 2021</copyright>'\
 '		<licenseUrl>https://github.com/MyPureCloud/platform-client-sdk-dotnet/blob/master/LICENSE</licenseUrl>'\
 '		<iconUrl>https://raw.githubusercontent.com/MyPureCloud/platform-client-sdk-dotnet/master/ininlogo64.png</iconUrl>'\
 '		<tags>genesys purecloud pure cloud public platform api sdk</tags>'\
@@ -40,14 +40,17 @@ echo '<?xml version="1.0" encoding="utf-8"?>'\
 '		<requireLicenseAcceptance>false</requireLicenseAcceptance>'\
 '		<description>A .NET library to interface with the PureCloud Public API</description>'\
 '		<dependencies>'\
-'			<dependency id="Newtonsoft.Json" version="11.0.2" />'\
-'			<dependency id="RestSharp" version="106.3.1" />'\
-'			<dependency id="ini-parser" version="3.4.0" />'\
+'			<group>'\
+'				<dependency id="Newtonsoft.Json" version="11.0.2" />'\
+'				<dependency id="RestSharp" version="106.3.1" />'\
+'				<dependency id="ini-parser" version="3.4.0" />'\
+'			</group>'\
+'			<group targetFramework=".NETFramework4.8" />'\
 '		</dependencies>'\
 '	</metadata>'\
 '	<files>'\
-"		<file src=\"$NAMESPACE.dll\" target=\"lib/netstandard2.0/$NAMESPACE.dll\" />"\
-"		<file src=\"$NAMESPACE.xml\" target=\"lib/netstandard2.0/$NAMESPACE.xml\" />"\
+"		<file src=\"$NAMESPACE.dll\" target=\"lib/net48/$NAMESPACE.dll\" />"\
+"		<file src=\"$NAMESPACE.xml\" target=\"lib/net48/$NAMESPACE.xml\" />"\
 '	</files>'\
 '</package>' > $BUILD_DIR/bin/$NAMESPACE.nuspec
 

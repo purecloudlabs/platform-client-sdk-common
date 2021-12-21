@@ -40,7 +40,7 @@ try {
 		packageCompany: 'Genesys',
 		packageCopyright: 'Copyright © Genesys 2017',
 		httpUserAgent: 'PureCloud SDK',
-		targetFramework: 'net452'
+		targetFramework: 'net48'
 	};
 
 	fs.writeFileSync(swaggerCodegenConfigFilePath, JSON.stringify(config, null, 2));
