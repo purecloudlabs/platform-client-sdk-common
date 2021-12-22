@@ -18,13 +18,12 @@ else
 	mozroots --import --sync
 fi
 
-
 # Install packages
 echo "Installing packages"
 mono $COMMON_DIR/resources/sdk/pureclouddotnet/bin/nuget.exe install $BUILD_DIR/src/$ROOT_NAMESPACE/packages.config -o $BUILD_DIR/packages -NoCache -Verbosity detailed;
 mono $COMMON_DIR/resources/sdk/pureclouddotnet/bin/nuget.exe install $BUILD_DIR/src/$ROOT_NAMESPACE.Tests/packages.config -o $BUILD_DIR/packages -NoCache -Verbosity detailed;
 
-mkdir -p $BUILD_DIR/bin;
+mkdir -p $BUILD_DIR/bin/netstandard2.0;
 
 cp $BUILD_DIR/packages/Newtonsoft.Json.11.0.2/lib/net45/Newtonsoft.Json.dll $BUILD_DIR/bin/Newtonsoft.Json.dll;
 cp $BUILD_DIR/packages/RestSharp.106.3.1/lib/net452/RestSharp.dll $BUILD_DIR/bin/RestSharp.dll;
@@ -34,17 +33,32 @@ cp $BUILD_DIR/packages/Moq.4.5.3/lib/net45/Moq.dll $BUILD_DIR/bin/Moq.dll;
 cp $BUILD_DIR/packages/ini-parser.3.4.0/lib/net20/INIFileParser.dll $BUILD_DIR/bin/INIFileParser.dll;
 
 echo "Compiling SDK..."
+echo "Target: netstandard2.0"
 mcs -r:$BUILD_DIR/bin/Newtonsoft.Json.dll,\
 $BUILD_DIR/bin/RestSharp.dll,\
 $BUILD_DIR/bin/websocket-sharp.dll,\
 $BUILD_DIR/bin/INIFileParser.dll,\
 System.Runtime.Serialization.dll \
 -target:library \
--out:$BUILD_DIR/bin/${ROOT_NAMESPACE}.dll \
--doc:$BUILD_DIR/bin/${ROOT_NAMESPACE}.xml \
+-out:$BUILD_DIR/bin/netstandard2.0/${ROOT_NAMESPACE}.dll \
+-doc:$BUILD_DIR/bin/netstandard2.0/${ROOT_NAMESPACE}.xml \
 -recurse:'src/'${ROOT_NAMESPACE}'/*.cs' \
--platform:anycpu
+-platform:anycpu \
 
+function compile_sdk() {
+	echo "Target: .NET $1"
+	rm -rf src/${ROOT_NAMESPACE}/obj
+	rm -rf src/${ROOT_NAMESPACE}.Tests/obj
+	mkdir -p $BUILD_DIR/bin/net$1
+	xbuild /p:Configuration=Release \
+		/p:TargetFrameworkVersion=v$1 \
+		/p:OutputPath=$BUILD_DIR/bin/net$1 \
+		/p:DocumentationFile=$BUILD_DIR/bin/net$1/${ROOT_NAMESPACE}.xml
+}
+
+compile_sdk "4.5.2"
+
+cp $BUILD_DIR/bin/netstandard2.0/${ROOT_NAMESPACE}.dll $BUILD_DIR/bin/${ROOT_NAMESPACE}.dll
 echo "Compiling tests..."
 mcs -r:$BUILD_DIR/bin/Newtonsoft.Json.dll,\
 $BUILD_DIR/bin/RestSharp.dll,\
@@ -61,4 +75,3 @@ $BUILD_DIR/bin/Moq.dll \
 
 echo "Running tests..."
 mono $COMMON_DIR/resources/sdk/pureclouddotnet/bin/nunit/nunit3-console.exe $BUILD_DIR/bin/${ROOT_NAMESPACE}.Tests.dll
-

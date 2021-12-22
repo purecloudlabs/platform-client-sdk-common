@@ -38,9 +38,9 @@ try {
 		packageProductName: 'PureCloudPlatformClient',
 		packageDescription: 'A .NET library to interface with the PureCloud Public API',
 		packageCompany: 'Genesys',
-		packageCopyright: 'Copyright © Genesys 2017',
+		packageCopyright: 'Copyright © Genesys 2022',
 		httpUserAgent: 'PureCloud SDK',
-		targetFramework: 'net48'
+		targetFramework: 'net452'
 	};
 
 	fs.writeFileSync(swaggerCodegenConfigFilePath, JSON.stringify(config, null, 2));
