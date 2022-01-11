@@ -36,52 +36,61 @@ The web messaging APIs do not require standard Genesys Cloud authentication, but
 ```{"language":"java"}
 // Configure session listener
 WebMessagingClient.SessionListener sessionListener = new WebMessagingClient.SessionListener() {
+
     @Override
-    public void sessionConfigured(ConfigureSessionRequest configureSessionRequest, String rawResponse) {
-        // Store configuration request in local var for future use
-        myConfigureSessionRequest = configureSessionRequest;
+    public void sessionResponse(SessionResponse sessionResponse, String s) {
+        //Do stuff here
+
     }
 
     @Override
-    public void sendEchoRequest(SendEchoRequest sendEchoRequest, String rawResponse) {
-        // Handle echo notification
+    public void structuredMessage(StructuredMessage structuredMessage, String s) {
+
     }
 
     @Override
-    public void responseReceived(SessionResponse sessionResponse, String rawResponse) {
-        // Handle response
-        // Store session response in local var for future use
-        mySessionResponse = sessionResponse;
+    public void presignedUrlResponse(PresignedUrlResponse presignedUrlResponse, String s) {
+
     }
 
     @Override
-    public void messageReceived(StructuredMessage baseResponse, String rawResponse) {
-        // Handle message
+    public void uploadSuccessEvent(UploadSuccessEvent uploadSuccessEvent, String s) {
+
     }
 
     @Override
-    public void unknownMessageReceived(BaseMessage baseResponse, String rawResponse) {
-        // Handle unknown message
+    public void uploadFailureEvent(UploadFailureEvent uploadFailureEvent, String s) {
+
     }
 
     @Override
-    public void rawMessageReceived(String rawResponse) {
-        // Handle raw message
+    public void connectionClosedEvent(ConnectionClosedEvent connectionClosedEvent, String s) {
+
+    }
+
+    @Override
+    public void sessionExpiredEvent(SessionExpiredEvent sessionExpiredEvent, String s) {
+
+    }
+
+    @Override
+    public void jwtResponse(JwtResponse jwtResponse, String s) {
+
+    }
+
+    @Override
+    public void unexpectedMessage(BaseMessage baseMessage, String s) {
+
     }
 
     @Override
     public void webSocketConnected() {
-        // Handle websocket connection
+
     }
 
     @Override
-    public void webSocketDisconnected(int statusCode, String reason) {
-        // Handle websocket disconnection
-    }
+    public void webSocketDisconnected(int i, String s) {
 
-    @Override
-    public void sessionReady() {
-        // Handle session ready
     }
 };
 
@@ -92,26 +101,28 @@ WebMessagingClient client = new WebMessagingClient(webSocketHost);
 // Add the session listener
 client.addSessionListener(sessionListener);
 
-// Connect to the websocket to join the conversation
+// Connect to the websocket
 String deploymentId = "df2ad262-7fe2-4fb2-9a83-e34be463713a";
-String token = "31a7021f-5798-4b6f-9ca2-7303d91f3f73";
-String initialMessage = "Initial webmessaging message";
-client.joinConversation(deploymentId, token, initialMessage);
+String origin = "app.mypurecloud.com";
+client.connect(deploymentId, origin);
 
-// Send a message to the conversation
-System.out.println("Type a message to send it...");
-BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-String message = reader.readLine();
-client.sendMessage(message);
+// Configure a new session
+client.configureSession(deploymentId,origin);
+
+// Send message
+client.sendMessage("The quick brown fox jumps over the lazy dog");
+
+// Send message with custom attributes
+Map<String, String> customAttributes = Map.of(
+    "customerAccountId", "079fd5fe-03f8-434d-a2cb-0a9946849bd6",
+    "customerName", "John Doe"
+);
+
+client.sendMessage("The quick brown fox jumps over the lazy dog", customAttributes);
 
 // Disconnect from conversation
 client.disconnect();
 
-// Get all messages in conversation
-WebMessagingMessageEntityList list = client.getHistory();
-for(WebMessagingMessage webMessagingMessage : list.getEntities()) {
-    System.out.println(webMessagingMessage.toString());
-}
 ```
 
 #### Setting the environment
