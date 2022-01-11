@@ -12,7 +12,7 @@ import ({{#imports}}
 // {{classname}}{{#description}} - {{{description}}}{{/description}}
 type {{classname}} struct { {{#vars}}
 	// {{name}}{{#description}} - {{{description}}}{{/description}}
-	{{name}} *{{{datatype}}} `json:"{{baseName}},omitempty"`
+	{{name}} *{{{dataType}}} `json:"{{baseName}},omitempty"`
 
 {{/vars}}}
 
@@ -41,7 +41,7 @@ func (o *{{classname}}) MarshalJSON() ([]byte, error) {
 		{{/isDateTime}}{{^isDateTime}}{{#isDate}}
 		{{name}} *string `json:"{{baseName}},omitempty"`
 		{{/isDate}}{{^isDate}}
-		{{name}} *{{{datatype}}} `json:"{{baseName}},omitempty"`
+		{{name}} *{{{dataType}}} `json:"{{baseName}},omitempty"`
 		{{/isDate}}{{/isDateTime}}{{/vars}}*Alias
 	}{ {{#vars}}{{#isDateTime}}
 		{{name}}: {{name}},
