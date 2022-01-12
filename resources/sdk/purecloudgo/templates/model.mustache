@@ -113,11 +113,11 @@ func (o *{{classname}}) UnmarshalJSON(b []byte) error {
 		{{name}}String, _ := json.Marshal({{name}})
 		json.Unmarshal({{name}}String, &o.{{name}})
 	}
-	{{/isMap}}{{^isMap}}
+	{{/isMap}}{{^isMap}}{{^isNumber}}
 	if {{name}}, ok := {{classname}}Map["{{baseName}}"].({{dataType}}); ok {
 		o.{{name}} = &{{name}}
 	}
-	{{/isMap}}{{/isDouble}}{{/isFloat}}{{/isLong}}{{/isInteger}}{{/isPrimitiveType}}{{/isArray}}{{/isDate}}{{/isDateTime}}{{/vars}}
+    {{/isNumber}}{{/isMap}}{{/isDouble}}{{/isFloat}}{{/isLong}}{{/isInteger}}{{/isPrimitiveType}}{{/isArray}}{{/isDate}}{{/isDateTime}}{{/vars}}
 
 	return nil
 }
