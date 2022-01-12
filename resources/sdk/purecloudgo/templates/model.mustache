@@ -103,7 +103,11 @@ func (o *{{classname}}) UnmarshalJSON(b []byte) error {
 	if {{name}}, ok := {{classname}}Map["{{baseName}}"].(float64); ok {
 		o.{{name}} = &{{name}}
 	}
-	{{/isDouble}}{{^isInteger}}{{^isLong}}{{^isFloat}}{{^isDouble}}{{#isMap}}
+    {{/isDouble}}{{#isNumber}}
+        if {{name}}, ok := {{classname}}Map["{{baseName}}"].(float64); ok {
+        o.{{name}} = &{{name}}
+        }
+    {{/isNumber}}{{^isInteger}}{{^isLong}}{{^isFloat}}{{^isDouble}}{{#isMap}}
 	if {{name}}, ok := {{classname}}Map["{{baseName}}"].(map[string]interface{}); ok {
 		{{name}}String, _ := json.Marshal({{name}})
 		json.Unmarshal({{name}}String, &o.{{name}})
