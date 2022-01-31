@@ -30,11 +30,10 @@ func init() {
 
 func Cmd{{classVarName}}() *cobra.Command { {{#operation}}
 	{{#queryParams}}utils.AddFlag({{operationId}}Cmd.Flags(), "{{{dataType}}}", "{{paramName}}", "{{#defaultValue}}{{{.}}}{{/defaultValue}}{{^defaultValue}}{{/defaultValue}}", "{{{description}}}{{#required}} - REQUIRED{{/required}}{{#allowableValues}} Valid values: {{#values}}{{.}}{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}}")
-	{{#hasMore}}{{/hasMore}}{{/queryParams}}{{operationId}}Cmd.SetUsageTemplate(fmt.Sprintf("%s\nOperation:\n  %s %s\n%s\n%s", {{operationId}}Cmd.UsageTemplate(), "{{httpMethod}}", "{{path}}", utils.FormatPermissions([]string{ {{#permissions}}"{{.}}", {{/permissions}} }), utils.GenerateDevCentreLink("{{httpMethod}}", "{{#vendorExtensions}}{{x-purecloud-category}}{{/vendorExtensions}}", "{{path}}")))
-	utils.AddFileFlagIfUpsert({{operationId}}Cmd.Flags(), "{{httpMethod}}", `{{#bodyParam}}{{{jsonSchema}}}{{/bodyParam}}`)
+	{{#hasMore}}{{/hasMore}}{{/queryParams}}
 	{{#queryParams}}{{#required}}{{operationId}}Cmd.MarkFlagRequired("{{paramName}}")
 	{{/required}}{{/queryParams}}
-	{{#responses}}{{#-first}}utils.AddPaginateFlagsIfListingResponse({{operationId}}Cmd.Flags(), "{{httpMethod}}", `{{{jsonSchema}}}`){{/-first}}{{/responses}}
+
 	{{classVarName}}Cmd.AddCommand({{operationId}}Cmd)
 	{{/operation}}
 	return {{classVarName}}Cmd
@@ -43,8 +42,8 @@ func Cmd{{classVarName}}() *cobra.Command { {{#operation}}
 {{#operation}}
 var {{operationId}}Cmd = &cobra.Command{
 	Use:   "{{operationId}}{{#pathParams}} [{{paramName}}{{#hasMore}}{{/hasMore}}]{{/pathParams}}",
-	Short: "{{#summary}}{{summary}}{{/summary}}",
-	Long:  "{{#summary}}{{summary}}{{/summary}}",
+	Short: "{{#summary}}{{{summary}}}{{/summary}}",
+	Long:  "{{#summary}}{{{summary}}}{{/summary}}",
 	Args:  utils.DetermineArgs([]string{ {{#pathParams}}"{{paramName}}", {{#hasMore}}{{/hasMore}}{{/pathParams}}}),
 
 	Run: func(cmd *cobra.Command, args []string) {
