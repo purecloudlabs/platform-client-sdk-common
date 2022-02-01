@@ -194,7 +194,8 @@ func authorize(c config.Configuration) (models.OAuthTokenData, error) {
 			// Generate a self-signed X.509 certificate for a TLS server
 			err := tls.GenerateCerts()
 			if err != nil {
-				logger.Fatalf("Error generating self-signed certificate: %v\n", err)
+				oAuthTokenResponse := &models.OAuthTokenData{}
+				return *oAuthTokenResponse, err
 			}
 		}
 		go startLocalServer(c, authChannel)
@@ -306,7 +307,7 @@ func startLocalServerFunc(c config.Configuration, authChannel chan models.OAuthT
 	http.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
 		_, err := fmt.Fprintf(w, activePage)
 		if err != nil {
-			logger.Fatal(err)
+			logger.Fatalf("Error handling request: %v", err)
 		}
 
 		// If no longer displaying initial page -

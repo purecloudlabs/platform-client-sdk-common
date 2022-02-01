@@ -23,10 +23,7 @@ const (
 )
 
 func isValidGrantType(t GrantType) bool {
-	if t == None || t == ClientCredentials || t == ImplicitGrant {
-		return true
-	}
-	return false
+	return t == None || t == ClientCredentials || t == ImplicitGrant
 }
 
 func constructConfig(profileName string, environment string, clientID string, clientSecret string, redirectURI string, secureLoginEnabled bool, accessToken string) config.Configuration {
@@ -80,15 +77,18 @@ func constructConfig(profileName string, environment string, clientID string, cl
 }
 
 func requestUserInput() config.Configuration {
-	var name string
-	var environment string
-	var clientID string
-	var clientSecret string
-	var accessToken string
-	var authChoice string
-	var redirectURI string
-	var grantType GrantType
-	secureLoginEnabled := false
+	var (
+		name               string
+		environment        string
+		clientID           string
+		clientSecret       string
+		accessToken        string
+		authChoice         string
+		redirectURI        string
+		redirectURIPort    string
+		grantType          GrantType
+		secureLoginEnabled = false
+	)
 
 	fmt.Print("Profile Name [DEFAULT]: ")
 	fmt.Scanln(&name)
@@ -125,18 +125,20 @@ func requestUserInput() config.Configuration {
 	clientID, clientSecret = requestClientCreds(accessToken, grantType)
 
 	if grantType == ImplicitGrant {
+		redirectURIPort = requestRedirectURIPort()
 		for true {
 			fmt.Print("Would you like to use a secure HTTP connection? [Y/N]: ")
 			fmt.Scanln(&authChoice)
 			if strings.ToUpper(authChoice) == "Y" {
 				secureLoginEnabled = true
+				redirectURI = "https://localhost:" + redirectURIPort
 				break
 			} else if strings.ToUpper(authChoice) == "N" {
 				secureLoginEnabled = false
+				redirectURI = "http://localhost:" + redirectURIPort
 				break
 			}
 		}
-		redirectURI = requestRedirectURI(secureLoginEnabled)
 		fmt.Printf("Redirect URI: %s\n", redirectURI)
 	}
 
@@ -178,26 +180,17 @@ func requestClientCreds(accessToken string, grantType GrantType) (string, string
 	return id, secret
 }
 
-func requestRedirectURI(secure bool) string {
+func requestRedirectURIPort() string {
 	var inputPort string
-	var redirectURI string
 	defaultPort := "8080"
-
-	if secure {
-		redirectURI = "https://localhost:"
-	} else {
-		redirectURI = "http://localhost:"
-	}
 
 	fmt.Printf("Redirect URI port [%s]: ", defaultPort)
 	fmt.Scanln(&inputPort)
-	if inputPort != "" {
-		redirectURI += inputPort
-	} else {
-		redirectURI += defaultPort
+	if inputPort == "" {
+		inputPort = defaultPort
 	}
 
-	return redirectURI
+	return inputPort
 }
 
 func overrideConfig(name string) bool {
