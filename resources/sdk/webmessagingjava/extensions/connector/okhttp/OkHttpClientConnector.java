@@ -4,7 +4,8 @@ import com.google.common.util.concurrent.SettableFuture;
 import cloud.genesys.webmessaging.sdk.connector.ApiClientConnector;
 import cloud.genesys.webmessaging.sdk.connector.ApiClientConnectorRequest;
 import cloud.genesys.webmessaging.sdk.connector.ApiClientConnectorResponse;
-import com.squareup.okhttp.*;
+import okhttp3.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Map;
