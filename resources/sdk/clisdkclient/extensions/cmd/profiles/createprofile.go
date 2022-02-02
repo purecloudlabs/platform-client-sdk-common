@@ -2,7 +2,9 @@ package profiles
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
+	"syscall"
 
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
@@ -12,6 +14,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/term"
 )
 
 type GrantType string
@@ -84,9 +87,8 @@ func requestUserInput() config.Configuration {
 		clientSecret       string
 		accessToken        string
 		authChoice         string
-		redirectURI        string
-		redirectURIPort    string
 		grantType          GrantType
+		redirectURL        url.URL
 		secureLoginEnabled = false
 	)
 
@@ -106,7 +108,7 @@ func requestUserInput() config.Configuration {
 
 	fmt.Print("Note: If you provide an access token, this will take precedence over any authorization grant type.\n")
 	fmt.Print("Access Token (Optional): ")
-	fmt.Scanln(&accessToken)
+	accessToken = readSensitiveInput()
 
 	for true {
 		fmt.Print("Select your authorization grant type.\n")
@@ -125,24 +127,24 @@ func requestUserInput() config.Configuration {
 	clientID, clientSecret = requestClientCreds(accessToken, grantType)
 
 	if grantType == ImplicitGrant {
-		redirectURIPort = requestRedirectURIPort()
+		redirectURL.Host = "localhost:" + requestRedirectURIPort()
 		for true {
 			fmt.Print("Would you like to use a secure HTTP connection? [Y/N]: ")
 			fmt.Scanln(&authChoice)
 			if strings.ToUpper(authChoice) == "Y" {
 				secureLoginEnabled = true
-				redirectURI = "https://localhost:" + redirectURIPort
+				redirectURL.Scheme = "https"
 				break
 			} else if strings.ToUpper(authChoice) == "N" {
 				secureLoginEnabled = false
-				redirectURI = "http://localhost:" + redirectURIPort
+				redirectURL.Scheme = "http"
 				break
 			}
 		}
-		fmt.Printf("Redirect URI: %s\n", redirectURI)
+		fmt.Printf("Redirect URI: %s\n", redirectURL.String())
 	}
 
-	return constructConfig(name, environment, clientID, clientSecret, redirectURI, secureLoginEnabled, accessToken)
+	return constructConfig(name, environment, clientID, clientSecret, redirectURL.String(), secureLoginEnabled, accessToken)
 }
 
 func requestClientCreds(accessToken string, grantType GrantType) (string, string) {
@@ -155,7 +157,7 @@ func requestClientCreds(accessToken string, grantType GrantType) (string, string
 			fmt.Scanln(&id)
 
 			fmt.Print("Client Secret: ")
-			fmt.Scanln(&secret)
+			secret = readSensitiveInput()
 		} else {
 			for id == "" {
 				fmt.Print("Client ID: ")
@@ -163,7 +165,7 @@ func requestClientCreds(accessToken string, grantType GrantType) (string, string
 			}
 			for secret == "" {
 				fmt.Print("Client Secret: ")
-				fmt.Scanln(&secret)
+				secret = readSensitiveInput()
 			}
 		}
 	} else if grantType == ImplicitGrant {
@@ -174,10 +176,16 @@ func requestClientCreds(accessToken string, grantType GrantType) (string, string
 		}
 
 		fmt.Print("Client Secret (Optional): ")
-		fmt.Scanln(&secret)
+		secret = readSensitiveInput()
 	}
 
 	return id, secret
+}
+
+func readSensitiveInput() string {
+	bytes, _ := term.ReadPassword(int(syscall.Stdin))
+	fmt.Println()
+	return string(bytes)
 }
 
 func requestRedirectURIPort() string {

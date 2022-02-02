@@ -285,15 +285,11 @@ func createOAuthTokenResponse(c config.Configuration, oAuthToken models.OAuthTok
 
 // Starts the local server at the redirect URI
 func startLocalServerFunc(c config.Configuration, authChannel chan models.OAuthToken) {
-	var host string
-	if c.SecureLoginEnabled() {
-		host = "https://localhost"
-	} else {
-		host = "http://localhost"
+	u, err := url.Parse(c.RedirectURI())
+	if err != nil {
+		logger.Fatalf("Error parsing redirect URL: %v", err)
 	}
-	address := strings.Replace(c.RedirectURI(), host, "", -1)
-	port := address[0:5]
-	path := strings.Replace(address, port, "", -1)
+	path := u.Path
 	if path == "" {
 		path = "/"
 	}
@@ -327,9 +323,10 @@ func startLocalServerFunc(c config.Configuration, authChannel chan models.OAuthT
 	})
 
 	if c.SecureLoginEnabled() {
-		log.Fatal(http.ListenAndServeTLS(port, os.TempDir() + "cert.pem", os.TempDir() + "key.pem", nil))
+		log.SetOutput(ioutil.Discard)
+		log.Fatal(http.ListenAndServeTLS(":" + u.Port(), os.TempDir() + "cert.pem", os.TempDir() + "key.pem", nil))
 	} else {
-		log.Fatal(http.ListenAndServe(port, nil))
+		log.Fatal(http.ListenAndServe(":" + u.Port(), nil))
 	}
 }
 
