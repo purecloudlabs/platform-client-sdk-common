@@ -34,7 +34,7 @@ func Cmd{{classVarName}}() *cobra.Command { {{#operation}}
 	utils.AddFileFlagIfUpsert({{operationId}}Cmd.Flags(), "{{httpMethod}}", `{{#bodyParam}}{{{jsonSchema}}}{{/bodyParam}}`)
 	{{#queryParams}}{{#required}}{{operationId}}Cmd.MarkFlagRequired("{{paramName}}")
 	{{/required}}{{/queryParams}}
-    {{#responses}}{{#-first}}utils.AddPaginateFlagsIfListingResponse({{operationId}}Cmd.Flags(), "{{httpMethod}}", `{{{jsonSchema}}}`){{/-first}}{{/responses}}
+	{{#responses}}{{#-first}}utils.AddPaginateFlagsIfListingResponse({{operationId}}Cmd.Flags(), "{{httpMethod}}", `{{{jsonSchema}}}`){{/-first}}{{/responses}}
 	{{classVarName}}Cmd.AddCommand({{operationId}}Cmd)
 	{{/operation}}
 	return {{classVarName}}Cmd
