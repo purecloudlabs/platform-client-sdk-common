@@ -21,7 +21,7 @@ type {{classname}}Dud struct { {{#vars}}
 // {{classname}}{{#description}} - {{{description}}}{{/description}}
 type {{classname}} struct { {{#vars}}
     {{^isReadOnly}}// {{name}}{{#description}} - {{{description}}}{{/description}}
-    {{name}} {{{datatype}}} `json:"{{baseName}}"`{{/isReadOnly}}
+    {{name}} {{{dataType}}} `json:"{{baseName}}"`{{/isReadOnly}}
 
 {{/vars}}}
 
