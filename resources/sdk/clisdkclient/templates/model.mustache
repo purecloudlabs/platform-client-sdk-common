@@ -14,7 +14,7 @@ var (
 
 // This struct is here to use the useless readonly properties so that their required imports don't throw an unused error (time, etc.)
 type {{classname}}Dud struct { {{#vars}}
-    {{#isReadOnly}}{{name}} {{{datatype}}} `json:"{{baseName}}"`{{/isReadOnly}}
+    {{#isReadOnly}}{{name}} {{{dataType}}} `json:"{{baseName}}"`{{/isReadOnly}}
 
 {{/vars}}}
 
@@ -29,7 +29,7 @@ type {{classname}} struct { {{#vars}}
 func (o *{{classname}}) String() string {
     {{#vars}}
     {{^isReadOnly}}
-    {{#vendorExtensions}}{{#x-datatypeWithDefaults}} o.{{name}} = {{{x-datatypeWithDefaults}}} {{/x-datatypeWithDefaults}}{{/vendorExtensions}}
+    {{#vendorExtensions}}{{#x-dataTypeWithDefaults}} o.{{name}} = {{{x-dataTypeWithDefaults}}} {{/x-dataTypeWithDefaults}}{{/vendorExtensions}}
     {{/isReadOnly}}
     {{/vars}}
 
@@ -48,15 +48,15 @@ func (u *{{classname}}) MarshalJSON() ([]byte, error) {
     {{classname}}Marshalled = true
 
     return json.Marshal(&struct { {{#vars}}
-        {{^isReadOnly}}{{name}} {{{datatype}}} `json:"{{baseName}}"`{{/isReadOnly}}
+        {{^isReadOnly}}{{name}} {{{dataType}}} `json:"{{baseName}}"`{{/isReadOnly}}
         {{/vars}}
         *Alias
     }{
         {{#vars}}
 
-        {{^isReadOnly}}{{#vendorExtensions}}{{#x-datatypeWithDefaults}}
-        {{name}}: {{{x-datatypeWithDefaults}}},
-        {{/x-datatypeWithDefaults}}{{/vendorExtensions}}{{/isReadOnly}}
+        {{^isReadOnly}}{{#vendorExtensions}}{{#x-dataTypeWithDefaults}}
+        {{name}}: {{{x-dataTypeWithDefaults}}},
+        {{/x-dataTypeWithDefaults}}{{/vendorExtensions}}{{/isReadOnly}}
 
         {{/vars}}
         Alias: (*Alias)(u),
