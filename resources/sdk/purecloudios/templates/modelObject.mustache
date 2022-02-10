@@ -8,11 +8,11 @@ public class {{classname}}: Codable {
 {{/allVars}}
 {{#allVars}}
 {{#isEnum}}
-    {{#description}}/** {{description}} */
+    {{#description}}/** {{{description}}} */
     {{/description}}public var {{name}}: {{{datatypeWithEnum}}}{{^required_ifSwaggerDocsGuaranteed}}?{{/required_ifSwaggerDocsGuaranteed}}{{#defaultValue}} = {{{defaultValue}}}{{/defaultValue}}
 {{/isEnum}}
 {{^isEnum}}
-    {{#description}}/** {{description}} */
+    {{#description}}/** {{{description}}} */
     {{/description}}public var {{name}}: {{{datatype}}}{{^required_ifSwaggerDocsGuaranteed}}?{{/required_ifSwaggerDocsGuaranteed}}{{#defaultValue}} = {{{defaultValue}}}{{/defaultValue}}{{#objcCompatible}}{{#vendorExtensions.x-swift-optional-scalar}}
     public var {{name}}Num: NSNumber? {
         get {
