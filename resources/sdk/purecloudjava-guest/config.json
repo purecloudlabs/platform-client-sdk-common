@@ -82,7 +82,16 @@
 	        "failOnError": true
         }
       ],
-      "postRunScripts": []
+      "postRunScripts": [
+        {
+          "type": "node",
+          "path": "combineApiDataFiles.js",
+          "args": [
+            "${SDK_REPO}/build/docs",
+            "${SDK_REPO}/build/APIData.json"
+          ]
+        }
+      ]
     },
     "postbuild": {
       "gitCommit": false,

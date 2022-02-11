@@ -23,6 +23,7 @@ try {
 
 	fs.writeFileSync(swaggerCodegenConfigFilePath, JSON.stringify(config, null, 2));
 	console.log(`Config file written to ${swaggerCodegenConfigFilePath}`);
+	
 } catch (err) {
 	process.exitCode = 1;
 	console.log(err);

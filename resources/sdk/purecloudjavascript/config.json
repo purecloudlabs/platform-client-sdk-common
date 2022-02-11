@@ -93,6 +93,14 @@
           	"test"
           ],
           "failOnError": true
+        },
+        {
+          "type": "node",
+          "path": "combineApiDataFiles.js",
+          "args": [
+            "${SDK_REPO}/build/docs",
+            "${SDK_REPO}/build/APIData.json"
+          ]
         }
       ]
     },
