@@ -33,6 +33,7 @@ SHA=$(echo ${SHA_OUTPUT} | cut -d' ' -f1)
 FULL_TAG_REPO="https://${GITHUB_TOKEN}@${TAP_REPO}"
 
 if [ -d "./tap_repo" ]
+then
     rm -rf tap_repo
 fi
 
