@@ -16,6 +16,6 @@ updates:
       interval: "daily"
 
   - package-ecosystem: "maven"
-    directory: "resources/sdk/webmessaging/templates/"
+    directory: "resources/sdk/webmessagingjava/templates/"
     schedule:
       interval: "daily"
