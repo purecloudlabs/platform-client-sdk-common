@@ -1,8 +1,8 @@
 const fs = require('fs');
 const childProcess = require('child_process');
-
 const log = require('./logger');
 const swaggerDiffImpl = require('./swaggerDiffImpl');
+const processRefs = require("./processRefs");
 
 /* CONSTRUCTOR */
 
@@ -40,9 +40,11 @@ SwaggerDiff.prototype.getAndDiff = function(oldSwaggerPath, newSwaggerPath, save
 	if (fs.existsSync(newSwaggerPath)) {
 		log.info(`Loading new swagger from disk: ${newSwaggerPath}`);
 		newSwagger = JSON.parse(fs.readFileSync(newSwaggerPath, 'utf8'));
+		newSwagger = processRefs(newSwagger);
 	} else if (newSwaggerPath.toLowerCase().startsWith('http')) {
 		log.info(`Downloading new swagger from: ${newSwaggerPath}`);
 		newSwagger = JSON.parse(downloadFile(newSwaggerPath));
+		newSwagger = processRefs(newSwagger);
 	} else {
 		log.warn(`Invalid newSwaggerPath: ${newSwaggerPath}`);
 	}
