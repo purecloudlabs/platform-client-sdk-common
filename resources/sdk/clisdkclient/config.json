@@ -77,14 +77,6 @@
             "${SDK_TEMP}/resourceDefinitions.json"
           ],
           "failOnError": true
-        },
-        {
-          "type": "node",
-          "path": "combineApiDataFiles.js",
-          "args": [
-            "${SDK_REPO}/build/docs",
-            "${SDK_REPO}/build/APIData.json"
-          ]
         }
       ]
     },
@@ -100,6 +92,14 @@
             "${SDK_REPO}"
           ],
           "failOnError": true
+        },
+        {
+          "type": "node",
+          "path": "combineApiDataFiles.js",
+          "args": [
+            "${SDK_REPO}/docs",
+            "${SDK_REPO}/APIData.json"
+          ]
         },
         {
           "type": "command",

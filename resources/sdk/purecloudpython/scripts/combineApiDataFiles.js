@@ -15,7 +15,6 @@ while ((dirent = dir.readSync()) !== null) {
 
     const filePath = path.join(rootDir, dirent.name);
     let apiFile = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    console.log('API FILE', apiFile);
     dataFile[apiName] = {};
     for (const key of Object.keys(apiFile)) {
         dataFile[apiName][key] = apiFile[key];

@@ -10,8 +10,6 @@ const dir = fs.opendirSync(rootDir);
 let dirent;
 while ((dirent = dir.readSync()) !== null) {
     const nameLowerCase = dirent.name.toLowerCase();
-    // console.log('NAME LOWER CASE', nameLowerCase);
-
     const apiName = nameLowerCase.replace('api.json', '');
     if (!nameLowerCase.endsWith('api.json')) continue;
 

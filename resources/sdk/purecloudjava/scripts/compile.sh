@@ -45,7 +45,5 @@ export PATH=$PATH:/usr/local/maven/bin
 # CD to build dir
 cd $BUILD_DIR
 
-cat ../../../SchemaQuantityLimits.java > $BUILD_DIR/src/main/java/com/mypurecloud/sdk/v2/model/SchemaQuantityLimits.java
-
 # Build
 mvn $MAVEN_SETTINGS_FILE $BUILD_MODE $TESTS $DPGP_PASSPHRASE

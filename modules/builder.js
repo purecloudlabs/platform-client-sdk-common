@@ -329,8 +329,6 @@ function prebuildImpl() {
 				var releaseNotePath = path.join(getEnv('SDK_REPO'), 'releaseNotes.md');
 				log.info(`Writing release notes to ${releaseNotePath}`);
 				fs.writeFileSync(releaseNotePath, _this.releaseNotes);
-
-				fs.copyFileSync(path.join(getEnv('SDK_REPO'), 'build/src/main/java/com/mypurecloud/sdk/v2/model/SchemaQuantityLimits.java'), path.join(getEnv('COMMON_ROOT'), 'SchemaQuantityLimits.java'));
 			})
 			.then(() => executeScripts(_this.config.stageSettings.prebuild.postRunScripts, 'custom prebuild post-run'))
 			.then(() => deferred.resolve())
