@@ -1,27 +1,25 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>{{groupId}}</groupId>
-  <artifactId>{{artifactId}}</artifactId>
-  <packaging>jar</packaging>
-  <name>{{artifactId}}</name>
-  <version>{{artifactVersion}}</version>
-  <description>{{packageDescription}}</description>
-  <url>{{packageUrl}}</url>
+  <groupId>com.mypurecloud</groupId>
+  <artifactId>platform-client-v2</artifactId>
+  <name>${props.name}</name>
+  <version>${props.version}</version>
+  <description>${props.description}</description>
+  <url>${props.url}</url>
 
   <repositories>
     <repository>
-        <id>central</id>
-        <url>https://repo.maven.apache.org/maven2/</url>
+      <id>central</id>
+      <url>https://repo.maven.apache.org/maven2/</url>
     </repository>
   </repositories>
   <pluginRepositories>
     <pluginRepository>
-        <id>central</id>
-        <url>https://repo.maven.apache.org/maven2/</url>
+      <id>central</id>
+      <url>https://repo.maven.apache.org/maven2/</url>
     </pluginRepository>
   </pluginRepositories>
-
   <licenses>
     <license>
       <name>The MIT License (MIT)</name>
@@ -41,7 +39,7 @@
   <scm>
     <connection>scm:git:git://github.com/MyPureCloud/purecloud_api_sdk_java.git</connection>
     <developerConnection>scm:git:ssh://github.com:MyPureCloud/purecloud_api_sdk_java.git</developerConnection>
-    <url>http://github.com/MyPureCloud/purecloud_api_sdk_java/</url>
+    <url>https://github.com/MyPureCloud/purecloud_api_sdk_java/</url>
   </scm>
 
   <prerequisites>
@@ -78,26 +76,26 @@
       </plugin>
 
       <!-- attach test jar -->
-      {{!-- <plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>2.2</version>
+        <version>3.2.2</version>
         <executions>
           <execution>
+            <id>default-jar</id>
+            <phase>package</phase>
             <goals>
               <goal>jar</goal>
               <goal>test-jar</goal>
             </goals>
           </execution>
         </executions>
-        <configuration>
-        </configuration>
-      </plugin> --}}
+      </plugin>
 
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
-        <version>1.10</version>
+        <version>3.3.0</version>
         <executions>
           <execution>
             <id>add_sources</id>
@@ -111,7 +109,7 @@
               </sources>
             </configuration>
           </execution>
-          {{!-- <execution>
+          <execution>
             <id>add_test_sources</id>
             <phase>generate-test-sources</phase>
             <goals>
@@ -122,16 +120,16 @@
                 <source>src/test/java</source>
               </sources>
             </configuration>
-          </execution> --}}
+          </execution>
         </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>2.3.2</version>
+        <version>3.10.0</version>
         <configuration>
-          <source>1.7</source>
-          <target>1.7</target>
+          <source>1.8</source>
+          <target>1.8 </target>
         </configuration>
       </plugin>
 
@@ -139,7 +137,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
-        <version>2.2.1</version>
+        <version>3.2.1</version>
         <executions>
           <execution>
             <id>attach-sources</id>
@@ -154,9 +152,10 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <version>2.9.1</version>
+        <version>3.3.2</version>
         <configuration>
-          <additionalparam>-Xdoclint:none</additionalparam>
+          <doclint>none</doclint>
+          <failOnError>false</failOnError>
         </configuration>
         <executions>
           <execution>
@@ -172,7 +171,7 @@
       <plugin>
         <groupId>org.sonatype.plugins</groupId>
         <artifactId>nexus-staging-maven-plugin</artifactId>
-        <version>1.6.7</version>
+        <version>1.6.12</version>
         <extensions>true</extensions>
         <configuration>
           <serverId>ossrh</serverId>
@@ -185,7 +184,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-gpg-plugin</artifactId>
-        <version>1.5</version>
+        <version>3.0.1</version>
         <executions>
           <execution>
             <id>sign-artifacts</id>
@@ -198,17 +197,37 @@
       </plugin>
 
       <!-- Following plugin executes the testng tests -->
-      {{!-- <plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.22.0</version>
+        <version>2.22.2</version>
         <configuration>
           <!-- Suite testng xml file to consider for test execution -->
           <suiteXmlFiles>
-            <suiteXmlFile>testng.xml</suiteXmlFile>
+            <suiteXmlFile>testng-integration.xml</suiteXmlFile>
+            <suiteXmlFile>testng-unit.xml</suiteXmlFile>
           </suiteXmlFiles>
         </configuration>
-      </plugin> --}}
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>properties-maven-plugin</artifactId>
+        <version>1.0.0</version>
+        <executions>
+          <execution>
+            <phase>initialize</phase>
+            <goals>
+              <goal>read-project-properties</goal>
+            </goals>
+            <configuration>
+              <files>
+                <file>./props.properties</file>
+              </files>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
 
     </plugins>
   </build>
@@ -217,6 +236,11 @@
       <groupId>io.swagger</groupId>
       <artifactId>swagger-annotations</artifactId>
       <version>${swagger-annotations-version}</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.xml.bind</groupId>
+      <artifactId>jaxb-api</artifactId>
+      <version>2.3.1</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -228,7 +252,6 @@
       <artifactId>ini4j</artifactId>
       <version>${ini4j-version}</version>
     </dependency>
-	
     <!-- HTTP client: apache httpclient -->
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
@@ -236,16 +259,21 @@
       <version>${apache-httpclient-version}</version>
     </dependency>
     <dependency>
-      <groupId>com.squareup.okhttp</groupId>
+      <groupId>com.squareup.okhttp3</groupId>
       <artifactId>okhttp</artifactId>
       <version>${okhttpclient-version}</version>
     </dependency>
     <dependency>
-        <groupId>org.asynchttpclient</groupId>
-        <artifactId>async-http-client</artifactId>
-        <version>${ning-asynchttpclient-version}</version>
+      <groupId>org.asynchttpclient</groupId>
+      <artifactId>async-http-client</artifactId>
+      <version>${ning-asynchttpclient-version}</version>
     </dependency>
-
+    <!-- https://mvnrepository.com/artifact/xerces/xercesImpl -->
+    <dependency>
+      <groupId>xerces</groupId>
+      <artifactId>xercesImpl</artifactId>
+      <version>2.12.2</version>
+    </dependency>
     <!-- JSON processing: jackson -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
@@ -292,6 +320,13 @@
       <version>${testng-version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>${mockito.version}</version>
+      <scope>test</scope>
+    </dependency>
+
 
     <!-- for notification helper extensions -->
     <dependency>
@@ -309,18 +344,19 @@
   </dependencies>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <swagger-annotations-version>1.5.8</swagger-annotations-version>
-    <slf4j-version>1.7.21</slf4j-version>
-    <ini4j-version>0.5.4</ini4j-version>
+    <swagger-annotations-version>1.6.5</swagger-annotations-version>
+    <slf4j-version>1.7.36</slf4j-version>
     <jersey-version>1.19.1</jersey-version>
-    <jackson-version>2.12.1</jackson-version>
-    <jodatime-version>2.10.10</jodatime-version>
+    <jackson-version>2.13.1</jackson-version>
+    <jodatime-version>2.10.13</jodatime-version>
     <maven-plugin-version>1.0.0</maven-plugin-version>
-    <testng-version>6.14.3</testng-version>
+    <testng-version>7.5</testng-version>
     <apache-httpclient-version>4.5.13</apache-httpclient-version>
-    <okhttpclient-version>2.7.4</okhttpclient-version>
+    <okhttpclient-version>4.9.3</okhttpclient-version>
     <ning-asynchttpclient-version>2.12.3</ning-asynchttpclient-version>
-    <nv-websocket-client-version>2.1</nv-websocket-client-version>
-    <guava-version>30.0-jre</guava-version>
+    <nv-websocket-client-version>2.14</nv-websocket-client-version>
+    <guava-version>31.1-jre</guava-version>
+    <mockito.version>4.3.1</mockito.version>
+    <ini4j-version>0.5.4</ini4j-version>
   </properties>
 </project>
