@@ -270,6 +270,6 @@
     <maven-plugin-version>1.0.0</maven-plugin-version>
     <apache-httpclient-version>4.5.13</apache-httpclient-version>
     <okhttpclient-version>4.9.3</okhttpclient-version>
-    <guava-version>31.0.1-jre</guava-version>
+    <guava-version>31.1-jre</guava-version>
   </properties>
 </project>
