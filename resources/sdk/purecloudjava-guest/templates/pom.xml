@@ -3,10 +3,10 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.mypurecloud</groupId>
   <artifactId>purecloud-guest-chat-client</artifactId>
-  <name>${props.name}</name>
-  <version>${props.version}</version>
-  <description>${props.description}</description>
-  <url>${props.url}</url>
+  <name>${name}</name>
+  <version>${version}</version>
+  <description>${description}</description>
+  <url>${url}</url>
 
   <repositories>
     <repository>
@@ -288,5 +288,9 @@
     <nv-websocket-client-version>2.14</nv-websocket-client-version>
     <guava-version>31.1-jre</guava-version>
     <ini4j-version>0.5.4</ini4j-version>
+    <name>${props.name}</name>
+    <version>${props.version}</version>
+    <description>${props.description}</description>
+    <url>${props.url}</url>
   </properties>
 </project>

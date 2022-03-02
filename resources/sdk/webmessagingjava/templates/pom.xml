@@ -5,10 +5,10 @@
 
   <groupId>cloud.genesys</groupId>
   <artifactId>web-messaging-sdk</artifactId>
-  <name>${props.name}</name>
-  <version>${props.version}</version>
-  <description>${props.description}</description>
-  <url>${props.url}</url>
+  <name>${name}</name>
+  <version>${version}</version>
+  <description>${description}</description>
+  <url>${url}</url>
 
   <developers>
     <developer>
@@ -271,5 +271,9 @@
     <apache-httpclient-version>4.5.13</apache-httpclient-version>
     <okhttpclient-version>4.9.3</okhttpclient-version>
     <guava-version>31.1-jre</guava-version>
+    <name>${props.name}</name>
+    <version>${props.version}</version>
+    <description>${props.description}</description>
+    <url>${props.url}</url>
   </properties>
 </project>
