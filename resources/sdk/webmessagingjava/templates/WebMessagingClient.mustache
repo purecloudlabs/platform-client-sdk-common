@@ -311,7 +311,8 @@ public class WebMessagingClient {
             SendMessageRequest sendMessageRequest = new SendMessageRequest();
             sendMessageRequest.token(this.token);
             sendMessageRequest.action(RequestTypeIncomingMessage.ONMESSAGE);
-            sendMessageRequest.message(new IncomingNormalizedMessage()
+            IncomingNormalizedMessage normalizedMessage = new IncomingNormalizedMessage();
+            sendMessageRequest.message(normalizedMessage
                .type(NormalizedType.TEXT)
                .text(message));
             if (customAttributes != null) {
@@ -321,7 +322,10 @@ public class WebMessagingClient {
                 baseMessagingChannel.metadata(baseChannelMetadata);
                 sendMessageRequest.channel(baseMessagingChannel);
             }
-            sendMessageRequest.attachmentIds(Arrays.asList(attachmentIds));
+            for (String attachmentId : attachmentIds) {
+                normalizedMessage.getContent().add(new MessageContent().contentType(ContentType.ATTACHMENT)
+                        .attachment(new ContentAttachment().id(attachmentId)));
+            }
             String payload = objectMapper.writeValueAsString(sendMessageRequest);
 
             webSocket.sendText(payload, true);
@@ -330,6 +334,56 @@ public class WebMessagingClient {
         }
     }
 
+    /**
+     * send an event of type Presence join
+     * @see EventPresence
+     */
+    public void sendPresenceEvent() {
+        try {
+            SendMessageRequest sendMessageRequest = new SendMessageRequest();
+            sendMessageRequest.token(this.token);
+            sendMessageRequest.action(RequestTypeIncomingMessage.ONMESSAGE);
+            sendMessageRequest.message(new IncomingNormalizedMessage()
+                    .type(NormalizedType.EVENT)
+                    .events(Collections.singletonList(new MessageEvent()
+                            .eventType(EventType.PRESENCE)
+                            .presence(new EventPresence()
+                                    .type(EventPresenceType.JOIN))
+                            ))
+            );
+            String payload = objectMapper.writeValueAsString(sendMessageRequest);
+            webSocket.sendText(payload, true);
+        } catch (JsonProcessingException e) {
+            // no-op
+        }
+    }
+
+    /**
+     * send an event of type Typing on
+     * @see EventTyping
+     */
+    public void sendTypingEvent() {
+        try {
+            SendMessageRequest sendMessageRequest = new SendMessageRequest();
+            sendMessageRequest.token(this.token);
+            sendMessageRequest.action(RequestTypeIncomingMessage.ONMESSAGE);
+            sendMessageRequest.message(new IncomingNormalizedMessage()
+                    .type(NormalizedType.EVENT)
+                    .events(Collections.singletonList(new MessageEvent()
+                            .eventType(EventType.TYPING)
+                            .typing(new EventTyping().type(EventTypingType.ON))
+                            ))
+            );
+            String payload = objectMapper.writeValueAsString(sendMessageRequest);
+            webSocket.sendText(payload, true);
+        } catch (JsonProcessingException e) {
+            // no-op
+        }
+    }
+
+		/**
+		* send a request to generate an upload url for an attachment
+		*/
     public void attachment(String fileName, int fileSize, String fileType) {
         try {
             GenerateUploadUrlRequest generateUploadUrlRequest = new GenerateUploadUrlRequest()
@@ -346,6 +400,9 @@ public class WebMessagingClient {
         }
     }
 
+		/**
+		* send a request to generate a download url for an attachment
+		*/
     public void getAttachment(String attachmentId) {
         try {
             GenerateDownloadUrlRequest generateDownloadUrlRequest = new GenerateDownloadUrlRequest()
@@ -360,6 +417,9 @@ public class WebMessagingClient {
         }
     }
 
+		/**
+		* delete an attachment. Must not have been sent
+		*/
     public void deleteAttachment(String attachmentId) {
         try {
             DeleteAttachmentRequest deleteAttachmentRequest = new DeleteAttachmentRequest()
@@ -463,7 +523,7 @@ public class WebMessagingClient {
                 for (SessionListener sessionListener : sessionListeners) {
                     sessionListener.jwtResponse((JwtResponse) response, rawMessage);
                 }
-                break;           
+                break;
             default:
                 for (SessionListener sessionListener : sessionListeners) {
                     sessionListener.unexpectedMessage(baseMessage, rawMessage);
@@ -619,7 +679,7 @@ public class WebMessagingClient {
          *
          * @param connectionClosedEvent    The deserialized event
          * @param rawMessage  The raw message payload JSON as a string
-         */    
+         */
         public void connectionClosedEvent(ConnectionClosedEvent cnxClosedResponse, String rawMessage);
 
         /**
@@ -628,7 +688,7 @@ public class WebMessagingClient {
          * @param sessionExpiredEvent    The deserialized event
          * @param rawMessage  The raw message payload JSON as a string
          */
-        public void sessionExpiredEvent(SessionExpiredEvent sessionExpiredResponse, String rawMessage);    
+        public void sessionExpiredEvent(SessionExpiredEvent sessionExpiredResponse, String rawMessage);
 
         /**
          * Raised for responses to url requests (type == BaseResponseType.RESPONSE, class = SessionResponse)
@@ -637,7 +697,7 @@ public class WebMessagingClient {
          * @param rawMessage  The raw message payload JSON as a string
          */
         public void jwtResponse(JwtResponse jwtResponse, String rawMessage);
-            
+
         /**
          * Raised for unmatched BaseResponseType
          *
