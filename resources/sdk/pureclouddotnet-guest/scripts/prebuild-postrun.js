@@ -6,7 +6,7 @@ var Mustache = require('mustache');
 
 try {
 	var swaggerCodegenConfigFilePath = process.argv[2];
-	var version = require(path.resolve(process.argv[3]));
+	var version = fs.existsSync(process.argv[3]) ? require(path.resolve(process.argv[3])) : undefined;
 	var packageName = process.argv[4];
 	var nugetPath = process.argv[5];
 
@@ -16,7 +16,7 @@ try {
 
 	var config = {
 		packageName: packageName || 'PureCloudPlatform.Client.Guest',
-		packageVersion: version.displayFull,
+		packageVersion: version ? version.displayFull : '',
 		packageTitle: 'PureCloud Platform Guest Chat SDK',
 		packageProductName: 'PureCloudPlatformGuestChat',
 		packageDescription: 'A .NET library to interface with the PureCloud Platform API Guest Chat APIs',
@@ -31,7 +31,8 @@ try {
 
 	console.log('downloading nuget...');
 	let data = cp.execFileSync('curl', ['--silent', '-L', 'https://dist.nuget.org/win-x86-commandline/latest/nuget.exe'], {
-		encoding: 'binary'
+		encoding: 'binary',
+		maxBuffer: 1024 * 10000
 	});
 	fs.writeFileSync(nugetPath, data, 'binary');
 } catch (err) {
