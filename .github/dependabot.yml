@@ -24,3 +24,8 @@ updates:
     directory: "resources/sdk/clisdkclient/extensions/"
     schedule:
       interval: "daily"
+
+  - package-ecosystem: "pip"
+    directory: "resources/sdk/purecloudpython/templates/"
+    schedule:
+      interval: "daily"

@@ -91,6 +91,7 @@
             "${SKIP_TESTS}"
           ],
 	        "appendIsNewReleaseArg": true,
+	        "appendVersionArg": true,
 	        "failOnError": true
         }
       ],

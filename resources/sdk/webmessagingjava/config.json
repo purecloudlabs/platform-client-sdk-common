@@ -79,6 +79,7 @@
 						"${DPGP_PASSPHRASE}"
 					],
 					"appendIsNewReleaseArg": true,
+					"appendVersionArg": true,
 					"failOnError": true
 				},
 				{
