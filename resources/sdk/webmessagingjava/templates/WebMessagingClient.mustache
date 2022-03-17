@@ -17,6 +17,7 @@ import java.net.http.WebSocket.Listener;
 import java.net.http.WebSocket;
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EventListener;
 import java.util.List;
 import java.util.UUID;
@@ -69,7 +70,6 @@ public class WebMessagingClient {
      * @param deploymentId     The ID of the Web Messaging deployment
      * @param initialMessage   The initial message to send once the session is ready
      *
-     * @return The token that identifies the session
      */
     public void joinConversation(String deploymentId, String initialMessage, String origin) {
         joinConversation(deploymentId, UUID.randomUUID().toString(), initialMessage, origin);
@@ -129,12 +129,18 @@ public class WebMessagingClient {
 
             @Override
             public void webSocketDisconnected(int statusCode, String reason) {
+
+            }
+
+            @Override
+            public void webSocketError(String reason) {
+
             }
 
         };
 
-        addSessionListener(listener);
         connect(deploymentId, origin);
+        addSessionListener(listener);
     }
 
     /**
@@ -164,6 +170,12 @@ public class WebMessagingClient {
             }
 
             @Override
+            public void onError(WebSocket webSocket, Throwable error) {
+                onWebSocketError(error.getMessage());
+                Listener.super.onError(webSocket, error);
+            }
+
+            @Override
             public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
                 onWebSocketDisconnected(statusCode, reason);
                 return Listener.super.onClose(webSocket, statusCode, reason);
@@ -180,6 +192,22 @@ public class WebMessagingClient {
 
         // Connect to WebSocket server
         completableFuture.join();
+    }
+
+    /**
+     * Check whether the underlying websocket's input is closed
+     * @return true if closed, false otherwise
+     */
+    public boolean isInputClosed() {
+        return webSocket.isInputClosed();
+    }
+
+    /**
+     * Check whether the underlying websocket's output is closed
+     * @return true if closed, false otherwise
+     */
+    public boolean isOutputClosed() {
+        return webSocket.isOutputClosed();
     }
 
     /**
@@ -465,8 +493,8 @@ public class WebMessagingClient {
     /**
      * Invokes appropriate handler for incoming WebSocket messages
      *
-     * @param rawResponse The raw message payload JSON as a string
-     * @param event       The deserialized event object
+     * @param rawMessage The raw message payload JSON as a string
+     * @param baseMessage       The deserialized event object
      */
     private void onSessionEvent(String rawMessage, BaseMessage baseMessage) {
         String className = baseMessage.getClassProperty().toString();
@@ -549,6 +577,16 @@ public class WebMessagingClient {
         // Invoke each listener
         for (SessionListener sessionListener : sessionListeners) {
             sessionListener.webSocketDisconnected(statusCode, reason);
+        }
+    }
+
+    /**
+     * Invokes registered listeners when an error occurs on the connection to the remote server
+     */
+    private void onWebSocketError(String reason) {
+        // Invoke each listener
+        for (SessionListener sessionListener : sessionListeners) {
+            sessionListener.webSocketError(reason);
         }
     }
 
@@ -680,7 +718,7 @@ public class WebMessagingClient {
          * @param connectionClosedEvent    The deserialized event
          * @param rawMessage  The raw message payload JSON as a string
          */
-        public void connectionClosedEvent(ConnectionClosedEvent cnxClosedResponse, String rawMessage);
+        public void connectionClosedEvent(ConnectionClosedEvent connectionClosedEvent, String rawMessage);
 
         /**
          * Raised for responses to url requests (type == BaseResponseType.RESPONSE, class = SessionResponse)
@@ -688,7 +726,7 @@ public class WebMessagingClient {
          * @param sessionExpiredEvent    The deserialized event
          * @param rawMessage  The raw message payload JSON as a string
          */
-        public void sessionExpiredEvent(SessionExpiredEvent sessionExpiredResponse, String rawMessage);
+        public void sessionExpiredEvent(SessionExpiredEvent sessionExpiredEvent, String rawMessage);
 
         /**
          * Raised for responses to url requests (type == BaseResponseType.RESPONSE, class = SessionResponse)
@@ -718,5 +756,12 @@ public class WebMessagingClient {
          * @param reason
          */
         void webSocketDisconnected(int statusCode, String reason);
+
+        /**
+         * Raised when error occurs on the remote connection
+         *
+         * @param reason
+         */
+        void webSocketError(String reason);
     }
 }
