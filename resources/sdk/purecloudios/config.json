@@ -67,7 +67,16 @@
           ]
         }
       ],
-      "postRunScripts": []
+      "postRunScripts": [
+        {
+          "type": "node",
+          "path": "${COMMON_ROOT}/resources/scripts/combineApiDataFiles.js",
+          "args": [
+            "${SDK_REPO}/build/docs",
+            "${SDK_REPO}/build/APIData.json"
+          ]
+        }
+      ]
     },
     "postbuild": {
       "gitCommit": false,

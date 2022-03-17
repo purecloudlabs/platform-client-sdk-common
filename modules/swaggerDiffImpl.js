@@ -219,6 +219,7 @@ function checkForChange(id, key, location, impact, property, oldObject, newObjec
 }
 
 function checkOperations(oldSwagger, newSwagger) {
+	if (!oldSwagger) return;
 	// Check for removed paths
 	_.forEach(oldSwagger.paths, function(oldPath, pathKey) {
 		var newPath = newSwagger.paths[pathKey];
@@ -463,6 +464,7 @@ function getSchemaType(schema) {
 }
 
 function checkModels(oldSwagger, newSwagger) {
+	if (!oldSwagger) return;
 	// Check for removed models
 	_.forEach(oldSwagger.definitions, function(oldModel, modelKey) {
 		var newModel = newSwagger.definitions[modelKey];

@@ -94,6 +94,14 @@
           "failOnError": true
         },
         {
+          "type": "node",
+          "path": "${COMMON_ROOT}/resources/scripts/combineApiDataFiles.js",
+          "args": [
+            "${SDK_REPO}/docs",
+            "${SDK_REPO}/APIData.json"
+          ]
+        },
+        {
           "type": "command",
           "command": "make",
           "cwd": "${SDK_REPO}",

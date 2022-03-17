@@ -80,7 +80,7 @@
           "args": [
             "${COMMON_ROOT}/resources/sdk/pureclouddotnet-guest/extensions",
             {
-              "$ref": "#/settings/resourcePaths.extensions"
+              "$ref": "#/settings/resourcePaths/extensions"
             },
             {
               "$ref": "#/settings/namespace"
@@ -102,7 +102,16 @@
           ]
         }
       ],
-      "postRunScripts": []
+      "postRunScripts": [
+        {
+          "type": "node",
+          "path": "${COMMON_ROOT}/resources/scripts/combineApiDataFiles.js",
+          "args": [
+            "${SDK_REPO}/build/docs",
+            "${SDK_REPO}/build/APIData.json"
+          ]
+        }
+      ]
     },
     "postbuild": {
       "gitCommit": false,
