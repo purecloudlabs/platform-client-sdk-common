@@ -90,7 +90,8 @@
           "args": [
             "${SDK_REPO}/build/docs",
             "${SDK_REPO}/build/APIData.json"
-          ]
+          ],
+          "failOnError": true
         }
       ]
     },
