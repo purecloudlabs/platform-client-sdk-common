@@ -1,5 +1,6 @@
 {
     {{#operations}}{{#operation}}"{{httpMethod}} {{path}}": {
+        "operationId": "{{{operationIdLowerCase}}}",
         "functionName": "{{{operationId}}}",
         "signature": "{{{operationId}}}({{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}})"{{#hasParams}},{{/hasParams}}{{^hasParams}}{{#returnType}},{{/returnType}}{{/hasParams}}
         {{#hasParams}}"parameters": [{{#allParams}}
