@@ -6,10 +6,11 @@
         {{#hasParams}}"parameters": [{{#allParams}}
             {
                 "name": "{{paramName}}",
-                "type": "{{dataType}}"
+                "type": "{{{dataType}}}",
+                "required": "{{#required}}true{{/required}}{{^required}}false{{/required}}"
             }{{#hasMore}},{{/hasMore}}{{/allParams}}
         ]{{/hasParams}}{{#returnType}}{{#hasParams}},{{/hasParams}}
-        "return": "{{returnType}}"{{/returnType}}
+        "return": "{{{returnType}}}"{{/returnType}}
     }{{#hasMore}},{{/hasMore}}
     {{/operation}}{{/operations}}
 }
