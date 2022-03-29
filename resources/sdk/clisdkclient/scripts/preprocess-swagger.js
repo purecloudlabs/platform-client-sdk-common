@@ -47,6 +47,7 @@ function processDefinitions(includedSwaggerPathObjects, resourceDefinitions, new
 	for (const path of Object.keys(includedSwaggerPathObjects)) {
 		// Override tags if possible
 		for (let value of Object.values(includedSwaggerPathObjects[path])) {
+			value['x-genesys-original-operation-id'] = value.operationId;
 			if (value.operationId.startsWith("get")) {
 				const successResponse = value.responses["200"]
 				if (successResponse) {
