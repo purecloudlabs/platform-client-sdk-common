@@ -336,7 +336,7 @@ def _get_config_int(config, section, key):
 
 class ConfigFileEventHandler(FileSystemEventHandler):
     def __init__(self, configuration):
-        super()
+        super(FileSystemEventHandler, self).__init__()
         self.configuration = configuration
         self.config_file_path = self.configuration.config_file_path
 

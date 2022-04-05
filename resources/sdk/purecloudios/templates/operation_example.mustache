@@ -1,13 +1,13 @@
-{{#operation}}import {{{projectName}}}
+{{#operation}}import PureCloudPlatformClientV2
 
-{{{projectName}}}API.basePath = "{{basePath}}"
-{{{projectName}}}API.accessToken = "cwRto9ScT..."
+PureCloudPlatformClientV2API.basePath = "{{basePath}}" // expected format: "https://api.[base path]"
+PureCloudPlatformClientV2API.accessToken = "your_access_token"
 
 {{#allParams}}
 let {{{paramName}}}: {{#isEnum}}{{#isContainer}}{{{dataType}}}{{/isContainer}}{{^isContainer}}{{{classname}}}.{{{datatypeWithEnum}}}_{{operationId}}{{/isContainer}}{{/isEnum}}{{^isEnum}}{{{dataType}}}{{/isEnum}} = {{#isEnum}}{{#isContainer}}[{{/isContainer}}{{{classname}}}.{{{enumName}}}_{{{operationId}}}.enummember{{#isContainer}}.rawValue]{{/isContainer}}{{/isEnum}}{{^isEnum}}{{{example}}}{{/isEnum}} // {{#description}}{{{description}}}{{/description}}
 {{/allParams}}
 
-// Code example
+{{#summary}}// {{{.}}}{{/summary}}
 {{{classname}}}.{{{operationId}}}({{#allParams}}{{{paramName}}}: {{{paramName}}}{{#hasMore}}, {{/hasMore}}{{/allParams}}) { ({{#returnType}}response, {{/returnType}}error) in
     if let error = error {
         dump(error)
