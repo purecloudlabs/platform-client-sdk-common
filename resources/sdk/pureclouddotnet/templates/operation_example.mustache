@@ -1,31 +1,31 @@
 {{#operation}}using System;
 using System.Diagnostics;
-using {{packageName}}.Api;
-using {{packageName}}.Client;
-using {{packageName}}.Model;
+using PureCloudPlatform.Client.V2.Api;
+using PureCloudPlatform.Client.V2.Client;
+using PureCloudPlatform.Client.V2.Model;
+using PureCloudPlatform.Client.V2.Extensions;
 
 namespace Example
 {
     public class {{operationId}}Example
     {
-        public void main()
-        { {{#hasAuthMethods}}{{#authMethods}}{{#isBasic}}
-            // Configure HTTP basic authorization: {{{name}}}
-            Configuration.Default.Username = 'YOUR_USERNAME';
-            Configuration.Default.Password = 'YOUR_PASSWORD';{{/isBasic}}{{#isApiKey}}
+        static void Main(string[] args)
+        {   
+            PureCloudRegionHosts region = PureCloudRegionHosts.us_east_1; // Genesys Cloud region
+            Configuration.Default.ApiClient.setBasePath(region);
+            {{#hasAuthMethods}}{{#authMethods}}{{#isBasic}}// Configure HTTP basic authorization: {{{name}}}
+            Configuration.Default.Username = "YOUR_USERNAME";
+            Configuration.Default.Password = "YOUR_PASSWORD";{{/isBasic}}{{#isApiKey}}
             // Configure API key authorization: {{{name}}}
-            Configuration.Default.ApiKey.Add('{{{keyParamName}}}', 'YOUR_API_KEY');
+            Configuration.Default.ApiKey.Add("{{{keyParamName}}}", "YOUR_API_KEY");
             // Uncomment below to setup prefix (e.g. BEARER) for API key, if needed
-            // Configuration.Default.ApiKeyPrefix.Add('{{{keyParamName}}}', 'BEARER');{{/isApiKey}}{{#isOAuth}}
+            // Configuration.Default.ApiKeyPrefix.Add("{{{keyParamName}}}", "BEARER");{{/isApiKey}}{{#isOAuth}}
             // Configure OAuth2 access token for authorization: {{{name}}}
-            // The following example is using the Authorization Code Grant
-            var accessTokenInfo = Configuration.Default.ApiClient.PostToken("18a4c365-7ea3-4f0g-9fb7-884fb4d2e9c6",
-                "M7FfdYQyL5TA6BdbEZ8M9-Wx4uZai1rNQ7jcuFdcJJo",
-                "http://redirecturi.com/",
-                "6Zxcb0oASMBI55wQJ6bVmOmO57k8CxXBKgzDKtYXbtk");{{/isOAuth}}{{/authMethods}}{{/hasAuthMethods}}
+            // The following example is using the Client Credentials Grant
+            var accessTokenInfo = Configuration.Default.ApiClient.PostToken("18a4c365-7ea3-4f0g-9fb7-884fb4d2e9c6", "M7FfdYQyL5TA6BdbEZ8M9-Wx4uZai1rNQ7jcuFdcJJo");{{/isOAuth}}{{/authMethods}}{{/hasAuthMethods}}
 
-            var apiInstance = new {{classname}}();{{#allParams}}{{#isPrimitiveType}}
-            var {{paramName}} = {{example}};  // {{{dataType}}} | {{{description}}}{{^required}} (optional) {{/required}}{{#defaultValue}} (default to {{{.}}}){{/defaultValue}}{{/isPrimitiveType}}{{^isPrimitiveType}}
+            var apiInstance = new {{baseName}}Api();{{#allParams}}{{#isPrimitiveType}}
+            {{#isString}}var {{paramName}} = "{{{example}}}";  // {{{dataType}}} | {{{description}}}{{^required}} (optional) {{/required}}{{#defaultValue}} (default to {{{.}}}){{/defaultValue}}{{/isString}}{{#isDate}}var {{paramName}} = new Date();  // {{{dataType}}} | {{{description}}}{{^required}} (optional) {{/required}}{{#defaultValue}} (default to {{{.}}}){{/defaultValue}}{{/isDate}}{{^isString}}{{^isDate}}{{#isDateTime}}var {{paramName}} = new DateTime();  // {{{dataType}}} | {{{description}}}{{^required}} (optional) {{/required}}{{#defaultValue}} (default to {{{.}}}){{/defaultValue}}{{/isDateTime}}var {{paramName}} = {{{example}}};  // {{{dataType}}} | {{{description}}}{{^required}} (optional) {{/required}}{{#defaultValue}} (default to {{{.}}}){{/defaultValue}}{{/isDate}}{{/isString}}{{/isPrimitiveType}}{{^isPrimitiveType}}
             var {{paramName}} = new {{{dataType}}}(); // {{{dataType}}} | {{{description}}}{{^required}} (optional) {{/required}}{{#defaultValue}} (default to {{{.}}}){{/defaultValue}}{{/isPrimitiveType}}{{/allParams}}
 
             try
@@ -36,7 +36,7 @@ namespace Example
             }
             catch (Exception e)
             {
-                Debug.Print("Exception when calling {{classname}}.{{operationId}}: " + e.Message );
+                Debug.Print("Exception when calling {{baseName}}.{{operationId}}: " + e.Message );
             }
         }
     }

@@ -1,21 +1,21 @@
-{{#operation}}import time
-import {{{packageName}}}
-from {{{packageName}}}.rest import ApiException
+{{#operation}}import PureCloudPlatformClientV2
+from PureCloudPlatformClientV2.rest import ApiException
 from pprint import pprint
 {{#hasAuthMethods}}{{#authMethods}}{{#isBasic}}
 # Configure HTTP basic authorization: {{{name}}}
-{{{packageName}}}.configuration.username = 'YOUR_USERNAME'
-{{{packageName}}}.configuration.password = 'YOUR_PASSWORD'{{/isBasic}}{{#isApiKey}}
+PureCloudPlatformClientV2.configuration.username = 'YOUR_USERNAME'
+PureCloudPlatformClientV2.configuration.password = 'YOUR_PASSWORD'{{/isBasic}}{{#isApiKey}}
 # Configure API key authorization: {{{name}}}
-{{{packageName}}}.configuration.api_key['{{{keyParamName}}}'] = 'YOUR_API_KEY'
+PureCloudPlatformClientV2.configuration.api_key['{{{keyParamName}}}'] = 'YOUR_API_KEY'
 # Uncomment below to setup prefix (e.g. BEARER) for API key, if needed
-# {{{packageName}}}.configuration.api_key_prefix['{{{keyParamName}}}'] = 'BEARER'{{/isApiKey}}{{#isOAuth}}
+# PureCloudPlatformClientV2.configuration.api_key_prefix['{{{keyParamName}}}'] = 'BEARER'{{/isApiKey}}{{#isOAuth}}
 # Configure OAuth2 access token for authorization: {{{name}}}
-{{{packageName}}}.configuration.access_token = 'YOUR_ACCESS_TOKEN'{{/isOAuth}}{{/authMethods}}
+PureCloudPlatformClientV2.configuration.access_token = 'your_access_token'{{/isOAuth}}{{/authMethods}}
+# or use get_client_credentials_token(...), get_saml2bearer_token(...) or get_code_authorization_token(...)
 {{/hasAuthMethods}}
 
 # create an instance of the API class
-api_instance = {{{packageName}}}.{{{classname}}}()
+api_instance = PureCloudPlatformClientV2.{{baseName}}Api()
 {{#allParams}}{{paramName}} = {{{example}}} # {{{dataType}}} | {{{description}}}{{^required}} (optional){{/required}}{{#defaultValue}} (default to {{{.}}}){{/defaultValue}}
 {{/allParams}}
 
