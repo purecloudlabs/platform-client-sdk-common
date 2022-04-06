@@ -34,6 +34,11 @@
 			"name": "getschemametadata"
 		}
 	},
+    "/api/v2/conversations/callbacks": {
+        "patch": {
+                "name": "updatescheduledcallback"
+        }
+    },
 	"/api/v2/authorization/roles/{roleId}": {
 		"post": {
 			"name": "bulkgrant"
