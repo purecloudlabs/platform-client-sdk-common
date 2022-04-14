@@ -30,31 +30,6 @@
     "moduleName": "platformClient",
     "apiHealthCheckUrl": "https://api.mypurecloud.com/api/v2/health/check"
   },
-  "stageSettings": {
-    "prebuild": {
-      "preRunScripts": [],
-      "postRunScripts": [
-        {
-          "type": "node",
-          "path": "prebuild-postrun.js",
-          "args": [
-            {
-              "$ref": "#/settings/swaggerCodegen/configFile"
-            },
-            {
-              "$ref": "#/settings/versionFile"
-            },
-            {
-              "$ref": "#/settings/moduleName"
-            },
-            {
-              "$ref": "#/settings/packageName"
-            }
-          ],
-          "failOnError": true
-        }
-      ]
-    },
     "stageSettings": {
         "prebuild": {
             "preRunScripts": [],
@@ -110,14 +85,14 @@
                     "failOnError": true
                 },
                 {
-                    "type": "command",
-                    "command": "npm",
-                    "cwd": "${COMMON_ROOT}/resources/sdk/purecloudjavascript/scripts/test",
-                    "args": [
-                        "run",
-                        "test"
-                    ],
-                    "failOnError": true
+                  "type": "command",
+                  "command": "npm",
+                  "cwd": "${COMMON_ROOT}/resources/sdk/purecloudjavascript/scripts/test",
+                  "args": [
+                    "run",
+                    "test"
+                  ],
+                  "failOnError": true
                 },
                 {
                     "type": "node",
