@@ -10,7 +10,7 @@ class {{classname}} {
 
 	/**
 	 * Constructs a new {{classname}}. {{#description}}
-	 * {{description}}{{/description}}
+	 * {{{description}}}{{/description}}
 	 * @alias module:{{#invokerPackage}}{{invokerPackage}}/{{/invokerPackage}}{{#apiPackage}}{{apiPackage}}/{{/apiPackage}}{{classname}}
 	 * @class
 	 * @param {module:{{#invokerPackage}}{{invokerPackage}}/{{/invokerPackage}}ApiClient} apiClient Optional API client implementation to use,
@@ -22,11 +22,11 @@ class {{classname}} {
 
 {{#operations}}{{#operation}}{{#emitJSDoc}}
 	/**{{#summary}}
-	 * {{summary}}{{/summary}}{{#notes}}
-	 * {{notes}}{{/notes}}{{#allParams}}{{#required}}
-	 * @param {{&vendorExtensions.x-jsdoc-type}} {{paramName}} {{description}}{{/required}}{{/allParams}}{{#hasOptionalParams}}
+	 * {{{summary}}}{{/summary}}{{#notes}}
+	 * {{{notes}}}{{/notes}}{{#allParams}}{{#required}}
+	 * @param {{&vendorExtensions.x-jsdoc-type}} {{paramName}} {{{description}}}{{/required}}{{/allParams}}{{#hasOptionalParams}}
 	 * @param {Object} opts Optional parameters{{#allParams}}{{^required}}
-	 * @param {{&vendorExtensions.x-jsdoc-type}} opts.{{paramName}} {{description}}{{#defaultValue}} (default to {{.}}){{/defaultValue}}{{/required}}{{/allParams}}{{/hasOptionalParams}}
+	 * @param {{&vendorExtensions.x-jsdoc-type}} opts.{{paramName}} {{{description}}}{{#defaultValue}} (default to {{.}}){{/defaultValue}}{{/required}}{{/allParams}}{{/hasOptionalParams}}
 	 */{{/emitJSDoc}}
 	{{nickname}}({{vendorExtensions.x-codegen-arg-list}}) { {{#hasOptionalParams}}
 		opts = opts || {};
@@ -39,10 +39,10 @@ class {{classname}} {
 		return this.apiClient.callApi(
 			'{{&path}}', 
 			'{{httpMethod}}', 
-			{ {{#pathParams}}'{{baseName}}': {{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}{{#hasMore}},{{/hasMore}}{{/pathParams}} }, 
-			{ {{#queryParams}}'{{baseName}}': {{#collectionFormat}}this.apiClient.buildCollectionParam({{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}, '{{collectionFormat}}'){{/collectionFormat}}{{^collectionFormat}}{{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}{{/collectionFormat}}{{#hasMore}},{{/hasMore}}{{/queryParams}} }, 
-			{ {{#headerParams}}'{{baseName}}': {{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}{{#hasMore}},{{/hasMore}}{{/headerParams}} }, 
-			{ {{#formParams}}'{{baseName}}': {{#collectionFormat}}this.apiClient.buildCollectionParam({{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}, '{{collectionFormat}}'){{/collectionFormat}}{{^collectionFormat}}{{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}{{/collectionFormat}}{{#hasMore}},{{/hasMore}}{{/formParams}} }, 
+			{ {{#pathParams}}'{{baseName}}': {{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}{{^-last}},{{/-last}}{{/pathParams}} },
+			{ {{#queryParams}}'{{baseName}}': {{#collectionFormat}}this.apiClient.buildCollectionParam({{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}, '{{collectionFormat}}'){{/collectionFormat}}{{^collectionFormat}}{{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}{{/collectionFormat}}{{^-last}},{{/-last}}{{/queryParams}} },
+			{ {{#headerParams}}'{{baseName}}': {{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}{{^-last}},{{/-last}}{{/headerParams}} },
+			{ {{#formParams}}'{{baseName}}': {{#collectionFormat}}this.apiClient.buildCollectionParam({{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}, '{{collectionFormat}}'){{/collectionFormat}}{{^collectionFormat}}{{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}{{/collectionFormat}}{{^-last}},{{/-last}}{{/formParams}} },
 			{{#bodyParam}}{{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}{{/bodyParam}}{{^bodyParam}}null{{/bodyParam}}, 
 			['PureCloud OAuth'], 
 			[{{#consumes}}'{{mediaType}}'{{^-last}}, {{/-last}}{{/consumes}}],
