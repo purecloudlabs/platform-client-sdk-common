@@ -28,7 +28,7 @@ class {{classname}} {
 	 * @param {Object} opts Optional parameters{{#allParams}}{{^required}}
 	 * @param {{&vendorExtensions.x-jsdoc-type}} opts.{{paramName}} {{description}}{{#defaultValue}} (default to {{.}}){{/defaultValue}}{{/required}}{{/allParams}}{{/hasOptionalParams}}
 	 */{{/emitJSDoc}}
-	{{nickname}}({{vendorExtensions.x-codegen-argList}}) { {{#hasOptionalParams}}
+	{{nickname}}({{vendorExtensions.x-codegen-arg-list}}) { {{#hasOptionalParams}}
 		opts = opts || {};
 		{{/hasOptionalParams}}{{#allParams}}{{#required}}
 		// verify the required parameter '{{paramName}}' is set
@@ -45,8 +45,8 @@ class {{classname}} {
 			{ {{#formParams}}'{{baseName}}': {{#collectionFormat}}this.apiClient.buildCollectionParam({{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}, '{{collectionFormat}}'){{/collectionFormat}}{{^collectionFormat}}{{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}{{/collectionFormat}}{{#hasMore}},{{/hasMore}}{{/formParams}} }, 
 			{{#bodyParam}}{{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}{{/bodyParam}}{{^bodyParam}}null{{/bodyParam}}, 
 			['PureCloud OAuth'], 
-			[{{#consumes}}'{{mediaType}}'{{#hasMore}}, {{/hasMore}}{{/consumes}}], 
-			[{{#produces}}'{{mediaType}}'{{#hasMore}}, {{/hasMore}}{{/produces}}]{{^usePromises}}, 
+			[{{#consumes}}'{{mediaType}}'{{^-last}}, {{/-last}}{{/consumes}}],
+			[{{#produces}}'{{mediaType}}'{{^-last}}, {{/-last}}{{/produces}}]{{^usePromises}},
 			callback{{/usePromises}}
 		);
 	}
