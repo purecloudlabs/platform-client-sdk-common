@@ -47,10 +47,10 @@ func (u *{{classname}}) MarshalJSON() ([]byte, error) {
     }
     {{classname}}Marshalled = true
 
-    return json.Marshal(&struct { {{#vars}}
-        {{^isReadOnly}}{{name}} {{{dataType}}} `json:"{{baseName}}"`{{/isReadOnly}}
-        {{/vars}}
-        *Alias
+    return json.Marshal(&struct {
+        {{#vars}}{{^isReadOnly}}
+        {{name}} {{{dataType}}} `json:"{{baseName}}"`
+        {{/isReadOnly}}{{/vars}}*Alias
     }{
         {{#vars}}
 
