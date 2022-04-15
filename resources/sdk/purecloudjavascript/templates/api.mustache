@@ -22,7 +22,8 @@ class {{classname}} {
 
 {{#operations}}{{#operation}}{{#emitJSDoc}}
 	/**{{#summary}}
-	 * {{{summary}}}{{/summary}}{{#notes}}
+	 * {{{summary}}}{{/summary}}{{^notes}}
+	 * {{/notes}}{{#notes}}
 	 * {{{notes}}}{{/notes}}{{#allParams}}{{#required}}
 	 * @param {{&vendorExtensions.x-jsdoc-type}} {{paramName}} {{{description}}}{{/required}}{{/allParams}}{{#hasOptionalParams}}
 	 * @param {Object} opts Optional parameters{{#allParams}}{{^required}}
@@ -45,7 +46,7 @@ class {{classname}} {
 			{ {{#formParams}}'{{baseName}}': {{#collectionFormat}}this.apiClient.buildCollectionParam({{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}, '{{collectionFormat}}'){{/collectionFormat}}{{^collectionFormat}}{{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}{{/collectionFormat}}{{^-last}},{{/-last}}{{/formParams}} },
 			{{#bodyParam}}{{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}{{/bodyParam}}{{^bodyParam}}null{{/bodyParam}}, 
 			['PureCloud OAuth'], 
-			[{{#consumes}}'{{mediaType}}'{{^-last}}, {{/-last}}{{/consumes}}],
+			[{{^consumes}}'application/json'{{/consumes}}{{#consumes}}'{{mediaType}}'{{^-last}}, {{/-last}}{{/consumes}}],
 			[{{#produces}}'{{mediaType}}'{{^-last}}, {{/-last}}{{/produces}}]{{^usePromises}},
 			callback{{/usePromises}}
 		);
