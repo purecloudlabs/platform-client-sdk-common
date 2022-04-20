@@ -1,7 +1,7 @@
 import PureCloudRegionHosts from './PureCloudRegionHosts.js';
 import ApiClient from './ApiClient.js';
-{{#apiInfo}}{{#apis}}import {{importPath}} from './{{#apiPackage}}{{apiPackage}}/{{/apiPackage}}{{importPath}}.js';
-{{/apis}}{{/apiInfo}}
+{{#apiInfo}}{{#apis}}{{#-first}}import {{importPath}} from './{{#apiPackage}}{{apiPackage}}/{{/apiPackage}}{{importPath}}.js';
+{{/-first}}{{/apis}}{{/apiInfo}}
 
 {{#emitJSDoc}}/**{{#projectDescription}}
  * {{projectDescription}}.<br>{{/projectDescription}}
@@ -40,12 +40,12 @@ import ApiClient from './ApiClient.js';
 		 * The ApiClient constructor.
 		 * @property {module:<#invokerPackage><invokerPackage>/</invokerPackage>ApiClient}
 		 */</emitJSDoc>
-		this.ApiClient = new ApiClient();<#apiInfo><#apis><#emitJSDoc>
+		this.ApiClient = new ApiClient();<#apiInfo><#apis><#-first><#emitJSDoc>
 		/**
 		 * The <importPath> service constructor.
 		 * @property {module:<#invokerPackage><invokerPackage>/</invokerPackage><#apiPackage><apiPackage>/</apiPackage><importPath>}
 		 */</emitJSDoc>
-		this.<importPath> = <importPath>;</apis></apiInfo><#emitJSDoc>
+		this.<importPath> = <importPath>;</-first></apis></apiInfo><#emitJSDoc>
 		/**
 		 * The PureCloudRegionsHost Object.
 		 * @property {module:<#invokerPackage><invokerPackage>/</invokerPackage>MyPureCloudRegionHost}
