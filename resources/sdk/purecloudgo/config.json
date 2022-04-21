@@ -19,7 +19,7 @@
     "swaggerCodegen": {
       "resourceLanguage": "purecloudgo",
       "codegenLanguage": "purecloudgo",
-      "jarPath": "${WORKSPACE}/swagger-codegen/modules/swagger-codegen-cli/target/swagger-codegen-cli.jar",
+      "jarPath": "${WORKSPACE}/openapi-generator/modules/openapi-generator-cli/target/openapi-generator-cli.jar",
       "configFile": "${SDK_TEMP}/config.json",
       "extraGeneratorOptions": []
     },
@@ -62,7 +62,17 @@
           "failOnError": true
         }
       ],
-      "postRunScripts": []
+      "postRunScripts": [
+        {
+          "type": "node",
+          "path": "${COMMON_ROOT}/resources/scripts/combineApiDataFiles.js",
+          "args": [
+            "${SDK_REPO}/build/docs",
+            "${SDK_REPO}/build/APIData.json"
+          ],
+          "failOnError": true
+        }
+      ]
     },
     "postbuild": {
       "gitCommit": false,

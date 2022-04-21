@@ -1,3 +1,4 @@
+
 import superagent from 'superagent';
 import Configuration from './configuration.js';
 
@@ -86,7 +87,7 @@ class ApiClient {
 		 */
 {{=< >=}}		this.authentications = {<#authMethods><#isBasic>
 			'<name>': {type: 'basic'}</isBasic><#isApiKey>
-			'<name>': {type: 'apiKey', 'in': <#isKeyInHeader>'header'</isKeyInHeader><^isKeyInHeader>'query'</isKeyInHeader>, name: '<keyParamName>'}</isApiKey><#isOAuth>
+			'<name>': {type: 'apiKey', 'in': <#isKeyInHeader>'header'</isKeyInHeader><^isKeyInHeader>'query'</isKeyInHeader>, name: '<keyParamName>'},</isApiKey><#isOAuth>
 			'<name>': {type: 'oauth2'}</isOAuth><#hasMore>,</hasMore></authMethods>
 		};
 <={{ }}=>

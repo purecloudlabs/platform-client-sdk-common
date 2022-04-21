@@ -13,12 +13,16 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
+import java.net.http.WebSocket.Builder;
 import java.net.http.WebSocket.Listener;
 import java.net.http.WebSocket;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EventListener;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -66,10 +70,8 @@ public class WebMessagingClient {
     /**
      * Full service operation to connect the WebSocket and configure the session
      *
-     * @param deploymentId     The ID of the Web Messaging deployment
-     * @param initialMessage   The initial message to send once the session is ready
-     *
-     * @return The token that identifies the session
+     * @param deploymentId   The ID of the Web Messaging deployment
+     * @param initialMessage The initial message to send once the session is ready
      */
     public void joinConversation(String deploymentId, String initialMessage, String origin) {
         joinConversation(deploymentId, UUID.randomUUID().toString(), initialMessage, origin);
@@ -78,9 +80,9 @@ public class WebMessagingClient {
     /**
      * Full service operation to connect the WebSocket and configure the session
      *
-     * @param deploymentId     The ID of the Web Messaging deployment
-     * @param token            The session token
-     * @param initialMessage   The initial message to send once the session is ready
+     * @param deploymentId   The ID of the Web Messaging deployment
+     * @param token          The session token
+     * @param initialMessage The initial message to send once the session is ready
      */
     public void joinConversation(String deploymentId, String token, String initialMessage, String origin) {
         SessionListener listener = new SessionListener() {
@@ -129,18 +131,33 @@ public class WebMessagingClient {
 
             @Override
             public void webSocketDisconnected(int statusCode, String reason) {
+
+            }
+
+            @Override
+            public void webSocketError(String reason) {
+
             }
 
         };
 
-        addSessionListener(listener);
         connect(deploymentId, origin);
+        addSessionListener(listener);
     }
+
+    public void connect(String deploymentId, String origin) {
+        connect(deploymentId, origin, Optional.empty());
+    }
+
 
     /**
      * Establishes a connection to Genesys Cloud via a WebSocket
+     *
+     * @param deploymentId      deploymentId to connect to
+     * @param origin            origin header to add
+     * @param connectionTimeout connection timeout, in second, to use
      */
-    public void connect(String deploymentId, String origin) {
+    public void connect(String deploymentId, String origin, Optional<Integer> connectionTimeout) {
         // Create listener
         Listener listener = new Listener() {
             @Override
@@ -164,6 +181,12 @@ public class WebMessagingClient {
             }
 
             @Override
+            public void onError(WebSocket webSocket, Throwable error) {
+                onWebSocketError(error.getMessage());
+                Listener.super.onError(webSocket, error);
+            }
+
+            @Override
             public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
                 onWebSocketDisconnected(statusCode, reason);
                 return Listener.super.onClose(webSocket, statusCode, reason);
@@ -171,22 +194,44 @@ public class WebMessagingClient {
         };
 
         // Configure WebSocket
-        CompletableFuture<WebSocket> completableFuture = HttpClient
+        Builder builder = HttpClient
                 .newHttpClient()
                 .newWebSocketBuilder()
                 .header("Origin", origin)
-                .header("deploymentId", deploymentId)
-                .buildAsync(URI.create(webSocketAddress + "?deploymentId=" + deploymentId), listener);
+                .header("deploymentId", deploymentId);
+
+        if (connectionTimeout.isPresent()) {
+            builder.connectTimeout(Duration.ofSeconds(connectionTimeout.get()));
+        }
+        CompletableFuture<WebSocket> completableFuture = builder.buildAsync(URI.create(webSocketAddress + "?deploymentId=" + deploymentId), listener);
 
         // Connect to WebSocket server
         completableFuture.join();
     }
 
     /**
+     * Check whether the underlying websocket's input is closed
+     *
+     * @return true if closed, false otherwise
+     */
+    public boolean isInputClosed() {
+        return webSocket.isInputClosed();
+    }
+
+    /**
+     * Check whether the underlying websocket's output is closed
+     *
+     * @return true if closed, false otherwise
+     */
+    public boolean isOutputClosed() {
+        return webSocket.isOutputClosed();
+    }
+
+    /**
      * Configures a new session with a randomly generated session token
      *
-     * @param deploymentId     The ID of the Web Messaging deployment
-     * @param origin           Represents the origin of the request. You can restrict access in Messenger Deployments
+     * @param deploymentId The ID of the Web Messaging deployment
+     * @param origin       Represents the origin of the request. You can restrict access in Messenger Deployments
      */
     public void configureSession(String deploymentId, String origin) {
         configureSession(deploymentId, UUID.randomUUID().toString(), origin);
@@ -195,11 +240,11 @@ public class WebMessagingClient {
     /**
      * Configures a session using the provided session token. This can be used to reconnect to active sessions.
      *
-     * @param deploymentId     The ID of the Web Messaging deployment
-     * @param token            The session token
-     * @param origin           Represents the origin of the request. You can restrict access in Messenger Deployments
+     * @param deploymentId The ID of the Web Messaging deployment
+     * @param token        The session token
+     * @param origin       Represents the origin of the request. You can restrict access in Messenger Deployments
      */
-    public void configureSession(String deploymentId,  String token, String origin) {
+    public void configureSession(String deploymentId, String token, String origin) {
         try {
             this.token = token;
             this.deploymentId = deploymentId;
@@ -220,46 +265,46 @@ public class WebMessagingClient {
         }
     }
 
-  /**
-   * Configures a new authenticated session with a randomly generated session token
-   *
-   * @param deploymentId     The ID of the Web Messaging deployment
-   * @param origin           Represents the origin of the request. You can restrict access in Messenger Deployments
-   * @param data             The session OAuthParams for configuring Authenticated Session
-   */
-  public void configureAuthenticatedSession(String deploymentId, String origin, OAuthParams data) {
-    configureAuthenticatedSession(deploymentId, UUID.randomUUID().toString(), origin, data);
-  }
-
-  /**
-   * Configures an authenticated session using the provided session token. This can be used to reconnect to active sessions.
-   *
-   * @param deploymentId     The ID of the Web Messaging deployment
-   * @param token            The session token
-   * @param origin           Represents the origin of the request. You can restrict access in Messenger Deployments
-   * @param data             The session OAuthParams for configuring Authenticated Session
-   */
-  public void configureAuthenticatedSession(String deploymentId,  String token, String origin, OAuthParams data) {
-    try {
-      this.token = token;
-      this.deploymentId = deploymentId;
-      if (apiClient == null) {
-        initializeApiClient(origin);
-      }
-
-      // Create configuration request
-      ConfigureAuthenticatedSessionRequest configureAuthenticatedSessionRequest = new ConfigureAuthenticatedSessionRequest();
-      configureAuthenticatedSessionRequest.setAction(RequestTypeConfigureAuthenticatedSession.CONFIGUREAUTHENTICATEDSESSION);
-      configureAuthenticatedSessionRequest.setDeploymentId(deploymentId);
-      configureAuthenticatedSessionRequest.setToken(token);
-      configureAuthenticatedSessionRequest.setData(data);
-      String payload = objectMapper.writeValueAsString(configureAuthenticatedSessionRequest);
-
-      webSocket.sendText(payload, true);
-    } catch (JsonProcessingException e) {
-      // no-op
+    /**
+     * Configures a new authenticated session with a randomly generated session token
+     *
+     * @param deploymentId The ID of the Web Messaging deployment
+     * @param origin       Represents the origin of the request. You can restrict access in Messenger Deployments
+     * @param data         The session OAuthParams for configuring Authenticated Session
+     */
+    public void configureAuthenticatedSession(String deploymentId, String origin, OAuthParams data) {
+        configureAuthenticatedSession(deploymentId, UUID.randomUUID().toString(), origin, data);
     }
-  }
+
+    /**
+     * Configures an authenticated session using the provided session token. This can be used to reconnect to active sessions.
+     *
+     * @param deploymentId The ID of the Web Messaging deployment
+     * @param token        The session token
+     * @param origin       Represents the origin of the request. You can restrict access in Messenger Deployments
+     * @param data         The session OAuthParams for configuring Authenticated Session
+     */
+    public void configureAuthenticatedSession(String deploymentId, String token, String origin, OAuthParams data) {
+        try {
+            this.token = token;
+            this.deploymentId = deploymentId;
+            if (apiClient == null) {
+                initializeApiClient(origin);
+            }
+
+            // Create configuration request
+            ConfigureAuthenticatedSessionRequest configureAuthenticatedSessionRequest = new ConfigureAuthenticatedSessionRequest();
+            configureAuthenticatedSessionRequest.setAction(RequestTypeConfigureAuthenticatedSession.CONFIGUREAUTHENTICATEDSESSION);
+            configureAuthenticatedSessionRequest.setDeploymentId(deploymentId);
+            configureAuthenticatedSessionRequest.setToken(token);
+            configureAuthenticatedSessionRequest.setData(data);
+            String payload = objectMapper.writeValueAsString(configureAuthenticatedSessionRequest);
+
+            webSocket.sendText(payload, true);
+        } catch (JsonProcessingException e) {
+            // no-op
+        }
+    }
 
     /**
      * Closes the WebSocket connection
@@ -292,7 +337,7 @@ public class WebMessagingClient {
     /**
      * Sends a message to the conversation
      *
-     * @param message The text to send
+     * @param message       The text to send
      * @param attachmentIds The Id of the attachments being sent with the message
      */
     public void sendMessage(String message, String... attachmentIds) {
@@ -302,18 +347,19 @@ public class WebMessagingClient {
     /**
      * Sends a message to the conversation with customAttributes
      *
-     * @param message The text to send
+     * @param message          The text to send
      * @param customAttributes Key Value Pair that allows custom data to be sent with a message
-     * @param attachmentIds The Id of the attachments being sent with the message
+     * @param attachmentIds    The Id of the attachments being sent with the message
      */
     public void sendMessage(String message, Map<String, String> customAttributes, String... attachmentIds) {
         try {
             SendMessageRequest sendMessageRequest = new SendMessageRequest();
             sendMessageRequest.token(this.token);
             sendMessageRequest.action(RequestTypeIncomingMessage.ONMESSAGE);
-            sendMessageRequest.message(new IncomingNormalizedMessage()
-               .type(NormalizedType.TEXT)
-               .text(message));
+            IncomingNormalizedMessage normalizedMessage = new IncomingNormalizedMessage();
+            sendMessageRequest.message(normalizedMessage
+                    .type(NormalizedType.TEXT)
+                    .text(message));
             if (customAttributes != null) {
                 BaseMessagingChannel baseMessagingChannel = new BaseMessagingChannel();
                 BaseChannelMetadata baseChannelMetadata = new BaseChannelMetadata();
@@ -321,7 +367,10 @@ public class WebMessagingClient {
                 baseMessagingChannel.metadata(baseChannelMetadata);
                 sendMessageRequest.channel(baseMessagingChannel);
             }
-            sendMessageRequest.attachmentIds(Arrays.asList(attachmentIds));
+            for (String attachmentId : attachmentIds) {
+                normalizedMessage.getContent().add(new MessageContent().contentType(ContentType.ATTACHMENT)
+                        .attachment(new ContentAttachment().id(attachmentId)));
+            }
             String payload = objectMapper.writeValueAsString(sendMessageRequest);
 
             webSocket.sendText(payload, true);
@@ -330,14 +379,66 @@ public class WebMessagingClient {
         }
     }
 
+    /**
+     * send an event of type Presence join
+     *
+     * @see EventPresence
+     */
+    public void sendPresenceEvent() {
+        try {
+            SendMessageRequest sendMessageRequest = new SendMessageRequest();
+            sendMessageRequest.token(this.token);
+            sendMessageRequest.action(RequestTypeIncomingMessage.ONMESSAGE);
+            sendMessageRequest.message(new IncomingNormalizedMessage()
+                    .type(NormalizedType.EVENT)
+                    .events(Collections.singletonList(new MessageEvent()
+                            .eventType(EventType.PRESENCE)
+                            .presence(new EventPresence()
+                                    .type(EventPresenceType.JOIN))
+                    ))
+            );
+            String payload = objectMapper.writeValueAsString(sendMessageRequest);
+            webSocket.sendText(payload, true);
+        } catch (JsonProcessingException e) {
+            // no-op
+        }
+    }
+
+    /**
+     * send an event of type Typing on
+     *
+     * @see EventTyping
+     */
+    public void sendTypingEvent() {
+        try {
+            SendMessageRequest sendMessageRequest = new SendMessageRequest();
+            sendMessageRequest.token(this.token);
+            sendMessageRequest.action(RequestTypeIncomingMessage.ONMESSAGE);
+            sendMessageRequest.message(new IncomingNormalizedMessage()
+                    .type(NormalizedType.EVENT)
+                    .events(Collections.singletonList(new MessageEvent()
+                            .eventType(EventType.TYPING)
+                            .typing(new EventTyping().type(EventTypingType.ON))
+                    ))
+            );
+            String payload = objectMapper.writeValueAsString(sendMessageRequest);
+            webSocket.sendText(payload, true);
+        } catch (JsonProcessingException e) {
+            // no-op
+        }
+    }
+
+    /**
+     * send a request to generate an upload url for an attachment
+     */
     public void attachment(String fileName, int fileSize, String fileType) {
         try {
             GenerateUploadUrlRequest generateUploadUrlRequest = new GenerateUploadUrlRequest()
-              .token(this.token)
-              .action(RequestTypeGenerateUploadUrl.ONATTACHMENT)
-              .fileName(fileName)
-              .fileSize(fileSize)
-              .fileType(fileType);
+                    .token(this.token)
+                    .action(RequestTypeGenerateUploadUrl.ONATTACHMENT)
+                    .fileName(fileName)
+                    .fileSize(fileSize)
+                    .fileType(fileType);
 
             String payload = objectMapper.writeValueAsString(generateUploadUrlRequest);
             webSocket.sendText(payload, true);
@@ -346,6 +447,9 @@ public class WebMessagingClient {
         }
     }
 
+    /**
+     * send a request to generate a download url for an attachment
+     */
     public void getAttachment(String attachmentId) {
         try {
             GenerateDownloadUrlRequest generateDownloadUrlRequest = new GenerateDownloadUrlRequest()
@@ -360,6 +464,9 @@ public class WebMessagingClient {
         }
     }
 
+		/**
+		* delete an attachment. Must not have been sent
+		*/
     public void deleteAttachment(String attachmentId) {
         try {
             DeleteAttachmentRequest deleteAttachmentRequest = new DeleteAttachmentRequest()
@@ -405,8 +512,8 @@ public class WebMessagingClient {
     /**
      * Invokes appropriate handler for incoming WebSocket messages
      *
-     * @param rawResponse The raw message payload JSON as a string
-     * @param event       The deserialized event object
+     * @param rawMessage  The raw message payload JSON as a string
+     * @param baseMessage The deserialized event object
      */
     private void onSessionEvent(String rawMessage, BaseMessage baseMessage) {
         String className = baseMessage.getClassProperty().toString();
@@ -459,11 +566,11 @@ public class WebMessagingClient {
                     sessionListener.sessionExpiredEvent((SessionExpiredEvent) response, rawMessage);
                 }
                 break;
-             case "JwtResponse":
+            case "JwtResponse":
                 for (SessionListener sessionListener : sessionListeners) {
                     sessionListener.jwtResponse((JwtResponse) response, rawMessage);
                 }
-                break;           
+                break;
             default:
                 for (SessionListener sessionListener : sessionListeners) {
                     sessionListener.unexpectedMessage(baseMessage, rawMessage);
@@ -489,6 +596,16 @@ public class WebMessagingClient {
         // Invoke each listener
         for (SessionListener sessionListener : sessionListeners) {
             sessionListener.webSocketDisconnected(statusCode, reason);
+        }
+    }
+
+    /**
+     * Invokes registered listeners when an error occurs on the connection to the remote server
+     */
+    private void onWebSocketError(String reason) {
+        // Invoke each listener
+        for (SessionListener sessionListener : sessionListeners) {
+            sessionListener.webSocketError(reason);
         }
     }
 
@@ -619,8 +736,8 @@ public class WebMessagingClient {
          *
          * @param connectionClosedEvent    The deserialized event
          * @param rawMessage  The raw message payload JSON as a string
-         */    
-        public void connectionClosedEvent(ConnectionClosedEvent cnxClosedResponse, String rawMessage);
+         */
+        public void connectionClosedEvent(ConnectionClosedEvent connectionClosedEvent, String rawMessage);
 
         /**
          * Raised for responses to url requests (type == BaseResponseType.RESPONSE, class = SessionResponse)
@@ -628,7 +745,7 @@ public class WebMessagingClient {
          * @param sessionExpiredEvent    The deserialized event
          * @param rawMessage  The raw message payload JSON as a string
          */
-        public void sessionExpiredEvent(SessionExpiredEvent sessionExpiredResponse, String rawMessage);    
+        public void sessionExpiredEvent(SessionExpiredEvent sessionExpiredEvent, String rawMessage);
 
         /**
          * Raised for responses to url requests (type == BaseResponseType.RESPONSE, class = SessionResponse)
@@ -637,7 +754,7 @@ public class WebMessagingClient {
          * @param rawMessage  The raw message payload JSON as a string
          */
         public void jwtResponse(JwtResponse jwtResponse, String rawMessage);
-            
+
         /**
          * Raised for unmatched BaseResponseType
          *
@@ -658,5 +775,12 @@ public class WebMessagingClient {
          * @param reason
          */
         void webSocketDisconnected(int statusCode, String reason);
+
+        /**
+         * Raised when error occurs on the remote connection
+         *
+         * @param reason
+         */
+        void webSocketError(String reason);
     }
 }
