@@ -1,6 +1,5 @@
 const fs = require('fs');
 const childProcess = require('child_process');
-
 const log = require('./logger');
 const swaggerDiffImpl = require('./swaggerDiffImpl');
 
