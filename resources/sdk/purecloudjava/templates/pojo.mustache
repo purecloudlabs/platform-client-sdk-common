@@ -2,7 +2,7 @@
  * {{#description}}{{.}}{{/description}}{{^description}}{{classname}}{{/description}}
  */{{#description}}
 @ApiModel(description = "{{{description}}}"){{/description}}
-{{>generatedAnnotation}}
+
 public class {{classname}} {{#parent}}extends {{{parent}}}{{/parent}} {{#serializableModel}}{{#isPagedResource}}implements Serializable, PagedResource<{{{pagedResourceType}}}>{{/isPagedResource}}{{^isPagedResource}}implements Serializable{{/isPagedResource}}{{/serializableModel}}{{#isPagedResource}}{{^serializableModel}}implements PagedResource<{{{pagedResourceType}}}>{{/serializableModel}}{{/isPagedResource}} {
   {{#vars}}{{#isEnum}}
 
@@ -23,7 +23,7 @@ public class {{classname}} {{#parent}}extends {{{parent}}}{{/parent}} {{#seriali
   }
   {{/isReadOnly}}{{#vendorExtensions.extraAnnotation}}
   {{vendorExtensions.extraAnnotation}}{{/vendorExtensions.extraAnnotation}}
-  @ApiModelProperty({{#example}}example = "{{{example}}}", {{/example}}{{#required}}required = {{required}}, {{/required}}value = "{{{description}}}")
+  @ApiModelProperty({{#example}}example = "{{example}}", {{/example}}{{#required}}required = {{required}}, {{/required}}value = "{{{description}}}")
   @JsonProperty("{{baseName}}")
   public {{{datatypeWithEnum}}} {{getter}}() {
     return {{name}};
@@ -43,15 +43,17 @@ public class {{classname}} {{#parent}}extends {{{parent}}}{{/parent}} {{#seriali
       return false;
     }{{#hasVars}}
     {{classname}} {{classVarName}} = ({{classname}}) o;
-    return {{#vars}}Objects.equals(this.{{name}}, {{classVarName}}.{{name}}){{#hasMore}} &&
-        {{/hasMore}}{{/vars}}{{#parent}} &&
-        super.equals(o){{/parent}};{{/hasVars}}{{^hasVars}}
+
+    return {{#vars}}{{#isByteArray}}Arrays{{/isByteArray}}{{^isByteArray}}Objects{{/isByteArray}}.equals(this.{{name}}, {{classVarName}}.{{name}}){{^-last}} &&
+            {{/-last}}{{/vars}}{{#parent}} &&
+            super.equals(o){{/parent}};{{/hasVars}}{{^hasVars}}
+
     return true;{{/hasVars}}
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash({{#vars}}{{name}}{{#hasMore}}, {{/hasMore}}{{/vars}}{{#parent}}{{#hasVars}}, {{/hasVars}}super.hashCode(){{/parent}});
+    return Objects.hash({{#vars}}{{^isByteArray}}{{name}}{{/isByteArray}}{{#isByteArray}}Arrays.hashCode({{name}}){{/isByteArray}}{{^-last}}, {{/-last}}{{/vars}}{{#parent}}{{#hasVars}}, {{/hasVars}}super.hashCode(){{/parent}});
   }
 
   @Override
