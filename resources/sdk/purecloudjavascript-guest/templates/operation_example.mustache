@@ -1,0 +1,44 @@
+{{#operation}}// Browser
+const {{{moduleName}}} = require('{{{moduleName}}}');
+// Node
+const {{{moduleName}}} = require('{{{projectName}}}');
+{{#hasAuthMethods}}
+{{#authMethods}}{{#isBasic}}
+// Configure HTTP basic authorization: {{{name}}}
+let {{{name}}} = {{{moduleName}}}.ApiClient.instance.authentications['{{{name}}}'];
+{{{name}}}.username = 'YOUR USERNAME';
+{{{name}}}.password = 'YOUR PASSWORD';{{/isBasic}}{{#isApiKey}}
+// Set JWT from the create chat response
+{{{moduleName}}}.ApiClient.instance.setJwt(chatInfo.jwt);{{/isApiKey}}{{#isOAuth}}
+// Manually set auth token or use loginImplicitGrant(...) or loginClientCredentialsGrant(...)
+{{{moduleName}}}.ApiClient.instance.setAccessToken(yourAccessToken);{{/isOAuth}}
+{{/authMethods}}
+{{/hasAuthMethods}}
+
+let apiInstance = new {{{moduleName}}}.{{{classname}}}();{{#hasParams}}
+{{#vendorExtensions.x-codegen-hasRequiredParams}}{{#allParams}}{{#required}}
+let {{{paramName}}} = {{{example}}}; // {{{dataType}}} | {{{description}}}{{/required}}{{/allParams}}{{/vendorExtensions.x-codegen-hasRequiredParams}}{{#hasOptionalParams}}
+let opts = { {{#allParams}}{{^required}}
+  '{{{paramName}}}': {{{example}}}{{#vendorExtensions.x-codegen-hasMoreOptional}},{{/vendorExtensions.x-codegen-hasMoreOptional}} // {{{dataType}}} | {{{description}}}{{/required}}{{/allParams}}
+};{{/hasOptionalParams}}{{/hasParams}}
+
+{{#usePromises}}
+apiInstance.{{{operationId}}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/hasOptionalParams}})
+  .then(({{#returnType}}data{{/returnType}}) => {
+    {{#returnType}}console.log(`{{{operationId}}} success! data: ${JSON.stringify(data, null, 2)}`);{{/returnType}}{{^returnType}}console.log('{{{operationId}}} returned successfully.');{{/returnType}}
+  })
+  .catch((err) => {
+    console.log('There was a failure calling {{{operationId}}}');
+    console.error(err);
+  });
+
+{{/usePromises}}{{^usePromises}}
+let callback = (error, data, response) => {
+  if (error) {
+    console.error(error);
+  } else {
+    {{#returnType}}console.log('API called successfully. Returned data: ' + data);{{/returnType}}{{^returnType}}console.log('API called successfully.');{{/returnType}}
+  }
+};
+apiInstance.{{{operationId}}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/hasOptionalParams}}{{#hasParams}}, {{/hasParams}}callback);
+{{/usePromises}}{{/operation}}

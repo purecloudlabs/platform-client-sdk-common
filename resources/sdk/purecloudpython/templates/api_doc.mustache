@@ -16,21 +16,29 @@ All URIs are relative to *{{basePath}}*
 {{#operation}}
 <a name="{{operationId}}"></a>
 
-## {{#returnType}}{{#returnTypeIsPrimitive}}{{returnType}}**{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}[**{{returnType}}**]({{returnBaseType}}.html){{/returnTypeIsPrimitive}}{{/returnType}} {{{operationId}}}({{#allParams}}{{#required}}{{{paramName}}}{{/required}}{{^required}}{{{paramName}}}={{{paramName}}}{{/required}}{{#hasMore}}, {{/hasMore}}{{/allParams}})
+## {{#returnType}}{{#returnTypeIsPrimitive}}{{returnType}}**{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}[**{{returnType}}**]({{returnBaseType}}.html){{/returnTypeIsPrimitive}}{{/returnType}} {{{operationId}}}({{#allParams}}{{#required}}{{{paramName}}}{{/required}}{{^required}}{{{paramName}}}={{{paramName}}}{{/required}}{{^-last}}, {{/-last}}{{/allParams}})
 
-{{#deprecated}}<span style="background-color: #f0ad4e;display: inline-block;padding: 7px;font-weight: bold;line-height: 1;color: #ffffff;text-align: center;white-space: nowrap;vertical-align: baseline;border-radius: .25em;margin: 10px 0;">DEPRECATED</span>{{/deprecated}}
+{{#isDeprecated}}<span style="background-color: #f0ad4e;display: inline-block;padding: 7px;font-weight: bold;line-height: 1;color: #ffffff;text-align: center;white-space: nowrap;vertical-align: baseline;border-radius: .25em;margin: 10px 0;">DEPRECATED</span>{{/isDeprecated}}
 
 {{{summary}}}{{#notes}}
 
 {{{notes}}}{{/notes}}
 
+
+
 Wraps {{httpMethod}} {{path}} 
 
-Requires {{permissionType}} permissions: 
+{{#vendorExtensions.x-inin-requires-permissions}}
+Requires {{type}} permissions: 
 
 {{#permissions}}
 * {{.}}
 {{/permissions}}
+{{/vendorExtensions.x-inin-requires-permissions}}
+{{^vendorExtensions.x-inin-requires-permissions}}
+Requires no permissions
+
+{{/vendorExtensions.x-inin-requires-permissions}}
 
 ### Example
 
@@ -58,7 +66,7 @@ api_instance = {{{packageName}}}.{{{classname}}}()
 
 try:
 {{#summary}}    # {{{.}}}
-{{/summary}}    {{#returnType}}api_response = {{/returnType}}api_instance.{{{operationId}}}({{#allParams}}{{#required}}{{paramName}}{{/required}}{{^required}}{{paramName}}={{paramName}}{{/required}}{{#hasMore}}, {{/hasMore}}{{/allParams}}){{#returnType}}
+{{/summary}}    {{#returnType}}api_response = {{/returnType}}api_instance.{{{operationId}}}({{#allParams}}{{#required}}{{paramName}}{{/required}}{{^required}}{{paramName}}={{paramName}}{{/required}}{{^-last}}, {{/-last}}{{/allParams}}){{#returnType}}
     pprint(api_response){{/returnType}}
 except ApiException as e:
     print("Exception when calling {{classname}}->{{operationId}}: %s\n" % e)
@@ -66,11 +74,11 @@ except ApiException as e:
 
 ### Parameters
 
-{{^allParams}}This endpoint does not need any parameter.{{/allParams}}{{#allParams}}{{#-last}}
+{{^allParams}}This endpoint does not need any parameters.{{/allParams}}{{#allParams}}{{#-last}}
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|{{/-last}}{{/allParams}}
 {{#allParams}}| **{{paramName}}** | {{#isFile}}**{{dataType}}**{{/isFile}}{{#isPrimitiveType}}**{{dataType}}**{{/isPrimitiveType}}{{^isPrimitiveType}}{{^isFile}}[**{{dataType}}**]({{baseType}}.html){{/isFile}}{{/isPrimitiveType}}| {{description}} | {{^required}}[optional] {{/required}}{{#defaultValue}}[default to {{defaultValue}}]{{/defaultValue}}{{#allowableValues}}<br />**Values**: {{#values}}{{.}}{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}} |
-{{/allParams}}{: class="table table-striped"}
+{{#-last}}{: class="table table-striped"}{{/-last}}{{/allParams}}
 
 ### Return type
 

@@ -34,6 +34,11 @@
 			"name": "getschemametadata"
 		}
 	},
+    "/api/v2/conversations/callbacks": {
+        "patch": {
+                "name": "updatescheduledcallback"
+        }
+    },
 	"/api/v2/authorization/roles/{roleId}": {
 		"post": {
 			"name": "bulkgrant"
@@ -147,6 +152,11 @@
 			"name": "list"
 		}
 	},
+	"/api/v2/groups/{groupId}/members": {
+		"post": {
+			"name": "add"
+		}
+	},
 	"/api/v2/knowledge/knowledgebases/{knowledgeBaseId}/languages/{languageCode}/documents": {
 		"patch": {
 			"name": "updatecollection"
@@ -165,6 +175,11 @@
 	"/api/v2/outbound/contactlists": {
 		"delete": {
 			"name": "deletecontactlists"
+		}
+	},
+	"/api/v2/organizations/limits/namespaces": {
+		"get": {
+			"name": "list"
 		}
 	},
 	"/api/v2/quality/forms/surveys/{formId}": {
@@ -244,9 +259,19 @@
 			"name": "modify"
 		}
 	},
+	"/api/v2/speechandtextanalytics/sentimentfeedback/{sentimentFeedbackId}": {
+        "delete": {
+            "name": "deletebyid"
+        }
+    },
 	"/api/v2/speechandtextanalytics/settings": {
 		"patch": {
 			"name": "patch"
+		}
+	},
+	"/api/v2/speechandtextanalytics/sentimentfeedback": {
+		"delete": {
+			"name": "deleteallsentimentfeedback"
 		}
 	},
 	"/api/v2/telephony/providers/edges/{edgeId}/logicalinterfaces": {
@@ -321,6 +346,14 @@
 		},
 		"put": {
 			"name": "put"
+		}
+	},
+	"/api/v2/voicemail/userpolicies/{userId}": {
+		"put": {
+			"name": "put"
+		},
+		"patch": {
+			"name": "update"
 		}
 	}
 }

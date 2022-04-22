@@ -1,0 +1,35 @@
+{{#operation}}const platformClient = require("{{{invokerPackage}}}");
+
+const client = platformClient.ApiClient.instance;
+client.setEnvironment(platformClient.PureCloudRegionHosts.us_east_1); // Genesys Cloud region
+{{#hasAuthMethods}}{{#authMethods}}{{#isBasic}}
+// Configure HTTP basic authorization: {{{name}}}
+let {{{name}}} = client.authentications["{{{name}}}"];
+{{{name}}}.username = "YOUR USERNAME";
+{{{name}}}.password = "YOUR PASSWORD";{{/isBasic}}{{#isApiKey}}
+// Configure API key authorization: {{{name}}}
+let {{{name}}} = client.authentications["{{{name}}}"];
+{{{name}}}.apiKey = "YOUR API KEY";
+// Uncomment the following line to set a prefix for the API key, e.g. "Token" (defaults to void)
+//{{{name}}}.apiKeyPrefix = "Token";{{/isApiKey}}{{#isOAuth}}
+// Manually set auth token or use loginImplicitGrant(...) or loginClientCredentialsGrant(...)
+client.setAccessToken("your_access_token");{{/isOAuth}}
+{{/authMethods}}
+{{/hasAuthMethods}}
+
+let apiInstance = new platformClient.{{baseName}}Api();{{#hasParams}}
+{{#vendorExtensions.x-codegen-hasRequiredParams}}{{#allParams}}{{#required}}
+let {{{paramName}}} = {{{example}}}; // {{{dataType}}} | {{{description}}}{{/required}}{{/allParams}}{{/vendorExtensions.x-codegen-hasRequiredParams}}{{#hasOptionalParams}}
+let opts = { {{#allParams}}{{^required}}
+  "{{{paramName}}}": {{{example}}}{{#vendorExtensions.x-codegen-hasMoreOptional}},{{/vendorExtensions.x-codegen-hasMoreOptional}} // {{{dataType}}} | {{{description}}}{{/required}}{{/allParams}}
+};{{/hasOptionalParams}}{{/hasParams}}
+
+{{#summary}}// {{{.}}}{{/summary}}
+apiInstance.{{{operationId}}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/hasOptionalParams}})
+  .then(({{#returnType}}data{{/returnType}}) => {
+    {{#returnType}}console.log(`{{{operationId}}} success! data: ${JSON.stringify(data, null, 2)}`);{{/returnType}}{{^returnType}}console.log("{{{operationId}}} returned successfully.");{{/returnType}}
+  })
+  .catch((err) => {
+    console.log("There was a failure calling {{{operationId}}}");
+    console.error(err);
+  });{{/operation}}

@@ -10,8 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spf13/pflag"
-
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
@@ -30,7 +28,7 @@ type CommandService interface {
 	Patch(uri string, payload string) (string, error)
 	Put(uri string, payload string) (string, error)
 	Delete(uri string) (string, error)
-	DetermineAction(httpMethod string, uri string, flags *pflag.FlagSet) func(retryConfiguration *retry.RetryConfiguration) (string, error)
+	DetermineAction(httpMethod string, uri string, cmd *cobra.Command, opId string) func(retryConfiguration *retry.RetryConfiguration) (string, error)
 }
 
 type commandService struct {
@@ -111,6 +109,9 @@ func (c *commandService) Stream(uri string) (string, error) {
 		return "", err
 	}
 
+	pageDataMap := make(map[string]bool, 0)
+	pageDataMap[data] = true
+
 	switch determinePaginationStyle(firstPage) {
 	case cursorPagination:
 		cursor := getCursor(firstPage)
@@ -130,6 +131,11 @@ func (c *commandService) Stream(uri string) (string, error) {
 				return "", err
 			}
 
+			if pageDataMap[data] {
+				break
+			}
+			pageDataMap[data] = true
+
 			utils.Render(data)
 			cursor = getCursor(pageData)
 			pagedURI = updateCursorPagingURI(pagedURI, cursor)
@@ -137,7 +143,7 @@ func (c *commandService) Stream(uri string) (string, error) {
 		break
 	case entityPagination:
 		pagedURI := uri
-		for x := firstPage.PageNumber + 1; x <= firstPage.PageCount; x++ {
+		for x := 2; ; x++ {
 			pagedURI = updatePagingIndex(pagedURI, "pageNumber", x)
 			logger.Info("Paginating with URI: ", pagedURI)
 			c.traceProgress(pagedURI)
@@ -146,6 +152,21 @@ func (c *commandService) Stream(uri string) (string, error) {
 			if err != nil {
 				return "", err
 			}
+
+			pageData := &models.Entities{}
+			err = json.Unmarshal([]byte(data), pageData)
+			if err != nil {
+				return "", err
+			}
+
+			if len(pageData.Entities) == 0 {
+				break
+			}
+
+			if pageDataMap[data] {
+				break
+			}
+			pageDataMap[data] = true
 
 			utils.Render(data)
 		}
@@ -168,6 +189,11 @@ func (c *commandService) Stream(uri string) (string, error) {
 			if err != nil {
 				return "", err
 			}
+
+			if pageDataMap[data] {
+				break
+			}
+			pageDataMap[data] = true
 
 			if len(getPageObjects(pageData)) > 0 {
 				utils.Render(data)
@@ -209,14 +235,17 @@ func (c *commandService) List(uri string) (string, error) {
 
 	//Allocate the total results based on the page count
 	totalResults := make([]string, 0)
+	for _, val := range getPageObjects(firstPage) {
+		totalResults = append(totalResults, string(val))
+	}
+
+	//This map is necessary to avoid some APIs where the query string isn't working
+	pageDataMap := make(map[string]bool, 0)
+	pageDataMap[data] = true
 
 	//Looks up the rest of the pages
 	switch determinePaginationStyle(firstPage) {
 	case cursorPagination:
-		//Appends the individual records from page objects into the array
-		for _, val := range getPageObjects(firstPage) {
-			totalResults = append(totalResults, string(val))
-		}
 		cursor := getCursor(firstPage)
 		pagedURI := updateCursorPagingURI(uri, cursor)
 		for ok := true; ok; ok = cursor != "" {
@@ -234,6 +263,10 @@ func (c *commandService) List(uri string) (string, error) {
 				return "", err
 			}
 
+			if pageDataMap[data] {
+				break
+			}
+			pageDataMap[data] = true
 			for _, val := range getPageObjects(pageData) {
 				totalResults = append(totalResults, string(val))
 			}
@@ -242,12 +275,8 @@ func (c *commandService) List(uri string) (string, error) {
 		}
 		break
 	case entityPagination:
-		//Appends the individual records from page objects into the array
-		for _, val := range getPageObjects(firstPage) {
-			totalResults = append(totalResults, string(val))
-		}
 		pagedURI := uri
-		for x := firstPage.PageNumber + 1; x <= firstPage.PageCount; x++ {
+		for x := 2; ; x++ {
 			pagedURI = updatePagingIndex(pagedURI, "pageNumber", x)
 			logger.Info("Paginating with URI: ", pagedURI)
 			c.traceProgress(pagedURI)
@@ -263,16 +292,20 @@ func (c *commandService) List(uri string) (string, error) {
 				return "", err
 			}
 
+			if len(pageData.Entities) == 0 {
+				break
+			}
+
+			if pageDataMap[data] {
+				break
+			}
+			pageDataMap[data] = true
 			for _, val := range getPageObjects(pageData) {
 				totalResults = append(totalResults, string(val))
 			}
 		}
 		break
 	case indexPagination:
-		//Appends the individual records from page objects into the array
-		for _, val := range getPageObjects(firstPage) {
-			totalResults = append(totalResults, string(val))
-		}
 		pagedURI := uri
 		pageData := firstPage
 		for ok := true; ok; ok = len(getPageObjects(pageData)) > 0 {
@@ -291,6 +324,10 @@ func (c *commandService) List(uri string) (string, error) {
 				return "", err
 			}
 
+			if pageDataMap[data] {
+				break
+			}
+			pageDataMap[data] = true
 			for _, val := range getPageObjects(pageData) {
 				totalResults = append(totalResults, string(val))
 			}
@@ -453,6 +490,12 @@ func reAuthenticateIfNecessary(config config.Configuration, err error) error {
 	}
 
 	if e, ok := err.(models.HttpStatusError); ok && e.StatusCode == http.StatusUnauthorized {
+		// do not re-authenticate with client credentials if we have an access_token
+		if config.AccessToken() != "" {
+			logger.Warn("unauthorized. your access_token has either expired or is not valid. please authenticate")
+			err := fmt.Errorf("unauthorized. your access_token has either expired or is not valid. please authenticate")
+			return err
+		}
 		logger.Info("Received HTTP 401 error, re-authenticating")
 		_, err = restclient.ReAuthenticate(config)
 		if err != nil {
@@ -467,37 +510,52 @@ func reAuthenticateIfNecessary(config config.Configuration, err error) error {
 	return nil
 }
 
-func (c *commandService) DetermineAction(httpMethod string, uri string, flags *pflag.FlagSet) func(retryConfiguration *retry.RetryConfiguration) (string, error) {
+func (c *commandService) DetermineAction(httpMethod string, uri string, cmd *cobra.Command, opId string) func(retryConfiguration *retry.RetryConfiguration) (string, error) {
+	flags := cmd.Flags()
 	logger.InitLogger(c.cmd)
 	switch httpMethod {
 	case http.MethodGet:
-		if flags == nil {
+
+		var doAutoPagination bool
+		const listOpId = "list"
+		profileName, _ := cmd.Root().Flags().GetString("profile")
+		autoPaginationInConfig, _ := config.GetAutoPaginationEnabled(profileName)
+		if autoPaginationInConfig && opId == listOpId {
+			doAutoPagination = true
+		}
+
+		if flags == nil && !doAutoPagination {
 			return retry.Retry(uri, c.Get)
 		}
+
 		// These flags will be false if they're not available on the command (simple GETs) or if they haven't been set on a paginatable command
 		autoPaginate, _ := flags.GetBool("autopaginate")
 		stream, _ := flags.GetBool("stream")
-		if !autoPaginate && !stream {
+
+		if !autoPaginate && !stream && !doAutoPagination {
 			return retry.Retry(uri, c.Get)
 		}
-		// Stream if the user just sets stream or stream and autopaginate
+
+		// Stream if the user just sets stream or stream and autopagination
 		if stream {
 			return retry.Retry(uri, c.Stream)
 		}
+
 		return retry.Retry(uri, c.List)
+
 	case http.MethodPatch:
-		if flags.Lookup("file") == nil {
-			return retry.RetryWithData(uri, "", c.Patch)
+		if flags.Lookup("file") == nil || flags.Lookup("directory") == nil {
+			return retry.RetryWithData(uri, []string{""}, c.Patch)
 		}
 		return retry.RetryWithData(uri, utils.ResolveInputData(c.cmd), c.Patch)
 	case http.MethodPost:
-		if flags.Lookup("file") == nil {
-			return retry.RetryWithData(uri, "", c.Post)
+		if flags.Lookup("file") == nil || flags.Lookup("directory") == nil {
+			return retry.RetryWithData(uri, []string{""}, c.Post)
 		}
 		return retry.RetryWithData(uri, utils.ResolveInputData(c.cmd), c.Post)
 	case http.MethodPut:
-		if flags.Lookup("file") == nil {
-			return retry.RetryWithData(uri, "", c.Put)
+		if flags.Lookup("file") == nil || flags.Lookup("directory") == nil {
+			return retry.RetryWithData(uri, []string{""}, c.Put)
 		}
 		return retry.RetryWithData(uri, utils.ResolveInputData(c.cmd), c.Put)
 	case http.MethodDelete:

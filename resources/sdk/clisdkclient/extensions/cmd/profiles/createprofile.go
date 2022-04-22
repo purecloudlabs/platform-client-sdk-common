@@ -2,56 +2,95 @@ package profiles
 
 import (
 	"fmt"
+	"net/url"
+	"strings"
+	"syscall"
+
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/mocks"
-	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/restclient"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
-	"strings"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/restclient"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/term"
 )
 
-func constructConfig(profileName string, environment string, clientID string, clientSecret string) config.Configuration {
-	config := &mocks.MockClientConfig{}
+type GrantType string
 
-	config.ProfileNameFunc = func() string {
+const (
+	None              GrantType = "0"
+	ClientCredentials           = "1"
+	ImplicitGrant               = "2"
+)
+
+func isValidGrantType(t GrantType) bool {
+	return t == None || t == ClientCredentials || t == ImplicitGrant
+}
+
+func constructConfig(profileName string, environment string, clientID string, clientSecret string, redirectURI string, secureLoginEnabled bool, accessToken string) config.Configuration {
+	c := &mocks.MockClientConfig{}
+
+	c.ProfileNameFunc = func() string {
 		return profileName
 	}
 
-	config.EnvironmentFunc = func() string {
-		return environment
+	c.EnvironmentFunc = func() string {
+		return config.MapEnvironment(environment)
 	}
 
-	config.LogFilePathFunc = func() string {
+	c.LogFilePathFunc = func() string {
 		return ""
 	}
 
-	config.LoggingEnabledFunc = func() bool {
+	c.LoggingEnabledFunc = func() bool {
 		return false
 	}
 
-	config.ClientIDFunc = func() string {
+	c.AutoPaginationEnabledFunc = func() bool {
+		return false
+	}
+
+	c.ClientIDFunc = func() string {
 		return clientID
 	}
 
-	config.ClientSecretFunc = func() string {
+	c.ClientSecretFunc = func() string {
 		return clientSecret
 	}
 
-	config.OAuthTokenDataFunc = func() string {
+	c.RedirectURIFunc = func() string {
+		return redirectURI
+	}
+
+	c.SecureLoginEnabledFunc = func() bool {
+		return secureLoginEnabled
+	}
+
+	c.OAuthTokenDataFunc = func() string {
 		return ""
 	}
 
-	return config
+	c.AccessTokenFunc = func() string {
+		return accessToken
+	}
+
+	return c
 }
 
 func requestUserInput() config.Configuration {
-	var name string
-	var environment string
-	var clientID string
-	var clientSecret string
+	var (
+		name               string
+		environment        string
+		clientID           string
+		clientSecret       string
+		accessToken        string
+		authChoice         string
+		grantType          GrantType
+		redirectURL        url.URL
+		secureLoginEnabled = false
+	)
 
 	fmt.Print("Profile Name [DEFAULT]: ")
 	fmt.Scanln(&name)
@@ -67,23 +106,99 @@ func requestUserInput() config.Configuration {
 		environment = "mypurecloud.com"
 	}
 
+	fmt.Print("Note: If you provide an access token, this will take precedence over any authorization grant type.\n")
+	fmt.Print("Access Token (Optional): ")
+	accessToken = readSensitiveInput()
+
 	for true {
-		fmt.Printf("Client ID: ")
-		fmt.Scanln(&clientID)
-		if len(strings.TrimSpace(clientID)) != 0 {
+		fmt.Print("Select your authorization grant type.\n")
+		fmt.Print("\t0. None\n\t1. Client Credentials\n\t2. Implicit Grant\nGrant Type: ")
+		fmt.Scanln(&grantType)
+
+		if accessToken == "" && grantType == None {
+			fmt.Print("If you have not provided an access token, you must select a grant type.\n")
+			continue
+		}
+		if isValidGrantType(grantType) {
 			break
 		}
 	}
 
-	for true {
-		fmt.Printf("Client Secret: ")
-		fmt.Scanln(&clientSecret)
-		if len(strings.TrimSpace(clientSecret)) != 0 {
-			break
+	clientID, clientSecret = requestClientCreds(accessToken, grantType)
+
+	if grantType == ImplicitGrant {
+		redirectURL.Host = "localhost:" + requestRedirectURIPort()
+		for true {
+			fmt.Print("Would you like to use a secure HTTP connection? [Y/N]: ")
+			fmt.Scanln(&authChoice)
+			if strings.ToUpper(authChoice) == "Y" {
+				secureLoginEnabled = true
+				redirectURL.Scheme = "https"
+				break
+			} else if strings.ToUpper(authChoice) == "N" {
+				secureLoginEnabled = false
+				redirectURL.Scheme = "http"
+				break
+			}
 		}
+		fmt.Printf("Redirect URI: %s\n", redirectURL.String())
 	}
 
-	return constructConfig(name, environment, clientID, clientSecret)
+	return constructConfig(name, environment, clientID, clientSecret, redirectURL.String(), secureLoginEnabled, accessToken)
+}
+
+func requestClientCreds(accessToken string, grantType GrantType) (string, string) {
+	id := ""
+	secret := ""
+
+	if grantType == ClientCredentials {
+		if accessToken != "" {
+			fmt.Print("Client ID: ")
+			fmt.Scanln(&id)
+
+			fmt.Print("Client Secret: ")
+			secret = readSensitiveInput()
+		} else {
+			for id == "" {
+				fmt.Print("Client ID: ")
+				fmt.Scanln(&id)
+			}
+			for secret == "" {
+				fmt.Print("Client Secret: ")
+				secret = readSensitiveInput()
+			}
+		}
+	} else if grantType == ImplicitGrant {
+		// Implicit Grant
+		for id == "" {
+			fmt.Print("Client ID: ")
+			fmt.Scanln(&id)
+		}
+
+		fmt.Print("Client Secret (Optional): ")
+		secret = readSensitiveInput()
+	}
+
+	return id, secret
+}
+
+func readSensitiveInput() string {
+	bytes, _ := term.ReadPassword(int(syscall.Stdin))
+	fmt.Println()
+	return string(bytes)
+}
+
+func requestRedirectURIPort() string {
+	var inputPort string
+	defaultPort := "8080"
+
+	fmt.Printf("Redirect URI port [%s]: ", defaultPort)
+	fmt.Scanln(&inputPort)
+	if inputPort == "" {
+		inputPort = defaultPort
+	}
+
+	return inputPort
 }
 
 func overrideConfig(name string) bool {
@@ -140,7 +255,7 @@ var createProfilesCmd = &cobra.Command{
 			logger.Fatal("Exiting profile creation process")
 		}
 
-		if validateCredentials(newConfig) == false {
+		if newConfig.AccessToken() == "" && validateCredentials(newConfig) == false {
 			logger.Fatal("The credentials provided are not valid.")
 		}
 

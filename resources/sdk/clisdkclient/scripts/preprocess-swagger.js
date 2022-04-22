@@ -10,6 +10,7 @@ try {
 	const overridesPath = process.argv[6];
 
 	let newSwagger = retrieveSwagger(newSwaggerPath);
+	newSwagger = processRefs(newSwagger);
 	const overrides = JSON.parse(fs.readFileSync(overridesPath, 'utf8'));
 	const resourceDefinitions = overrideDefinitions(createDefinitions(newSwagger), overrides)
 	let [superCommands, includedSwaggerPathObjects] = initialProcessOfDefinitions(newSwagger, resourceDefinitions);
@@ -33,23 +34,70 @@ try {
 	console.log(err);
 }
 
+function processRefs(swagger) {
+	const keys = Object.keys(swagger.definitions);
+	keys.forEach((key, index) => {
+		let obj = swagger.definitions[key].properties;
+		if (obj) {
+			const keys = Object.keys(swagger.definitions[key].properties);
+			keys.forEach((key2, index) => {
+				let obj2 = swagger.definitions[key].properties[key2];
+				if (obj2) {
+					if (obj2.hasOwnProperty("$ref") && (obj2.hasOwnProperty("readOnly") || obj2.hasOwnProperty("description"))) {
+						if (obj2.readOnly === true && obj2.hasOwnProperty("description")) {
+							obj2.description = `${obj2.description} readOnly`
+						}
+
+						let refObj = { "$ref": obj2.$ref };
+						obj2.allOf = [refObj];
+						delete obj2.$ref;
+					}
+				}
+			});
+		}
+	});
+	return swagger
+}
+
+function firstIndexOfCapital(str) {
+	for (i = 0; i < str.length; i++) {
+		if (str[i] === str[i].toUpperCase()) {
+			return i;
+		}
+	}
+	return -1;
+}
+
 function processDefinitions(includedSwaggerPathObjects, resourceDefinitions, newSwagger) {
 	let paths = {};
 	for (const path of Object.keys(includedSwaggerPathObjects)) {
 		// Override tags if possible
 		for (let value of Object.values(includedSwaggerPathObjects[path])) {
+			value['x-genesys-original-operation-id'] = value.operationId;
 			if (value.operationId.startsWith("get")) {
 				const successResponse = value.responses["200"]
 				if (successResponse) {
 					const schema = successResponse.schema['$ref'] || ''
 					if (canPaginate(schema, newSwagger)) {
-						value.operationId = "SWAGGER_OVERRIDE_list"
+						value.operationId = "list"
 						value.responses["200"].schema['$ref'] = "SWAGGER_OVERRIDE_list"
 					} else if (canList(path, successResponse.schema, newSwagger)) {
-						value.operationId = "SWAGGER_OVERRIDE_list"
+						value.operationId = "list"
 					}
 				}
 			}
+
+			if (value.operationId !== "list") {
+				value.operationId = value.operationId.substring(0, firstIndexOfCapital(value.operationId));
+			}
+			// post -> create
+			// patch or put -> update (will cause a clash if a resource has both, this would have to be resolved by overriding one or both operationIds)
+			value.operationId = value.operationId
+					.replace(/^post/g, "create")
+					.replace(/^patch|^put/g, "update");
+			value.operationId = value.operationId.replace(/s*$/g, "");
+
+			value['x-purecloud-category'] = value.tags[0];
 
 			let commandName = resourceDefinitions[path].name || value.tags[0];
 			commandName = commandName.toLowerCase().replace(' ', '');
@@ -68,7 +116,7 @@ function processDefinitions(includedSwaggerPathObjects, resourceDefinitions, new
 		for (const method of Object.keys(includedSwaggerPathObjects[path])) {
 			if (!Object.keys(resourceDefinitions[path]).includes(method)) continue;
 			if (resourceDefinitions[path][method].name !== undefined) {
-				includedSwaggerPathObjects[path][method].operationId = `SWAGGER_OVERRIDE_${resourceDefinitions[path][method].name}`;
+				includedSwaggerPathObjects[path][method].operationId = `${resourceDefinitions[path][method].name}`;
 			}
 		}
 
@@ -161,10 +209,13 @@ function canPaginate(schema, newSwagger) {
 	if (schema === '') return false
 	const definitionName = schema.split("/").pop()
 
-	return newSwagger.definitions[definitionName].properties.pageNumber !== undefined 
-			|| newSwagger.definitions[definitionName].properties.cursor !== undefined
-			|| newSwagger.definitions[definitionName].properties.nextUri !== undefined
-			|| newSwagger.definitions[definitionName].properties.startIndex !== undefined
+	const properties = newSwagger.definitions[definitionName].properties
+	if (properties == undefined) return false
+
+	return properties.pageNumber !== undefined 
+			|| properties.cursor !== undefined
+			|| properties.nextUri !== undefined
+			|| properties.startIndex !== undefined
 }
 
 function canList(path, successResponse, newSwagger) {
@@ -175,8 +226,11 @@ function canList(path, successResponse, newSwagger) {
 	if (schema === '') return false
 
 	const definitionName = schema.split("/").pop()
+	const properties = newSwagger.definitions[definitionName].properties
+	if (properties == undefined) return false
+
 	return definitionName.endsWith("List")
-			|| newSwagger.definitions[definitionName].properties.entities !== undefined
+			|| properties.entities !== undefined
 }
 
 function overrideDefinitions(resourceDefinitions, overrides) {

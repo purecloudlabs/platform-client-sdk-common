@@ -2,6 +2,7 @@ package {{packageName}}
 {{#models}}
 import ({{#imports}}
 	"{{import}}"{{/imports}}
+	"github.com/leekchan/timeutil"
 	"encoding/json"
 	"strconv"
 	"strings"
@@ -11,9 +12,115 @@ import ({{#imports}}
 // {{classname}}{{#description}} - {{{description}}}{{/description}}
 type {{classname}} struct { {{#vars}}
 	// {{name}}{{#description}} - {{{description}}}{{/description}}
-	{{name}} *{{{datatype}}} `json:"{{baseName}},omitempty"`
+	{{name}} *{{{dataType}}} `json:"{{baseName}},omitempty"`
 
 {{/vars}}}
+
+func (o *{{classname}}) MarshalJSON() ([]byte, error) {
+	// Redundant initialization to avoid unused import errors for models with no Time values
+	_  = timeutil.Timedelta{}
+	type Alias {{classname}}
+	{{#vars}}{{#isDateTime}}
+	{{name}} := new(string)
+	if o.{{name}} != nil {
+		{{#vendorExtensions.x-local-date-time}}*{{name}} = timeutil.Strftime(o.{{name}}, "%Y-%m-%dT%H:%M:%S.%f"){{/vendorExtensions.x-local-date-time}}
+		{{^vendorExtensions.x-local-date-time}}*{{name}} = timeutil.Strftime(o.{{name}}, "%Y-%m-%dT%H:%M:%S.%fZ"){{/vendorExtensions.x-local-date-time}}
+	} else {
+		{{name}} = nil
+	}
+	{{/isDateTime}}{{^isDateTime}}{{#isDate}}
+	{{name}} := new(string)
+	if o.{{name}} != nil {
+		*{{name}} = timeutil.Strftime(o.{{name}}, "%Y-%m-%d")
+	} else {
+		{{name}} = nil
+	}
+	{{/isDate}}{{/isDateTime}}{{/vars}}
+	return json.Marshal(&struct { {{#vars}}{{#isDateTime}}
+		{{name}} *string `json:"{{baseName}},omitempty"`
+		{{/isDateTime}}{{^isDateTime}}{{#isDate}}
+		{{name}} *string `json:"{{baseName}},omitempty"`
+		{{/isDate}}{{^isDate}}
+		{{name}} *{{{dataType}}} `json:"{{baseName}},omitempty"`
+		{{/isDate}}{{/isDateTime}}{{/vars}}*Alias
+	}{ {{#vars}}{{#isDateTime}}
+		{{name}}: {{name}},
+		{{/isDateTime}}{{^isDateTime}}{{#isDate}}
+		{{name}}: {{name}},
+		{{/isDate}}{{^isDate}}
+		{{name}}: o.{{name}},
+		{{/isDate}}{{/isDateTime}}{{/vars}}Alias:    (*Alias)(o),
+	})
+}
+
+func (o *{{classname}}) UnmarshalJSON(b []byte) error {
+	var {{classname}}Map map[string]interface{}
+	err := json.Unmarshal(b, &{{classname}}Map)
+	if err != nil {
+		return err
+	}
+	{{#vars}}{{#isDateTime}}{{#vendorExtensions.x-local-date-time}}
+	if {{baseName}}String, ok := {{classname}}Map["{{baseName}}"].(string); ok {
+		{{name}}, _ := time.Parse("2006-01-02T15:04:05.999999", {{baseName}}String)
+		o.{{name}} = &{{name}}
+	}
+	{{/vendorExtensions.x-local-date-time}}{{^vendorExtensions.x-local-date-time}}
+	if {{baseName}}String, ok := {{classname}}Map["{{baseName}}"].(string); ok {
+		{{name}}, _ := time.Parse("2006-01-02T15:04:05.999999Z", {{baseName}}String)
+		o.{{name}} = &{{name}}
+	}
+	{{/vendorExtensions.x-local-date-time}}{{/isDateTime}}{{^isDateTime}}{{#isDate}}
+	if {{baseName}}String, ok := {{classname}}Map["{{baseName}}"].(string); ok {
+		{{name}}, _ := time.Parse("2006-01-02", {{baseName}}String)
+		o.{{name}} = &{{name}}
+	}
+	{{/isDate}}{{^isDate}}{{#isArray}}
+	if {{name}}, ok := {{classname}}Map["{{baseName}}"].([]interface{}); ok {
+		{{name}}String, _ := json.Marshal({{name}})
+		json.Unmarshal({{name}}String, &o.{{name}})
+	}
+	{{/isArray}}{{^isArray}}{{^isPrimitiveType}}
+	if {{name}}, ok := {{classname}}Map["{{baseName}}"].(map[string]interface{}); ok {
+		{{name}}String, _ := json.Marshal({{name}})
+		json.Unmarshal({{name}}String, &o.{{name}})
+	}
+	{{/isPrimitiveType}}{{#isPrimitiveType}}{{#isInteger}}
+	if {{name}}, ok := {{classname}}Map["{{baseName}}"].(float64); ok {
+		{{name}}Int := int({{name}})
+		o.{{name}} = &{{name}}Int
+	}
+	{{/isInteger}}{{#isLong}}
+	if {{name}}, ok := {{classname}}Map["{{baseName}}"].(float64); ok {
+		{{name}}Int := int({{name}})
+		o.{{name}} = &{{name}}Int
+	}
+	{{/isLong}}{{#isFloat}}
+	if {{name}}, ok := {{classname}}Map["{{baseName}}"].(float64); ok {
+		{{name}}Float32 := float32({{name}})
+		o.{{name}} = &{{name}}Float32
+	}
+	{{/isFloat}}{{#isDouble}}
+	if {{name}}, ok := {{classname}}Map["{{baseName}}"].(float64); ok {
+		o.{{name}} = &{{name}}
+	}
+    {{/isDouble}}{{#isNumber}}
+	if {{name}}, ok := {{classname}}Map["{{baseName}}"].(float64); ok {
+		{{name}}Float32 := float32({{name}})
+		o.{{name}} = &{{name}}Float32
+	}
+    {{/isNumber}}{{^isInteger}}{{^isLong}}{{^isFloat}}{{^isDouble}}{{#isMap}}
+	if {{name}}, ok := {{classname}}Map["{{baseName}}"].(map[string]interface{}); ok {
+		{{name}}String, _ := json.Marshal({{name}})
+		json.Unmarshal({{name}}String, &o.{{name}})
+	}
+	{{/isMap}}{{^isMap}}{{^isNumber}}
+	if {{name}}, ok := {{classname}}Map["{{baseName}}"].({{dataType}}); ok {
+		o.{{name}} = &{{name}}
+	}
+    {{/isNumber}}{{/isMap}}{{/isDouble}}{{/isFloat}}{{/isLong}}{{/isInteger}}{{/isPrimitiveType}}{{/isArray}}{{/isDate}}{{/isDateTime}}{{/vars}}
+
+	return nil
+}
 
 // String returns a JSON representation of the model
 func (o *{{classname}}) String() string {

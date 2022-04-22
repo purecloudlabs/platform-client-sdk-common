@@ -28,7 +28,7 @@ try {
 
 // Creates command root files if they don't already exist
 function generateSuperCommandFiles(rootDir, topLevelCommands, resourceDefinitions, resourcePath) {
-	const templateString = `package {{=it.supercommand}}
+	const templateString = `package {{addit.supercommand}}
 
 import (
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
@@ -38,9 +38,9 @@ import (
 )
 
 var (
-	Description = utils.FormatUsageDescription("{{=it.supercommand}}", "SWAGGER_OVERRIDE_{{=it.description}}")
-	{{=it.supercommand}}Cmd = &cobra.Command{
-		Use:   utils.FormatUsageDescription("{{=it.supercommand}}"),
+	Description = utils.FormatUsageDescription("{{addit.supercommand}}", "SWAGGER_OVERRIDE_{{addit.description}}")
+	{{addit.supercommand}}Cmd = &cobra.Command{
+		Use:   utils.FormatUsageDescription("{{addit.supercommand}}"),
 		Short: Description,
 		Long:  Description,
 	}
@@ -48,11 +48,11 @@ var (
 )
 
 func init() {
-	CommandService = services.NewCommandService({{=it.supercommand}}Cmd)
+	CommandService = services.NewCommandService({{addit.supercommand}}Cmd)
 }
 
-func Cmd{{=it.supercommand}}() *cobra.Command {
-	return {{=it.supercommand}}Cmd
+func Cmd{{addit.supercommand}}() *cobra.Command {
+	return {{addit.supercommand}}Cmd
 }
 `;
 	for (const supercommand of topLevelCommands) {
@@ -138,17 +138,17 @@ function generateRootFiles(rootDir, resourceDefinitions) {
 		}
 	}
 
-	const templateString = `package {{=it.supercommand}}
+	const templateString = `package {{addit.supercommand}}
 
 import (
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
-	{{=it.import}}
+	{{addit.import}}
 )
 
 func init() {
-	{{=it.addcommand}}
-	{{=it.short}}
-	{{=it.long}}
+	{{addit.addcommand}}
+	{{addit.short}}
+	{{addit.long}}
 }
 `;
 
@@ -193,6 +193,7 @@ function processName(name) {
 function processRoot(rootDir, rootFileName, resourceDefinitions, topLevelCommands) {
 	let exclusionList = new Set();
 	exclusionList.add(rootFileName);
+	exclusionList.add("dummy_command.go");
 	for (const resourceDefinition of Object.values(resourceDefinitions)) {
 		if (resourceDefinition.supercommand !== undefined) {
 			const supercommandlist = resourceDefinition.supercommand.split('.');
@@ -202,9 +203,8 @@ function processRoot(rootDir, rootFileName, resourceDefinitions, topLevelCommand
 					exclusionList.add(resourceDefinition.name);
 			}
 			for (const command of supercommandlist) {
-				if (!topLevelCommands.includes(command)) {
+				if (!topLevelCommands.includes(command) && command !== "profiles")
 					exclusionList.add(command);
-				}
 			}
 		}
 	}
@@ -230,7 +230,20 @@ function processRoot(rootDir, rootFileName, resourceDefinitions, topLevelCommand
 }
 
 function writeTemplate(templateString, templateObj, filePath) {
-	let template = dot.template(templateString, null, templateObj);
+	let template = dot.template(templateString, dot.templateSettings = {
+		evaluate:    /\{\{([\s\S]+?)\}\}/g,
+		interpolate: /\{\{add([\s\S]+?)\}\}/g,
+		encode:      /\{\{!([\s\S]+?)\}\}/g,
+		use:         /\{\{#([\s\S]+?)\}\}/g,
+		define:      /\{\{##\s*([\w\.$]+)\s*(\:|=)([\s\S]+?)#\}\}/g,
+		conditional: /\{\{\?(\?)?\s*([\s\S]*?)\s*\}\}/g,
+		iterate:     /\{\{~\s*(?:\}\}|([\s\S]+?)\s*\:\s*([\w$]+)\s*(?:\:\s*([\w$]+))?\s*\}\})/g,
+		varname: 'it',
+		strip: false,
+		append: true,
+		selfcontained: false
+	}, templateObj);
+	//let template = dot.template(templateString, null, templateObj);
 	let result = template(templateObj);
 
 	fs.writeFileSync(filePath, result);

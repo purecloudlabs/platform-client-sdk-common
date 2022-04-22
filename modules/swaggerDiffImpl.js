@@ -219,6 +219,7 @@ function checkForChange(id, key, location, impact, property, oldObject, newObjec
 }
 
 function checkOperations(oldSwagger, newSwagger) {
+	if (!oldSwagger) return;
 	// Check for removed paths
 	_.forEach(oldSwagger.paths, function(oldPath, pathKey) {
 		var newPath = newSwagger.paths[pathKey];
@@ -463,6 +464,7 @@ function getSchemaType(schema) {
 }
 
 function checkModels(oldSwagger, newSwagger) {
+	if (!oldSwagger) return;
 	// Check for removed models
 	_.forEach(oldSwagger.definitions, function(oldModel, modelKey) {
 		var newModel = newSwagger.definitions[modelKey];
@@ -473,6 +475,8 @@ function checkModels(oldSwagger, newSwagger) {
 
 	// Check for changed and added models
 	_.forEach(newSwagger.definitions, function(newModel, modelKey) {
+		// ArrayNode and JsonNode were removed in API-5692
+		if (modelKey === 'ArrayNode' || modelKey == 'JsonNode') return;
 		var oldModel = oldSwagger.definitions[modelKey];
 		if (!oldModel) {
 			// Add note about the new model

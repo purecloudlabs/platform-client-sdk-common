@@ -7,6 +7,7 @@ import (
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/retry"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/services"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
 	"github.com/spf13/cobra"
 	"net/url"
 	"strings"
@@ -28,12 +29,12 @@ func init() {
 }
 
 func Cmd{{classVarName}}() *cobra.Command { {{#operation}}
-	{{#queryParams}}utils.AddFlag({{operationId}}Cmd.Flags(), "{{{dataType}}}", "{{paramName}}", "{{#defaultValue}}{{{.}}}{{/defaultValue}}{{^defaultValue}}{{/defaultValue}}", "{{description}}{{#required}} - REQUIRED{{/required}}{{#allowableValues}} Valid values: {{#values}}{{.}}{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}}")
-	{{#hasMore}}{{/hasMore}}{{/queryParams}}{{operationId}}Cmd.SetUsageTemplate(fmt.Sprintf("%s\nOperation:\n  %s %s\n%s", {{operationId}}Cmd.UsageTemplate(), "{{httpMethod}}", "{{path}}", utils.FormatPermissions([]string{ {{#permissions}}"{{.}}", {{/permissions}} })))
-	utils.AddFileFlagIfUpsert({{operationId}}Cmd.Flags(), "{{httpMethod}}", `{{#bodyParam}}{{jsonSchema}}{{/bodyParam}}`)
+	{{#queryParams}}utils.AddFlag({{operationId}}Cmd.Flags(), "{{{dataType}}}", "{{paramName}}", "{{#defaultValue}}{{{.}}}{{/defaultValue}}{{^defaultValue}}{{/defaultValue}}", "{{{description}}}{{#required}} - REQUIRED{{/required}}{{#allowableValues}} Valid values: {{#values}}{{.}}{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}}")
+	{{#hasMore}}{{/hasMore}}{{/queryParams}}{{operationId}}Cmd.SetUsageTemplate(fmt.Sprintf("%s\nOperation:\n  %s %s\n%s\n%s", {{operationId}}Cmd.UsageTemplate(), "{{httpMethod}}", "{{path}}", utils.FormatPermissions([]string{ {{#permissions}}"{{.}}", {{/permissions}} }), utils.GenerateDevCentreLink("{{httpMethod}}", "{{#vendorExtensions}}{{x-purecloud-category}}{{/vendorExtensions}}", "{{path}}")))
+	utils.AddFileFlagIfUpsert({{operationId}}Cmd.Flags(), "{{httpMethod}}", `{{#bodyParam}}{{{jsonSchema}}}{{/bodyParam}}`)
 	{{#queryParams}}{{#required}}{{operationId}}Cmd.MarkFlagRequired("{{paramName}}")
 	{{/required}}{{/queryParams}}
-	{{#responses}}{{#-first}}utils.AddPaginateFlagsIfListingResponse({{operationId}}Cmd.Flags(), "{{httpMethod}}", `{{jsonSchema}}`){{/-first}}{{/responses}}
+	{{#responses}}{{#-first}}utils.AddPaginateFlagsIfListingResponse({{operationId}}Cmd.Flags(), "{{httpMethod}}", `{{{jsonSchema}}}`){{/-first}}{{/responses}}
 	{{classVarName}}Cmd.AddCommand({{operationId}}Cmd)
 	{{/operation}}
 	return {{classVarName}}Cmd
@@ -42,11 +43,22 @@ func Cmd{{classVarName}}() *cobra.Command { {{#operation}}
 {{#operation}}
 var {{operationId}}Cmd = &cobra.Command{
 	Use:   "{{operationId}}{{#pathParams}} [{{paramName}}{{#hasMore}}{{/hasMore}}]{{/pathParams}}",
-	Short: "{{#summary}}{{summary}}{{/summary}}",
-	Long:  "{{#summary}}{{summary}}{{/summary}}",
+	Short: "{{#summary}}{{{summary}}}{{/summary}}",
+	Long:  "{{#summary}}{{{summary}}}{{/summary}}",
 	Args:  utils.DetermineArgs([]string{ {{#pathParams}}"{{paramName}}", {{#hasMore}}{{/hasMore}}{{/pathParams}}}),
 
 	Run: func(cmd *cobra.Command, args []string) {
+		_ = models.Entities{}
+
+		printReqBody, _ := cmd.Flags().GetBool("printrequestbody")
+		if printReqBody {
+			{{#allParams}}{{#vendorExtensions}}{{#x-baseType}}
+			reqModel := models.{{x-baseType}}{}
+			utils.Render(reqModel.String())
+			{{/x-baseType}}{{/vendorExtensions}}{{/allParams}}
+			return
+		}
+
 		queryParams := make(map[string]string)
 
 		path := "{{path}}"{{#pathParams}}
@@ -66,7 +78,9 @@ var {{operationId}}Cmd = &cobra.Command{
 			urlString = strings.TrimSuffix(urlString, "&")
 		}
 
-		retryFunc := CommandService.DetermineAction("{{httpMethod}}", urlString, cmd.Flags())
+		const opId = "{{operationId}}"
+		const httpMethod = "{{httpMethod}}"
+		retryFunc := CommandService.DetermineAction(httpMethod, urlString, cmd, opId)
 		// TODO read from config file
 		retryConfig := &retry.RetryConfiguration{
 			RetryWaitMin: 5 * time.Second,

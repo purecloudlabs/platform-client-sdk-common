@@ -1,20 +1,39 @@
 package cmd
 
 import (
+	"github.com/hashicorp/go-version"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/cmd/alternative_formats"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/data_format"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/transform_data"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
 
 	"flag"
 	"fmt"
+	"strings"
+	"encoding/json"
+	"io/ioutil"
+	"time"
+	"net/http"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/cmd/dummy_command"
 	{{addImports}}
 	"os"
 )
 
+type LatestVersion struct {
+	Version string `json:"version"`
+}
+
 var (
 	profileName string
 	output string
+	externalVersionURL = "https://sdk-cdn.mypurecloud.com/external/go-cli/latest-version.json"
+	internalVersionURL = "https://sdk-cdn.mypurecloud.com/internal/go-cli/latest-version.json"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -29,8 +48,66 @@ var versionCmd = &cobra.Command{
 	Short: "Print the version number of gc",
 	Long:  `All software has versions. This is gc version's`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("{{packageVersion}}")
+		fmt.Println("Current version: {{packageVersion}}")
+		checkForNewVersion()
 	},
+}
+
+func checkForNewVersion() {
+	var url string
+	if strings.Contains("{{basePath}}", "api.mypurecloud.com") {
+		url = externalVersionURL
+	} else {
+		url = internalVersionURL
+	}
+
+	err, latestVersion := retrieveLatestVersion(url)
+	if err != nil {
+		fmt.Println("An error occurred while retrieving the latest version.")
+		return
+	}
+
+	if versionsAreEqual("{{packageVersion}}", latestVersion) {
+		fmt.Println("You're all up to date.")
+	} else {
+		fmt.Printf("A new version of the CLI is available: %v\n", latestVersion)
+	}
+}
+
+func retrieveLatestVersion(url string) (error, string) {
+	client := http.Client{
+		Timeout: time.Second * 6,
+	}
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return err, ""
+	}
+
+	res, getErr := client.Do(req)
+	if getErr != nil {
+		return getErr, ""
+	}
+	if res.Body != nil {
+		defer res.Body.Close()
+	}
+	body, readErr := ioutil.ReadAll(res.Body)
+	if readErr != nil {
+		return readErr, ""
+	}
+
+	latestVersion := LatestVersion{}
+	jsonErr := json.Unmarshal(body, &latestVersion)
+	if jsonErr != nil {
+		return jsonErr, ""
+	}
+
+	return nil, latestVersion.Version
+}
+
+func versionsAreEqual(current string, latest string) bool {
+	v1, _ := version.NewVersion(current)
+	v2, _ := version.NewVersion(latest)
+	return v1.GreaterThanOrEqual(v2)
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -60,8 +137,32 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&profileName, "profile", "p", "DEFAULT", "Name of the profile to use for configuring the cli")
 	rootCmd.PersistentFlags().BoolP("indicateprogress", "i", false, "Trace progress indicators to stderr")
 
+	rootCmd.PersistentFlags().StringVar(&config.Environment, "environment", "", "environment override. E.g. mypurecloud.com.au or ap-southeast-2")
+	rootCmd.PersistentFlags().StringVar(&config.ClientId, "clientid", "", "clientId override")
+	rootCmd.PersistentFlags().StringVar(&config.ClientSecret, "clientsecret", "", "clientSecret override")
+	rootCmd.PersistentFlags().StringVar(&config.AccessToken, "accesstoken", "", "accessToken override")
+
+	rootCmd.PersistentFlags().StringVar(&transform_data.TemplateFile, "transform", "", "Provide a Go template file for transforming output data")
+	rootCmd.PersistentFlags().StringVar(&transform_data.TemplateStr, "transformstr", "", "Provide a Go template string for transforming output data")
+
+	rootCmd.PersistentFlags().StringVar(&data_format.InputFormat, "inputformat", "", "Data input format. Supported formats: YAML, JSON")
+	rootCmd.PersistentFlags().StringVar(&data_format.OutputFormat, "outputformat", "", "Data output format. Supported formats: YAML, JSON")
+
+	if data_format.OutputFormat == "" {
+		data_format.OutputFormat, _ = config.GetOutputFormat(getProfileName(os.Args))
+	}
+	if data_format.InputFormat == "" {
+		data_format.InputFormat, _ = config.GetInputFormat(getProfileName(os.Args))
+	}
+
+	rootCmd.AddCommand(alternative_formats.Cmdalternative_formats())
+
 	rootCmd.AddCommand(versionCmd)
 	{{addCommands}}
+
+	if config.IsExperimentalFeatureEnabled(getProfileName(os.Args), models.DummyCommand.String()) {
+		rootCmd.AddCommand(dummy_command.Cmddummy_command())
+	}
 
 	if os.Getenv("GenerateGcDocs") != "" {
 		if _, err := os.Stat("/tmp/gc_docs"); os.IsNotExist(err) {
@@ -76,3 +177,22 @@ func init() {
 		}
 	}
 }
+
+func getProfileName(args []string) string {
+    name := ""
+    for i, s := range args {
+        if (s == "-p" || s == "--profile") && i < len(args)-1 {
+            return args[i+1]
+        }
+        if strings.HasPrefix(s, "--profile=") {
+            name = strings.Replace(s, "--profile=", "", -1)
+        } else if strings.HasPrefix(s, "-p=") {
+            name = strings.Replace(s, "-p=", "", -1)
+        }
+    }
+    if name == "" {
+        return "DEFAULT"
+    }
+    return name
+}
+

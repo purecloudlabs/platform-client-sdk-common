@@ -1,5 +1,4 @@
 import {{moduleName}} = require('{{projectName}}');
-import Configuration = require('./src/purecloud-guest-chat-client/configuration');
 
 declare module '{{projectName}}' {
 	export const ApiClient: ApiClientClass;
@@ -35,8 +34,34 @@ declare class ProxyConfig {
 	port: number;
 	protocol: string;
 }
+
+declare class Configuration {
+	instance: Configuration;
+	configPath: string;
+	live_reload_config: boolean;
+	host: string;
+	environment: string;
+	basePath: string;
+	authUrl: string;
+	logger: Logger;
+	config: any;
+	setEnvironment(environment: string): void;
+}
+
+declare class Logger {
+	log_level: string;
+	log_format: string;
+	log_file_path: string;
+	log_to_console: boolean;
+	log_response_body: boolean;
+	log_request_body: boolean;
+	logLevels: any;
+	logLevelEnum: any;
+	logFormatEnum: any;
+	setLogger(): void;
+}
 {{#apiInfo}}
-{{#apis}}{{#operations}}
+{{#apis}}{{#operations}}{{#-first}}
 declare class {{classname}} { {{#operation}} {{!-- class: CodegenOperation --}}
   	{{operationId}}({{#allParams}}{{#required}}{{{paramName}}}: {{{typeScriptType}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts?: {{classname}}.{{operationId}}Options{{/hasOptionalParams}}): Promise<{{{typeScriptResponseType}}}>;{{/operation}}
 }
@@ -46,6 +71,7 @@ declare namespace {{classname}} { {{#operation}}{{#hasOptionalParams}}
 		"{{{paramName}}}"?: {{{typeScriptType}}};{{/required}}{{/allParams}}
 	}{{/hasOptionalParams}}{{/operation}}
 }
+{{/-first}}
 {{/operations}}
 {{/apis}}
 

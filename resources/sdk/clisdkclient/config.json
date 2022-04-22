@@ -19,7 +19,7 @@
     "swaggerCodegen": {
       "resourceLanguage": "clisdkclient",
       "codegenLanguage": "clisdkclient",
-      "jarPath": "${WORKSPACE}/swagger-codegen/modules/swagger-codegen-cli/target/swagger-codegen-cli.jar",
+      "jarPath": "${WORKSPACE}/openapi-generator/modules/openapi-generator-cli/target/openapi-generator-cli.jar",
       "configFile": "${SDK_TEMP}/config.json",
       "extraGeneratorOptions": []
     },
@@ -94,20 +94,19 @@
           "failOnError": true
         },
         {
+          "type": "node",
+          "path": "${COMMON_ROOT}/resources/scripts/combineApiDataFiles.js",
+          "args": [
+            "${SDK_REPO}/docs",
+            "${SDK_REPO}/APIData.json"
+          ],
+          "failOnError": true
+        },
+        {
           "type": "command",
           "command": "make",
           "cwd": "${SDK_REPO}",
           "args":[ "build", "test" ],
-          "failOnError": true
-        },
-        {
-          "type": "shell",
-          "path": "generate-docs.sh",
-          "cwd": "${SDK_REPO}",
-          "args":[ 
-            "/tmp/gc_docs",
-            "${SDK_TEMP}"
-           ],
           "failOnError": true
         }
       ]

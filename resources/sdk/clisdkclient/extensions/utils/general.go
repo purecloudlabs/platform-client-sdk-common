@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -13,8 +14,11 @@ import (
 	"strings"
 	"time"
 
+	"sigs.k8s.io/yaml"
+
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
 
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/data_format"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -60,6 +64,8 @@ func AddFileFlagIfUpsert(flags *pflag.FlagSet, method string, jsonSchema string)
 		fallthrough
 	case http.MethodPut:
 		flags.StringP("file", "f", "", "File name containing the JSON body")
+		flags.BoolP("printrequestbody", "b", false, "Print the request body format of the API.")
+		flags.StringP("directory", "d", "", "Directory path with files containing request bodies")
 	}
 }
 
@@ -113,9 +119,9 @@ func FormatUsageDescription(inputs ...string) string {
 
 	// Some command names are separated by underscores. We only want the last name
 	name := strings.Split(messages[0], "_")
-	message := name[len(name) - 1]
-	message = strings.Replace(message, "testfile" , "test", -1)
-	message = strings.Replace(message, "documentationfile" , "documentation", -1)
+	message := name[len(name)-1]
+	message = strings.Replace(message, "testfile", "test", -1)
+	message = strings.Replace(message, "documentationfile", "documentation", -1)
 	if len(messages) == 1 {
 		return message
 	}
@@ -204,6 +210,21 @@ func FormatPermissions(permissions []string) string {
 	return permissionString
 }
 
+func GenerateDevCentreLink(method, category, path string) string {
+	category = strings.ToLower(strings.Replace(category, " ", "", -1))
+	path = strings.Replace(path, "/", "-", -1)
+	path = strings.Replace(path, "{", "-", -1)
+	path = strings.Replace(path, "}", "-", -1)
+
+	linkString := "Documentation:\n"
+	linkString += fmt.Sprintf("  https://developer.genesys.cloud/api/rest/v2/%v/#%v%v\n",
+		category,
+		strings.ToLower(method),
+		path)
+
+	return linkString
+}
+
 func DetermineArgs(args []string) cobra.PositionalArgs {
 	validArgs := 0
 	for _, arg := range args {
@@ -240,10 +261,10 @@ func ConvertStdInString() string {
 		}
 	}
 
-	return string(inputBuffer.Bytes())
+	return convertToJSON(string(inputBuffer.Bytes()))
 }
 
-func ConvertFileJSON(fileName string) string {
+func ConvertFile(fileName string) string {
 	jsonFile, err := os.Open(fileName)
 
 	if err != nil {
@@ -254,23 +275,53 @@ func ConvertFileJSON(fileName string) string {
 	defer jsonFile.Close()
 
 	fileContent, _ := ioutil.ReadAll(jsonFile)
-	return string(fileContent)
+	return convertToJSON(string(fileContent))
+}
+
+func readDirectory(dirName string) []string {
+	files, err := ioutil.ReadDir(dirName)
+	if err != nil {
+		logger.Fatal(fmt.Sprintf("Error reading %s: ", dirName), err)
+	}
+	if len(files) == 0 {
+		logger.Fatal(fmt.Sprintf("Error reading %s: no files in directory\n", dirName))
+	}
+
+	var data []string
+
+	for _, file := range files {
+		fileName := dirName + file.Name()
+		if dirName[len(dirName)-1] != '/' {
+			fileName = dirName + "/" + file.Name()
+		}
+		data = append(data, ConvertFile(fileName))
+	}
+
+	return data
 }
 
 // ResolveInputData is used to determine where the Put, Patch and Delete Post data should be read from
-func ResolveInputData(cmd *cobra.Command) string {
+func ResolveInputData(cmd *cobra.Command) []string {
 	fileName, _ := cmd.Flags().GetString("file")
+	dirName, _ := cmd.Flags().GetString("directory")
 	if fileName != "" {
-		return ConvertFileJSON(fileName)
+		return []string{ConvertFile(fileName)}
+	}
+	if dirName != "" {
+		return readDirectory(dirName)
 	}
 	for _, command := range cmd.Commands() {
 		fileName, _ := command.Flags().GetString("file")
+		dirName, _ := command.Flags().GetString("directory")
 		if fileName != "" {
-			return ConvertFileJSON(fileName)
+			return []string{ConvertFile(fileName)}
+		}
+		if dirName != "" {
+			return readDirectory(dirName)
 		}
 	}
 
-	return ConvertStdInString()
+	return []string{ConvertStdInString()}
 }
 
 func GenerateGuid() string {
@@ -289,4 +340,20 @@ func MilliSecondsToNanoSeconds(milliSeconds int64) time.Duration {
 
 func SecondsToNanoSeconds(seconds int) time.Duration {
 	return MilliSecondsToNanoSeconds(int64(seconds)) * 1000
+}
+
+func convertToJSON(data string) string {
+	if strings.EqualFold("yaml", data_format.InputFormat) {
+		result, err := yaml.YAMLToJSON([]byte(data))
+		if err != nil {
+			logger.Fatalf("Error converting YAML to JSON: %v\n", err)
+		}
+		return string(result)
+	}
+	return data
+}
+
+func isJSON(str string) bool {
+	var js json.RawMessage
+	return json.Unmarshal([]byte(str), &js) == nil
 }

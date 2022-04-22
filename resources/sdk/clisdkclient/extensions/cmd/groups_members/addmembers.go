@@ -1,6 +1,8 @@
 package groups_members
 
 import (
+	"bytes"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -16,9 +18,9 @@ import (
 
 func init() {
 	note := "Note: The 'version' value from the command input will be ignored and the latest version value will be retrieved from the API instead"
-	addCmd.SetUsageTemplate(fmt.Sprintf("%s\nOperation:\n  %s %s\n%s\n\n%s\n", addCmd.UsageTemplate(), "POST", "/api/v2/groups/{groupId}/members", utils.FormatPermissions([]string{  }), note))
+	AddCmd.SetUsageTemplate(fmt.Sprintf("%s\nOperation:\n  %s %s\n%s\n\n%s\n", AddCmd.UsageTemplate(), "POST", "/api/v2/groups/{groupId}/members", utils.FormatPermissions([]string{}), note))
 
-	createCmd = addCmd
+	addCmd = AddCmd
 }
 
 type group struct {
@@ -41,7 +43,7 @@ var (
 	}
 )
 
-var addCmd = &cobra.Command{
+var AddCmd = &cobra.Command{
 	Use:   "add [groupId]",
 	Short: "Add members",
 	Long:  `Add members`,
@@ -54,8 +56,14 @@ var addCmd = &cobra.Command{
 		currentVersion := getGroupVersion(path, cmd)
 
 		inputData := utils.ResolveInputData(cmd)
+
+		// convert inputData to []byte for unmarshalling
+		buffer := &bytes.Buffer{}
+		gob.NewEncoder(buffer).Encode(inputData)
+		byteSlice := buffer.Bytes()
+
 		body := &addGroupMembersBody{}
-		err := json.Unmarshal([]byte(inputData), body)
+		err := json.Unmarshal([]byte(byteSlice), body)
 		if err != nil {
 			logger.Fatal(err)
 		}
@@ -63,8 +71,12 @@ var addCmd = &cobra.Command{
 		body.Version = currentVersion
 		bodyString, _ := json.Marshal(body)
 
+		// request body
+		data := []string{string(bodyString)}
+
 		path = strings.Replace(addMembersOperation.Path, "{groupId}", fmt.Sprintf("%v", groupId), -1)
-		retryFunc := retry.RetryWithData(path, string(bodyString), CommandService.Post)
+
+		retryFunc := retry.RetryWithData(path, data, CommandService.Post)
 		// TODO read from config file
 		retryConfig := &retry.RetryConfiguration{
 			RetryWaitMin: 5 * time.Second,
@@ -81,7 +93,7 @@ var addCmd = &cobra.Command{
 }
 
 func getGroupVersion(path string, cmd *cobra.Command) int {
-	retryFunc := CommandService.DetermineAction(getMembersOperation.Method, path, cmd.Flags())
+	retryFunc := CommandService.DetermineAction(getMembersOperation.Method, path, cmd, "")
 	retryConfig := &retry.RetryConfiguration{
 		RetryWaitMin: 5 * time.Second,
 		RetryWaitMax: 60 * time.Second,

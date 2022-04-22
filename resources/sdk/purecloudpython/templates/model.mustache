@@ -42,13 +42,13 @@ class {{classname}}(object):
                                   and the value is json key in definition.
         """
         self.swagger_types = {
-            {{#vars}}'{{name}}': '{{{datatype}}}'{{#hasMore}},
-            {{/hasMore}}{{/vars}}
+            {{#vars}}'{{name}}': '{{{datatype}}}'{{^-last}},
+            {{/-last}}{{/vars}}
         }
 
         self.attribute_map = {
-            {{#vars}}'{{name}}': '{{baseName}}'{{#hasMore}},
-            {{/hasMore}}{{/vars}}
+            {{#vars}}'{{name}}': '{{baseName}}'{{^-last}},
+            {{/-last}}{{/vars}}
         }
 
 {{#vars}}
@@ -84,10 +84,12 @@ class {{classname}}(object):
             self._{{name}} = {{name}}
 {{/isEnum}}
 {{^isEnum}}
-{{#hasValidation}}
+{{#required}}
 
         if not {{name}}:
             raise ValueError("Invalid value for `{{name}}`, must not be `None`")
+{{/required}}
+{{#hasValidation}}
 {{#maxLength}}
         if len({{name}}) > {{maxLength}}: 
             raise ValueError("Invalid value for `{{name}}`, length must be less than `{{maxLength}}`")
