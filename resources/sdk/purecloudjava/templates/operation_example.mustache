@@ -1,0 +1,40 @@
+{{#operation}}import {{{invokerPackage}}}.ApiClient;
+import {{{invokerPackage}}}.ApiException;
+import {{{invokerPackage}}}.Configuration;
+import {{{invokerPackage}}}.api.{{baseName}}Api;
+{{#imports}}import {{{invokerPackage}}}.model.{{.}};{{#hasMore}}
+{{/hasMore}}{{/imports}}
+
+public class Example{{operationId}} {
+    public static void main(String[] args) {
+        // Create ApiClient instance
+        ApiClient apiClient = ApiClient.Builder.standard()
+                .withAccessToken("your_access_token")   // or use authorizeClientCredentials(...), authorizeCodeAuthorization(...) or authorizeSaml2Bearer(...)
+                .withBasePath("https://api.mypurecloud.com") // expected format: https://api.[base path]
+                .build();
+        {{#hasAuthMethods}}{{#authMethods}}{{#isBasic}}
+        // Configure HTTP basic authorization: {{{name}}}
+        HttpBasicAuth {{{name}}} = (HttpBasicAuth) apiClient.getAuthentication("{{{name}}}");
+        {{{name}}}.setUsername("YOUR USERNAME");
+        {{{name}}}.setPassword("YOUR PASSWORD");{{/isBasic}}{{#isApiKey}}
+        // Configure API key authorization: {{{name}}}
+        ApiKeyAuth {{{name}}} = (ApiKeyAuth) apiClient.getAuthentication("{{{name}}}");
+        {{{name}}}.setApiKey("YOUR API KEY");
+        // Uncomment the following line to set a prefix for the API key, e.g. "Token" (defaults to null)
+        //{{{name}}}.setApiKeyPrefix("Token");{{/isApiKey}}{{#isOAuth}}
+        // Use the ApiClient instance
+        Configuration.setDefaultApiClient(apiClient);{{/isOAuth}}{{/authMethods}}{{/hasAuthMethods}}
+
+        {{baseName}}Api apiInstance = new {{baseName}}Api();
+        {{#allParams}}{{{dataType}}} {{{paramName}}} = {{{example}}}; // {{{dataType}}} | {{{description}}}
+        {{/allParams}}
+        try { {{#summary}}
+            // {{{.}}}{{/summary}}
+            {{#returnType}}{{{returnType}}} result = {{/returnType}}apiInstance.{{{operationId}}}({{#allParams}}{{{paramName}}}{{#hasMore}}, {{/hasMore}}{{/allParams}});{{#returnType}}
+            System.out.println(result);{{/returnType}}
+        } catch (ApiException e) {
+            System.err.println("Exception when calling {{baseName}}Api#{{{operationId}}}");
+            e.printStackTrace();
+        }{{/operation}}
+    }
+}

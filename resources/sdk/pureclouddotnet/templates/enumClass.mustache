@@ -3,7 +3,7 @@
         /// </summary>{{#description}}
         /// <value>{{{description}}}</value>{{/description}}
         [JsonConverter(typeof(UpgradeSdkEnumConverter))]
-        public enum {{#datatypeWithEnum}}{{.}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}
+        public enum {{#datatypeWithEnum}}{{{.}}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{classname}}{{/datatypeWithEnum}}
         {
             /// <summary>
             /// Your SDK version is out of date and an unknown enum value was encountered. 

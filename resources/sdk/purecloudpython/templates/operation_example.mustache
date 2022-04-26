@@ -1,0 +1,27 @@
+{{#operation}}import PureCloudPlatformClientV2
+from PureCloudPlatformClientV2.rest import ApiException
+from pprint import pprint
+{{#hasAuthMethods}}{{#authMethods}}{{#isBasic}}
+# Configure HTTP basic authorization: {{{name}}}
+PureCloudPlatformClientV2.configuration.username = 'YOUR_USERNAME'
+PureCloudPlatformClientV2.configuration.password = 'YOUR_PASSWORD'{{/isBasic}}{{#isApiKey}}
+# Configure API key authorization: {{{name}}}
+PureCloudPlatformClientV2.configuration.api_key['{{{keyParamName}}}'] = 'YOUR_API_KEY'
+# Uncomment below to setup prefix (e.g. BEARER) for API key, if needed
+# PureCloudPlatformClientV2.configuration.api_key_prefix['{{{keyParamName}}}'] = 'BEARER'{{/isApiKey}}{{#isOAuth}}
+# Configure OAuth2 access token for authorization: {{{name}}}
+PureCloudPlatformClientV2.configuration.access_token = 'your_access_token'{{/isOAuth}}{{/authMethods}}
+# or use get_client_credentials_token(...), get_saml2bearer_token(...) or get_code_authorization_token(...)
+{{/hasAuthMethods}}
+
+# create an instance of the API class
+api_instance = PureCloudPlatformClientV2.{{baseName}}Api()
+{{#allParams}}{{paramName}} = {{{example}}} # {{{dataType}}} | {{{description}}}{{^required}} (optional){{/required}}{{#defaultValue}} (default to {{{.}}}){{/defaultValue}}
+{{/allParams}}
+
+try:
+{{#summary}}    # {{{.}}}
+{{/summary}}    {{#returnType}}api_response = {{/returnType}}api_instance.{{{operationId}}}({{#allParams}}{{#required}}{{paramName}}{{/required}}{{^required}}{{paramName}}={{paramName}}{{/required}}{{#hasMore}}, {{/hasMore}}{{/allParams}}){{#returnType}}
+    pprint(api_response){{/returnType}}
+except ApiException as e:
+    print("Exception when calling {{classname}}->{{operationId}}: %s\n" % e){{/operation}}

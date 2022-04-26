@@ -21,10 +21,11 @@
         /// </summary>{{#description}}
         /// <value>{{{description}}}</value>{{/description}}
         [DataMember(Name="{{baseName}}", EmitDefaultValue={{emitDefaultValue}})]
-        public {{{datatypeWithEnum}}}{{#isEnum}}?{{/isEnum}} {{name}} { get; set; }
+        public {{{datatypeWithEnum}}}? {{name}} { get; {{#isReadOnly}}private {{/isReadOnly}}set; }
         {{/isEnum}}
         {{/vars}}
     {{#hasRequired}}
+
         /// <summary>
         /// Initializes a new instance of the <see cref="{{classname}}" /> class.
         /// </summary>
@@ -34,8 +35,8 @@
         /// <summary>
         /// Initializes a new instance of the <see cref="{{classname}}" /> class.
         /// </summary>{{#vars}}{{^isReadOnly}}
-        /// <param name="{{name}}">{{#description}}{{description}}{{/description}}{{^description}}{{name}}{{/description}}{{#required}} (required){{/required}}{{#defaultValue}} (default to {{defaultValue}}){{/defaultValue}}.</param>{{/isReadOnly}}{{/vars}}
-        public {{classname}}({{#vars}}{{^isReadOnly}}{{{datatypeWithEnum}}}{{#isEnum}}?{{/isEnum}} {{name}} = null{{/isReadOnly}}{{#hasMoreNonReadOnly}}, {{/hasMoreNonReadOnly}}{{/vars}})
+        /// <param name="{{name}}">{{#description}}{{{description}}}{{/description}}{{^description}}{{name}}{{/description}}{{#required}} (required){{/required}}{{#defaultValue}} (default to {{defaultValue}}){{/defaultValue}}.</param>{{/isReadOnly}}{{/vars}}
+        public {{classname}}({{#vars}}{{^isReadOnly}}{{{datatypeWithEnum}}}{{#isEnum}}?{{/isEnum}} {{name}} = null{{/isReadOnly}}{{#hasMoreNonReadOnly}}{{^isReadOnly}}, {{/isReadOnly}}{{/hasMoreNonReadOnly}}{{/vars}})
         {
             {{#vars}}{{^isReadOnly}}{{#defaultValue}}// use default value if no "{{name}}" provided
             if ({{name}} == null)
@@ -50,15 +51,19 @@
         }
         
         {{#vars}}
+
         {{^isEnum}}
+
         /// <summary>
-        /// {{^description}}Gets or Sets {{{name}}}{{/description}}{{#description}}{{description}}{{/description}}
+        /// {{^description}}Gets or Sets {{{name}}}{{/description}}{{#description}}{{{description}}}{{/description}}
         /// </summary>{{#description}}
-        /// <value>{{description}}</value>{{/description}}
+        /// <value>{{{description}}}</value>{{/description}}
         [DataMember(Name="{{baseName}}", EmitDefaultValue={{emitDefaultValue}})]
         public {{{datatypeWithEnum}}} {{name}} { get; {{#isReadOnly}}private {{/isReadOnly}}set; }
         {{/isEnum}}
+
         {{/vars}}
+
         /// <summary>
         /// Returns the string presentation of the object
         /// </summary>
@@ -67,8 +72,10 @@
         {
             var sb = new StringBuilder();
             sb.Append("class {{classname}} {\n");
+
             {{#vars}}
-            sb.Append("  {{name}}: ").Append({{name}}).Append("\n");{{/vars}}
+            sb.Append("  {{name}}: ").Append({{name}}).Append("\n");
+            {{/vars}}
             sb.Append("}\n");
             return sb.ToString();
         }
@@ -108,17 +115,17 @@
             if (other == null)
                 return false;
 
-            return true{{#vars}}{{#isNotContainer}} &&
+            return true{{#vars}}{{^isContainer}} &&
                 (
                     this.{{name}} == other.{{name}} ||
                     this.{{name}} != null &&
                     this.{{name}}.Equals(other.{{name}})
-                ){{/isNotContainer}}{{^isNotContainer}} &&
+                ){{/isContainer}}{{#isContainer}} &&
                 (
                     this.{{name}} == other.{{name}} ||
                     this.{{name}} != null &&
                     this.{{name}}.SequenceEqual(other.{{name}})
-                ){{/isNotContainer}}{{/vars}}{{^vars}} && false{{/vars}};
+                ){{/isContainer}}{{/vars}}{{^vars}} && false{{/vars}};
         }
 
         /// <summary>
@@ -135,6 +142,7 @@
                 {{#vars}}
                 if (this.{{name}} != null)
                     hash = hash * 59 + this.{{name}}.GetHashCode();
+
                 {{/vars}}
                 return hash;
             }

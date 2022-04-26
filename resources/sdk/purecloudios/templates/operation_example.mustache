@@ -1,0 +1,19 @@
+{{#operation}}import PureCloudPlatformClientV2
+
+PureCloudPlatformClientV2API.basePath = "{{basePath}}" // expected format: "https://api.[base path]"
+PureCloudPlatformClientV2API.accessToken = "your_access_token"
+
+{{#allParams}}
+let {{{paramName}}}: {{#isEnum}}{{#isContainer}}{{{dataType}}}{{/isContainer}}{{^isContainer}}{{{classname}}}.{{{datatypeWithEnum}}}_{{operationId}}{{/isContainer}}{{/isEnum}}{{^isEnum}}{{{dataType}}}{{/isEnum}} = {{#isEnum}}{{#isContainer}}[{{/isContainer}}{{{classname}}}.{{{enumName}}}_{{{operationId}}}.enummember{{#isContainer}}.rawValue]{{/isContainer}}{{/isEnum}}{{^isEnum}}{{{example}}}{{/isEnum}} // {{#description}}{{{description}}}{{/description}}
+{{/allParams}}
+
+{{#summary}}// {{{.}}}{{/summary}}
+{{{classname}}}.{{{operationId}}}({{#allParams}}{{{paramName}}}: {{{paramName}}}{{#hasMore}}, {{/hasMore}}{{/allParams}}) { ({{#returnType}}response, {{/returnType}}error) in
+    if let error = error {
+        dump(error)
+    }{{#returnType}} else if let response = response {
+        print("{{{classname}}}.{{{operationId}}} was successful")
+        dump(response){{/returnType}}{{^returnType}} else {
+        print("{{{classname}}}.{{{operationId}}} was successful"){{/returnType}}
+    }
+}{{/operation}}
