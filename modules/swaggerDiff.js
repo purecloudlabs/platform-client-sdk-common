@@ -1,6 +1,5 @@
 const fs = require('fs');
 const childProcess = require('child_process');
-
 const log = require('./logger');
 const swaggerDiffImpl = require('./swaggerDiffImpl');
 
@@ -34,7 +33,7 @@ SwaggerDiff.prototype.getAndDiff = function(oldSwaggerPath, newSwaggerPath, save
 		log.warn(`Invalid oldSwaggerPath: ${oldSwaggerPath}`);
 	}
 
-	log.debug(`Old swagger length: ${JSON.stringify(oldSwagger).length}`);
+	log.debug(`Old swagger length: ${(JSON.stringify(oldSwagger) || []).length}`);
 
 	// Retrieve new swagger
 	if (fs.existsSync(newSwaggerPath)) {

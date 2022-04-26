@@ -15,19 +15,27 @@ All URIs are relative to *{{basePath}}*
 {{#operation}}
 <a name="{{operationIdLowerCase}}"></a>
 
-## {{#returnType}}{{#returnTypeIsPrimitive}}**{{returnType}}**{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}[**{{returnType}}**]({{returnBaseType}}.html){{/returnTypeIsPrimitive}}{{/returnType}}{{^returnType}}void{{/returnType}} {{operationId}} ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{#hasMore}}, {{/hasMore}}{{/allParams}})
+## {{#returnType}}{{#returnTypeIsPrimitive}}**{{returnType}}**{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}[**{{returnType}}**]({{returnBaseType}}.html){{/returnTypeIsPrimitive}}{{/returnType}}{{^returnType}}void{{/returnType}} {{operationId}} ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{^-last}}, {{/-last}}{{/allParams}})
 
-{{#deprecated}}<span style="background-color: #f0ad4e;display: inline-block;padding: 7px;font-weight: bold;line-height: 1;color: #ffffff;text-align: center;white-space: nowrap;vertical-align: baseline;border-radius: .25em;margin: 10px 0;">DEPRECATED</span>{{/deprecated}}
+{{#isDeprecated}}<span style="background-color: #f0ad4e;display: inline-block;padding: 7px;font-weight: bold;line-height: 1;color: #ffffff;text-align: center;white-space: nowrap;vertical-align: baseline;border-radius: .25em;margin: 10px 0;">DEPRECATED</span>{{/isDeprecated}}
 
 {{{summary}}}{{#notes}}
 
 {{{notes}}}{{/notes}}
 
-Requires {{permissionType}} permissions: 
+
+
+{{#vendorExtensions.x-inin-requires-permissions}}
+Requires {{type}} permissions: 
 
 {{#permissions}}
 * {{.}}
 {{/permissions}}
+{{/vendorExtensions.x-inin-requires-permissions}}
+{{^vendorExtensions.x-inin-requires-permissions}}
+Requires NO permissions: 
+
+{{/vendorExtensions.x-inin-requires-permissions}}
 
 ### Example
 ```{"language":"csharp"}
@@ -64,7 +72,7 @@ namespace Example
             try
             { {{#summary}}
                 // {{{.}}}{{/summary}}
-                {{#returnType}}{{{returnType}}} result = {{/returnType}}apiInstance.{{{operationId}}}({{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}});{{#returnType}}
+                {{#returnType}}{{{returnType}}} result = {{/returnType}}apiInstance.{{{operationId}}}({{#allParams}}{{paramName}}{{^-last}}, {{/-last}}{{/allParams}});{{#returnType}}
                 Debug.WriteLine(result);{{/returnType}}
             }
             catch (Exception e)
@@ -81,7 +89,11 @@ namespace Example
 
 |Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|{{/-last}}{{/allParams}}
+<<<<<<< HEAD
+{{#allParams}}| **{{paramName}}** | {{#isFile}}**{{{dataType}}}**{{/isFile}}{{#isPrimitiveType}}**{{{dataType}}}**{{/isPrimitiveType}}{{^isPrimitiveType}}{{^isFile}}[**{{{dataType}}}**]({{baseType}}.html){{/isFile}}{{/isPrimitiveType}}| {{description}} | {{^required}}[optional] {{/required}}{{#defaultValue}}[default to {{{defaultValue}}}]{{/defaultValue}}{{#allowableValues}}<br />**Values**: {{#values}}{{.}}{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}} |
+=======
 {{#allParams}}| **{{paramName}}** | {{#isFile}}**{{{dataType}}}**{{/isFile}}{{#isPrimitiveType}}**{{{dataType}}}**{{/isPrimitiveType}}{{^isPrimitiveType}}{{^isFile}}[**{{{dataType}}}**]({{baseType}}.html){{/isFile}}{{/isPrimitiveType}}| {{description}} | {{^required}}[optional] {{/required}}{{#defaultValue}}[default to {{defaultValue}}]{{/defaultValue}}{{#allowableValues}}<br />**Values**: {{#values}}{{.}}{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}} |
+>>>>>>> openapi-staging
 {{#-last}}{: class="table table-striped"}{{/-last}}{{/allParams}}
 
 ### Return type

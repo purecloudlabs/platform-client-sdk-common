@@ -3,10 +3,10 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.mypurecloud</groupId>
   <artifactId>purecloud-guest-chat-client</artifactId>
-  <name>${props.name}</name>
-  <version>${props.version}</version>
-  <description>${props.description}</description>
-  <url>${props.url}</url>
+  <name>${name}</name>
+  <version>${version}</version>
+  <description>${description}</description>
+  <url>${url}</url>
 
   <repositories>
     <repository>
@@ -98,7 +98,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.10.0</version>
+        <version>3.10.1</version>
         <configuration>
           <source>1.7</source>
           <target>1.7</target>
@@ -170,7 +170,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>properties-maven-plugin</artifactId>
-        <version>1.0.0</version>
+        <version>1.1.0</version>
         <executions>
           <execution>
             <phase>initialize</phase>
@@ -277,16 +277,20 @@
   </dependencies>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <swagger-annotations-version>1.6.5</swagger-annotations-version>
+    <swagger-annotations-version>1.6.6</swagger-annotations-version>
     <slf4j-version>1.7.36</slf4j-version>
-    <jackson-version>2.13.1</jackson-version>
-    <jodatime-version>2.10.13</jodatime-version>
+    <jackson-version>2.13.2.1</jackson-version>
+    <jodatime-version>2.10.14</jodatime-version>
     <testng-version>6.14.3</testng-version>
     <apache-httpclient-version>4.5.13</apache-httpclient-version>
     <okhttpclient-version>4.9.3</okhttpclient-version>
     <ning-asynchttpclient-version>2.12.3</ning-asynchttpclient-version>
     <nv-websocket-client-version>2.14</nv-websocket-client-version>
-    <guava-version>31.0.1-jre</guava-version>
+    <guava-version>31.1-jre</guava-version>
     <ini4j-version>0.5.4</ini4j-version>
+    <name>${props.name}</name>
+    <version>${props.version}</version>
+    <description>${props.description}</description>
+    <url>${props.url}</url>
   </properties>
 </project>

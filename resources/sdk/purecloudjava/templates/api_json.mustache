@@ -1,0 +1,16 @@
+{
+    {{#operations}}{{#operation}}"{{httpMethod}} {{path}}": {
+        "operationId": "{{{operationIdLowerCase}}}",
+        "functionName": "{{{operationId}}}",
+        "signature": "{{{operationId}}}({{#allParams}}{{paramName}}{{^-last}}, {{/-last}}{{/allParams}})"{{#hasParams}},{{/hasParams}}{{^hasParams}}{{#returnType}},{{/returnType}}{{/hasParams}}
+        {{#hasParams}}"parameters": [{{#allParams}}
+            {
+                "name": "{{paramName}}",
+                "type": "{{{dataType}}}",
+                "required": "{{#required}}true{{/required}}{{^required}}false{{/required}}"
+            }{{^-last}}, {{/-last}}{{/allParams}}
+        ]{{/hasParams}}{{#returnType}}{{#hasParams}},{{/hasParams}}
+        "return": "{{{returnType}}}"{{/returnType}}
+    }{{^-last}},{{/-last}}
+    {{/operation}}{{/operations}}
+}

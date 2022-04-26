@@ -1,0 +1,19 @@
+{{#operation}}// Import classes:
+//import {{{packageName}}}.infrastructure.*
+//import {{{modelPackage}}}.*
+
+{{! TODO: Auth method documentation examples}}
+val apiInstance = {{{classname}}}()
+{{#allParams}}
+val {{{paramName}}} : {{{dataType}}} = {{{example}}} // {{{dataType}}} | {{{description}}}
+{{/allParams}}
+try {
+    {{#returnType}}val result : {{{returnType}}} = {{/returnType}}apiInstance.{{{operationId}}}({{#allParams}}{{{paramName}}}{{#hasMore}}, {{/hasMore}}{{/allParams}}){{#returnType}}
+    println(result){{/returnType}}
+} catch (e: ClientException) {
+    println("4xx response calling {{{classname}}}#{{{operationId}}}")
+    e.printStackTrace()
+} catch (e: ServerException) {
+    println("5xx response calling {{{classname}}}#{{{operationId}}}")
+    e.printStackTrace()
+}{{/operation}}

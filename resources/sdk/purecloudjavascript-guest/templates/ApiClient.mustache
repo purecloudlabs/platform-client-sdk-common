@@ -98,7 +98,7 @@ class ApiClient {
 		 */
 {{=< >=}}		this.authentications = {<#authMethods><#isBasic>
 			'<name>': {type: 'basic'}</isBasic><#isApiKey>
-			'<name>': {type: 'apiKey', 'in': <#isKeyInHeader>'header'</isKeyInHeader><^isKeyInHeader>'query'</isKeyInHeader>, name: '<keyParamName>', apiKeyPrefix: 'Bearer' }</isApiKey><#isOAuth>
+			'<name>': {type: 'apiKey', 'in': <#isKeyInHeader>'header'</isKeyInHeader><^isKeyInHeader>'query'</isKeyInHeader>, name: '<keyParamName>', apiKeyPrefix: 'Bearer' },</isApiKey><#isOAuth>
 			'<name>': {type: 'oauth2'}</isOAuth><#hasMore>,</hasMore></authMethods>
 		};
 <={{ }}=>

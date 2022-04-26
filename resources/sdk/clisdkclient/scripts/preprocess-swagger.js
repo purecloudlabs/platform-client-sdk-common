@@ -10,6 +10,7 @@ try {
 	const overridesPath = process.argv[6];
 
 	let newSwagger = retrieveSwagger(newSwaggerPath);
+	newSwagger = processRefs(newSwagger);
 	const overrides = JSON.parse(fs.readFileSync(overridesPath, 'utf8'));
 	const resourceDefinitions = overrideDefinitions(createDefinitions(newSwagger), overrides)
 	let [superCommands, includedSwaggerPathObjects] = initialProcessOfDefinitions(newSwagger, resourceDefinitions);
@@ -33,6 +34,31 @@ try {
 	console.log(err);
 }
 
+function processRefs(swagger) {
+	const keys = Object.keys(swagger.definitions);
+	keys.forEach((key, index) => {
+		let obj = swagger.definitions[key].properties;
+		if (obj) {
+			const keys = Object.keys(swagger.definitions[key].properties);
+			keys.forEach((key2, index) => {
+				let obj2 = swagger.definitions[key].properties[key2];
+				if (obj2) {
+					if (obj2.hasOwnProperty("$ref") && (obj2.hasOwnProperty("readOnly") || obj2.hasOwnProperty("description"))) {
+						if (obj2.readOnly === true && obj2.hasOwnProperty("description")) {
+							obj2.description = `${obj2.description} readOnly`
+						}
+
+						let refObj = { "$ref": obj2.$ref };
+						obj2.allOf = [refObj];
+						delete obj2.$ref;
+					}
+				}
+			});
+		}
+	});
+	return swagger
+}
+
 function firstIndexOfCapital(str) {
 	for (i = 0; i < str.length; i++) {
 		if (str[i] === str[i].toUpperCase()) {
@@ -47,6 +73,7 @@ function processDefinitions(includedSwaggerPathObjects, resourceDefinitions, new
 	for (const path of Object.keys(includedSwaggerPathObjects)) {
 		// Override tags if possible
 		for (let value of Object.values(includedSwaggerPathObjects[path])) {
+			value['x-genesys-original-operation-id'] = value.operationId;
 			if (value.operationId.startsWith("get")) {
 				const successResponse = value.responses["200"]
 				if (successResponse) {

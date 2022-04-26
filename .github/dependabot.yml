@@ -19,3 +19,13 @@ updates:
     directory: "resources/sdk/webmessagingjava/templates/"
     schedule:
       interval: "daily"
+
+  - package-ecosystem: "gomod"
+    directory: "resources/sdk/clisdkclient/extensions/"
+    schedule:
+      interval: "daily"
+
+  - package-ecosystem: "pip"
+    directory: "resources/sdk/purecloudpython/templates/"
+    schedule:
+      interval: "daily"

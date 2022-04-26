@@ -61,7 +61,7 @@ declare class Logger {
 	setLogger(): void;
 }
 {{#apiInfo}}
-{{#apis}}{{#operations}}
+{{#apis}}{{#operations}}{{#-first}}
 declare class {{classname}} { {{#operation}} {{!-- class: CodegenOperation --}}
   	{{operationId}}({{#allParams}}{{#required}}{{{paramName}}}: {{{typeScriptType}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts?: {{classname}}.{{operationId}}Options{{/hasOptionalParams}}): Promise<{{{typeScriptResponseType}}}>;{{/operation}}
 }
@@ -71,6 +71,7 @@ declare namespace {{classname}} { {{#operation}}{{#hasOptionalParams}}
 		"{{{paramName}}}"?: {{{typeScriptType}}};{{/required}}{{/allParams}}
 	}{{/hasOptionalParams}}{{/operation}}
 }
+{{/-first}}
 {{/operations}}
 {{/apis}}
 
