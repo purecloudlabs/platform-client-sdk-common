@@ -252,6 +252,9 @@ function prebuildImpl() {
 				return processRefs();
 			})
 			.then(() => {
+				return processAnyTypes();
+			})
+			.then(() => {
 				// Save new swagger to temp file for build
 				log.info(`Writing new swagger file to temp storage path: ${newSwaggerTempFile}`);
 				fs.writeFileSync(newSwaggerTempFile, JSON.stringify(swaggerDiff.newSwagger));
@@ -603,6 +606,25 @@ function getNotificationClassName(id) {
 		});
 	}
 	return className;
+}
+
+function processAnyTypes() {
+	const keys = Object.keys(swaggerDiff.newSwagger.definitions);
+	keys.forEach((key, index) => {
+		let obj = swaggerDiff.newSwagger.definitions[key].properties;
+		if (obj) {
+			const keys = Object.keys(swaggerDiff.newSwagger.definitions[key].properties);
+			keys.forEach((key2, index) => {
+				let obj2 = swaggerDiff.newSwagger.definitions[key].properties[key2];
+				if (obj2) {
+					if (obj2.hasOwnProperty("type") && obj2["type"] === "any") {
+						obj2.type = "string";
+						obj2.format = "date-time";
+					}
+				}
+			});
+		}
+	});
 }
 
 function processRefs() {
