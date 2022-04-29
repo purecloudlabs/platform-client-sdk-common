@@ -6,7 +6,7 @@ title: Web Messaging SDK - Java
 
 [![web-messaging-sdk](https://maven-badges.herokuapp.com/maven-central/cloud.genesys/web-messaging-sdk/badge.svg)](https://maven-badges.herokuapp.com/maven-central/cloud.genesys/web-messaging-sdk)
 
-* **Documentation** https://developer.mypurecloud.com/api/rest/client-libraries/web-messaging-java/
+* **Documentation** https://developer.genesys.cloud/devapps/sdk/docexplorer/webmessagingjava/
 * **Source** https://github.com/MyPureCloud/web-messaging-sdk-java
 
 ## Install Using maven
@@ -19,7 +19,7 @@ Install the library from maven via the package [cloud.genesys:web-messaging-sdk]
 
 Import the necessary packages:
 
-```{"language":"java"}
+```java
 import cloud.genesys.webmessaging.sdk.GenesysCloudRegionWebSocketHosts;
 import cloud.genesys.webmessaging.sdk.WebMessagingException;
 import cloud.genesys.webmessaging.sdk.WebMessagingClient;
@@ -33,7 +33,7 @@ import java.io.InputStreamReader;
 
 The web messaging APIs do not require standard Genesys Cloud authentication, but do require a token for all API calls other than creating a new chat. This is handled transparently if you don't require a custom `ApiClient`  
 
-```{"language":"java"}
+```java
 // Configure session listener
 WebMessagingClient.SessionListener sessionListener = new WebMessagingClient.SessionListener() {
 
@@ -122,14 +122,13 @@ client.sendMessage("The quick brown fox jumps over the lazy dog", customAttribut
 
 // Disconnect from conversation
 client.disconnect();
-
 ```
 
 #### Setting the environment
 
 Provide the full web socket url if not using one provided in `GenesysCloudRegionWebSocketHosts`:
 
-```{"language":"java"}
+```java
 WebMessagingClient client = new WebMessagingClient("wss://webmessaging.mypurecloud.ie/v1");
 ```
 
@@ -139,7 +138,7 @@ If you want to use your own ApiClient you can build it with the access token and
 
 `ApiClient` implements a builder pattern to construct new instances:
 
-```{"language":"java"}
+```java
 // Create ApiClient instance
 // Set Region
 PureCloudRegionHosts region = PureCloudRegionHosts.us_east_1;
@@ -156,7 +155,7 @@ client.setApiClient(apiClient);
 
 Provide the full base url if not using one provided in `GenesysCloudRegionHosts`:
 
-```{"language":"java"}
+```java
 .withBasePath("https://api.mypurecloud.ie")
 ```
 
@@ -169,7 +168,7 @@ The SDK supports the following HTTP connectors:
 
 Specify the connector in the builder:
 
-```{"language":"java"}
+```java
 .withProperty(ApiClientConnectorProperty.CONNECTOR_PROVIDER, new OkHttpClientConnectorProvider())
 ```
 
@@ -179,18 +178,19 @@ By default, the Java Web Messaging SDK does not automatically retry any failed r
 To enable automatic retries, provide a `RetryConfiguration` object with the maximum number of seconds to retry requests when building the `ApiClient` instance.
 
 Building a `RetryConfiguration` instance:  
-```{"language":"java"}
+```java
 ApiClient.RetryConfiguration retryConfiguration = new ApiClient.RetryConfiguration();
 retryConfiguration.setMaxRetryTimeSec(30);
 ```
 
 Setting `RetryConfiguration` instance to `ApiClient`:
-```{"language":"java"}
+
+```java
 .withRetryConfiguration(retryConfiguration)
 ```
 Set the `maxRetryTimeSec` to the number of seconds to process retries before returning an error.
 When the retry time is a a positive integer, the SDK will follow the recommended backoff logic using the provided configuration.
-The best practices are documented in the [Rate Limiting](https://developer.mypurecloud.com/api/rest/rate_limits.html) Developer Center article.
+The best practices are documented in the [Rate Limiting](https://developer.genesys.cloud/platform/api/rate-limits) Developer Center article.
 
 #### Other ApiClient.Builder methods
 
@@ -217,4 +217,4 @@ The SDK's version is incremented according to the [Semantic Versioning Specifica
 
 This package is intended to be forwards compatible with v2 of Genesys Cloud's Platform API. While the general policy for the API is not to introduce breaking changes, there are certain additions and changes to the API that cause breaking changes for the SDK, often due to the way the API is expressed in its swagger definition. Because of this, the SDK can have a major version bump while the API remains at major version 2. While the SDK is intended to be forward compatible, patches will only be released to the latest version. For these reasons, it is strongly recommended that all applications using this SDK are kept up to date and use the latest version of the SDK.
 
-For any issues, questions, or suggestions for the SDK, visit the [Genesys Cloud Developer Forum](https://developer.mypurecloud.com/forum/).
+For any issues, questions, or suggestions for the SDK, visit the [Genesys Cloud Developer Forum](https://developer.genesys.cloud/forum/).
