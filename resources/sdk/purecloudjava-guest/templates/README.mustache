@@ -7,9 +7,9 @@ title: Guest Chat Client - Java
 [![platform-client-v2](https://maven-badges.herokuapp.com/maven-central/com.mypurecloud/purecloud-guest-chat-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.mypurecloud/purecloud-guest-chat-client)
 [![Release Notes Badge](https://developer-content.genesys.cloud/images/sdk-release-notes.png)](https://github.com/MyPureCloud/purecloud-guest-chat-client-java/blob/master/releaseNotes.md)
 
-* **Documentation** https://developer.mypurecloud.com/api/rest/client-libraries/java-guest/
+* **Documentation** https://developer.genesys.cloud/devapps/sdk/docexplorer/purecloudjava-guest/
 * **Source** https://github.com/MyPureCloud/purecloud-guest-chat-client-java
-* **Guest chat documentation** https://developer.mypurecloud.com/api/webchat/guestchat.html 
+* **Guest chat documentation** https://developer.genesys.cloud/commdigital/digital/webchat/guestchat
 
 ## Install Using maven
 
@@ -25,7 +25,7 @@ The SDK may be used in Android. This requires Java 8 support in Android Studio (
 
 Import the necessary packages:
 
-```{"language":"java"}
+```java
 import com.mypurecloud.sdk.v2.ApiException;
 import com.mypurecloud.sdk.v2.guest.ApiClient;
 import com.mypurecloud.sdk.v2.guest.ApiResponse;
@@ -39,7 +39,7 @@ import com.mypurecloud.sdk.v2.guest.model.*;
 
 The guest chat APIs do not require standard Genesys Cloud authentication, but do require a JWT token for all API calls other than creating a new chat.  
 
-```{"language":"java"}
+```java
 String organizationId = "12b1a3fe-7a80-4b50-45fs-df88c0f9efad";
 String deploymentId = "a3e316a7-ec8b-4fe9-5a49-dded9dcc097e";
 String queueName = "Chat Queue";
@@ -112,7 +112,7 @@ ws.connect();
 
 `ApiClient` implements a builder pattern to construct new instances:
 
-```{"language":"java"}
+```java
 // Create ApiClient instance
 PureCloudRegionHosts region = PureCloudRegionHosts.us_east_1;
 ApiClient apiClient = ApiClient.Builder.standard()
@@ -131,7 +131,7 @@ CreateWebChatConversationResponse chat = webChatApi.postWebchatGuestConversation
 
 Provide the full base url if not using `https://api.mypurecloud.com`:
 
-```{"language":"java"}
+```java
 PureCloudRegionHosts region = PureCloudRegionHosts.ap_southeast_2;
 .withBasePath(region)
 ```
@@ -146,7 +146,7 @@ The SDK supports the following HTTP connectors:
 
 Specify the connector in the builder:
 
-```{"language":"java"}
+```java
 .withProperty(ApiClientConnectorProperty.CONNECTOR_PROVIDER, new OkHttpClientConnectorProvider())
 ```
 
@@ -160,12 +160,12 @@ Logging can be provided through SL4J, which uses HTTP request and response inter
 To use SL4J, include a relevant SL4J library in the dependencies and SL4J configuration file.  
 
 To provide a custom request interceptor, provide an object implementing `org.apache.http.HttpRequestInterceptor` to the following APIClient builder method:
-```{"language":"java"}
+```java
         .withHttpRequestInterceptor(requestInterceptor)
 ```
 
 Use the following method to provide a custom response interceptor implementing `org.apache.http.HttpResponseInterceptor`:
-```{"language":"java"}
+```java
         .withHttpResponseInterceptor(responseInterceptor)
 ```
 
@@ -187,7 +187,8 @@ By default, the request and response bodies are not logged because these can con
 To log to a file, provide a value to `setLogFilePath`. SDK users are responsible for the rotation of the log file.
 
 Example logging configuration:
-```{"language":"java"}
+
+```java
 ApiClient.LoggingConfiguration loggingConfiguration = new ApiClient.LoggingConfiguration();
 loggingConfiguration.setLogLevel("trace");
 loggingConfiguration.setLogFormat("json");
@@ -210,19 +211,20 @@ A number of configuration parameters can be applied using a configuration file. 
 
 Example setting the configuration file:
 
-```{"language": "java"}
+```java
         .withConfigFilePath("/path/to/config")
 ```
 
 The SDK will take an event-driven approach to monitor for config file changes and will apply changes in near real-time, regardless of whether a config file was present at start-up. To disable this behavior, set `autoReloadConfig` to false like so:  
 
-```{"language": "java"}
+```java
         .withAutoReloadConfig(false)
 ```
 INI and JSON formats are supported. See below for examples of configuration values in both formats:
 
 INI:
-```{"language":"ini"}
+
+```ini
 [logging]
 log_level = trace
 log_format = text
@@ -236,7 +238,7 @@ host = https://api.mypurecloud.com
 ```
 
 JSON:
-```{"language":"json"}
+```json
 {
     "logging": {
         "log_level": "trace",
@@ -278,7 +280,7 @@ Example of getting the authenticated user's information:
 
 The JWT from the newly created chat must be applied to the SDK before any requests can be made targeting the chat. Do this by setting the JWT on the ApiClient instance.
 
-```{"language":"java"}
+```java
 apiClient.setJwt(chatInfo.getJwt());
 ```
 
@@ -286,7 +288,7 @@ apiClient.setJwt(chatInfo.getJwt());
 
 Request builders allow requests to be constructed by only providing values for the properties you want to set. This is useful for methods with long signatures when you only need to set some properties and will help future-proof your code if the method signature changes (i.e. new parameters added).
 
-```{"language":"java"}
+```java
 WebChatApi webChatApi = new WebChatApi();
 
 // This example assumes a chat has been created and the JWT has been set
@@ -307,7 +309,7 @@ WebChatMessage response = webChatApi.postWebchatGuestConversationMemberMessages(
 
 This request is identical to the request above, but uses the method with explicit parameters instead of a builder. These methods construct the request builder behind the scenes.
 
-```{"language":"java"}
+```java
 WebChatApi webChatApi = new WebChatApi();
 
 // This example assumes a chat has been created and the JWT has been set
@@ -331,7 +333,7 @@ The extended responses will be of type [ApiResponse<T>](https://github.com/MyPur
 
 Examples:
 
-```{"language":"java"}
+```java
 // Using the WithHttpInfo method
 ApiResponse<WebChatMessage> response = webChatApi.postWebchatGuestConversationMemberMessagesWithHttpInfo(
   chatInfo.getId(),
@@ -340,7 +342,7 @@ ApiResponse<WebChatMessage> response = webChatApi.postWebchatGuestConversationMe
 );
 ```
 
-```{"language":"java"}
+```java
 // Using the request builder
 PostWebchatGuestConversationMemberMessagesRequest request = 
   PostWebchatGuestConversationMemberMessagesRequest.builder()
@@ -367,4 +369,4 @@ The SDK's version is incremented according to the [Semantic Versioning Specifica
 
 This package is intended to be forwards compatible with v2 of Genesys Cloud's Platform API. While the general policy for the API is not to introduce breaking changes, there are certain additions and changes to the API that cause breaking changes for the SDK, often due to the way the API is expressed in its swagger definition. Because of this, the SDK can have a major version bump while the API remains at major version 2. While the SDK is intended to be forward compatible, patches will only be released to the latest version. For these reasons, it is strongly recommended that all applications using this SDK are kept up to date and use the latest version of the SDK.
 
-For any issues, questions, or suggestions for the SDK, visit the [Genesys Cloud Developer Forum](https://developer.mypurecloud.com/forum/).
+For any issues, questions, or suggestions for the SDK, visit the [Genesys Cloud Developer Forum](https://developer.genesys.cloud/forum/).

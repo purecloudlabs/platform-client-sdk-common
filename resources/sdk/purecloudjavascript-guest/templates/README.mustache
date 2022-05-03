@@ -10,26 +10,26 @@ title: Guest Chat Client - JavaScript
 
 [Platform release notes](releaseNotes.md)
 
-* **Documentation** https://developer.mypurecloud.com/api/rest/client-libraries/javascript-guest/
+* **Documentation** https://developer.genesys.cloud/devapps/sdk/docexplorer/purecloudjavascriptGuest/
 * **Source** https://github.com/MyPureCloud/purecloud-guest-chat-client-javascript
-* **Guest chat documentation** https://developer.mypurecloud.com/api/webchat/guestchat.html
+* **Guest chat documentation** https://developer.genesys.cloud/commdigital/digital/webchat/guestchat
 
 ## CommonJS
 
 For node.js via [NPM](https://www.npmjs.com/package/{{projectName}}):
 
-```{"language":"sh"}
+```sh
 npm install {{projectName}}
 ```
 
-```{"language":"javascript"}
+```javascript
 // Obtain a reference to the {{moduleName}} object
 const {{moduleName}} = require('{{projectName}}');
 ```
 
 For direct use in a browser script:
 
-```{"language":"html"}
+```html
 <!-- Include the CJS SDK -->
 <script src="https://sdk-cdn.mypurecloud.com/javascript-guest/{{projectVersion}}/{{projectName}}.min.js"></script>
 
@@ -42,7 +42,7 @@ For direct use in a browser script:
 
 ## AMD
 
-```{"language":"html"}
+```html
 <!-- Include requirejs -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.5/require.min.js"></script>
 
@@ -82,7 +82,7 @@ Want your app to always use the most recent version of the SDK? To do this, simp
 
 The guest chat APIs do not require standard Genesys Cloud authentication, but do require the JWT to be set for all API calls other than creating a new chat.  
 
-```{"language":"javascript"}
+```javascript
 const client = {{moduleName}}.ApiClient.instance;
 let chatInfo, socket;
 
@@ -167,7 +167,8 @@ By default, the request and response bodies are not logged because these can con
 To log to a file, provide a `log_file_path` value. SDK users are responsible for the rotation of the log file. This feature is not available in browser-based applications.
 
 Example logging configuration:
-```{"language":"javascript"}
+
+```javascript
 client.config.logger.log_level = client.config.logger.logLevelEnum.level.LTrace;
 client.config.logger.log_format = client.config.logger.logFormatEnum.formats.JSON;
 client.config.logger.log_request_body = true;
@@ -191,7 +192,8 @@ The SDK will constantly check to see if the config file has been updated, regard
 INI and JSON formats are supported. See below for examples of configuration values in both formats:
 
 INI:
-```{"language":"ini"}
+
+```ini
 [logging]
 log_level = trace
 log_format = text
@@ -205,7 +207,8 @@ host = https://api.mypurecloud.com
 ```
 
 JSON:
-```{"language":"json"}
+
+```json
 {
     "logging": {
         "log_level": "trace",
@@ -226,7 +229,7 @@ JSON:
 
 If connecting to a Genesys Cloud environment other than mypurecloud.com (e.g. mypurecloud.ie), set the environment on the `ApiClient` instance.
 
-```{"language":"javascript"}
+```javascript
 const client = {{moduleName}}.ApiClient.instance;
 client.setEnvironment({{moduleName}}.PureCloudRegionHosts.eu_west_1);
 ```
@@ -236,7 +239,7 @@ client.setEnvironment({{moduleName}}.PureCloudRegionHosts.eu_west_1);
 
 All API requests return a Promise which resolves to the response body, otherwise it rejects with an error. After setting the JWT, the following code will make an authenticated request:
 
-```{"language":"javascript"}
+```javascript
 // Create API instance
 const webChatApi = new {{moduleName}}.WebChatApi();
 
@@ -265,14 +268,14 @@ webChatApi.postWebchatGuestConversations(createChatBody)
 
 By default, the SDK will return only the response body as the result of an API function call. To retrieve additional information about the response, enable extended responses. This will return the extended response for all API function calls:
 
-```{"language":"javascript"}
+```javascript
 const client = {{moduleName}}.ApiClient.instance;
 client.setReturnExtendedResponses(true);
 ```
 
 Extended response object example (`body` and `text` have been truncated):
 
-```{"language":"json"}
+```json
 {
   "status": 200,
   "statusText": "",
@@ -301,7 +304,7 @@ After both steps have been completed, the configured proxy server will be used f
 
 NOTE: SDK proxy configuration is only available in the node.js package due to `superagent-proxy`'s incompatibility with browserify. Additionally, `superagent-proxy` is not included a dependency of the SDK and must be provided by your node application's dependencies.
 
-```{"language":"javascript"}
+```javascript
 const client = {{moduleName}}.ApiClient.instance;
 require('superagent-proxy')(client.superagent);
 // Configure settings for your proxy here
@@ -320,7 +323,7 @@ Error responses will always be thrown as an extended response object. Note that 
 
 Example error response object:
 
-```{"language":"json"}
+```json
 {
   "status": 404,
   "statusText": "",
@@ -356,4 +359,4 @@ The SDK's version is incremented according to the [Semantic Versioning Specifica
 
 This package is intended to be forwards compatible with v2 of Genesys Cloud's Platform API. While the general policy for the API is not to introduce breaking changes, there are certain additions and changes to the API that cause breaking changes for the SDK, often due to the way the API is expressed in its swagger definition. Because of this, the SDK can have a major version bump while the API remains at major version 2. While the SDK is intended to be forward compatible, patches will only be released to the latest version. For these reasons, it is strongly recommended that all applications using this SDK are kept up to date and use the latest version of the SDK.
 
-For any issues, questions, or suggestions for the SDK, visit the [Genesys Cloud Developer Forum](https://developer.mypurecloud.com/forum/).
+For any issues, questions, or suggestions for the SDK, visit the [Genesys Cloud Developer Forum](https://developer.genesys.cloud/forum/).
