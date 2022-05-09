@@ -249,6 +249,9 @@ function prebuildImpl() {
 				return addNotifications();
 			})
 			.then(() => {
+				return processPaths();
+			})
+			.then(() => {
 				return processRefs();
 			})
 			.then(() => {
@@ -625,6 +628,15 @@ function processAnyTypes() {
 			});
 		}
 	});
+}
+
+function processPaths() {
+	const paths = Object.keys(swaggerDiff.newSwagger.paths);
+	for (const path of paths) {
+		if (!path.startsWith("/api/v2")) {
+			delete swaggerDiff.newSwagger.paths[path]
+		}
+	}
 }
 
 function processRefs() {
