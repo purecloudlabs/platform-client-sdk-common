@@ -633,8 +633,17 @@ function processAnyTypes() {
 function processPaths() {
 	const paths = Object.keys(swaggerDiff.newSwagger.paths);
 	for (const path of paths) {
-		if (!path.startsWith("/api/v2")) {
+		if (!path.startsWith("/api/v2") || (path.startsWith("/api/v2/apps") && _this.config.settings.swaggerCodegen.codegenLanguage === "purecloudpython")) {
 			delete swaggerDiff.newSwagger.paths[path]
+		}
+	}
+
+	if (_this.config.settings.swaggerCodegen.codegenLanguage !== "purecloudpython") return
+
+	const definitions = Object.keys(swaggerDiff.newSwagger.definitions);
+	for (const definition of definitions) {
+		if (definition.endsWith("_")) {
+			delete swaggerDiff.newSwagger.definitions[definition]
 		}
 	}
 }
