@@ -60,9 +60,12 @@
             "compileScripts": [
               {
                 "type": "node",
-                "path": "generateImports.js",
+                "path": "generateIndexJsFile.js",
                 "args": [
-                  "${COMMON_ROOT}/output/purecloudjavascript/build/src/purecloud-platform-client-v2"
+                  "${COMMON_ROOT}/output/purecloudjavascript/build/src",
+                  {
+                    "$ref": "#/settings/versionFile"
+                  }
                 ],
                 "failOnError": true
               },
