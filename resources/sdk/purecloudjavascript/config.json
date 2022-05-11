@@ -58,21 +58,29 @@
         "build": {
             "preRunScripts": [],
             "compileScripts": [
-                {
-                    "type": "shell",
-                    "path": "compile.sh",
-                    "args": [
-                        "${SDK_REPO}",
-                        "${SDK_REPO}/build",
-                        "${COMMON_ROOT}/sdk/purecloudjavascript",
-                        {
-                            "$ref": "#/settings/moduleName"
-                        },
-                        {
-                            "$ref": "#/settings/packageName"
-                        }
-                    ]
-                }
+              {
+                "type": "node",
+                "path": "generateImports.js",
+                "args": [
+                  "${COMMON_ROOT}/output/purecloudjavascript/build/src/purecloud-platform-client-v2"
+                ],
+                "failOnError": true
+              },
+              {
+                  "type": "shell",
+                  "path": "compile.sh",
+                  "args": [
+                      "${SDK_REPO}",
+                      "${SDK_REPO}/build",
+                      "${COMMON_ROOT}/sdk/purecloudjavascript",
+                      {
+                          "$ref": "#/settings/moduleName"
+                      },
+                      {
+                          "$ref": "#/settings/packageName"
+                      }
+                  ]
+              }
             ],
             "postRunScripts": [
                 {
