@@ -2,7 +2,7 @@
 
 | Name | Type | Description | Notes |
 | ------------ | ------------- | ------------- | ------------- |
-{{#vars}}| **{{name}}** | {{#isEnum}}[**{{{datatypeWithEnum}}}**](#{{datatypeWithEnum}}){{/isEnum}}{{^isEnum}}<!---->{{#items.isEnum}}[**{{datatypeWithEnum}}**](#{{{items.datatypeWithEnum}}}){{/items.isEnum}}{{^items.isEnum}}<!---->{{#isPrimitiveType}}**{{datatype}}**{{/isPrimitiveType}}{{^isPrimitiveType}}[**{{datatype}}**]({{complexType}}.html){{/isPrimitiveType}}{{/items.isEnum}}{{/isEnum}}<!----> | {{description}} | {{^required}} [optional]{{/required}}{{#readOnly}} [readonly]{{/readOnly}} |
+{{#vars}}| **{{name}}** | {{#isEnum}}[**{{{datatypeWithEnum}}}**](#{{datatypeWithEnum}}){{/isEnum}}{{^isEnum}}<!---->{{#items.isEnum}}[**{{datatypeWithEnum}}**](#{{{items.datatypeWithEnum}}}){{/items.isEnum}}{{^items.isEnum}}<!---->{{#isPrimitiveType}}**{{datatype}}**{{/isPrimitiveType}}{{^isPrimitiveType}}[**{{datatype}}**]({{complexType}}.html){{/isPrimitiveType}}{{/items.isEnum}}{{/isEnum}}<!----> | {{{description}}} | {{^required}} [optional]{{/required}}{{#readOnly}} [readonly]{{/readOnly}} |
 {{/vars}}{: class="table table-striped"}
 {{#vars}}{{#isEnum}}
 
@@ -11,8 +11,10 @@
 ## Enum: {{datatypeWithEnum}}
 
 | Name | Value |
-| ---- | ----- |{{#allowableValues}}{{#enumVars}}
-| {{name}} | {{value}} |{{/enumVars}}{{/allowableValues}}
+| ---- | ----- |{{#allowableValues}}{{#enumVars.0}}
+| {{#isString}}{{#values}}{{#lambda.prefixNumberWithUnderscore}}{{#lambda.replace}}{{#lambda.uppercase}}{{.}}{{/lambda.uppercase}}{{/lambda.replace}}{{/lambda.prefixNumberWithUnderscore}} | &quot;{{.}}&quot; | {{^-last}}
+| {{/-last}}{{#-last}}{{/-last}}{{/values}}{{/isString}}{{^isString}}{{#values}}{{#lambda.replace}}{{#lambda.prefixNumberWithWord}}{{#lambda.uppercase}}{{.}}{{/lambda.uppercase}}{{/lambda.prefixNumberWithWord}}{{/lambda.replace}} | {{.}} | {{^-last}}
+| {{/-last}}{{#-last}}{{/-last}}{{/values}}{{/isString}}{{/enumVars.0}}{{/allowableValues}}
 {: class="table table-striped"}
 {{/isEnum}}{{#items.isEnum}}
 

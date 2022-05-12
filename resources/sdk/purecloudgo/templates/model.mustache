@@ -12,7 +12,7 @@ import ({{#imports}}
 // {{classname}}{{#description}} - {{{description}}}{{/description}}
 type {{classname}} struct { {{#vars}}
 	// {{name}}{{#description}} - {{{description}}}{{/description}}
-	{{name}} *{{{datatype}}} `json:"{{baseName}},omitempty"`
+	{{name}} *{{{dataType}}} `json:"{{baseName}},omitempty"`
 
 {{/vars}}}
 
@@ -41,7 +41,7 @@ func (o *{{classname}}) MarshalJSON() ([]byte, error) {
 		{{/isDateTime}}{{^isDateTime}}{{#isDate}}
 		{{name}} *string `json:"{{baseName}},omitempty"`
 		{{/isDate}}{{^isDate}}
-		{{name}} *{{{datatype}}} `json:"{{baseName}},omitempty"`
+		{{name}} *{{{dataType}}} `json:"{{baseName}},omitempty"`
 		{{/isDate}}{{/isDateTime}}{{/vars}}*Alias
 	}{ {{#vars}}{{#isDateTime}}
 		{{name}}: {{name}},
@@ -74,12 +74,12 @@ func (o *{{classname}}) UnmarshalJSON(b []byte) error {
 		{{name}}, _ := time.Parse("2006-01-02", {{baseName}}String)
 		o.{{name}} = &{{name}}
 	}
-	{{/isDate}}{{^isDate}}{{#isListContainer}}
+	{{/isDate}}{{^isDate}}{{#isArray}}
 	if {{name}}, ok := {{classname}}Map["{{baseName}}"].([]interface{}); ok {
 		{{name}}String, _ := json.Marshal({{name}})
 		json.Unmarshal({{name}}String, &o.{{name}})
 	}
-	{{/isListContainer}}{{^isListContainer}}{{^isPrimitiveType}}
+	{{/isArray}}{{^isArray}}{{^isPrimitiveType}}
 	if {{name}}, ok := {{classname}}Map["{{baseName}}"].(map[string]interface{}); ok {
 		{{name}}String, _ := json.Marshal({{name}})
 		json.Unmarshal({{name}}String, &o.{{name}})
@@ -103,16 +103,21 @@ func (o *{{classname}}) UnmarshalJSON(b []byte) error {
 	if {{name}}, ok := {{classname}}Map["{{baseName}}"].(float64); ok {
 		o.{{name}} = &{{name}}
 	}
-	{{/isDouble}}{{^isInteger}}{{^isLong}}{{^isFloat}}{{^isDouble}}{{#isMapContainer}}
+    {{/isDouble}}{{#isNumber}}
+	if {{name}}, ok := {{classname}}Map["{{baseName}}"].(float64); ok {
+		{{name}}Float32 := float32({{name}})
+		o.{{name}} = &{{name}}Float32
+	}
+    {{/isNumber}}{{^isInteger}}{{^isLong}}{{^isFloat}}{{^isDouble}}{{#isMap}}
 	if {{name}}, ok := {{classname}}Map["{{baseName}}"].(map[string]interface{}); ok {
 		{{name}}String, _ := json.Marshal({{name}})
 		json.Unmarshal({{name}}String, &o.{{name}})
 	}
-	{{/isMapContainer}}{{^isMapContainer}}
-	if {{name}}, ok := {{classname}}Map["{{baseName}}"].({{datatype}}); ok {
+	{{/isMap}}{{^isMap}}{{^isNumber}}
+	if {{name}}, ok := {{classname}}Map["{{baseName}}"].({{dataType}}); ok {
 		o.{{name}} = &{{name}}
 	}
-	{{/isMapContainer}}{{/isDouble}}{{/isFloat}}{{/isLong}}{{/isInteger}}{{/isPrimitiveType}}{{/isListContainer}}{{/isDate}}{{/isDateTime}}{{/vars}}
+    {{/isNumber}}{{/isMap}}{{/isDouble}}{{/isFloat}}{{/isLong}}{{/isInteger}}{{/isPrimitiveType}}{{/isArray}}{{/isDate}}{{/isDateTime}}{{/vars}}
 
 	return nil
 }

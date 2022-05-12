@@ -30,6 +30,33 @@ if (fs.existsSync(newSwaggerPath)) {
     console.log(`Invalid newSwaggerPath: ${newSwaggerPath}`)
 }
 
+internalSwagger = processRefs(internalSwagger)
+newSwagger = processRefs(newSwagger)
+
+function processRefs(swagger) {
+	const keys = Object.keys(swagger.definitions);
+	keys.forEach((key, index) => {
+		let obj = swagger.definitions[key].properties;
+		if (obj) {
+			const keys = Object.keys(swagger.definitions[key].properties);
+			keys.forEach((key2, index) => {
+				let obj2 = swagger.definitions[key].properties[key2];
+				if (obj2) {
+					if (obj2.hasOwnProperty("$ref") && (obj2.hasOwnProperty("readOnly") || obj2.hasOwnProperty("description"))) {
+						if (obj2.readOnly === true && obj2.hasOwnProperty("description")) {
+							obj2.description = `${obj2.description} readOnly`
+						}
+
+						let refObj = { "$ref": obj2.$ref };
+						obj2.allOf = [refObj];
+						delete obj2.$ref;
+					}
+				}
+			});
+		}
+	});
+    return swagger;
+}
 
 const webmessagingPath = "/api/v2/webmessaging/messages"
 delete newSwagger["basePath"]
@@ -54,8 +81,8 @@ function addDefinitions(definitionBody) {
     for (const propertyValues of Object.values(definitionBody.properties)) {
         let responseValuesSchemaDefinition
         // Get definitions by ref from root level of object
-        if (propertyValues["$ref"]) {
-            responseValuesSchemaDefinition = propertyValues["$ref"].replace("#/definitions/", "")
+        if (propertyValues["allOf"]) {
+            responseValuesSchemaDefinition = propertyValues["allOf"][0]["$ref"].replace("#/definitions/", "")
             newSwagger["definitions"][responseValuesSchemaDefinition] = internalSwagger.definitions[responseValuesSchemaDefinition]
             existingDefinitions.push(responseValuesSchemaDefinition)
             addDefinitions(internalSwagger.definitions[responseValuesSchemaDefinition])

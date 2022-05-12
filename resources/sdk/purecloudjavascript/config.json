@@ -1,34 +1,35 @@
 {
-    "name": "JavaScript SDK",
-    "envVars": {},
-    "settings": {
-        "sdkRepo": {
-            "repo": "https://github.com/MyPureCloud/platform-client-sdk-javascript",
-            "branch": "master"
-        },
-        "versionFile": "${SDK_REPO}/version.json",
-        "logLevel": "debug",
-        "extensionsDestination": "${SDK_REPO}/build/src/purecloud-platform-client-v2",
-        "swagger": {
-            "oldSwaggerPath": "${SDK_REPO}/swagger.json",
-            "newSwaggerPath": "https://api.mypurecloud.com/api/v2/docs/swagger",
-            "saveNewSwaggerPath": "${SDK_REPO}/swagger.json"
-        },
-        "swaggerCodegen": {
-            "resourceLanguage": "purecloudjavascript",
-            "codegenLanguage": "purecloudjavascript",
-            "jarPath": "${WORKSPACE}/swagger-codegen/modules/swagger-codegen-cli/target/swagger-codegen-cli.jar",
-            "configFile": "${SDK_TEMP}/config.json",
-            "extraGeneratorOptions": []
-        },
-        "releaseNoteTemplatePath": "${COMMON_ROOT}/resources/templates/githubSdkReleaseNotes.md",
-        "releaseNoteSummaryTemplatePath": "${COMMON_ROOT}/resources/templates/githubSdkReleaseNoteSummary.md",
-        "debugConfig": false,
-        "enableLoggerColor": false,
-        "packageName": "purecloud-platform-client-v2",
-        "moduleName": "platformClient",
-        "apiHealthCheckUrl": "https://api.mypurecloud.com/api/v2/health/check"
+  "name": "JavaScript SDK",
+  "envVars": {
+  },
+  "settings": {
+    "sdkRepo": {
+      "repo": "https://github.com/MyPureCloud/platform-client-sdk-javascript",
+      "branch": "master"
     },
+    "versionFile": "${SDK_REPO}/version.json",
+    "logLevel": "debug",
+    "extensionsDestination": "${SDK_REPO}/build/src/purecloud-platform-client-v2",
+    "swagger": {
+      "oldSwaggerPath": "${SDK_REPO}/swagger.json",
+      "newSwaggerPath": "https://api.mypurecloud.com/api/v2/docs/swagger",
+      "saveNewSwaggerPath": "${SDK_REPO}/swagger.json"
+    },
+    "swaggerCodegen": {
+      "resourceLanguage": "purecloudjavascript",
+      "codegenLanguage": "purecloudjavascript",
+      "jarPath": "${WORKSPACE}/openapi-generator/modules/openapi-generator-cli/target/openapi-generator-cli.jar",
+      "configFile": "${SDK_TEMP}/config.json",
+      "extraGeneratorOptions": []
+    },
+    "releaseNoteTemplatePath": "${COMMON_ROOT}/resources/templates/githubSdkReleaseNotes.md",
+    "releaseNoteSummaryTemplatePath": "${COMMON_ROOT}/resources/templates/githubSdkReleaseNoteSummary.md",
+    "debugConfig": false,
+    "enableLoggerColor": false,
+    "packageName": "purecloud-platform-client-v2",
+    "moduleName": "platformClient",
+    "apiHealthCheckUrl": "https://api.mypurecloud.com/api/v2/health/check"
+  },
     "stageSettings": {
         "prebuild": {
             "preRunScripts": [],
@@ -57,21 +58,32 @@
         "build": {
             "preRunScripts": [],
             "compileScripts": [
-                {
-                    "type": "shell",
-                    "path": "compile.sh",
-                    "args": [
-                        "${SDK_REPO}",
-                        "${SDK_REPO}/build",
-                        "${COMMON_ROOT}/sdk/purecloudjavascript",
-                        {
-                            "$ref": "#/settings/moduleName"
-                        },
-                        {
-                            "$ref": "#/settings/packageName"
-                        }
-                    ]
-                }
+              {
+                "type": "node",
+                "path": "generateIndexJsFile.js",
+                "args": [
+                  "${COMMON_ROOT}/output/purecloudjavascript/build/src",
+                  {
+                    "$ref": "#/settings/versionFile"
+                  }
+                ],
+                "failOnError": true
+              },
+              {
+                  "type": "shell",
+                  "path": "compile.sh",
+                  "args": [
+                      "${SDK_REPO}",
+                      "${SDK_REPO}/build",
+                      "${COMMON_ROOT}/sdk/purecloudjavascript",
+                      {
+                          "$ref": "#/settings/moduleName"
+                      },
+                      {
+                          "$ref": "#/settings/packageName"
+                      }
+                  ]
+              }
             ],
             "postRunScripts": [
                 {
@@ -84,14 +96,14 @@
                     "failOnError": true
                 },
                 {
-                    "type": "command",
-                    "command": "npm",
-                    "cwd": "${COMMON_ROOT}/resources/sdk/purecloudjavascript/scripts/test",
-                    "args": [
-                        "run",
-                        "test"
-                    ],
-                    "failOnError": true
+                  "type": "command",
+                  "command": "npm",
+                  "cwd": "${COMMON_ROOT}/resources/sdk/purecloudjavascript/scripts/test",
+                  "args": [
+                    "run",
+                    "test"
+                  ],
+                  "failOnError": true
                 },
                 {
                     "type": "node",

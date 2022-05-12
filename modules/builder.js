@@ -249,6 +249,15 @@ function prebuildImpl() {
 				return addNotifications();
 			})
 			.then(() => {
+				return processPaths();
+			})
+			.then(() => {
+				return processRefs();
+			})
+			.then(() => {
+				return processAnyTypes();
+			})
+			.then(() => {
 				// Save new swagger to temp file for build
 				log.info(`Writing new swagger file to temp storage path: ${newSwaggerTempFile}`);
 				fs.writeFileSync(newSwaggerTempFile, JSON.stringify(swaggerDiff.newSwagger));
@@ -356,15 +365,16 @@ function buildImpl() {
 		command += 'java ';
 		command += `-DapiTests=${_this.config.settings.swaggerCodegen.generateApiTests} `;
 		command += `-DmodelTests=${_this.config.settings.swaggerCodegen.generateModelTests} `;
-		command += `${getEnv('JAVA_OPTS', '')} -XX:MaxPermSize=256M -Xmx1024M -DloggerPath=conf/log4j.properties `;
+		command += `${getEnv('JAVA_OPTS', '')} -XX:MaxPermSize=256M -Xmx2g -DloggerPath=conf/log4j.properties `;
 		// Swagger-codegen jar file
 		command += `-jar ${_this.config.settings.swaggerCodegen.jarPath} `;
 		// Swagger-codegen options
 		command += 'generate ';
 		command += `-i ${newSwaggerTempFile} `;
-		command += `-l ${_this.config.settings.swaggerCodegen.codegenLanguage} `;
+		command += `-g ${_this.config.settings.swaggerCodegen.codegenLanguage} `;
 		command += `-o ${outputDir} `;
 		command += `-c ${_this.config.settings.swaggerCodegen.configFile} `;
+		command += '--skip-validate-spec ';
 		// Don't append empty templates directory
 		if (getFileCount(_this.resourcePaths.templates) > 0) command += `-t ${_this.resourcePaths.templates} `;
 
@@ -599,6 +609,67 @@ function getNotificationClassName(id) {
 		});
 	}
 	return className;
+}
+
+function processAnyTypes() {
+	const keys = Object.keys(swaggerDiff.newSwagger.definitions);
+	keys.forEach((key, index) => {
+		let obj = swaggerDiff.newSwagger.definitions[key].properties;
+		if (obj) {
+			const keys = Object.keys(swaggerDiff.newSwagger.definitions[key].properties);
+			keys.forEach((key2, index) => {
+				let obj2 = swaggerDiff.newSwagger.definitions[key].properties[key2];
+				if (obj2) {
+					if (obj2.hasOwnProperty("type") && obj2["type"] === "any") {
+						obj2.type = "string";
+						obj2.format = "date-time";
+					}
+				}
+			});
+		}
+	});
+}
+
+function processPaths() {
+	const paths = Object.keys(swaggerDiff.newSwagger.paths);
+	for (const path of paths) {
+		if (!path.startsWith("/api/v2") || (path.startsWith("/api/v2/apps") && _this.config.settings.swaggerCodegen.codegenLanguage === "purecloudpython")) {
+			delete swaggerDiff.newSwagger.paths[path]
+		}
+	}
+
+	if (_this.config.settings.swaggerCodegen.codegenLanguage !== "purecloudpython") return
+
+	const definitions = Object.keys(swaggerDiff.newSwagger.definitions);
+	for (const definition of definitions) {
+		if (definition.endsWith("_")) {
+			delete swaggerDiff.newSwagger.definitions[definition]
+		}
+	}
+}
+
+function processRefs() {
+	const keys = Object.keys(swaggerDiff.newSwagger.definitions);
+	keys.forEach((key, index) => {
+		let obj = swaggerDiff.newSwagger.definitions[key].properties;
+		if (obj) {
+			const keys = Object.keys(swaggerDiff.newSwagger.definitions[key].properties);
+			keys.forEach((key2, index) => {
+				let obj2 = swaggerDiff.newSwagger.definitions[key].properties[key2];
+				if (obj2) {
+					if (obj2.hasOwnProperty("$ref") && (obj2.hasOwnProperty("readOnly") || obj2.hasOwnProperty("description"))) {
+						if (obj2.readOnly === true && obj2.hasOwnProperty("description")) {
+							obj2.description = `${obj2.description} readOnly`
+						}
+
+						let refObj = { "$ref": obj2.$ref };
+						obj2.allOf = [refObj];
+						delete obj2.$ref;
+					}
+				}
+			});
+		}
+	});
 }
 
 function extractDefinitons(entity) {

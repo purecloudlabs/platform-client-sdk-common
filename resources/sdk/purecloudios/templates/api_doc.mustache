@@ -19,19 +19,27 @@ All URIs are relative to *{{basePath}}*
 
 {{#deprecated}}<span style="background-color: #f0ad4e;display: inline-block;padding: 7px;font-weight: bold;line-height: 1;color: #ffffff;text-align: center;white-space: nowrap;vertical-align: baseline;border-radius: .25em;margin: 10px 0;">DEPRECATED</span>{{/deprecated}}
 
-> {{#returnType}}{{#returnTypeIsPrimitive}}{{returnType}}{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}[{{returnType}}]({{returnBaseType}}.html){{/returnTypeIsPrimitive}}{{/returnType}}{{^returnType}}Void{{/returnType}} {{operationId}}({{#allParams}}{{{paramName}}}{{#hasMore}}, {{/hasMore}}{{/allParams}})
+> {{#returnType}}{{#returnTypeIsPrimitive}}{{returnType}}{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}[{{returnType}}]({{returnBaseType}}.html){{/returnTypeIsPrimitive}}{{/returnType}}{{^returnType}}Void{{/returnType}} {{operationId}}({{#allParams}}{{{paramName}}}{{^-last}}, {{/-last}}{{/allParams}})
 
 {{summary}}{{#notes}}
 
 {{notes}}{{/notes}}
 
+
+
 Wraps {{&httpMethod}} {{&path}}  
 
-Requires {{permissionType}} permissions: 
+{{#vendorExtensions.x-inin-requires-permissions}}
+Requires {{type}} permissions: 
 
 {{#permissions}}
 * {{.}}
 {{/permissions}}
+{{/vendorExtensions.x-inin-requires-permissions}}
+{{^vendorExtensions.x-inin-requires-permissions}}
+Requires NO permissions: 
+
+{{/vendorExtensions.x-inin-requires-permissions}}
 
 ### Example
 
@@ -46,7 +54,7 @@ let {{{paramName}}}: {{#isEnum}}{{#isContainer}}{{{dataType}}}{{/isContainer}}{{
 {{/allParams}}
 
 // Code example
-{{{classname}}}.{{{operationId}}}({{#allParams}}{{{paramName}}}: {{{paramName}}}{{#hasMore}}, {{/hasMore}}{{/allParams}}) { ({{#returnType}}response, {{/returnType}}error) in
+{{{classname}}}.{{{operationId}}}({{#allParams}}{{{paramName}}}: {{{paramName}}}{{^-last}}, {{/-last}}{{/allParams}}) { ({{#returnType}}response, {{/returnType}}error) in
     if let error = error {
         dump(error)
     }{{#returnType}} else if let response = response {
@@ -62,7 +70,7 @@ let {{{paramName}}}: {{#isEnum}}{{#isContainer}}{{{dataType}}}{{/isContainer}}{{
 {{^allParams}}This endpoint does not require any parameters.{{/allParams}}{{#allParams}}{{#-last}}
 | Name | Type | Description  | Notes |
 | ------------- | ------------- | ------------- | ------------- |{{/-last}}{{/allParams}}
-{{#allParams}}| **{{paramName}}** | {{#isPrimitiveType}}**{{dataType}}**{{/isPrimitiveType}}{{^isPrimitiveType}}{{#isFile}}**{{dataType}}**{{/isFile}}{{^isFile}}[**{{dataType}}**]({{baseType}}.html){{/isFile}}{{/isPrimitiveType}}| {{description}} |{{^required}} [optional]{{/required}}{{#defaultValue}} [default to {{defaultValue}}]{{/defaultValue}}{{#allowableValues}}<br />**Values**: {{#enumVars}}{{{name}}} ("{{{value}}}"){{^-last}}, {{/-last}}{{/enumVars}}{{/allowableValues}} |
+{{#allParams}}| **{{paramName}}** | {{#isPrimitiveType}}**{{dataType}}**{{/isPrimitiveType}}{{^isPrimitiveType}}{{#isFile}}**{{dataType}}**{{/isFile}}{{^isFile}}[**{{dataType}}**]({{baseType}}.html){{/isFile}}{{/isPrimitiveType}}| {{{description}}} |{{^required}} [optional]{{/required}}{{#defaultValue}} [default to {{defaultValue}}]{{/defaultValue}}{{#allowableValues}}<br />**Values**: {{#enumVars}}{{{name}}} ("{{{value}}}"){{^-last}}, {{/-last}}{{/enumVars}}{{/allowableValues}} |
 {{#-last}}{: class="table-striped"}{{/-last}}{{/allParams}}
 
 
