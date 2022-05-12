@@ -358,6 +358,9 @@ class ApiClient {
 												{ grant_type: 'urn:ietf:params:oauth:grant-type:saml2-bearer' },
 										        { orgName: orgName },
 										        { assertion: assertion });
+			if (this.proxy && request.proxy) {
+				request.proxy(this.proxy);
+			}
 			var bodyParam = {
 				grant_type: 'urn:ietf:params:oauth:grant-type:saml2-bearer',
 				orgName: orgName,
@@ -436,6 +439,9 @@ class ApiClient {
 												{ grant_type: 'authorization_code' },
 									            { code: authCode },
 										        { redirect_uri: redirectUri });
+			if (this.proxy && request.proxy) {
+				request.proxy(this.proxy);
+			}
 			var bodyParam = {
 				grant_type: 'authorization_code',
 				code: authCode,
@@ -461,6 +467,9 @@ class ApiClient {
 			}
 			var encodedData = Buffer.from(clientId + ':' + clientSecret).toString('base64');
 			var request = this._formAuthRequest(encodedData, { grant_type: 'refresh_token' }, { refresh_token: refreshToken });
+			if (this.proxy && request.proxy) {
+				request.proxy(this.proxy);
+			}
 			var bodyParam = {
 				grant_type: 'refresh_token',
 				refresh_token: refreshToken,
