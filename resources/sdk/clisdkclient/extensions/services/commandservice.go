@@ -58,30 +58,6 @@ func NewCommandService(cmd *cobra.Command) *commandService {
 	return &commandService{cmd: cmd}
 }
 
-func (c *commandService) Get(uri string) (string, error) {
-	profileName, _ := c.cmd.Root().Flags().GetString("profile")
-
-	config, err := configGetConfig(profileName)
-	if err != nil {
-		return "", err
-	}
-
-	restClient := restclientNewRESTClient(config)
-	c.traceStart(http.MethodGet, uri, "")
-	response, err := restClient.Get(uri)
-	if err == nil {
-		c.traceEnd()
-		return response, nil
-	}
-
-	err = reAuthenticateIfNecessary(config, err)
-	if err != nil {
-		return "", err
-	}
-
-	return c.Get(uri)
-}
-
 func (c *commandService) Stream(uri string) (string, error) {
 	profileName, _ := c.cmd.Root().Flags().GetString("profile")
 	config, err := configGetConfig(profileName)
@@ -430,27 +406,31 @@ func updatePagingIndex(pagedURI, indexName string, index int) string {
 	return pagedURI
 }
 
+func (c *commandService) Get(uri string) (string, error) {
+	return c.invoke(http.MethodGet, uri, "")
+}
+
 func (c *commandService) Post(uri string, payload string) (string, error) {
-	return c.upsert(http.MethodPost, uri, payload)
+	return c.invoke(http.MethodPost, uri, payload)
 }
 
 func (c *commandService) Patch(uri string, payload string) (string, error) {
-	return c.upsert(http.MethodPatch, uri, payload)
+	return c.invoke(http.MethodPatch, uri, payload)
 }
 
 func (c *commandService) Put(uri string, payload string) (string, error) {
-	return c.upsert(http.MethodPut, uri, payload)
+	return c.invoke(http.MethodPut, uri, payload)
 }
 
 func (c *commandService) Delete(uri string) (string, error) {
-	return c.upsert(http.MethodDelete, uri, "")
+	return c.invoke(http.MethodDelete, uri, "")
 }
 
 func (c *commandService) Head(uri string) (string, error) {
-	return c.upsert(http.MethodHead, uri, "")
+	return c.invoke(http.MethodHead, uri, "")
 }
 
-func (c *commandService) upsert(method string, uri string, payload string) (string, error) {
+func (c *commandService) invoke(method string, uri string, payload string) (string, error) {
 	profileName, _ := c.cmd.Root().Flags().GetString("profile")
 	config, err := configGetConfig(profileName)
 	if err != nil {
@@ -463,6 +443,8 @@ func (c *commandService) upsert(method string, uri string, payload string) (stri
 
 	c.traceStart(method, uri, payload)
 	switch method {
+	case http.MethodGet:
+		response, err = restClient.Get(uri)
 	case http.MethodPost:
 		response, err = restClient.Post(uri, payload)
 	case http.MethodPut:
@@ -487,7 +469,7 @@ func (c *commandService) upsert(method string, uri string, payload string) (stri
 		return "", err
 	}
 
-	return c.upsert(method, uri, payload)
+	return c.invoke(method, uri, payload)
 }
 
 func reAuthenticateIfNecessary(config config.Configuration, err error) error {
