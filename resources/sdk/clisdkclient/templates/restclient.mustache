@@ -49,6 +49,11 @@ func (r *RESTClient) Get(uri string) (string, error) {
 	return r.callAPI(http.MethodGet, uri, "")
 }
 
+//Head executes an HTTP Head
+func (r *RESTClient) Head(uri string) (string, error) {
+	return r.callAPI(http.MethodHead, uri, "")
+}
+
 //Put executes an HTTP Put
 func (r *RESTClient) Put(uri string, data string) (string, error) {
 	return r.callAPI(http.MethodPut, uri, data)

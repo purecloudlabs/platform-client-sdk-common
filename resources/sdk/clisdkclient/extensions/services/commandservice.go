@@ -22,6 +22,7 @@ import (
 //CommandService holds the method signatures for all common Command object invocations
 type CommandService interface {
 	Get(uri string) (string, error)
+	Head(uri string) (string, error)
 	List(uri string) (string, error)
 	Stream(uri string) (string, error)
 	Post(uri string, payload string) (string, error)
@@ -445,6 +446,10 @@ func (c *commandService) Delete(uri string) (string, error) {
 	return c.upsert(http.MethodDelete, uri, "")
 }
 
+func (c *commandService) Head(uri string) (string, error) {
+	return c.upsert(http.MethodHead, uri, "")
+}
+
 func (c *commandService) upsert(method string, uri string, payload string) (string, error) {
 	profileName, _ := c.cmd.Root().Flags().GetString("profile")
 	config, err := configGetConfig(profileName)
@@ -466,6 +471,8 @@ func (c *commandService) upsert(method string, uri string, payload string) (stri
 		response, err = restClient.Patch(uri, payload)
 	case http.MethodDelete:
 		response, err = restClient.Delete(uri)
+	case http.MethodHead:
+		response, err = restClient.Head(uri)
 	default:
 		logger.Fatalf("Unable to resolve the http verb: %v", method)
 	}
@@ -542,7 +549,8 @@ func (c *commandService) DetermineAction(httpMethod string, uri string, cmd *cob
 		}
 
 		return retry.Retry(uri, c.List)
-
+	case http.MethodHead:
+		return retry.Retry(uri, c.Head)
 	case http.MethodPatch:
 		if flags.Lookup("file") == nil || flags.Lookup("directory") == nil {
 			return retry.RetryWithData(uri, []string{""}, c.Patch)
