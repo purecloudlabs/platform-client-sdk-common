@@ -59,17 +59,6 @@
             "preRunScripts": [],
             "compileScripts": [
               {
-                "type": "node",
-                "path": "generateIndexJsFile.js",
-                "args": [
-                  "${COMMON_ROOT}/output/purecloudjavascript/build/src",
-                  {
-                    "$ref": "#/settings/versionFile"
-                  }
-                ],
-                "failOnError": true
-              },
-              {
                   "type": "shell",
                   "path": "compile.sh",
                   "args": [

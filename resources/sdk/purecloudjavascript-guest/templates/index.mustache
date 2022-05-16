@@ -1,7 +1,7 @@
 import PureCloudRegionHosts from './PureCloudRegionHosts.js';
 import ApiClient from './ApiClient.js';
-{{#apiInfo}}{{#apis}}{{#-first}}import {{importPath}} from './{{#apiPackage}}{{apiPackage}}/{{/apiPackage}}{{importPath}}.js';
-{{/-first}}{{/apis}}{{/apiInfo}}
+{{#apiInfo}}{{#apis}}import {{importPath}} from './{{#apiPackage}}{{apiPackage}}/{{/apiPackage}}{{importPath}}.js';
+{{/apis}}{{/apiInfo}}
 
 {{#emitJSDoc}}/**{{#projectDescription}}
  * {{projectDescription}}.<br>{{/projectDescription}}
