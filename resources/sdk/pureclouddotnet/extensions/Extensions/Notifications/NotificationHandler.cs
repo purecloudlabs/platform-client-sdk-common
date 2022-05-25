@@ -149,7 +149,7 @@ namespace {{=it.packageName}}.Extensions.Notifications
             if (match == null) return;
             subscriptions.Entities.Remove(match);
             _notificationsApi.PutNotificationsChannelSubscriptions(Channel.Id, subscriptions.Entities);
-            _typeMap.Remove(topic);
+            _typeMap.Remove(topic.ToLowerInvariant());
         }
 
         /// <summary>
