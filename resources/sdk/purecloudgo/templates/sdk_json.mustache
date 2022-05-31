@@ -1,0 +1,35 @@
+{
+    "models": { {{#models}}{{#model}}
+        "{{#lambda.lowercase}}{{classVarName}}{{/lambda.lowercase}}": { {{#description}}
+            "description": "{{{description}}}",{{/description}}
+            "properties": [{{#vars}}
+                {
+                    "name": "{{name}}",{{#description}}
+                    "description": "{{{description}}}",{{/description}}{{#isReadOnly}}
+                    "readOnly": true,{{/isReadOnly}}{{#required}}
+                    "required": true,{{/required}}
+                    "dataType": "{{{dataType}}}"{{#isEnum}},
+                    "enum": [{{#_enum}}"{{.}}"{{^-last}}, {{/-last}}{{/_enum}}]{{/isEnum}}
+                }{{^-last}}, {{/-last}}{{/vars}}
+            ]
+        }{{^-last}}, {{/-last}}{{/model}}{{/models}}
+    },
+    {{#apiInfo}}"apis": { {{#apis}}
+        {{#operations}}
+        {{#operation}}"{{httpMethod}} {{path}}": {
+            "className": "{{{classname}}}",
+            "operationId": "{{{operationIdLowerCase}}}",
+            "functionName": "{{{operationId}}}",
+            "signature": "{{{operationId}}}({{#allParams}}{{paramName}}{{^-last}}, {{/-last}}{{/allParams}})"{{#hasParams}},{{/hasParams}}{{^hasParams}}{{#returnType}},{{/returnType}}{{/hasParams}}
+            {{#hasParams}}"parameters": [{{#allParams}}
+                {
+                    "name": "{{paramName}}",
+                    "type": "{{{dataType}}}",
+                    "required": "{{#required}}true{{/required}}{{^required}}false{{/required}}"
+                }{{^-last}},{{/-last}}{{/allParams}}
+            ]{{/hasParams}}{{#returnType}}{{#hasParams}},{{/hasParams}}
+            "return": "{{{returnType}}}"{{/returnType}}
+        }{{^-last}},
+        {{/-last}}{{/operation}}{{/operations}}
+    {{^-last}}, {{/-last}}{{/apis}} }{{/apiInfo}}
+}
