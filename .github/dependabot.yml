@@ -9,6 +9,8 @@ updates:
     directory: "resources/sdk/purecloudjava/templates/" # Location of package manifests
     schedule:
       interval: "daily"
+    ignore:
+      - dependency-name: "testng*"
 
   - package-ecosystem: "maven"
     directory: "resources/sdk/purecloudjava-guest/templates/"
