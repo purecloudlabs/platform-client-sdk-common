@@ -84,11 +84,6 @@ class {{classname}}(object):
             self._{{name}} = {{name}}
 {{/isEnum}}
 {{^isEnum}}
-{{#required}}
-
-        if not {{name}}:
-            raise ValueError("Invalid value for `{{name}}`, must not be `None`")
-{{/required}}
 {{#hasValidation}}{{#maxLength}}
         if len({{name}}) > {{maxLength}}:
             raise ValueError("Invalid value for `{{name}}`, length must be less than `{{maxLength}}`")
