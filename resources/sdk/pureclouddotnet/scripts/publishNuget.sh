@@ -43,12 +43,12 @@ echo '<?xml version="1.0" encoding="utf-8"?>'\
 '		<group targetFramework=".NETStandard2.0">'\
 '			<dependency id="Newtonsoft.Json" version="11.0.2" />'\
 '			<dependency id="RestSharp" version="106.3.1" />'\
-'			<dependency id="ini-parser" version="3.4.0" />'\
+'			<dependency id="ini-parser" version="2.5.2" />'\
 '		</group>'\
 '		<group targetFramework=".NETFramework4.5.2">'\
 '			<dependency id="Newtonsoft.Json" version="11.0.2" />'\
 '			<dependency id="RestSharp" version="106.3.1" />'\
-'			<dependency id="ini-parser" version="3.4.0" />'\
+'			<dependency id="ini-parser" version="2.5.2" />'\
 '		</group>'\
 '		</dependencies>'\
 '	</metadata>'\
