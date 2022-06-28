@@ -81,6 +81,15 @@
 	        "failOnError": true
         },
         {
+          "type": "node",
+          "path": "replace-properties.js",
+          "args": [
+            "${SDK_REPO}/build/props.properties",
+            "${SDK_REPO}/build/pom.xml"
+          ],
+	        "failOnError": true
+        },
+        {
           "type": "shell",
           "path": "compile.sh",
           "args": [
