@@ -353,7 +353,7 @@
     <jackson-version>2.13.3</jackson-version>
     <jodatime-version>2.10.14</jodatime-version>
     <maven-plugin-version>1.0.0</maven-plugin-version>
-    <testng-version>7.5</testng-version>
+    <testng-version>7.6.1</testng-version>
     <apache-httpclient-version>4.5.13</apache-httpclient-version>
     <okhttpclient-version>4.9.3</okhttpclient-version>
     <ning-asynchttpclient-version>2.12.3</ning-asynchttpclient-version>
