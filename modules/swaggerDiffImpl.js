@@ -476,12 +476,13 @@ function checkModels(oldSwagger, newSwagger) {
 	// Check for changed and added models
 	_.forEach(newSwagger.definitions, function(newModel, modelKey) {
 		// ArrayNode and JsonNode were removed in API-5692
-		if (modelKey === 'ArrayNode' || modelKey == 'JsonNode') return;
+		if (!newModel.properties || modelKey === 'ArrayNode' || modelKey == 'JsonNode') return;
 		var oldModel = oldSwagger.definitions[modelKey];
 		if (!oldModel) {
 			// Add note about the new model
 			addChange(modelKey, modelKey, LOCATION_MODEL, IMPACT_MINOR, undefined, modelKey, 'Model was added');
 		} else {
+			if (!oldModel.properties) return;
 			// Check for removed properties
 			_.forEach(oldModel.properties, function(oldProperty, propertyKey) {
 				var newProperty = newModel.properties[propertyKey];
