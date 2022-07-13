@@ -5,29 +5,29 @@
 
 version: 2
 updates:
-  - package-ecosystem: "maven"
-    directory: "resources/sdk/purecloudjava/templates/" # Location of package manifests
+  - package-ecosystem: 'maven'
+    directory: 'resources/sdk/purecloudjava/templates/' # Location of package manifests
     schedule:
-      interval: "daily"
+      interval: 'daily'
     ignore:
-      - dependency-name: "testng*"
+      - dependency-name: 'org.testng:testng'
 
-  - package-ecosystem: "maven"
-    directory: "resources/sdk/purecloudjava-guest/templates/"
+  - package-ecosystem: 'maven'
+    directory: 'resources/sdk/purecloudjava-guest/templates/'
     schedule:
-      interval: "daily"
+      interval: 'daily'
 
-  - package-ecosystem: "maven"
-    directory: "resources/sdk/webmessagingjava/templates/"
+  - package-ecosystem: 'maven'
+    directory: 'resources/sdk/webmessagingjava/templates/'
     schedule:
-      interval: "daily"
+      interval: 'daily'
 
-  - package-ecosystem: "gomod"
-    directory: "resources/sdk/clisdkclient/extensions/"
+  - package-ecosystem: 'gomod'
+    directory: 'resources/sdk/clisdkclient/extensions/'
     schedule:
-      interval: "daily"
+      interval: 'daily'
 
-  - package-ecosystem: "pip"
-    directory: "resources/sdk/purecloudpython/templates/"
+  - package-ecosystem: 'pip'
+    directory: 'resources/sdk/purecloudpython/templates/'
     schedule:
-      interval: "daily"
+      interval: 'daily'
