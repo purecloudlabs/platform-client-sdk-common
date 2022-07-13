@@ -147,6 +147,11 @@
 			"name": "list"
 		}
 	},
+	"/api/v2/gamification/scorecards/profiles/{profileId}/metrics/{metricId}/users/{userId}/values/trends": {
+		"get": {
+			"name": "getusertrends"
+		}
+	},
 	"/api/v2/gamification/templates": {
 		"get": {
 			"name": "list"
