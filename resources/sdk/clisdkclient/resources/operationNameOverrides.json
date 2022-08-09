@@ -72,6 +72,11 @@
 			"name": "placecallbackcall"
 		}
 	},
+	"/api/v2/conversations/{conversationId}/secureattributes": {
+		"patch": {
+			"name": "patch"
+		}
+	},
 	"/api/v2/dataextensions/coretypes": {
 		"get": {
 			"name": "list"
