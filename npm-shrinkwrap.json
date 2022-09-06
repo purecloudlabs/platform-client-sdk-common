@@ -41,6 +41,20 @@
         "rollup-plugin-json": "^2.3.0"
       }
     },
+    "node_modules/@types/estree": {
+      "version": "0.0.38",
+      "resolved": "https://registry.npmjs.org/@types/estree/-/estree-0.0.38.tgz",
+      "integrity": "sha512-F/v7t1LwS4vnXuPooJQGBRKRGIoxWUTmA4VHfqjOccFsNDThD5bfUNpITive6s352O7o384wcpEaDV8rHCehDA==",
+      "dev": true,
+      "peer": true
+    },
+    "node_modules/@types/node": {
+      "version": "18.7.15",
+      "resolved": "https://registry.npmjs.org/@types/node/-/node-18.7.15.tgz",
+      "integrity": "sha512-XnjpaI8Bgc3eBag2Aw4t2Uj/49lLBSStHWfqKvIuXD7FIrZyMLWp8KuAFHAqxMZYTF9l08N1ctUn9YNybZJVmQ==",
+      "dev": true,
+      "peer": true
+    },
     "node_modules/acorn": {
       "version": "7.4.1",
       "resolved": "https://registry.npmjs.org/acorn/-/acorn-7.4.1.tgz",
@@ -2242,6 +2256,20 @@
         "inherits": "^2.0.1"
       }
     },
+    "node_modules/rollup": {
+      "version": "0.58.2",
+      "resolved": "https://registry.npmjs.org/rollup/-/rollup-0.58.2.tgz",
+      "integrity": "sha512-RZVvCWm9BHOYloaE6LLiE/ibpjv1CmI8F8k0B0Cp+q1eezo3cswszJH1DN0djgzSlo0hjuuCmyeI+1XOYLl4wg==",
+      "dev": true,
+      "peer": true,
+      "dependencies": {
+        "@types/estree": "0.0.38",
+        "@types/node": "*"
+      },
+      "bin": {
+        "rollup": "bin/rollup"
+      }
+    },
     "node_modules/rollup-plugin-json": {
       "version": "2.3.1",
       "resolved": "https://registry.npmjs.org/rollup-plugin-json/-/rollup-plugin-json-2.3.1.tgz",
@@ -2903,6 +2931,20 @@
     }
   },
   "dependencies": {
+    "@types/estree": {
+      "version": "0.0.38",
+      "resolved": "https://registry.npmjs.org/@types/estree/-/estree-0.0.38.tgz",
+      "integrity": "sha512-F/v7t1LwS4vnXuPooJQGBRKRGIoxWUTmA4VHfqjOccFsNDThD5bfUNpITive6s352O7o384wcpEaDV8rHCehDA==",
+      "dev": true,
+      "peer": true
+    },
+    "@types/node": {
+      "version": "18.7.15",
+      "resolved": "https://registry.npmjs.org/@types/node/-/node-18.7.15.tgz",
+      "integrity": "sha512-XnjpaI8Bgc3eBag2Aw4t2Uj/49lLBSStHWfqKvIuXD7FIrZyMLWp8KuAFHAqxMZYTF9l08N1ctUn9YNybZJVmQ==",
+      "dev": true,
+      "peer": true
+    },
     "acorn": {
       "version": "7.4.1",
       "resolved": "https://registry.npmjs.org/acorn/-/acorn-7.4.1.tgz",
@@ -4735,6 +4777,17 @@
       "requires": {
         "hash-base": "^3.0.0",
         "inherits": "^2.0.1"
+      }
+    },
+    "rollup": {
+      "version": "0.58.2",
+      "resolved": "https://registry.npmjs.org/rollup/-/rollup-0.58.2.tgz",
+      "integrity": "sha512-RZVvCWm9BHOYloaE6LLiE/ibpjv1CmI8F8k0B0Cp+q1eezo3cswszJH1DN0djgzSlo0hjuuCmyeI+1XOYLl4wg==",
+      "dev": true,
+      "peer": true,
+      "requires": {
+        "@types/estree": "0.0.38",
+        "@types/node": "*"
       }
     },
     "rollup-plugin-json": {

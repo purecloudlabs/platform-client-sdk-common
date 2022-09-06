@@ -37,7 +37,6 @@ public class WebMessagingClient {
     private String token;
     private String jwt;
     private String deploymentId;
-    private String sessionId;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final ArrayList<SessionListener> sessionListeners = new ArrayList<>();
     private ApiClient apiClient;
@@ -530,7 +529,6 @@ public class WebMessagingClient {
         Object response = objectMapper.convertValue(baseMessage.getBody(), messageClass);
         switch (className) {
             case "SessionResponse":
-                sessionId = ((SessionResponse) response).getSessionId();
                 // Invoke each listener
                 for (SessionListener sessionListener : sessionListeners) {
                     sessionListener.sessionResponse((SessionResponse) response, rawMessage);
