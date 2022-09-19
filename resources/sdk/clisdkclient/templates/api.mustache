@@ -97,6 +97,23 @@ var {{operationId}}Cmd = &cobra.Command{
 			logger.Fatal(err)
 		}
 
+        filterCondition, _ := cmd.Flags().GetString("filtercondition")
+        filterRegex, _ := cmd.Flags().GetString("filterregex")
+        if filterCondition != "" {
+            filteredResults, err := utils.FilterByCondition(results, filterCondition)
+            if err != nil {
+                logger.Fatal(err)
+            }
+            results = filteredResults
+        }
+        if filterRegex != "" {
+            filteredResults, err := utils.FilterByRegex(results, filterRegex)
+            if err != nil {
+                logger.Fatal(err)
+            }
+            results = filteredResults
+        }
+
 		utils.Render(results)
 	},
 }

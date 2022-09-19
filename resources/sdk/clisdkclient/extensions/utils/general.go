@@ -73,6 +73,8 @@ func AddPaginateFlagsIfListingResponse(flags *pflag.FlagSet, method, jsonSchema 
 	if method == http.MethodGet && strings.Contains(jsonSchema, "SWAGGER_OVERRIDE_list") {
 		flags.BoolP("autopaginate", "a", false, "Automatically paginate through the results stripping page information")
 		flags.BoolP("stream", "s", false, "Paginate and stream data as it is being processed leaving page information intact")
+		flags.String("filtercondition", "", "Filter output based on a given condition")
+		flags.String("filterregex", "", "Filter output based on a given regular expression")
 	}
 }
 
