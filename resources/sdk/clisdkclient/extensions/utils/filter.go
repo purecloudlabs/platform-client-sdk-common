@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
 	"strconv"
 	"strings"
 )
@@ -14,8 +15,26 @@ const (
 	TypeArray          = "array"
 )
 
+const (
+	equalsOperator            string = "=="
+	notEqualsOperator                = "!="
+	lessThanEqualsOperator           = "<="
+	greaterThanEqualsOperator        = ">="
+	lessThanOperator                 = "<"
+	greaterThanOperator              = ">"
+	containsOperator                 = "contains"
+)
+
 var (
-	supportedOperators = []string{"==", "!=", "<=", ">=", "<", ">", "contains"}
+	supportedOperators = []string{
+		equalsOperator,
+		notEqualsOperator,
+		lessThanEqualsOperator,
+		greaterThanEqualsOperator,
+		lessThanOperator,
+		greaterThanOperator,
+		containsOperator,
+	}
 )
 
 func FilterByRegex(data string, expression string) (string, error) {
@@ -27,13 +46,13 @@ func FilterByCondition(data string, condition string) (string, error) {
 	var jsonData interface{}
 	err := json.Unmarshal([]byte(data), &jsonData)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error unmarshalling json data: %v", err)
 	}
 
 	// Find operator in condition
 	operator := findOperatorInString(condition)
 	if operator == "" {
-		return "", fmt.Errorf("Could not understand condition: %s\n", condition)
+		return "", unrecognizedConditionError(condition)
 	}
 
 	path, value := getFieldKeyAndValueFromConditionString(condition, operator)
@@ -41,7 +60,11 @@ func FilterByCondition(data string, condition string) (string, error) {
 
 	var objects []interface{}
 	if jsonMap, ok := jsonData.(map[string]interface{}); ok {
-		objects = jsonMap["entities"].([]interface{})
+		if entitiesArray, ok := jsonMap["entities"].([]interface{}); ok {
+			objects = entitiesArray
+		} else {
+			return "", entitiesArrayNotFoundError()
+		}
 	} else if jsonArray, ok := jsonData.([]interface{}); ok {
 		objects = jsonArray
 	}
@@ -64,6 +87,8 @@ func findObjectsMatchingCondition(returnedObjects []interface{}, keys []string, 
 	var (
 		allMatchedObjects []interface{}
 		currentObject     interface{}
+		match             bool
+		err               error
 	)
 
 	for _, object := range returnedObjects {
@@ -71,43 +96,51 @@ func findObjectsMatchingCondition(returnedObjects []interface{}, keys []string, 
 		for i, k := range keys {
 			if currentObjectMap, ok := currentObject.(map[string]interface{}); ok {
 				if _, ok := currentObjectMap[k]; !ok {
-					return nil, fmt.Errorf("invalid key '%s' in path", k)
+					logger.Infof("field '%s' not found in current json object", k)
+					break
 				}
 				currentObject = currentObjectMap[k]
 				if _, ok := currentObject.(map[string]interface{}); ok {
 					if i == len(keys)-1 {
-						return nil, fmt.Errorf("key '%s' is type map and is incomparable to value: '%s'", k, value)
+						return nil, incomparableFieldError(k, value)
 					}
 					continue
 				}
 			}
+			if i < len(keys)-1 {
+				return nil, invalidKeyOrderingError(k)
+			}
 			if currentObjectArray, ok := currentObject.([]interface{}); ok {
-				for _, c := range currentObjectArray {
-					match, err := fieldMatchesValue(c, value, "==")
-					if err != nil {
-						return nil, err
-					}
-					if match {
-						allMatchedObjects = append(allMatchedObjects, object.(map[string]interface{}))
-						break
-					}
-				}
+				match, err = fieldMatchesValueInArray(currentObjectArray, value, operator)
 			} else {
-				if i < len(keys)-1 {
-					return nil, fmt.Errorf("the value inside field '%s' is a non-map, but it is not the last key in the provided path", k)
-				}
-				match, err := fieldMatchesValue(currentObject, value, operator)
-				if err != nil {
-					return nil, err
-				}
-				if match {
-					allMatchedObjects = append(allMatchedObjects, object.(map[string]interface{}))
-				}
+				match, err = fieldMatchesValue(currentObject, value, operator)
+			}
+			if err != nil {
+				return nil, err
+			}
+			if match {
+				allMatchedObjects = append(allMatchedObjects, object.(map[string]interface{}))
 			}
 		}
 	}
 
 	return allMatchedObjects, nil
+}
+
+func fieldMatchesValueInArray(jsonArray []interface{}, cliInputValue string, operator string) (bool, error) {
+	if operator != containsOperator {
+		return false, invalidOperatorError(TypeArray, operator)
+	}
+	for _, c := range jsonArray {
+		match, err := fieldMatchesValue(c, cliInputValue, equalsOperator)
+		if err != nil {
+			return false, err
+		}
+		if match {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func fieldMatchesValue(jsonValue interface{}, cliInputValue string, operator string) (bool, error) {
@@ -122,11 +155,11 @@ func fieldMatchesValue(jsonValue interface{}, cliInputValue string, operator str
 
 func compareStrings(jsonValue string, cliInputValue string, operator string) (bool, error) {
 	switch operator {
-	case "==":
+	case equalsOperator:
 		return jsonValue == cliInputValue, nil
-	case "!=":
+	case notEqualsOperator:
 		return jsonValue != cliInputValue, nil
-	case "contains":
+	case containsOperator:
 		return strings.Contains(jsonValue, cliInputValue), nil
 	default:
 		return false, invalidOperatorError(TypeString, operator)
@@ -143,17 +176,17 @@ func compareAsIntegers(jsonValue interface{}, cliInputValue string, operator str
 		return false, err
 	}
 	switch operator {
-	case "==":
+	case equalsOperator:
 		return value1Int == value2Int, nil
-	case "!=":
+	case notEqualsOperator:
 		return value1Int != value2Int, nil
-	case ">":
+	case greaterThanOperator:
 		return value1Int > value2Int, nil
-	case "<":
+	case lessThanOperator:
 		return value1Int < value2Int, nil
-	case ">=":
+	case greaterThanEqualsOperator:
 		return value1Int >= value2Int, nil
-	case "<=":
+	case lessThanEqualsOperator:
 		return value1Int <= value2Int, nil
 	default:
 		return false, invalidOperatorError(TypeInteger, operator)
@@ -162,7 +195,7 @@ func compareAsIntegers(jsonValue interface{}, cliInputValue string, operator str
 
 func compareBooleans(jsonValue bool, cliInputValue string, operator string) (bool, error) {
 	if cliInputValue != "true" && cliInputValue != "false" {
-		return false, fmt.Errorf("'%s' is not boolean. Valid options: true, false", cliInputValue)
+		return false, invalidBooleanValue(cliInputValue)
 	}
 	switch operator {
 	case "==":
@@ -201,4 +234,24 @@ func getKeysFromJsonFieldPath(path string) []string {
 
 func invalidOperatorError(valueType string, operator string) error {
 	return fmt.Errorf("invalid operator for %s comparison: %s\n", valueType, operator)
+}
+
+func entitiesArrayNotFoundError() error {
+	return fmt.Errorf("could not locate entites array inside response object")
+}
+
+func unrecognizedConditionError(condition string) error {
+	return fmt.Errorf("could not understand condition: %s\n", condition)
+}
+
+func incomparableFieldError(key string, value string) error {
+	return fmt.Errorf("key '%s' is incomparable to value: '%s'", key, value)
+}
+
+func invalidKeyOrderingError(key string) error {
+	return fmt.Errorf("the value inside field '%s' is a non-map, but it is not the last key in the provided path", key)
+}
+
+func invalidBooleanValue(value string) error {
+	return fmt.Errorf("'%s' is not boolean. Valid options: true, false", value)
 }
