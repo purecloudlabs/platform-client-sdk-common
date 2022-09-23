@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -23,6 +24,7 @@ const (
 	lessThanOperator                 = "<"
 	greaterThanOperator              = ">"
 	containsOperator                 = "contains"
+	matchOperator                    = "match"
 )
 
 var (
@@ -34,19 +36,14 @@ var (
 		lessThanOperator,
 		greaterThanOperator,
 		containsOperator,
+		matchOperator,
 	}
 )
 
-func FilterByRegex(data string, expression string) (string, error) {
-	fmt.Printf("Calling FilterByRegex with expression %s\n", expression)
-	return data, nil
-}
-
 func FilterByCondition(data string, condition string) (string, error) {
-	var jsonData interface{}
-	err := json.Unmarshal([]byte(data), &jsonData)
+	objects, err := getJsonObjectsFromString(data)
 	if err != nil {
-		return "", fmt.Errorf("error unmarshalling json data: %v", err)
+		return "", err
 	}
 
 	// Find operator in condition
@@ -57,17 +54,6 @@ func FilterByCondition(data string, condition string) (string, error) {
 
 	path, value := getFieldKeyAndValueFromConditionString(condition, operator)
 	keys := getKeysFromJsonFieldPath(path)
-
-	var objects []interface{}
-	if jsonMap, ok := jsonData.(map[string]interface{}); ok {
-		if entitiesArray, ok := jsonMap["entities"].([]interface{}); ok {
-			objects = entitiesArray
-		} else {
-			return "", entitiesArrayNotFoundError()
-		}
-	} else if jsonArray, ok := jsonData.([]interface{}); ok {
-		objects = jsonArray
-	}
 
 	allMatchedObjects, err := findObjectsMatchingCondition(objects, keys, value, operator)
 	if err != nil {
@@ -161,6 +147,12 @@ func compareStrings(jsonValue string, cliInputValue string, operator string) (bo
 		return jsonValue != cliInputValue, nil
 	case containsOperator:
 		return strings.Contains(jsonValue, cliInputValue), nil
+	case matchOperator:
+		matched, err := regexp.Match(cliInputValue, []byte(jsonValue))
+		if err != nil {
+			return false, err
+		}
+		return matched, nil
 	default:
 		return false, invalidOperatorError(TypeString, operator)
 	}
@@ -198,9 +190,9 @@ func compareBooleans(jsonValue bool, cliInputValue string, operator string) (boo
 		return false, invalidBooleanValue(cliInputValue)
 	}
 	switch operator {
-	case "==":
+	case equalsOperator:
 		return fmt.Sprintf("%v", jsonValue) == fmt.Sprintf("%v", cliInputValue), nil
-	case "!=":
+	case notEqualsOperator:
 		return fmt.Sprintf("%v", jsonValue) != fmt.Sprintf("%v", cliInputValue), nil
 	default:
 		return false, invalidOperatorError(TypeBoolean, operator)
@@ -214,6 +206,27 @@ func findOperatorInString(text string) string {
 		}
 	}
 	return ""
+}
+
+func getJsonObjectsFromString(data string) ([]interface{}, error) {
+	var (
+		jsonData interface{}
+		objects  []interface{}
+	)
+	err := json.Unmarshal([]byte(data), &jsonData)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling json data: %v", err)
+	}
+	if jsonMap, ok := jsonData.(map[string]interface{}); ok {
+		if entitiesArray, ok := jsonMap["entities"].([]interface{}); ok {
+			objects = entitiesArray
+		} else {
+			return nil, entitiesArrayNotFoundError()
+		}
+	} else if jsonArray, ok := jsonData.([]interface{}); ok {
+		objects = jsonArray
+	}
+	return objects, nil
 }
 
 func getFieldKeyAndValueFromConditionString(condition string, operator string) (string, string) {
