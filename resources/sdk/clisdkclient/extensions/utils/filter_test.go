@@ -13,6 +13,56 @@ type OperatorTestCaseStruct struct {
 	notExpectedValues []string
 }
 
+func TestFilterByConditionMatchOperator(t *testing.T) {
+	var (
+		object1Id = uuid.NewString()
+		object2Id = uuid.NewString()
+		object3Id = uuid.NewString()
+		object4Id = uuid.NewString()
+		object5Id = uuid.NewString()
+		data      = fmt.Sprintf(`
+[
+	{
+		"id": "%s",
+		"name": "Kyle"
+	},
+	{
+		"id": "%s",
+		"name": "Adam"
+	},
+	{
+		"id": "%s",
+		"name": "Marki"
+	},
+	{
+		"id": "%s",
+		"name": "Zarbi"
+	},
+	{
+		"id": "%s",
+		"carInfo": {
+			"name": "Ford Fiesta"
+		}
+	}
+]
+`, object1Id, object2Id, object3Id, object4Id, object5Id)
+
+		testCase1 = OperatorTestCaseStruct{"name match K([a-z]+)le", []string{object1Id}, []string{object2Id}}
+		testCase2 = OperatorTestCaseStruct{"name match A([a-d]+)a(.+)", []string{object2Id}, []string{object1Id}}
+		testCase3 = OperatorTestCaseStruct{"name match ([M-Z]+)ar(.+)i", []string{object3Id, object4Id}, []string{object1Id, object2Id}}
+		testCase4 = OperatorTestCaseStruct{"name match ^(.{4})$", []string{object1Id, object2Id}, []string{object3Id, object4Id}}
+		testCase5 = OperatorTestCaseStruct{"name match ^Gerry$", []string{"null"}, []string{object1Id, object2Id, object3Id, object4Id}}
+		testCase6 = OperatorTestCaseStruct{"carInfo.name match ^Ford ([A-Z]{1})(.+)$", []string{object5Id}, []string{object1Id, object2Id, object3Id, object4Id}}
+		testCases = []OperatorTestCaseStruct{testCase1, testCase2, testCase3, testCase4, testCase5, testCase6}
+	)
+
+	for _, test := range testCases {
+		if err := verifyValueReturnedWithCondition(data, test.condition, test.expectedValues, test.notExpectedValues); err != nil {
+			t.Errorf("ERROR: %v", err)
+		}
+	}
+}
+
 func TestFilterByConditionInvalidCondition(t *testing.T) {
 	type ErrorTestCaseStruct struct {
 		condition     string
@@ -206,7 +256,7 @@ func TestFilterByConditionGreaterAndLessThanOperations(t *testing.T) {
 `, objId1, objId2, objId3, objId4)
 
 		testCase1 = OperatorTestCaseStruct{"version<2", []string{objId1, objId4}, []string{objId2, objId3}}
-		testCase2 = OperatorTestCaseStruct{"version<=2", []string{objId1, objId2, objId4}, []string{objId3}}
+		testCase2 = OperatorTestCaseStruct{"version <= 2", []string{objId1, objId2, objId4}, []string{objId3}}
 		testCase3 = OperatorTestCaseStruct{"version>2", []string{objId3}, []string{objId1, objId2}}
 		testCase4 = OperatorTestCaseStruct{"version>=2", []string{objId2, objId3}, []string{objId1}}
 		testCase5 = OperatorTestCaseStruct{"version<10", []string{objId1, objId2, objId3, objId4}, []string{}}
