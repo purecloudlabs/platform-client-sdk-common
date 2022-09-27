@@ -231,7 +231,7 @@ func getJsonObjectsFromString(data string) ([]interface{}, error) {
 
 func getFieldKeyAndValueFromConditionString(condition string, operator string) (string, string) {
 	expressionSplit := strings.Split(condition, operator)
-	return expressionSplit[0], strings.TrimSpace(expressionSplit[1])
+	return strings.ToLower(expressionSplit[0]), strings.TrimSpace(expressionSplit[1])
 }
 
 func getKeysFromJsonFieldPath(path string) []string {

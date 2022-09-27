@@ -304,7 +304,7 @@ func TestFilterByConditionEquals(t *testing.T) {
 		testCase3 = OperatorTestCaseStruct{"division.name==Home", []string{object1Id}, []string{object2Id}}
 		testCase4 = OperatorTestCaseStruct{"version==3", []string{object1Id}, []string{object2Id}}
 		testCase5 = OperatorTestCaseStruct{"active!=true", []string{object2Id}, []string{object1Id}}
-		testCase6 = OperatorTestCaseStruct{"name!=Charlie C", []string{object2Id}, []string{object1Id}}
+		testCase6 = OperatorTestCaseStruct{"Name!=Charlie C", []string{object2Id}, []string{object1Id}}
 		testCase7 = OperatorTestCaseStruct{"division.name!=Home", []string{object2Id}, []string{object1Id}}
 		testCase8 = OperatorTestCaseStruct{"version!=3", []string{object2Id}, []string{object1Id}}
 		testCase9 = OperatorTestCaseStruct{"name==Darragh McD", []string{object2Id}, []string{object1Id}}
@@ -374,7 +374,7 @@ func TestFilterByConditionNestedJson(t *testing.T) {
 		testCase1 = OperatorTestCaseStruct{"a.c.d.f==Gamma", []string{object1Id}, []string{object2Id}}
 		testCase2 = OperatorTestCaseStruct{"a.c.d.f==Epsilon", []string{object2Id}, []string{object1Id}}
 		testCase3 = OperatorTestCaseStruct{"a.c.d.g contains Kappa", []string{object1Id}, []string{object2Id}}
-		testCase4 = OperatorTestCaseStruct{"a.c.d.g contains Iota", []string{object2Id, object3Id}, []string{object1Id}}
+		testCase4 = OperatorTestCaseStruct{"a.c.D.g contains Iota", []string{object2Id, object3Id}, []string{object1Id}}
 		testCase5 = OperatorTestCaseStruct{"a.c.e<=0", []string{object1Id}, []string{object2Id}}
 		testCase6 = OperatorTestCaseStruct{"a.c.e>100", []string{object2Id}, []string{object1Id}}
 		testCase7 = OperatorTestCaseStruct{"a.c.e<100", []string{object3Id, object1Id}, []string{object2Id}}
