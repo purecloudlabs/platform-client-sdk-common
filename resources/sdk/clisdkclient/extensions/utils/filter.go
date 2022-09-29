@@ -72,45 +72,61 @@ func FilterByCondition(data string, condition string) (string, error) {
 func findObjectsMatchingCondition(returnedObjects []interface{}, keys []string, value string, operator string) ([]interface{}, error) {
 	var (
 		allMatchedObjects []interface{}
-		currentObject     interface{}
 		match             bool
-		err               error
 	)
 
 	for _, object := range returnedObjects {
-		currentObject = object
-		for i, k := range keys {
-			if currentObjectMap, ok := currentObject.(map[string]interface{}); ok {
-				if _, ok := currentObjectMap[k]; !ok {
-					logger.Infof("field '%s' not found in current json object", k)
-					break
-				}
-				currentObject = currentObjectMap[k]
-				if _, ok := currentObject.(map[string]interface{}); ok {
-					if i == len(keys)-1 {
-						return nil, incomparableFieldError(k, value)
-					}
-					continue
-				}
-			}
-			if i < len(keys)-1 {
-				return nil, invalidKeyOrderingError(k)
-			}
-			if currentObjectArray, ok := currentObject.([]interface{}); ok {
-				match, err = fieldMatchesValueInArray(currentObjectArray, value, operator)
-			} else {
-				match, err = fieldMatchesValue(currentObject, value, operator)
-			}
-			if err != nil {
-				return nil, err
-			}
-			if match {
-				allMatchedObjects = append(allMatchedObjects, object.(map[string]interface{}))
-			}
+		currentObjectsValue, err := getReferencedValueFromMap(keys, object.(map[string]interface{}), value)
+		if err != nil {
+			return nil, err
+		}
+		// Field not found in current object
+		if currentObjectsValue == nil {
+			continue
+		}
+		if currentObjectArray, ok := currentObjectsValue.([]interface{}); ok {
+			match, err = fieldMatchesValueInArray(currentObjectArray, value, operator)
+		} else {
+			match, err = fieldMatchesValue(currentObjectsValue, value, operator)
+		}
+		if err != nil {
+			return nil, err
+		}
+		if match {
+			allMatchedObjects = append(allMatchedObjects, object.(map[string]interface{}))
 		}
 	}
 
 	return allMatchedObjects, nil
+}
+
+func getReferencedValueFromMap(keys []string, object map[string]interface{}, value string) (interface{}, error) {
+	var (
+		lastItem     interface{}
+		currentValue interface{}
+		currentItem  = object
+	)
+	for i, k := range keys {
+		currentValue = currentItem[k]
+		if currentValue == nil {
+			logger.Infof("field '%s' not found in current json object", k)
+			break
+		}
+		if i == len(keys)-1 {
+			lastItem = currentValue
+			break
+		}
+		if itemMap, ok := currentValue.(map[string]interface{}); ok {
+			currentItem = itemMap
+			continue
+		} else {
+			return nil, invalidKeyOrderingError(k)
+		}
+	}
+	if _, ok := lastItem.(map[string]interface{}); ok {
+		return nil, incomparableFieldError(keys[len(keys)-1], value)
+	}
+	return lastItem, nil
 }
 
 func fieldMatchesValueInArray(jsonArray []interface{}, cliInputValue string, operator string) (bool, error) {
@@ -130,11 +146,12 @@ func fieldMatchesValueInArray(jsonArray []interface{}, cliInputValue string, ope
 }
 
 func fieldMatchesValue(jsonValue interface{}, cliInputValue string, operator string) (bool, error) {
-	if fieldValueStr, ok := jsonValue.(string); ok {
-		return compareStrings(fieldValueStr, cliInputValue, operator)
-	} else if fieldValueBool, ok := jsonValue.(bool); ok {
-		return compareBooleans(fieldValueBool, cliInputValue, operator)
-	} else {
+	switch t := jsonValue.(type) {
+	case string:
+		return compareStrings(t, cliInputValue, operator)
+	case bool:
+		return compareBooleans(t, cliInputValue, operator)
+	default:
 		return compareAsIntegers(jsonValue, cliInputValue, operator)
 	}
 }
@@ -231,7 +248,7 @@ func getJsonObjectsFromString(data string) ([]interface{}, error) {
 
 func getFieldKeyAndValueFromConditionString(condition string, operator string) (string, string) {
 	expressionSplit := strings.Split(condition, operator)
-	return strings.ToLower(expressionSplit[0]), strings.TrimSpace(expressionSplit[1])
+	return expressionSplit[0], strings.TrimSpace(expressionSplit[1])
 }
 
 func getKeysFromJsonFieldPath(path string) []string {
