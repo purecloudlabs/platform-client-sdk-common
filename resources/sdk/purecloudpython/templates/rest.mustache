@@ -18,6 +18,8 @@ Copyright 2016 SmartBear Software
 Credit: this file (rest.py) is modified based on rest.py in Dropbox Python SDK:
 https://www.dropbox.com/developers/core/sdks/python
 """
+
+from __future__ import annotations
 from __future__ import absolute_import
 
 import sys
@@ -28,6 +30,10 @@ import certifi
 
 # python 2 and python 3 compatibility library
 from six import iteritems
+
+# type hinting support
+from typing import TypeVar
+from typing import Any
 
 from .configuration import Configuration
 
@@ -46,19 +52,21 @@ except ImportError:
 
 class RESTResponse(io.IOBase):
 
-    def __init__(self, resp):
+    TRESTResponse = TypeVar("TRESTResponse", bound="RESTResponse")
+
+    def __init__(self: TRESTResponse, resp: Any) -> None:
         self.urllib3_response = resp
         self.status = resp.status
         self.reason = resp.reason
         self.data = resp.data
 
-    def getheaders(self):
+    def getheaders(self: TRESTResponse) -> dict[str, Any]:
         """
         Returns a dictionary of the response headers.
         """
         return self.urllib3_response.getheaders()
 
-    def getheader(self, name, default=None):
+    def getheader(self: TRESTResponse, name: str, default: str = None) -> str:
         """
         Returns a given response header.
         """
@@ -67,7 +75,9 @@ class RESTResponse(io.IOBase):
 
 class RESTClientObject(object):
 
-    def __init__(self, pools_size=4, max_size=4):
+    TRESTClientObject = TypeVar("TRESTClientObject", bound="RESTClientObject")
+
+    def __init__(self: TRESTClientObject, pools_size: int = 4, max_size: int = 4) -> None:
         # urllib3.PoolManager will pass all kw parameters to connectionpool
         # https://github.com/shazow/urllib3/blob/f9409436f83aeb79fbaf090181cd81b784f1b8ce/urllib3/poolmanager.py#L75
         # https://github.com/shazow/urllib3/blob/f9409436f83aeb79fbaf090181cd81b784f1b8ce/urllib3/connectionpool.py#L680
@@ -129,8 +139,8 @@ class RESTClientObject(object):
                 key_file=key_file
             )
 
-    def request(self, method, url, query_params=None, headers=None,
-                body=None, post_params=None):
+    def request(self: TRESTClientObject, method: str, url: str, query_params: dict[str, Any] = None, headers: dict[str, Any] = None,
+                body: dict[str, Any] = None, post_params: dict[str, Any] = None) -> RESTResponse:
         """
         :param method: http request method
         :param url: http request url
@@ -198,44 +208,44 @@ class RESTClientObject(object):
 
         return r
 
-    def GET(self, url, headers=None, query_params=None):
+    def GET(self: TRESTClientObject, url: str, headers: dict[str, Any] = None, query_params: dict[str, Any] = None) -> RESTResponse:
         return self.request("GET", url,
                             headers=headers,
                             query_params=query_params)
 
-    def HEAD(self, url, headers=None, query_params=None):
+    def HEAD(self: TRESTClientObject, url: str, headers: dict[str, Any] = None, query_params: dict[str, Any] = None) -> RESTResponse:
         return self.request("HEAD", url,
                             headers=headers,
                             query_params=query_params)
 
-    def OPTIONS(self, url, headers=None, query_params=None, post_params=None, body=None):
+    def OPTIONS(self: TRESTClientObject, url: str, headers: dict[str, Any] = None, query_params: dict[str, Any] = None, post_params: dict[str, Any] = None, body: dict[str, Any] = None) -> RESTResponse:
         return self.request("OPTIONS", url,
                             headers=headers,
                             query_params=query_params,
                             post_params=post_params,
                             body=body)
 
-    def DELETE(self, url, headers=None, query_params=None, body=None):
+    def DELETE(self: TRESTClientObject, url: str, headers: dict[str, Any] = None, query_params: dict[str, Any] = None, body: dict[str, Any] = None) -> RESTResponse:
         return self.request("DELETE", url,
                             headers=headers,
                             query_params=query_params,
                             body=body)
 
-    def POST(self, url, headers=None, query_params=None, post_params=None, body=None):
+    def POST(self: TRESTClientObject, url: str, headers: dict[str, Any] = None, query_params: dict[str, Any] = None, post_params: dict[str, Any] = None, body: dict[str, Any] = None) -> RESTResponse:
         return self.request("POST", url,
                             headers=headers,
                             query_params=query_params,
                             post_params=post_params,
                             body=body)
 
-    def PUT(self, url, headers=None, query_params=None, post_params=None, body=None):
+    def PUT(self: TRESTClientObject, url: str, headers: dict[str, Any] = None, query_params: dict[str, Any] = None, post_params: dict[str, Any] = None, body: dict[str, Any] = None) -> RESTResponse:
         return self.request("PUT", url,
                             headers=headers,
                             query_params=query_params,
                             post_params=post_params,
                             body=body)
 
-    def PATCH(self, url, headers=None, query_params=None, post_params=None, body=None):
+    def PATCH(self: TRESTClientObject, url: str, headers: dict[str, Any] = None, query_params: dict[str, Any] = None, post_params: dict[str, Any] = None, body: dict[str, Any] = None) -> RESTResponse:
         return self.request("PATCH", url,
                             headers=headers,
                             query_params=query_params,
@@ -245,7 +255,9 @@ class RESTClientObject(object):
 
 class ApiException(Exception):
 
-    def __init__(self, status=None, reason=None, http_resp=None):
+    TApiException = TypeVar("TApiException", bound="ApiException")
+
+    def __init__(self: TApiException, status: str = None, reason: str = None, http_resp: RESTResponse = None) -> None:
         if http_resp:
             self.status = http_resp.status
             self.reason = http_resp.reason
@@ -257,7 +269,7 @@ class ApiException(Exception):
             self.body = None
             self.headers = None
 
-    def __str__(self):
+    def __str__(self: TApiException) -> str:
         """
         Custom error messages for exception
         """

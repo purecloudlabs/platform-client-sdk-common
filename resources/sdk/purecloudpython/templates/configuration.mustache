@@ -18,6 +18,7 @@ Copyright 2016 SmartBear Software
    ref: https://github.com/swagger-api/swagger-codegen
 """
 
+from __future__ import annotations
 from __future__ import absolute_import
 import base64
 import urllib3
@@ -42,6 +43,11 @@ import json
 
 from .logger import Logger, LogFormat, LogLevel
 
+# type hinting support
+from typing import TypeVar
+from typing import Any
+from typing import Union
+
 def singleton(cls, *args, **kw):
     instances = {}
 
@@ -60,7 +66,9 @@ class Configuration(object):
     Do not edit the class manually.
     """
 
-    def __init__(self):
+    TConfiguration = TypeVar("TConfiguration", bound="Configuration")
+
+    def __init__(self: TConfiguration) -> None:
         """
         Constructor
         """
@@ -133,11 +141,11 @@ class Configuration(object):
             self._config_updater()
 
     @property
-    def config_file_path(self):
+    def config_file_path(self: TConfiguration) -> str:
         return self.__config_file_path
 
     @config_file_path.setter
-    def config_file_path(self, value):
+    def config_file_path(self: TConfiguration, value: str) -> None:
         self.__config_file_path = value
         self._update_config_from_file()
         if not hasattr(self, "_observer"):
@@ -145,7 +153,7 @@ class Configuration(object):
         if self.live_reload_config:
             self._config_updater()
 
-    def get_api_key_with_prefix(self, identifier):
+    def get_api_key_with_prefix(self: TConfiguration, identifier: str) -> str:
         """
         Gets API key (with prefix if set).
 
@@ -157,7 +165,7 @@ class Configuration(object):
         elif self.api_key.get(identifier):
             return self.api_key[identifier]
 
-    def get_basic_auth_token(self):
+    def get_basic_auth_token(self: TConfiguration) -> str:
         """
         Gets HTTP basic authentication header (string).
 
@@ -166,7 +174,7 @@ class Configuration(object):
         return urllib3.util.make_headers(basic_auth=self.username + ':' + self.password)\
                            .get('authorization')
 
-    def auth_settings(self, access_token=None):
+    def auth_settings(self: TConfiguration, access_token: str = None) -> dict[str, Any]:
         """
         Gets Auth Settings dict for api client.
 
@@ -203,7 +211,7 @@ class Configuration(object):
 {{/isOAuth}}{{/authMethods}}
         }
 
-    def to_debug_report(self):
+    def to_debug_report(self: TConfiguration) -> str:
         """
         Gets the essential information for debugging.
 
@@ -216,7 +224,7 @@ class Configuration(object):
                "SDK Package Version: {{packageVersion}}".\
                format(env=sys.platform, pyversion=sys.version)
 
-    def _update_config_from_file(self):
+    def _update_config_from_file(self: TConfiguration) ->  None:
         try:
             config = configparser.ConfigParser()
             # try to parse as INI format
@@ -276,7 +284,7 @@ class Configuration(object):
         except Exception:
             return
 
-    def _run_observer(self):
+    def _run_observer(self: TConfiguration) -> None:
         self._observer = Observer()
         self._observer.start()
         try:
@@ -286,7 +294,7 @@ class Configuration(object):
             self._observer.stop()
             self._observer.join()
 
-    def _config_updater(self):
+    def _config_updater(self: TConfiguration) -> None:
         if self._observer is not None:
             self._observer.unschedule_all()
         event_handler = ConfigFileEventHandler(self)
@@ -310,13 +318,13 @@ class Configuration(object):
             except Exception as e:
                 return
 
-def _get_config_string(config, section, key):
+def _get_config_string(config: dict[str, Any], section: str, key: str) -> str:
         try:
             return str(config[section][key]).strip()
         except:
             return None
 
-def _get_config_bool(config, section, key):
+def _get_config_bool(config: dict[str, Any], section: str, key: str) -> Union[bool, None]:
         try:
             if type(config) == configparser.ConfigParser:
                 return config.getboolean(section, key)
@@ -325,7 +333,7 @@ def _get_config_bool(config, section, key):
         except:
             return None
 
-def _get_config_int(config, section, key):
+def _get_config_int(config: dict[str, Any], section: str, key: str) -> Union[int, str, None]:
         try:
             if type(config) == configparser.ConfigParser:
                 return config.getint(section, key)
@@ -335,12 +343,16 @@ def _get_config_int(config, section, key):
             return None
 
 class ConfigFileEventHandler(FileSystemEventHandler):
-    def __init__(self, configuration):
+
+    TConfigFileEventHandler = TypeVar("TConfigFileEventHandler", bound="ConfigFileEventHandler")
+    TConfiguration = TypeVar("TConfiguration", bound="Configuration")
+
+    def __init__(self: TConfigFileEventHandler, configuration: TConfiguration):
         super(FileSystemEventHandler, self).__init__()
         self.configuration = configuration
         self.config_file_path = self.configuration.config_file_path
 
-    def on_modified(self, event):
+    def on_modified(self: TConfigFileEventHandler, event: Any) -> None:
         # only respond if the config file has been modified
         if type(event) == FileModifiedEvent and event.src_path == self.config_file_path:
             if self.configuration.live_reload_config:

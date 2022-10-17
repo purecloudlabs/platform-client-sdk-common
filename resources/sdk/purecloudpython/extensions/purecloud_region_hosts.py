@@ -1,7 +1,13 @@
 from enum import Enum
 
+# type hinting support
+from typing import TypeVar
+from typing import Any
 
 class PureCloudRegionHosts(Enum):
+  
+    TPureCloudRegionHosts = TypeVar("TPureCloudRegionHosts", bound="PureCloudRegionHosts")
+
     us_east_1 = "https://api.mypurecloud.com"
     eu_west_1 = "https://api.mypurecloud.ie"
     ap_southeast_2 = "https://api.mypurecloud.com.au"
@@ -15,10 +21,10 @@ class PureCloudRegionHosts(Enum):
     us_east_2 = "https://api.use2.us-gov-pure.cloud"
     sa_east_1 = "https://api.sae1.pure.cloud"
 
-    def __init__(self, apihost):
+    def __init__(self: TPureCloudRegionHosts, apihost: Any) -> None:
         self.apihost = apihost
 
-    def get_api_host(self):
+    def get_api_host(self: TPureCloudRegionHosts) -> str:
         return self.apihost
 
 

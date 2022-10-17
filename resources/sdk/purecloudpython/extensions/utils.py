@@ -2,7 +2,10 @@ import sys
 from datetime import datetime, date
 from six import iteritems
 
-def sanitize_for_serialization(obj):
+# type hinting support
+from typing import Any
+
+def sanitize_for_serialization(obj: Any) -> Any:
     """
     Builds a JSON object ready for serialization.
 

@@ -1,9 +1,19 @@
+from __future__ import annotations
+
 import logging
 import json
 from datetime import datetime
 
+# type hinting support
+from typing import TypeVar
+from typing import Any
+from typing import Union
+
 class Logger(object):
-    def __init__(self):
+
+    TLogger = TypeVar("TLogger", bound="Logger")
+
+    def __init__(self: TLogger) -> None:
         # disable urllib3 logging
         logging.getLogger("urllib3").setLevel(logging.CRITICAL + 1)
         logging.getLogger("urllib3").propagate = False
@@ -30,7 +40,7 @@ class Logger(object):
         # configure file and console handlers
         self.set_log_outputs()
 
-    def set_log_outputs(self):
+    def set_log_outputs(self: TLogger) -> None:
         try:
             logger_formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 
@@ -60,54 +70,54 @@ class Logger(object):
             None
 
     @property
-    def log_level(self):
+    def log_level(self: TLogger) -> int:
         return self.__log_level
 
     @log_level.setter
-    def log_level(self, value):
+    def log_level(self: TLogger, value: int) -> None:
         self.__log_level = value
         self._logger.setLevel(self.__log_level)
 
     @property
-    def log_format(self):
+    def log_format(self: TLogger) -> int:
         return self.__log_format
 
     @log_format.setter
-    def log_format(self, value):
+    def log_format(self: TLogger, value: int) -> None:
         self.__log_format = value
         self.set_log_outputs()
 
     @property
-    def log_to_console(self):
+    def log_to_console(self: TLogger) -> bool:
         return self.__log_to_console
 
     @log_to_console.setter
-    def log_to_console(self, value):
+    def log_to_console(self: TLogger, value: bool):
         self.__log_to_console = value
         self.set_log_outputs()
 
     @property
-    def log_file_path(self):
+    def log_file_path(self: TLogger) -> str:
         return self.__log_file_path
 
     @log_file_path.setter
-    def log_file_path(self, value):
+    def log_file_path(self: TLogger, value: str) -> None:
         self.__log_file_path = value
         self.set_log_outputs()
 
-    def trace(self, method, url, request_body, status_code, request_headers, response_headers):
+    def trace(self: TLogger, method: str, url: str, request_body: dict[str, Any], status_code: str, request_headers: dict[str, Any], response_headers: dict[str, Any]) -> None:
         now = datetime.now()
         log_statement = LogStatement(level="trace", date=now.strftime("%m-%d-%Y, %H:%M:%S"), method=method, url=url, request_body=request_body,
                                     status_code=status_code, request_headers=request_headers, response_headers=response_headers)
         self._logger.log(LogLevel.LTrace, log_statement.string(self.log_format, self.log_request_body, self.log_response_body))
 
-    def debug(self, method, url, request_body, status_code, request_headers):
+    def debug(self: TLogger, method: str, url: str, request_body: dict[str, Any], status_code: str, request_headers: dict[str, Any]) -> None:
         now = datetime.now()
         log_statement = LogStatement(level="debug", date=now.strftime("%m-%d-%Y, %H:%M:%S"), method=method, url=url, request_body=request_body,
                                     status_code=status_code, request_headers=request_headers)
         self._logger.log(LogLevel.LDebug, log_statement.string(self.log_format, self.log_request_body, self.log_response_body))
 
-    def error(self, method, url, request_body, status_code, request_headers, response_body, response_headers):
+    def error(self: TLogger, method: str, url: str, request_body: dict[str, Any], status_code: str, request_headers: dict[str, Any], response_body: dict[str, Any], response_headers: dict[str, Any]) -> None:
         now = datetime.now()
         log_statement = LogStatement("error", now.strftime("%m-%d-%Y, %H:%M:%S"), method, url, request_body, status_code, request_headers, response_body, response_headers)
         self._logger.log(LogLevel.LError, log_statement.string(self.log_format, self.log_request_body, self.log_response_body))
@@ -117,7 +127,7 @@ class LogFormat:
     JSON = 2
 
     @staticmethod
-    def from_string(value):
+    def from_string(value: str) -> Union[dict[str, Any], int]:
         try:
             return {
                 'text': LogFormat.TEXT,
@@ -133,7 +143,7 @@ class LogLevel:
     LNone = logging.CRITICAL + 1
 
     @staticmethod
-    def from_string(value):
+    def from_string(value: str) -> Union[dict[str, Any], int]:
         try:
             return {
                 'trace': LogLevel.LTrace,
@@ -145,7 +155,10 @@ class LogLevel:
             return LogLevel.LNone
 
 class LogStatement(object):
-    def __init__(self, level, date, method, url, request_body, status_code, request_headers, response_body=None, response_headers=None):
+
+    TLogStatement = TypeVar("TLogStatement", bound="LogStatement")
+
+    def __init__(self: TLogStatement, level: str, date: str, method: str, url: str, request_body: dict[str, Any], status_code: str, request_headers: dict[str, Any], response_body: dict[str, Any] = None, response_headers: dict[str, Any] = None) -> None:
         self.level = level
         self.date = date
         self.method = method
@@ -163,7 +176,7 @@ class LogStatement(object):
         else:
              self.response_headers = None
     
-    def string(self, log_format, log_request_body, log_response_body):
+    def string(self: TLogStatement, log_format: int, log_request_body: bool, log_response_body: bool) -> str:
         self.request_headers["Authorization"] = "[REDACTED]"
 
         if not log_request_body:
@@ -190,11 +203,11 @@ class LogStatement(object):
            self._format_value("CorrelationId", self._get_correlation_id(self.response_headers)),
            self._format_value("Body", self.response_body))
     
-    def _camel_case(self, st):
+    def _camel_case(self: TLogStatement, st: str) -> str:
         output = ''.join(x for x in st.title() if x.isalnum())
         return output[0].lower() + output[1:]
 
-    def _get_correlation_id(self, headers):
+    def _get_correlation_id(self: TLogStatement, headers: dict[str, Any]) -> str:
         if headers is None:
             return ""
         try:
@@ -202,12 +215,12 @@ class LogStatement(object):
         except KeyError:
             return ""
 
-    def _format_value(self, name, value):
+    def _format_value(self: TLogStatement, name: str, value: str) -> str:
         if value == "" or value is None:
             return ""
         return "\n{}: {}".format(name, value)
 
-    def _format_headers(self, headers):
+    def _format_headers(self: TLogStatement, headers: dict[str, Any]) -> str:
         result = ""
         if headers is None:
             return result
