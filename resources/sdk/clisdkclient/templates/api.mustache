@@ -73,11 +73,11 @@ var {{operationId}}Cmd = &cobra.Command{
 		if len(queryParams) > 0 {
 			urlString = fmt.Sprintf("%v?", path)
 			for k, v := range queryParams {
-                if k == "varType" {
-                    k = "type"
-                    urlString += fmt.Sprintf("%v=%v&", url.QueryEscape(strings.TrimSpace(k)), url.QueryEscape(strings.TrimSpace(v)))
-                    continue
-                }
+				if k == "varType" {
+					k = "type"
+					urlString += fmt.Sprintf("%v=%v&", url.QueryEscape(strings.TrimSpace(k)), url.QueryEscape(strings.TrimSpace(v)))
+					continue
+				}
 				urlString += fmt.Sprintf("%v=%v&", url.QueryEscape(strings.TrimSpace(k)), url.QueryEscape(strings.TrimSpace(v)))
 			}
 			urlString = strings.TrimSuffix(urlString, "&")
