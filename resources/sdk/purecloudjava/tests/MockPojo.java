@@ -2,21 +2,21 @@ package com.mypurecloud.sdk.v2;
 
 public class MockPojo {
 
-	private String id;
+  private String id;
 
-	public MockPojo() {}
+  public MockPojo() {}
 
-	public String getId() {
-		return this.id;
-	}
+  public String getId() {
+    return this.id;
+  }
 
-	public void setId(String id) {
-		this.id = id;
-	}
+  public void setId(String id) {
+    this.id = id;
+  }
 
-	@Override      
-	public String toString() {          
-			return "MockPojo [id "+ getId() + "]";      
-	}    
+@Override
+  public String toString() {
+		return "MockPojo [id "+ getId() + "]";
+  }    
 
 }
