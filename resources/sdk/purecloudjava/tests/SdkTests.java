@@ -225,7 +225,7 @@ public class SdkTests {
         }
     }
 
-		@Test(priority = 8)
+    @Test(priority = 8)
     public void testObjectMapperIgnoresUnknownProperties() {
         try {
             final String ID = "12345";
