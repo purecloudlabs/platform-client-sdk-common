@@ -279,7 +279,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <swagger-annotations-version>1.6.8</swagger-annotations-version>
     <slf4j-version>2.0.3</slf4j-version>
-    <jackson-version>2.13.4</jackson-version>
+    <jackson-version>2.14.0</jackson-version>
     <jodatime-version>2.10.14</jodatime-version>
     <testng-version>6.14.3</testng-version>
     <apache-httpclient-version>4.5.13</apache-httpclient-version>
