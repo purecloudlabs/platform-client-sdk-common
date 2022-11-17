@@ -17,6 +17,10 @@ type testConfig struct {
 	logLevel            LoggingLevel
 	userEmail           string
 	usersAPI            *UsersApi
+	JourneyAPI          *JourneyApi
+	PatchSegment        Patchsegment
+	PatchConfiguration  PatchConfiguration
+	journeySegmentId    string
 	userID              string
 	userName            string
 	userDepartment      string
@@ -43,6 +47,7 @@ type testSerializationStruct struct {
 var config testConfig
 
 func TestEnvVars(t *testing.T) {
+	exampleDisplayName := "exampledisplayname"
 	// Get
 	config = testConfig{
 		environment:         "https://api." + os.Getenv("PURECLOUD_ENVIRONMENT"),
@@ -54,6 +59,8 @@ func TestEnvVars(t *testing.T) {
 		busyPresenceID:      "31fe3bac-dea6-44b7-bed7-47f91660a1a0",
 		availablePresenceID: "6a3af858-942f-489d-9700-5f9bcdcdae9b",
 		logLevel:            LNone,
+		PatchSegment:        Patchsegment{DisplayName: &exampleDisplayName},
+		journeySegmentId:    "b4ce917a-43e4-483d-9659-124b315e3651",
 	}
 	config.userEmail = fmt.Sprintf("%v@%v", uuid.New().String(), config.environment[12:])
 
@@ -74,7 +81,9 @@ func TestEnvVars(t *testing.T) {
 	// Setup
 	GetDefaultConfiguration().BasePath = config.environment
 	GetDefaultConfiguration().LoggingConfiguration.LogLevel = config.logLevel
+
 	config.usersAPI = NewUsersApi()
+	config.JourneyAPI = NewJourneyApi()
 
 	// Log
 	t.Logf("Enviornment: %v", config.environment)
@@ -242,6 +251,55 @@ func TestGetUser(t *testing.T) {
 func TestDeleteUser(t *testing.T) {
 	// Delete user
 	_, response, err := config.usersAPI.DeleteUser(config.userID)
+	if err != nil {
+		t.Error(err)
+	} else if response != nil && response.Error != nil {
+		t.Error(response.Error)
+	}
+}
+
+func TestSetPatchConfiguration(t *testing.T) {
+	// get the configuration
+	configuration := GetDefaultConfiguration()
+
+	// PatchConfiguration should be nil to begin with
+	t.Logf("%#v\n", configuration.PatchConfiguration)
+	if configuration.PatchConfiguration != nil {
+		t.Errorf("PatchConfiguration did not match. Expected %v, Actual: %v", nil, configuration.PatchConfiguration)
+	}
+
+	// set PatchConfiguration directly on the configuration object
+	patchConfig := &PatchConfiguration{RemoveOmitEmpty: true, APIs: []string{"/api/v2/journey/", "/api/v2/analytics/"}}
+	configuration.PatchConfiguration = patchConfig
+	t.Logf("%#v\n", configuration.PatchConfiguration)
+	if !reflect.DeepEqual(configuration.PatchConfiguration, patchConfig) {
+		t.Errorf("PatchConfiguration did not match. Expected %v, Actual: %v", patchConfig, configuration.PatchConfiguration)
+	}
+
+	// set PatchConfiguration using the SetPatchConfiguration function (should override the PatchConfiguration set above)
+	anotherPatchConfig := &PatchConfiguration{RemoveOmitEmpty: true, APIs: []string{"/api/v2/routing/", "/api/v2/integrations"}}
+	SetPatchConfiguration(anotherPatchConfig)
+	t.Logf("%#v\n", configuration.PatchConfiguration)
+	if !reflect.DeepEqual(configuration.PatchConfiguration, anotherPatchConfig) {
+		t.Errorf("PatchConfiguration did not match. Expected %v, Actual: %v", anotherPatchConfig, configuration.PatchConfiguration)
+	}
+}
+
+func TestProcessModel(t *testing.T) {
+	expected := "{\"id\":null,\"isActive\":null,\"displayName\":\"exampledisplayname\",\"version\":null,\"description\":null,\"color\":null,\"shouldDisplayToAgent\":null,\"context\":null,\"journey\":null,\"externalSegment\":null,\"assignmentExpirationDays\":null,\"selfUri\":null,\"createdDate\":null,\"modifiedDate\":null}"
+	input := config.PatchSegment
+	t.Logf("input %v", input.String())
+	output, _ := processModel(input)
+	t.Logf("output %v", string(output))
+	if string(output) != expected {
+		t.Errorf("output did not match. Expected %v, Actual: %v", expected, string(output))
+	}
+}
+
+func TestPatchJourneySegment(t *testing.T) {
+	patchConfig := &PatchConfiguration{RemoveOmitEmpty: true, APIs: []string{"/api/v2/journey/"}}
+	SetPatchConfiguration(patchConfig)
+	_, response, err := config.JourneyAPI.PatchJourneySegment(config.journeySegmentId, config.PatchSegment)
 	if err != nil {
 		t.Error(err)
 	} else if response != nil && response.Error != nil {

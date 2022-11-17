@@ -17,8 +17,8 @@ import (
 
 // APIClient provides functions for making API requests
 type APIClient struct {
-	client        retryablehttp.Client
-	configuration *Configuration
+	client             retryablehttp.Client
+	configuration      *Configuration
 }
 
 // NewAPIClient creates a new API client
@@ -118,8 +118,16 @@ func (c *APIClient) CallAPI(path string, method string,
 	// Set post body
 	if postBody != nil {
 		request.Header.Set("Content-Type", "application/json")
-		j, _ := json.Marshal(postBody)
-		request.SetBody(ioutil.NopCloser(bytes.NewReader(j)))
+
+		if c.configuration.PatchConfiguration != nil && method == "PATCH" && c.configuration.PatchConfiguration.RemoveOmitEmpty && pathContainsAPI(path, c.configuration.PatchConfiguration.APIs) {
+			processedModel, _ := processModel(postBody)
+			fmt.Println("processed model")
+			fmt.Println(string(processedModel))
+			request.SetBody(ioutil.NopCloser(bytes.NewReader(processedModel)))
+		} else {
+			j, _ := json.Marshal(postBody)
+			request.SetBody(ioutil.NopCloser(bytes.NewReader(j)))
+		}
 	}
 
 	// Set provided headers
@@ -278,4 +286,36 @@ func copy(data []byte, v interface{}) {
 	dataS := string(data)
 
 	reflect.ValueOf(v).Elem().Set(reflect.ValueOf(&dataS))
+}
+
+// process the model to remove omitempty tags on optional properties
+func processModel(model interface{}) ([]byte, error) {
+	value := reflect.ValueOf(model)
+	// If it's an interface or a pointer, unwrap it.
+    if value.Kind() == reflect.Ptr && value.Elem().Kind() == reflect.Struct {
+        value = value.Elem()
+    }
+	t := value.Type()
+	sf := make([]reflect.StructField, 0)
+	for i := 0; i < t.NumField(); i++ {
+		sf = append(sf, t.Field(i))
+		_, ok := t.Field(i).Tag.Lookup("required")
+		if !ok {
+			sf[i].Tag = reflect.StructTag(fmt.Sprintf("json:\"%v\"", strings.Split(t.Field(i).Tag.Get("json"), ",")[0]))
+			continue
+		}
+	}
+	newType := reflect.StructOf(sf)
+	newValue := value.Convert(newType)
+	return json.Marshal(newValue.Interface())
+}
+
+// check if the path contains an API from the PatchConfiguration APIs list
+func pathContainsAPI(path string, APIs []string) bool {
+	for _, item := range APIs {
+		if strings.Contains(path, item) {
+			return true
+		}
+	}
+	return false
 }

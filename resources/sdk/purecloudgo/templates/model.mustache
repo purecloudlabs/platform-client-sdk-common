@@ -12,7 +12,7 @@ import ({{#imports}}
 // {{classname}}{{#description}} - {{{description}}}{{/description}}
 type {{classname}} struct { {{#vars}}
 	// {{name}}{{#description}} - {{{description}}}{{/description}}
-	{{name}} *{{{dataType}}} `json:"{{baseName}},omitempty"`
+	{{name}} *{{{dataType}}} `json:"{{baseName}},omitempty"{{#required}} required:"{{required}}"{{/required}}`
 
 {{/vars}}}
 

@@ -21,29 +21,30 @@ import (
 
 // Configuration has settings to configure the SDK
 type Configuration struct {
-	UserName                 string                `json:"userName,omitempty"`
-	Password                 string                `json:"password,omitempty"`
-	APIKeyPrefix             map[string]string     `json:"APIKeyPrefix,omitempty"`
-	APIKey                   map[string]string     `json:"APIKey,omitempty"`
-	OAuthToken               string                `json:"oAuthToken,omitempty"`
-	Timeout                  int                   `json:"timeout,omitempty"`
-	BasePath                 string                `json:"basePath,omitempty"`
-	Host                     string                `json:"host,omitempty"`
-	Scheme                   string                `json:"scheme,omitempty"`
-	AccessToken              string                `json:"accessToken,omitempty"`
-	RefreshToken             string                `json:"refreshToken,omitempty"`
-	ClientID                 string                `json:"clientId,omitempty"`
-	ClientSecret             string                `json:"clientSecret,omitempty"`
-	ShouldRefreshAccessToken bool                  `json:"shouldRefreshAccessToken,omitempty"`
-	RefreshInProgress        int64                 `json:"refreshInProgress,omitempty"`
-	RefreshTokenWaitTime     int                   `json:"refreshTokenWaitTime,omitempty"`
-	DefaultHeader            map[string]string     `json:"defaultHeader,omitempty"`
-	UserAgent                string                `json:"userAgent,omitempty"`
-	APIClient                APIClient             `json:"APIClient,omitempty"`
-	RetryConfiguration       *RetryConfiguration   `json:"retryConfiguration,omitempty"`
-	LoggingConfiguration     *LoggingConfiguration `json:"loggingConfiguration,omitempty"`
-	ConfigFilePath           string                `json:"configFilePath,omitempty"`
-	AutoReloadConfig         bool                  `json:"autoReloadConfig,omitempty"`
+	UserName                                    string                `json:"userName,omitempty"`
+	Password                                    string                `json:"password,omitempty"`
+	APIKeyPrefix                                map[string]string     `json:"APIKeyPrefix,omitempty"`
+	APIKey                                      map[string]string     `json:"APIKey,omitempty"`
+	OAuthToken                                  string                `json:"oAuthToken,omitempty"`
+	Timeout                                     int                   `json:"timeout,omitempty"`
+	BasePath                                    string                `json:"basePath,omitempty"`
+	Host                                        string                `json:"host,omitempty"`
+	Scheme                                      string                `json:"scheme,omitempty"`
+	AccessToken                                 string                `json:"accessToken,omitempty"`
+	RefreshToken                                string                `json:"refreshToken,omitempty"`
+	ClientID                                    string                `json:"clientId,omitempty"`
+	ClientSecret                                string                `json:"clientSecret,omitempty"`
+	ShouldRefreshAccessToken                    bool                  `json:"shouldRefreshAccessToken,omitempty"`
+	RefreshInProgress                           int64                 `json:"refreshInProgress,omitempty"`
+	RefreshTokenWaitTime                        int                   `json:"refreshTokenWaitTime,omitempty"`
+	DefaultHeader                               map[string]string     `json:"defaultHeader,omitempty"`
+	UserAgent                                   string                `json:"userAgent,omitempty"`
+	APIClient                                   APIClient             `json:"APIClient,omitempty"`
+	RetryConfiguration                          *RetryConfiguration   `json:"retryConfiguration,omitempty"`
+	LoggingConfiguration                        *LoggingConfiguration `json:"loggingConfiguration,omitempty"`
+	ConfigFilePath                              string                `json:"configFilePath,omitempty"`
+	AutoReloadConfig                            bool                  `json:"autoReloadConfig,omitempty"`
+	PatchConfiguration                          *PatchConfiguration   `json:"patchConfiguration,omitempty"`
 }
 
 const (
@@ -59,6 +60,17 @@ const (
 	APSouth1     = "https://api.aps1.pure.cloud"
 	USEast2     = "https://api.use2.us-gov-pure.cloud"
 )
+
+func SetPatchConfiguration(patchConfiguration *PatchConfiguration) {
+	instance.PatchConfiguration = &PatchConfiguration{RemoveOmitEmpty: patchConfiguration.RemoveOmitEmpty, APIs: patchConfiguration.APIs}
+	fmt.Println("PatchConfiguration set")
+	fmt.Printf("%#v\n", instance.PatchConfiguration)
+} 
+
+type PatchConfiguration struct {
+	RemoveOmitEmpty bool     `json:"removeOmitEmpty,omitempty"`
+	APIs            []string `json:"apis,omitempty"`
+}
 
 // RetryConfiguration has settings to configure the SDK retry logic
 type RetryConfiguration struct {
