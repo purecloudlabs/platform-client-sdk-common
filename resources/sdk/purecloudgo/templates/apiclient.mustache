@@ -17,8 +17,8 @@ import (
 
 // APIClient provides functions for making API requests
 type APIClient struct {
-	client             retryablehttp.Client
-	configuration      *Configuration
+	client        retryablehttp.Client
+	configuration *Configuration
 }
 
 // NewAPIClient creates a new API client
@@ -118,7 +118,6 @@ func (c *APIClient) CallAPI(path string, method string,
 	// Set post body
 	if postBody != nil {
 		request.Header.Set("Content-Type", "application/json")
-
 		if c.configuration.PatchConfiguration != nil && method == "PATCH" && c.configuration.PatchConfiguration.RemoveOmitEmpty && pathContainsAPI(path, c.configuration.PatchConfiguration.APIs) {
 			processedModel, _ := processModel(postBody)
 			fmt.Println("processed model")
@@ -292,9 +291,9 @@ func copy(data []byte, v interface{}) {
 func processModel(model interface{}) ([]byte, error) {
 	value := reflect.ValueOf(model)
 	// If it's an interface or a pointer, unwrap it.
-    if value.Kind() == reflect.Ptr && value.Elem().Kind() == reflect.Struct {
-        value = value.Elem()
-    }
+	if value.Kind() == reflect.Ptr && value.Elem().Kind() == reflect.Struct {
+		value = value.Elem()
+	}
 	t := value.Type()
 	sf := make([]reflect.StructField, 0)
 	for i := 0; i < t.NumField(); i++ {

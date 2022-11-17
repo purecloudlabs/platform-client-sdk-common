@@ -19,7 +19,6 @@ type testConfig struct {
 	usersAPI            *UsersApi
 	JourneyAPI          *JourneyApi
 	PatchSegment        Patchsegment
-	PatchConfiguration  PatchConfiguration
 	journeySegmentId    string
 	userID              string
 	userName            string
