@@ -243,6 +243,11 @@
 			"name": "activate"
 		}
 	},
+	"/api/v2/routing/settings/transcription": {
+		"patch": {
+			"name": "modify"
+		}
+	},
 	"/api/v2/scim/users/{userId}": {
 		"put": {
 			"name": "replace"
