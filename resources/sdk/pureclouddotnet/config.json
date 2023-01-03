@@ -78,6 +78,18 @@
       ],
       "compileScripts": [
         {
+          "type": "node",
+          "path": "processExtensions.js",
+          "args": [
+            "${COMMON_ROOT}/resources/sdk/pureclouddotnet/extensions-test",
+            "${SDK_REPO}/build/src/${DOTNET_NAMESPACE}.Tests",
+            {
+              "$ref": "#/settings/namespace"
+            }
+          ],
+          "failOnError": true
+        },
+        {
           "type": "shell",
           "path": "compile.sh",
           "args": [
