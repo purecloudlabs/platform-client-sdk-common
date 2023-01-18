@@ -3,20 +3,34 @@ package {{packageName}}
 import ({{#imports}}
 	"{{import}}"{{/imports}}
 	"github.com/leekchan/timeutil"
+	"reflect"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 )
 {{#model}}
 
 // {{classname}}{{#description}} - {{{description}}}{{/description}}
-type {{classname}} struct { {{#vars}}
+type {{classname}} struct { 
+	// SetFieldNames defines the list of fields to use for controlled JSON serialization
+	SetFieldNames map[string]bool `json:"-"`{{#vars}}
 	// {{name}}{{#description}} - {{{description}}}{{/description}}
 	{{name}} *{{{dataType}}} `json:"{{baseName}},omitempty"`
 
 {{/vars}}}
 
-func (o *{{classname}}) MarshalJSON() ([]byte, error) {
+func (o {{classname}}) MarshalJSON() ([]byte, error) {
+	val := reflect.ValueOf(o)
+	if len(o.SetFieldNames) > 0 {
+		newObj := make(map[string]interface{})
+		for fieldName := range o.SetFieldNames {
+			newObj[fieldName] = val.FieldByName(fieldName).Interface()
+		}
+
+		return json.Marshal(newObj)
+	}
+
 	// Redundant initialization to avoid unused import errors for models with no Time values
 	_  = timeutil.Timedelta{}
 	type Alias {{classname}}
@@ -42,14 +56,14 @@ func (o *{{classname}}) MarshalJSON() ([]byte, error) {
 		{{name}} *string `json:"{{baseName}},omitempty"`
 		{{/isDate}}{{^isDate}}
 		{{name}} *{{{dataType}}} `json:"{{baseName}},omitempty"`
-		{{/isDate}}{{/isDateTime}}{{/vars}}*Alias
+		{{/isDate}}{{/isDateTime}}{{/vars}}Alias
 	}{ {{#vars}}{{#isDateTime}}
 		{{name}}: {{name}},
 		{{/isDateTime}}{{^isDateTime}}{{#isDate}}
 		{{name}}: {{name}},
 		{{/isDate}}{{^isDate}}
 		{{name}}: o.{{name}},
-		{{/isDate}}{{/isDateTime}}{{/vars}}Alias:    (*Alias)(o),
+		{{/isDate}}{{/isDateTime}}{{/vars}}Alias:    (Alias)(o),
 	})
 }
 

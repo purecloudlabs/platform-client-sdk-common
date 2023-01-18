@@ -279,3 +279,33 @@ func copy(data []byte, v interface{}) {
 
 	reflect.ValueOf(v).Elem().Set(reflect.ValueOf(&dataS))
 }
+
+// SetField uses reflection to set a field on the model if the model has a property SetFieldNames, and triggers custom JSON serialization logic to only serialize properties that have been set using this function.
+func SetField(model interface{}, field string, fieldValue interface{}) error {
+	// Get Value object for field
+	target := reflect.ValueOf(model)
+	targetField := reflect.Indirect(target).FieldByName(field)
+	setFieldNamesField := reflect.Indirect(target).FieldByName("SetFieldNames")
+
+	if !setFieldNamesField.IsValid() {
+		return fmt.Errorf("%s does not have SetFieldNames\n", target.Type())
+	}
+
+	// Set value
+	if fieldValue != nil {
+		fieldValueValue := reflect.ValueOf(fieldValue)
+		targetField.Set(fieldValueValue)
+	} else {
+		// Must create a new Value (creates **type) then get its element (*type), which will be nil pointer of the appropriate type
+		targetField.Set(reflect.Indirect(reflect.New(targetField.Type())))
+	}
+
+	// Add field to set field names list
+	if setFieldNamesField.IsNil() {
+		fmt.Println("Init map")
+		setFieldNamesField.Set(reflect.ValueOf(make(map[string]bool)))
+	}
+	setFieldNamesField.Interface().(map[string]bool)[field] = true
+
+	return nil
+}
