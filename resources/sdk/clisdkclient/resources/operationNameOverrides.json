@@ -370,5 +370,15 @@
 		"patch": {
 			"name": "update"
 		}
-	}
+	},
+	"/api/v2/conversations/emails/{conversationId}/messages/draft": {
+        "patch": {
+            "name": "patch"
+        }
+    },
+	"/api/v2/recording/jobs": {
+        "delete": {
+            "name": "deletejobsbystate"
+        }
+    }
 }
