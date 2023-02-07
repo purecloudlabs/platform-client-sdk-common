@@ -265,17 +265,19 @@ public class WebMessagingClient {
      * @param origin       Represents the origin of the request. You can restrict access in Messenger Deployments
      */
     public void configureSession(String deploymentId, String origin) {
-        configureSession(deploymentId, UUID.randomUUID().toString(), origin);
+        configureSession(deploymentId, UUID.randomUUID().toString(), origin, Optional.empty());
     }
 
     /**
-     * Configures a session using the provided session token. This can be used to reconnect to active sessions.
-     *
-     * @param deploymentId The ID of the Web Messaging deployment
-     * @param token        The session token
-     * @param origin       Represents the origin of the request. You can restrict access in Messenger Deployments
-     */
-    public void configureSession(String deploymentId, String token, String origin) {
+    * Configures a session using the provided session token. This can be used to reconnect to active sessions.
+    *
+    * @param deploymentId The ID of the Web Messaging deployment
+    * @param token        The session token
+    * @param origin       Represents the origin of the request. You can restrict access in Messenger Deployments
+    * @param startNew     true if you want to start a new session for your currently read-only session (after a Presence event of type {@link EventPresenceType#DISCONNECT})
+    *
+    */
+    public void configureSession(String deploymentId, String token, String origin, Optional<Boolean> startNew) {
         try {
             this.token = token;
             this.deploymentId = deploymentId;
