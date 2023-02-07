@@ -41,37 +41,37 @@ public class WebMessagingClient {
     private final ArrayList<SessionListener> sessionListeners = new ArrayList<>();
     private ApiClient apiClient;
 
-		/**
-		* Inspect a StructuredMessage, looking for Presence events ({@link EventType#PRESENCE} )
-		* @param message message to introspect for Presence events
-		* @return true if a Presence event exists in this message, false otherwise
-		* @see EventType#PRESENCE
-		*/
-		static public boolean hasPresenceEvents(StructuredMessage message) {
-			return hasEvents(message, EventType.PRESENCE);
-		}
+    /**
+    * Inspect a StructuredMessage, looking for Presence events ({@link EventType#PRESENCE} )
+    * @param message message to introspect for Presence events
+    * @return true if a Presence event exists in this message, false otherwise
+    * @see EventType#PRESENCE
+    */
+    static public boolean hasPresenceEvents(StructuredMessage message) {
+        return hasEvents(message, EventType.PRESENCE);
+    }
 
-		/**
-		* Inspect a StructuredMessage, looking for Typing events ({@link EventType#TYPING} )
-		* @param message message to introspect for Typing events
-		* @return true if a Typing event exists in this message, false otherwise
-		* @see EventType#TYPING
-		*/
-		static public boolean hasTypingEvents(StructuredMessage message) {
-			return hasEvents(message, EventType.TYPING);
-		}
+    /**
+    * Inspect a StructuredMessage, looking for Typing events ({@link EventType#TYPING} )
+    * @param message message to introspect for Typing events
+    * @return true if a Typing event exists in this message, false otherwise
+    * @see EventType#TYPING
+    */
+    static public boolean hasTypingEvents(StructuredMessage message) {
+        return hasEvents(message, EventType.TYPING);
+    }
 
-		/**
-		* Inspect a StructuredMessage, looking for a type of event ({@link EventType} )
-		*
-		* @param message message to introspect for events
-		* @param type type of event to look for
-		* @return true if this type of event exists in this message, false otherwise
-		* @see EventType
-		*/
-		static public boolean hasEvents(StructuredMessage message, EventType type) {
-			return message.getEvents().stream().anyMatch(messageEvent -> messageEvent.getEventType() == type);
-		}
+    /**
+    * Inspect a StructuredMessage, looking for a type of event ({@link EventType} )
+    *
+    * @param message message to introspect for events
+    * @param type type of event to look for
+    * @return true if this type of event exists in this message, false otherwise
+    * @see EventType
+    */
+    static public boolean hasEvents(StructuredMessage message, EventType type) {
+        return message.getEvents().stream().anyMatch(messageEvent -> messageEvent.getEventType() == type);
+    }
 
     /**
      * Creates a new Web Messaging client
