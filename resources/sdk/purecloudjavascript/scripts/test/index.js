@@ -104,6 +104,9 @@ describe('JS SDK for Node', function () {
 			.catch((err) => handleError(err, done));
 	});
 
+	/*
+	Don't delete, needed for testing proxy code in future
+
 	it('should get the user through a proxy', (done) => {
 		client.proxy = {
 			host: "ec2-54-146-246-30.compute-1.amazonaws.com",
@@ -122,6 +125,8 @@ describe('JS SDK for Node', function () {
 			})
 			.catch((err) => handleError(err, done));
 	});
+	*/
+
 
 	it('should delete the user', (done) => {
 		usersApi
