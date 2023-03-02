@@ -10,7 +10,7 @@ resources/sdk/*/scripts/local.sh
 resources/sdk/pureclouddotnet/extensions/Client/NotificationTopics.cs
 resources/sdk/purecloudjava/tests/.idea/
 *.pyc
-
+.DS_Store
 
 
 
