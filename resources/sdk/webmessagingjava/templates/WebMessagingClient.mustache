@@ -290,6 +290,7 @@ public class WebMessagingClient {
             configureSessionRequest.setAction(RequestTypeConfigureSession.CONFIGURESESSION);
             configureSessionRequest.setDeploymentId(deploymentId);
             configureSessionRequest.setToken(token);
+            startNew.ifPresent(boolValue -> configureSessionRequest.setStartNew(boolValue));
             String payload = objectMapper.writeValueAsString(configureSessionRequest);
 
             webSocket.sendText(payload, true);
