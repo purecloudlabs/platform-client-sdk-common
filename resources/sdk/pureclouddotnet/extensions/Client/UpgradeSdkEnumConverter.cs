@@ -82,6 +82,7 @@ namespace {{=it.packageName}}.Client
                     if (attribute.Value == "OUTDATED_SDK_VERSION")
                     {
                         defaultValue = enumValue;
+                        stringsByValue[enumValue] = attribute.Value;
                     }
                     else
                     {
