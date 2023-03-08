@@ -42,6 +42,38 @@ public class WebMessagingClient {
     private ApiClient apiClient;
 
     /**
+    * Inspect a StructuredMessage, looking for Presence events ({@link EventType#PRESENCE} )
+    * @param message message to introspect for Presence events
+    * @return true if a Presence event exists in this message, false otherwise
+    * @see EventType#PRESENCE
+    */
+    static public boolean hasPresenceEvents(StructuredMessage message) {
+        return hasEvents(message, EventType.PRESENCE);
+    }
+
+    /**
+    * Inspect a StructuredMessage, looking for Typing events ({@link EventType#TYPING} )
+    * @param message message to introspect for Typing events
+    * @return true if a Typing event exists in this message, false otherwise
+    * @see EventType#TYPING
+    */
+    static public boolean hasTypingEvents(StructuredMessage message) {
+        return hasEvents(message, EventType.TYPING);
+    }
+
+    /**
+    * Inspect a StructuredMessage, looking for a type of event ({@link EventType} )
+    *
+    * @param message message to introspect for events
+    * @param type type of event to look for
+    * @return true if this type of event exists in this message, false otherwise
+    * @see EventType
+    */
+    static public boolean hasEvents(StructuredMessage message, EventType type) {
+        return message.getEvents().stream().anyMatch(messageEvent -> messageEvent.getEventType() == type);
+    }
+
+    /**
      * Creates a new Web Messaging client
      *
      * @param address The WebSocket server's address, including the wss:// protocol
@@ -233,17 +265,19 @@ public class WebMessagingClient {
      * @param origin       Represents the origin of the request. You can restrict access in Messenger Deployments
      */
     public void configureSession(String deploymentId, String origin) {
-        configureSession(deploymentId, UUID.randomUUID().toString(), origin);
+        configureSession(deploymentId, UUID.randomUUID().toString(), origin, Optional.empty());
     }
 
     /**
-     * Configures a session using the provided session token. This can be used to reconnect to active sessions.
-     *
-     * @param deploymentId The ID of the Web Messaging deployment
-     * @param token        The session token
-     * @param origin       Represents the origin of the request. You can restrict access in Messenger Deployments
-     */
-    public void configureSession(String deploymentId, String token, String origin) {
+    * Configures a session using the provided session token. This can be used to reconnect to active sessions.
+    *
+    * @param deploymentId The ID of the Web Messaging deployment
+    * @param token        The session token
+    * @param origin       Represents the origin of the request. You can restrict access in Messenger Deployments
+    * @param startNew     true if you want to start a new session for your currently read-only session (after a Presence event of type {@link EventPresenceType#DISCONNECT})
+    *
+    */
+    public void configureSession(String deploymentId, String token, String origin, Optional<Boolean> startNew) {
         try {
             this.token = token;
             this.deploymentId = deploymentId;
@@ -256,6 +290,7 @@ public class WebMessagingClient {
             configureSessionRequest.setAction(RequestTypeConfigureSession.CONFIGURESESSION);
             configureSessionRequest.setDeploymentId(deploymentId);
             configureSessionRequest.setToken(token);
+            startNew.ifPresent(boolValue -> configureSessionRequest.setStartNew(boolValue));
             String payload = objectMapper.writeValueAsString(configureSessionRequest);
 
             webSocket.sendText(payload, true);
