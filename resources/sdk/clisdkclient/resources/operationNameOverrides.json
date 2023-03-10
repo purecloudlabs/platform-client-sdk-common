@@ -167,6 +167,11 @@
 			"name": "add"
 		}
 	},
+	"/api/v2/infrastructureascode/jobs/{jobId}": {
+		"get": {
+			"name": "getjob"
+		}
+	},
 	"/api/v2/knowledge/knowledgebases/{knowledgeBaseId}/languages/{languageCode}/documents": {
 		"patch": {
 			"name": "updatecollection"
