@@ -91,7 +91,8 @@ describe('JS SDK for Node', function () {
 	});
 
 	it('should get the user', (done) => {
-		usersApi
+		setTimeout(() => {
+			usersApi
 			.getUser(USER_ID, { expand: ['profileSkills'] })
 			.then((data) => {
 				assert.strictEqual(data.id, USER_ID);
@@ -102,6 +103,10 @@ describe('JS SDK for Node', function () {
 				done();
 			})
 			.catch((err) => handleError(err, done));
+		}, 6000);
+
+		console.log('after wait');
+		
 	});
 
 	/*

@@ -1,4 +1,4 @@
-import base64, imp, os, requests, sys, unittest, uuid
+import base64, imp, os, requests, sys, unittest, uuid, time
 from pprint import pprint
 
 # Load SDK from local build
@@ -81,12 +81,14 @@ class SdkTests(unittest.TestCase):
 		self.assertEqual(user.department, SdkTests.userDepartment)
 
 	def test_5_set_profile_skills(self):
+		print('before ww')
 		skills = SdkTests.users_api.put_user_profileskills(SdkTests.userId, [ SdkTests.userProfileSkill ])
 
 		self.assertEqual(len(skills), 1)
 		self.assertEqual(skills[0], SdkTests.userProfileSkill)
 
 	def test_6_get_user(self):
+		time.sleep(8)
 		user = SdkTests.users_api.get_user(SdkTests.userId, expand = [ 'profileSkills' ])
 
 		self.assertEqual(user.id, SdkTests.userId)
