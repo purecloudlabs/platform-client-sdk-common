@@ -90,7 +90,6 @@ class SdkTests(unittest.TestCase):
 
 	@retry(AssertionError, tries=2, delay=3.0)
 	def test_6_get_user(self):
-		time.sleep(8)
 		user = SdkTests.users_api.get_user(SdkTests.userId, expand = [ 'profileSkills' ])
     	
 		self.assertEqual(user.id, SdkTests.userId)
