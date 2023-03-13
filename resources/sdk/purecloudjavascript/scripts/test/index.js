@@ -107,6 +107,7 @@ describe('JS SDK for Node', function () {
 				assert.strictEqual(data.department, USER_DEPARTMENT);
 				assert.strictEqual(data.profileSkills[0], USER_PROFILE_SKILL);
 				done();
+			}
 			catch(err) {
 				if( retry >0 ) {
 					getUsers(--retry,done);
