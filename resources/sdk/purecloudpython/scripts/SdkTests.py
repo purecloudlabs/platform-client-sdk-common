@@ -1,5 +1,6 @@
-import base64, imp, os, requests, sys, unittest, uuid
+import base64, imp, os, requests, sys, unittest, uuid, time
 from pprint import pprint
+from retry import retry
 
 # Load SDK from local build
 sys.path.append('../../../../output/purecloudpython/build/build/lib')
@@ -86,9 +87,10 @@ class SdkTests(unittest.TestCase):
 		self.assertEqual(len(skills), 1)
 		self.assertEqual(skills[0], SdkTests.userProfileSkill)
 
+	@retry(AssertionError, tries=2, delay=3.0)
 	def test_6_get_user(self):
 		user = SdkTests.users_api.get_user(SdkTests.userId, expand = [ 'profileSkills' ])
-
+    	
 		self.assertEqual(user.id, SdkTests.userId)
 		self.assertEqual(user.name, SdkTests.userName)
 		self.assertEqual(user.email, SdkTests.userEmail)

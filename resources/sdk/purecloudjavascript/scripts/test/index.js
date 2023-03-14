@@ -91,18 +91,32 @@ describe('JS SDK for Node', function () {
 	});
 
 	it('should get the user', (done) => {
-		usersApi
-			.getUser(USER_ID, { expand: ['profileSkills'] })
-			.then((data) => {
-				assert.strictEqual(data.id, USER_ID);
-				assert.strictEqual(data.name, USER_NAME);
-				assert.strictEqual(data.email, USER_EMAIL);
-				assert.strictEqual(data.department, USER_DEPARTMENT);
-				assert.strictEqual(data.profileSkills[0], USER_PROFILE_SKILL);
-				done();
-			})
-			.catch((err) => handleError(err, done));
+		getUsers(2, done);
 	});
+
+	function getUsers(retry, done) {
+		setTimeout(() => {
+			usersApi
+				.getUser(USER_ID, { expand: ['profileSkills'] })
+				.then((data) => {
+					try {
+						assert.strictEqual(data.id, USER_ID);
+						assert.strictEqual(data.name, USER_NAME);
+						assert.strictEqual(data.email, USER_EMAIL);
+						assert.strictEqual(data.department, USER_DEPARTMENT);
+						assert.strictEqual(data.profileSkills[0], USER_PROFILE_SKILL);
+						done();
+					} catch (err) {
+						if (retry > 0) {
+							getUsers(--retry, done);
+						} else {
+							handleError(err, done);
+						}
+					}
+				})
+				.catch((err) => handleError(err, done));
+		}, 3000);
+	}
 
 	/*
 	Don't delete, needed for testing proxy code in future
@@ -126,7 +140,6 @@ describe('JS SDK for Node', function () {
 			.catch((err) => handleError(err, done));
 	});
 	*/
-
 
 	it('should delete the user', (done) => {
 		usersApi
