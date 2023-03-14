@@ -82,7 +82,6 @@ class SdkTests(unittest.TestCase):
 		self.assertEqual(user.department, SdkTests.userDepartment)
 
 	def test_5_set_profile_skills(self):
-		print('before ww')
 		skills = SdkTests.users_api.put_user_profileskills(SdkTests.userId, [ SdkTests.userProfileSkill ])
 
 		self.assertEqual(len(skills), 1)
