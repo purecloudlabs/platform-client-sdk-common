@@ -15,7 +15,7 @@ PureCloudPlatformClientV2.configuration.access_token = 'your_access_token'{{/isO
 {{/hasAuthMethods}}
 
 # create an instance of the API class
-api_instance = PureCloudPlatformClientV2.{{baseName}}Api()
+api_instance = {{{packageName}}}.{{{classname}}}()
 {{#allParams}}{{paramName}} = {{{example}}} # {{{dataType}}} | {{{description}}}{{^required}} (optional){{/required}}{{#defaultValue}} (default to {{{.}}}){{/defaultValue}}
 {{/allParams}}
 
