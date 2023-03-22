@@ -115,7 +115,7 @@ describe('JS SDK for Node', function () {
 					}
 				})
 				.catch((err) => handleError(err, done));
-		}, 3000);
+		}, 6000);
 	}
 
 	/*
