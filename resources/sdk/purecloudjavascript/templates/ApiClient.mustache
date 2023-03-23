@@ -990,8 +990,8 @@ class ApiClient {
 				var url = that.buildUrl(path, pathParams);
 				var request = {
 					method: httpMethod,
-					url: url,
-                    httpsAgent: that.proxyAgent,
+					url: url,	
+					httpsAgent: that.proxyAgent,
 					timeout: that.timeout,
 					params: that.serialize(queryParams)
 				};
