@@ -376,22 +376,20 @@ Extended response object example (`body` and `text` have been truncated):
 
 ### Using a Proxy (Node.js only)
 
-Using a proxy is accomplished by setting the proxy settings on the `client` object
+Using a proxy is accomplished by setting the proxyAgent settings on the `client` object.
+We recommended using the npm package `hpagent` to create the proxyAgent although other options are available. 
 
 NOTE: SDK proxy configuration is only available in the node.js package due to the axios proxy incompatibility with browsers.
 
 ```javascript
+const {HttpsProxyAgent} = require('hpagent')
 const client = {{moduleName}}.ApiClient.instance;
+
 // Documentation: https://axios-http.com/docs/req_config
-client.proxy = {
-  host: '172.1.1.100',
-  port: 443,
-  protocol: 'https',
-  auth: {
-    username: 'john_doe',
-    password: 'abc123'
-  }
-};
+agent = new HttpsProxyAgent({
+  proxy: proxyUrl,
+});
+client.setProxyAgent(agent)
 ```
 
 
