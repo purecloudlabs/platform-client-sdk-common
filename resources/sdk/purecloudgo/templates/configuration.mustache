@@ -216,48 +216,48 @@ func (c *Configuration) updateConfigFromFile() error {
 		return err
 	}
 
-    // proxy
-    if getObject("proxy") != "" {
-		if isJson {
-			proxyI := getObject("proxy")
-       		jsonbody, err := json.Marshal(proxyI)
-			if err != nil {
-       		 return err
-    		}
-			proxyconf := ProxyConfiguration{}
-    		if err := json.Unmarshal(jsonbody, &proxyconf); err != nil {
-        		return err
-   			}
-			c.ProxyConfiguration = &proxyconf
-		} else {
-		proxyconf := ProxyConfiguration{}
-		c.ProxyConfiguration = &proxyconf
+	//proxy
+    if getConfigString("proxy", "host") != "" {
+                if isJson {
+                        proxyI := getObject("proxy")
+                        jsonbody, err := json.Marshal(proxyI)
+                        if err != nil {
+                                return err
+                        }
+                        proxyconf := ProxyConfiguration{}
+                        if err := json.Unmarshal(jsonbody, &proxyconf); err != nil {
+                                return err
+                        }
+                        c.ProxyConfiguration = &proxyconf
+                } else {
+                        proxyconf := ProxyConfiguration{}
+                        c.ProxyConfiguration = &proxyconf
 
-		hostProxy := getConfigString("proxy", "host")
-		if hostProxy != "" {
-			c.ProxyConfiguration.Host = hostProxy
-		}
+                        hostProxy := getConfigString("proxy", "host")
+                        if hostProxy != "" {
+                                c.ProxyConfiguration.Host = hostProxy
+                        }
 
-		port := getConfigString("proxy", "port")
-		if port != "" {
-			c.ProxyConfiguration.Port = port
-		}
+                        port := getConfigString("proxy", "port")
+                        if port != "" {
+                                c.ProxyConfiguration.Port = port
+                        }
 
-		protocol := getConfigString("proxy", "protocol")
-		if port != "" {
-			c.ProxyConfiguration.Protocol = protocol
-		}
+                        protocol := getConfigString("proxy", "protocol")
+                        if port != "" {
+                                c.ProxyConfiguration.Protocol = protocol
+                        }
 
-    	userName := getConfigString("proxy", "auth-username")
-		password := getConfigString("proxy", "auth-password")
-		if userName != "" && password != "" {
-				auth := Auth{}
-				c.ProxyConfiguration.Auth = &auth
-				c.ProxyConfiguration.Auth.UserName = userName
-				c.ProxyConfiguration.Auth.Password = password
-			}
-		}
-	}
+                        userName := getConfigString("proxy", "auth-username")
+                        password := getConfigString("proxy", "auth-password")
+                        if userName != "" && password != "" {
+                                auth := Auth{}
+                                c.ProxyConfiguration.Auth = &auth
+                                c.ProxyConfiguration.Auth.UserName = userName
+                                c.ProxyConfiguration.Auth.Password = password
+                        }
+                }
+        }
 
 
 	// logging
@@ -332,10 +332,8 @@ func getConfigString(section, key string) string {
 	return strings.Trim(fmt.Sprintf("%s", value), " ")
 }
 
-type I interface{}
-
-func getObject(section string) I {
-	return viper.Get(fmt.Sprintf("%s", section))
+func getObject(section string) interface{} {
+        return viper.Get(fmt.Sprintf("%s", section))
 }
 
 func getConfigBool(section, key string) bool {
