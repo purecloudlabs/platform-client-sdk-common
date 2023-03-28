@@ -19,7 +19,7 @@ const USER_DEPARTMENT = 'Ministry of Testing';
 const USER_PROFILE_SKILL = 'Testmaster';
 
 describe('JS SDK for Node', function () {
-	this.timeout(16000); // Ensure we don't timeout before the API returns a timeout (15s)
+	this.timeout(60000); // Ensure we don't timeout before the API returns a timeout (15s)
 
 	it('should trace basic information', () => {
 		PURECLOUD_ENVIRONMENT = setEnvironment();
@@ -116,7 +116,7 @@ describe('JS SDK for Node', function () {
 					}
 				})
 				.catch((err) => handleError(err, done));
-		}, 6000);
+		}, 8000);
 	}
 
 	//Don't delete, needed for testing proxy code in future
