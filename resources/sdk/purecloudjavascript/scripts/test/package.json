@@ -9,7 +9,8 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "mocha": "^5.2.0"
+    "mocha": "^5.2.0",
+    "hpagent": "^1.2.0"
   },
   "dependencies": {}
 }

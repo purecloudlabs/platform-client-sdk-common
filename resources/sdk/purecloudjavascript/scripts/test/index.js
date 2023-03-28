@@ -1,6 +1,7 @@
 /* globals describe it */
 
 const assert = require('assert');
+const { HttpsProxyAgent } = require('hpagent');
 
 // purecloud-platform-client-v2
 const platformClient = require('../../../../../output/purecloudjavascript/build');
@@ -118,28 +119,24 @@ describe('JS SDK for Node', function () {
 		}, 6000);
 	}
 
-	/*
-	Don't delete, needed for testing proxy code in future
-
-	it('should get the user through a proxy', (done) => {
-		client.proxy = {
-			host: "ec2-54-146-246-30.compute-1.amazonaws.com",
-			protocol: "http",
-			port: 8888,
-		}
-		usersApi
-			.getUser(USER_ID, { expand: ['profileSkills'] })
-			.then((data) => {
-				assert.strictEqual(data.id, USER_ID);
-				assert.strictEqual(data.name, USER_NAME);
-				assert.strictEqual(data.email, USER_EMAIL);
-				assert.strictEqual(data.department, USER_DEPARTMENT);
-				assert.strictEqual(data.profileSkills[0], USER_PROFILE_SKILL);
-				done();
-			})
-			.catch((err) => handleError(err, done));
-	});
-	*/
+	//Don't delete, needed for testing proxy code in future
+	// it('should get the user through a proxy', (done) => {
+	// 	httpsAgent = new HttpsProxyAgent({
+	// 		proxy: 'http://ec2-54-146-246-30.compute-1.amazonaws.com:8888',
+	// 	});
+	// 	client.proxyAgent = httpsAgent
+	// 	usersApi
+	// 		.getUser(USER_ID, { expand: ['profileSkills'] })
+	// 		.then((data) => {
+	// 			assert.strictEqual(data.id, USER_ID);
+	// 			assert.strictEqual(data.name, USER_NAME);
+	// 			assert.strictEqual(data.email, USER_EMAIL);
+	// 			assert.strictEqual(data.department, USER_DEPARTMENT);
+	// 			assert.strictEqual(data.profileSkills[0], USER_PROFILE_SKILL);
+	// 			done();
+	// 		})
+	// 		.catch((err) => handleError(err, done));
+	// });
 
 	it('should delete the user', (done) => {
 		usersApi
