@@ -42,7 +42,7 @@ func (a {{classname}}) {{nickname}}({{#allParams}}{{paramName}} {{{dataType}}}{{
 	var httpMethod = "{{httpMethod}}"
 	// create path and map variables
 	path := a.Configuration.BasePath + "{{path}}"{{#pathParams}}
-	path = strings.Replace(path, "{{=[[ ]]=}}{[[baseName]]}[[={{ }}=]]", fmt.Sprintf("%v", {{paramName}}), -1){{/pathParams}}{{#returnType}}
+	path = strings.Replace(path, "{{=[[ ]]=}}{[[baseName]]}[[={{ }}=]]", url.PathEscape(fmt.Sprintf("%v", {{paramName}})), -1){{/pathParams}}{{#returnType}}
 	defaultReturn := {{#isArray}}make{{/isArray}}{{^isArray}}new{{/isArray}}({{{returnType}}}{{#isArray}}, 0{{/isArray}}){{/returnType}}
 	if true == false {
 		return {{#returnType}}defaultReturn, {{/returnType}}nil, errors.New("This message brought to you by the laws of physics being broken")
