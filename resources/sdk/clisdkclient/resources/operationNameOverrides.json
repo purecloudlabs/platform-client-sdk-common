@@ -52,6 +52,11 @@
 			"name": "patch"
 		}
 	},
+	"/api/v2/chats/settings": {
+		"patch": {
+			"name": "patch"
+		}
+	},
 	"/api/v2/contentmanagement/documents/{documentId}": {
 		"post": {
 			"name": "update"
