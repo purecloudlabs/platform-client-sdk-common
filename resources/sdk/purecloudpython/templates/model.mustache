@@ -92,7 +92,9 @@ class {{classname}}(object):
         :param {{name}}: The {{name}} of this {{classname}}.
         :type: {{datatype}}
         """
-        {{#isEnum}}allowed_values = [{{#allowableValues}}{{#values}}"{{{this}}}"{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}}]
+        {{#isEnum}}if isinstance({{name}}, int):
+            {{name}} = str({{name}})
+        allowed_values = [{{#allowableValues}}{{#values}}"{{{this}}}"{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}}]
         if {{name}}.lower() not in map(str.lower, allowed_values):
             # print("Invalid value for {{name}} -> " + {{name}})
             self._{{name}} = "outdated_sdk_version"
