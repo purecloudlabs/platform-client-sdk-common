@@ -85,6 +85,17 @@ func (a {{classname}}) {{nickname}}({{#allParams}}{{paramName}} {{{dataType}}}{{
 	queryParams["{{paramName}}"] = a.Configuration.APIClient.ParameterToString({{paramName}}, "{{#collectionFormat}}{{collectionFormat}}{{/collectionFormat}}")
 	{{/queryParams}}{{/hasQueryParams}}
 
+	// Find an replace keys that were altered to avoid clashes with go keywords 
+	correctedQueryParams := make(map[string]string)
+	for k, v := range queryParams {
+		if k == "varType" {
+			correctedQueryParams["type"] = v
+			continue
+		}
+		correctedQueryParams[k] = v
+	}
+	queryParams = correctedQueryParams
+
 	// to determine the Content-Type header
 	localVarHttpContentTypes := []string{ {{^consumes}}"application/json", {{/consumes}}{{#consumes}}"{{mediaType}}", {{/consumes}} }
 
