@@ -57,7 +57,8 @@ describe('JS SDK for Node', function () {
 				USER_ID = data.id;
 				assert.strictEqual(data.name, USER_NAME);
 				assert.strictEqual(data.email, USER_EMAIL);
-
+                		console.log(`USER_ID=${USER_ID}`);
+				console.log(data.id);
 				done();
 			})
 			.catch((err) => handleError(err, done));
