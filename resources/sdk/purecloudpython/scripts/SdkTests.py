@@ -68,6 +68,7 @@ class SdkTests(unittest.TestCase):
 		SdkTests.userId = user.id
 		self.assertEqual(user.name, SdkTests.userName)
 		self.assertEqual(user.email, SdkTests.userEmail)
+		print(SdkTests.userId)
 
 	def test_4_update_user(self):
 		updateUser = PureCloudPlatformClientV2.UpdateUser()
