@@ -164,18 +164,16 @@ Host - Host Ip or DNS of the proxy server
 Protocol - Protocol required to connect to the Proxy (http or https)
 
 The 'ProxyConfiguration' has another section which is an optional section. If the proxy requires authentication to connect to
-'Auth' needs to be mentioned under the 'ProxyConfiguration'. This section can be removed from the JSON file if no authentication is required.
+'userName' and 'password' needs to be mentioned under the 'ProxyConfiguration'. This section can be removed from the JSON file if no authentication is required.
 
 JSON configuration file:
+
 {
-    "proxy": {
         "host": "hostname",
         "protocol": "http",
-        "port": "8888"
-        "auth": {
-            "username": "username",
-            "password": "password"
-        }
+        "port": "8888",
+        "userName": "username",
+        "password": "password"
 }
 
 Command to Enable Proxy:

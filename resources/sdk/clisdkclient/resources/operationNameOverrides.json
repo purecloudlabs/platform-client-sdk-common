@@ -375,5 +375,18 @@
 		"patch": {
 			"name": "update"
 		}
-	}
+	},
+	"/api/v2/voicemail/userpolicies/{userId}": {
+		"put": {
+			"name": "put"
+		},
+		"patch": {
+			"name": "update"
+		}
+	},
+	"/api/v2/chats/settings": {
+        "put": {
+            "name": "updateSettings"
+        }
+    }
 }
