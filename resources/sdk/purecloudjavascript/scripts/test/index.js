@@ -60,6 +60,7 @@ describe('JS SDK for Node', function () {
 				assert.strictEqual(data.body.email, USER_EMAIL);
                 console.log(`USER_ID=${USER_ID}`);
 				console.log(`correlation ID postUsers ${data.headers['inin-correlation-id']}`)
+				console.log(`Version of User ${data.body.version}`)
 				done();
 			})
 			.catch((err) => handleError(err, done));
@@ -109,6 +110,7 @@ describe('JS SDK for Node', function () {
 						assert.strictEqual(data.body.email, USER_EMAIL);
 						assert.strictEqual(data.body.department, USER_DEPARTMENT);
 						console.log(`correlation ID getUser ${data.headers['inin-correlation-id']}`)
+						console.log(`Version of User ${data.body.version}`)
 						assert.strictEqual(data.body.profileSkills[0], USER_PROFILE_SKILL);
 						done();
 					} catch (err) {
