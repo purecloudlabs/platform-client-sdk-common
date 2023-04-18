@@ -365,7 +365,7 @@ function buildImpl() {
 		command += 'java ';
 		command += `-DapiTests=${_this.config.settings.swaggerCodegen.generateApiTests} `;
 		command += `-DmodelTests=${_this.config.settings.swaggerCodegen.generateModelTests} `;
-		command += `${getEnv('JAVA_OPTS', '')} -XX:MaxPermSize=256M -Xmx2g -DloggerPath=conf/log4j.properties `;
+		command += `${getEnv('JAVA_OPTS', '')} -XX:MaxMetaspaceSize=256M -Xmx2g -DloggerPath=conf/log4j.properties `;
 		// Swagger-codegen jar file
 		command += `-jar ${_this.config.settings.swaggerCodegen.jarPath} `;
 		// Swagger-codegen options
