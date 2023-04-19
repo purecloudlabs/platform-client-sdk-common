@@ -246,6 +246,14 @@ function prebuildImpl() {
 				);
 			})
 			.then(() => {
+				// For Jenkins only. 
+				if (newSwaggerTempFile.includes('build-platform-sdks-internal-pipeline') && process.argv.includes("is-upstream-cause-and-build-contains-changes")) {
+					if (swaggerDiff.changeCount == 0) {
+						throw new Error('The build was triggered by an upstream cause and contains changes, but the Swagger definition has not been updated.');
+					}
+				}
+			})
+			.then(() => {
 				return addNotifications();
 			})
 			.then(() => {
