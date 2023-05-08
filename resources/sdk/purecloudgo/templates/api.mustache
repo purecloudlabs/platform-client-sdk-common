@@ -37,7 +37,9 @@ func New{{classname}}WithConfig(config *Configuration) *{{classname}} {
 //
 // {{{summary}}}{{/summary}}{{#notes}}
 //
-// {{notes}}{{/notes}}
+// {{notes}}{{/notes}}{{#isDeprecated}}
+//
+// Deprecated: {{nickname}} is deprecated{{/isDeprecated}}
 func (a {{classname}}) {{nickname}}({{#allParams}}{{paramName}} {{{dataType}}}{{^-last}}, {{/-last}}{{/allParams}}) ({{#returnType}}{{^isArray}}*{{/isArray}}{{{returnType}}}, {{/returnType}}*APIResponse, error) {
 	var httpMethod = "{{httpMethod}}"
 	// create path and map variables
