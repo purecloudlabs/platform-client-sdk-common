@@ -15,6 +15,7 @@ const log = require('./logger');
 const swaggerDiff = require('./swaggerDiff');
 const git = require('./gitModule');
 const zip = require('./zip');
+const proxy = require('./proxy');
 
 /* PRIVATE VARS */
 
@@ -398,6 +399,10 @@ function buildImpl() {
 		} else {
 			log.warn(`Extensions path does not exist! Path: ${_this.resourcePaths.extensions}`);
 		}
+ 
+		// Set Up Proxy for Testcases in Compile-Build 
+        proxy.setupNginx
+
 		// Ensure compile scripts fail on error
 		_.forEach(_this.config.stageSettings.build.compileScripts, function (script) {
 			script.failOnError = true;
@@ -439,6 +444,8 @@ function postbuildImpl() {
 	var deferred = Q.defer();
 
 	try {
+		// clear proxy
+		proxy.stopServer
 		// Pre-run scripts
 		executeScripts(_this.config.stageSettings.postbuild.preRunScripts, 'custom postbuild pre-run');
 
