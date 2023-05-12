@@ -15,7 +15,7 @@ const log = require('./logger');
 const swaggerDiff = require('./swaggerDiff');
 const git = require('./gitModule');
 const zip = require('./zip');
-const proxy = require('./proxy');
+const proxy = require('./proxy-npm');
 
 /* PRIVATE VARS */
 
@@ -35,6 +35,7 @@ Builder.prototype.releaseNoteTemplatePath = '';
 
 function Builder(configPath, localConfigPath) {
 	try {
+		
 		log.writeBox('Constructing Builder');
 
 		// Load config files
@@ -401,8 +402,7 @@ function buildImpl() {
 		}
  
 		// Set Up Proxy for Testcases in Compile-Build 
-        proxy.setupNginx
-
+		proxy.setupProxy();
 		// Ensure compile scripts fail on error
 		_.forEach(_this.config.stageSettings.build.compileScripts, function (script) {
 			script.failOnError = true;
@@ -431,9 +431,11 @@ function buildImpl() {
 		zip
 			.zipDir(path.join(outputDir, 'docs'), path.join(getEnv('SDK_TEMP'), 'docs.zip'))
 			.then(() => executeScripts(_this.config.stageSettings.build.postRunScripts, 'custom build post-run'))
+			.then(() => proxy.stopProxy())
 			.then(() => deferred.resolve())
 			.catch((err) => deferred.reject(err));
 	} catch (err) {
+		proxy.stopProxy()
 		deferred.reject(err);
 	}
 
@@ -444,8 +446,6 @@ function postbuildImpl() {
 	var deferred = Q.defer();
 
 	try {
-		// clear proxy
-		proxy.stopServer
 		// Pre-run scripts
 		executeScripts(_this.config.stageSettings.postbuild.preRunScripts, 'custom postbuild pre-run');
 

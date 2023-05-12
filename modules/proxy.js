@@ -1,114 +1,41 @@
-// const fs = require('fs');
-// const path = require('path');
-const { exec } = require('child_process');
+const http = require('http');
+const net = require('net');
+const url = require('url');
+const { createProxyServer } = require('http-proxy');
 
-// function setupNginx(nginxPort, jenkinsPort) {
-//   const nginxConfig = `
-//     server {
-//         listen ${nginxPort} default_server;
-//         server_name _;
+const proxy = createProxyServer();
 
-//         location / {
-//             proxy_pass http://localhost:${jenkinsPort};
-//             proxy_set_header Host $host;
-//             proxy_set_header X-Real-IP $remote_addr;
-//             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-//         }
-//     }
-//   `;
-  
-//   const nginxConfigFile = '/etc/nginx/sites-available/default';
-//   fs.writeFileSync(nginxConfigFile, nginxConfig);
-//   fs.symlinkSync(nginxConfigFile, '/etc/nginx/sites-enabled/default', 'file');
-  
-//   exec('sudo service nginx restart', (error, stdout, stderr) => {
-//     if (error) {
-//       console.error(`exec error: ${error}`);
-//       return;
-//     }
-//     console.log(`stdout: ${stdout}`);
-//     console.error(`stderr: ${stderr}`);
-//   });
-// }
+const server = http.createServer((req, res) => {
+  const { hostname, port } = url.parse(req.url);
+  if (hostname && port) {
+    proxy.web(req, res, { target: `http://${hostname}:${port}` });
+  } else {
+    res.writeHead(400, { 'Content-Type': 'text/plain' });
+    res.end('Invalid request');
+  }
+});
 
-// const { exec } = require('child_process');
-
-function Proxy() {}
-
-Proxy.prototype.setupNginx =  function setupNginx() {
-  // Install Nginx using the installNginx.sh script
-  exec('./modules/installNginx.sh', (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Error installing Nginx: ${error.message}`);
-      return;
-    }
-    if (stderr) {
-      console.error(`stderr: ${stderr}`);
-      return;
-    }
-    console.log(`stdout: ${stdout}`);
-    
-    // Configure Nginx proxy as needed using the Nginx configuration file
-    // ...
-  });
-};
-
-Proxy.prototype.setupNginx =  function stopServer() {
-    // Install Nginx using the installNginx.sh script
-    exec('./modules/stopProxy.sh', (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Error installing Nginx: ${error.message}`);
-        return;
-      }
-      if (stderr) {
-        console.error(`stderr: ${stderr}`);
-        return;
-      }
-      console.log(`stdout: ${stdout}`);
-      
-      // Configure Nginx proxy as needed using the Nginx configuration file
-      // ...
+server.on('connect', (req, clientSocket, head) => {
+  const { port, hostname } = url.parse(`//${req.url}`, false, true);
+  if (hostname && port) {
+    const serverSocket = net.connect(port, hostname, () => {
+      clientSocket.write('HTTP/1.1 200 Connection Established\r\n' +
+                          'Proxy-agent: Node.js-Proxy\r\n' +
+                          '\r\n');
+      serverSocket.write(head);
+      serverSocket.pipe(clientSocket);
+      clientSocket.pipe(serverSocket);
     });
-  };
+  } else {
+    clientSocket.write('HTTP/1.1 400 Bad Request\r\n' +
+                        'Content-Type: text/plain\r\n' +
+                        '\r\n' +
+                        'Invalid request');
+    clientSocket.end();
+  }
+});
 
+server.listen(4001, () => {
+  console.log('HTTP proxy server listening on port 4001');
+});
 
-function setupNginx1() {
-    // Install Nginx using the installNginx.sh script
-    exec('./modules/installNginx.sh', (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Error installing Nginx: ${error.message}`);
-        return;
-      }
-      if (stderr) {
-        console.error(`stderr: ${stderr}`);
-        return;
-      }
-      console.log(`stdout: ${stdout}`);
-      
-      // Configure Nginx proxy as needed using the Nginx configuration file
-      // ...
-    });
-  };
-
-// const http = require('http');
-// const httpProxy = require('http-proxy');
-
-// // Create a new HTTP proxy server
-// const proxy = httpProxy.createProxyServer({});
-
-// // Create a new HTTP server
-// const server = http.createServer((req, res) => {
-//   // Proxy all requests to http://example.com
-//   proxy.web(req, res, { target: 'http://example.com' });
-// });
-
-// // Start the HTTP server on port 8080
-// server.listen(8800, () => {
-//   console.log('Proxy server is running on port 8080');
-// });
-
-// module.exports = { setupNginx };
-
-// module.exports = setupNginx;
-
-setupNginx1();
