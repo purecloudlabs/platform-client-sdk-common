@@ -194,11 +194,12 @@ namespace {{packageName}}.Tests
                 // Assert.AreEqual(user.Data.ProfileSkills[0], userProfileSkill);
         }
 
-        [Test, Order(7)]
-        public void DeleteUser()
-        {
-            usersApi.DeleteUser(userId);
-        }
+        // Commented out until the issue with APIs to send the latest Version of the User is fixed.
+        // [Test, Order(7)]
+        // public void DeleteUser()
+        // {
+        //    usersApi.DeleteUser(userId);
+        //}
 
 
 

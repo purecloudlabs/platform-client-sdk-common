@@ -145,12 +145,13 @@ describe('JS SDK for Node', function () {
 	// 		.catch((err) => handleError(err, done));
 	// });
 
-	it('should delete the user', (done) => {
-		usersApi
-			.deleteUser(USER_ID)
-			.then(() => done())
-			.catch((err) => handleError(err, done));
-	});
+	// commented out until a fix from API team
+	// it('should delete the user', (done) => {
+	// 	usersApi
+	// 		.deleteUser(USER_ID)
+	// 		.then(() => done())
+	// 		.catch((err) => handleError(err, done));
+	// });
 });
 
 function handleError(err, done) {
