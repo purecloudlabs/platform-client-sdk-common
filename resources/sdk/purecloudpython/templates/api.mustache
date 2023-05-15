@@ -35,6 +35,7 @@ from ..api_client import ApiClient
 from typing import List
 from typing import Dict
 from typing import Any
+from typing import deprecated
 
 from ..models import Empty
 {{#imports}}from ..models import {{classname}}
@@ -60,6 +61,7 @@ class {{classname}}(object):
             self.api_client = config.api_client
 {{#operation}}
 
+    {{#isDeprecated}}@deprecated("{{operationId}} is deprecated"){{/isDeprecated}}
     def {{operationId}}(self, {{#sortParamsByRequiredFlag}}{{#allParams}}{{#required}}{{paramName}}: {{#vendorExtensions}}{{{x-dataType}}}{{/vendorExtensions}}, {{/required}}{{/allParams}}{{/sortParamsByRequiredFlag}}**kwargs) -> {{#returnType}}{{#vendorExtensions}}{{{x-returnType}}}{{/vendorExtensions}}{{/returnType}}{{^returnType}}None{{/returnType}}:
         """
         {{{summary}}}

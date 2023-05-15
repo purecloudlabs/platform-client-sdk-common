@@ -97,6 +97,7 @@ class SdkTests(unittest.TestCase):
 		self.assertEqual(user.name, SdkTests.userName)
 		self.assertEqual(user.email, SdkTests.userEmail)
 		self.assertEqual(user.department, SdkTests.userDepartment)
+		# Commented out until the issue with APIs to send the latest Version of the User is fixed.
 		# self.assertEqual(user.profile_skills[0], SdkTests.userProfileSkill)
 
 	def test_7_reauthenticate(self):
@@ -139,7 +140,8 @@ class SdkTests(unittest.TestCase):
 		self.assertEqual(user.email, SdkTests.userEmail)
 		self.assertEqual(user.department, SdkTests.userDepartment)
 		# self.assertEqual(user.profile_skills[0], SdkTests.userProfileSkill)
-
+    
+	# Commented out until the issue with APIs to send the latest Version of the User is fixed.
 	# def test_9_delete_user(self):
 	# 	SdkTests.users_api.delete_user(SdkTests.userId)
 
