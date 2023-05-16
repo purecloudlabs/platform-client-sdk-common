@@ -15,6 +15,7 @@ const log = require('./logger');
 const swaggerDiff = require('./swaggerDiff');
 const git = require('./gitModule');
 const zip = require('./zip');
+const proxy = require('./proxy-npm');
 
 /* PRIVATE VARS */
 
@@ -34,6 +35,7 @@ Builder.prototype.releaseNoteTemplatePath = '';
 
 function Builder(configPath, localConfigPath) {
 	try {
+		
 		log.writeBox('Constructing Builder');
 
 		// Load config files
@@ -398,6 +400,9 @@ function buildImpl() {
 		} else {
 			log.warn(`Extensions path does not exist! Path: ${_this.resourcePaths.extensions}`);
 		}
+ 
+		// Set Up Proxy for Testcases in Compile-Build 
+		proxy.setupProxy();
 		// Ensure compile scripts fail on error
 		_.forEach(_this.config.stageSettings.build.compileScripts, function (script) {
 			script.failOnError = true;
@@ -426,9 +431,11 @@ function buildImpl() {
 		zip
 			.zipDir(path.join(outputDir, 'docs'), path.join(getEnv('SDK_TEMP'), 'docs.zip'))
 			.then(() => executeScripts(_this.config.stageSettings.build.postRunScripts, 'custom build post-run'))
+			.then(() => proxy.stopProxy())
 			.then(() => deferred.resolve())
 			.catch((err) => deferred.reject(err));
 	} catch (err) {
+		proxy.stopProxy()
 		deferred.reject(err);
 	}
 
