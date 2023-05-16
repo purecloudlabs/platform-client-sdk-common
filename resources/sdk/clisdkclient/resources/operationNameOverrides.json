@@ -36,9 +36,14 @@
 	},
     "/api/v2/conversations/callbacks": {
         "patch": {
-                "name": "updatescheduledcallback"
+            "name": "updatescheduledcallback"
         }
     },
+	"/api/v2/conversations/emails/{conversationId}/messages/draft": {
+		"patch": {
+			"name": "patch"
+		}
+	},
 	"/api/v2/authorization/roles/{roleId}": {
 		"post": {
 			"name": "bulkgrant"
