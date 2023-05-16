@@ -43,7 +43,8 @@ public class {{classname}} {
    * @param {{paramName}} {{{description}}}{{#required}} (required){{/required}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}{{/allParams}}{{#returnType}}
    * @return {{{returnType}}}{{/returnType}}
    * @throws ApiException if the request fails on the server
-   * @throws IOException if the request fails to be processed
+   * @throws IOException if the request fails to be processed{{#isDeprecated}}
+   * @deprecated{{/isDeprecated}}
    */
   public {{#returnType}}{{{returnType}}} {{/returnType}}{{^returnType}}void {{/returnType}}{{operationId}}({{#allParams}}{{{dataType}}} {{paramName}}{{^-last}}, {{/-last}}{{/allParams}}) throws IOException, ApiException {
     {{#returnType}}return {{/returnType}} {{operationId}}(create{{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}Request({{#allParams}}{{paramName}}{{^-last}}, {{/-last}}{{/allParams}}));
@@ -54,7 +55,8 @@ public class {{classname}} {
    * {{{notes}}}{{#allParams}}
    * @param {{paramName}} {{{description}}}{{#required}} (required){{/required}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}{{/allParams}}{{#returnType}}
    * @return {{{returnType}}}{{/returnType}}
-   * @throws IOException if the request fails to be processed
+   * @throws IOException if the request fails to be processed{{#isDeprecated}}
+   * @deprecated{{/isDeprecated}}
    */
   public ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> {{operationId}}WithHttpInfo({{#allParams}}{{{dataType}}} {{paramName}}{{^-last}}, {{/-last}}{{/allParams}}) throws IOException {
     return {{operationId}}(create{{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}Request({{#allParams}}{{paramName}}{{^-last}}, {{/-last}}{{/allParams}}).withHttpInfo());
@@ -74,7 +76,8 @@ public class {{classname}} {
    * @param request The request object{{#returnType}}
    * @return {{{returnType}}}{{/returnType}}
    * @throws ApiException if the request fails on the server
-   * @throws IOException if the request fails to be processed
+   * @throws IOException if the request fails to be processed{{#isDeprecated}}
+   * @deprecated{{/isDeprecated}}
    */
   public {{#returnType}}{{{returnType}}} {{/returnType}}{{^returnType}}void {{/returnType}}{{operationId}}({{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}Request request) throws IOException, ApiException {
     try {
@@ -92,7 +95,8 @@ public class {{classname}} {
    * {{{notes}}}
    * @param request The request object
    * @return the response
-   * @throws IOException if the request fails to be processed
+   * @throws IOException if the request fails to be processed{{#isDeprecated}}
+   * @deprecated{{/isDeprecated}}
    */
   public {{#returnType}}ApiResponse<{{{returnType}}}>{{/returnType}}{{^returnType}}ApiResponse<Void>{{/returnType}} {{operationId}}(ApiRequest<{{#bodyParam}}{{{dataType}}}{{/bodyParam}}{{^bodyParam}}Void{{/bodyParam}}> request) throws IOException {
     try {
