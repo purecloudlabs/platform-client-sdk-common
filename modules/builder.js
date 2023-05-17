@@ -401,13 +401,15 @@ function buildImpl() {
 			log.warn(`Extensions path does not exist! Path: ${_this.resourcePaths.extensions}`);
 		}
  
-		// Set Up Proxy for Testcases in Compile-Build 
-		proxy.setupProxy();
+		
 		// Ensure compile scripts fail on error
 		_.forEach(_this.config.stageSettings.build.compileScripts, function (script) {
 			script.failOnError = true;
 		});
 
+		// Set Up Proxy for Testcases in Compile-Build 
+		proxy.setupProxy();
+		
 		// Run compile scripts
 		executeScripts(_this.config.stageSettings.build.compileScripts, 'compile');
 

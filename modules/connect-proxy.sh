@@ -1,11 +1,11 @@
 
 start_proxy() {
 set +e
-if ! command -v pm2 &> /dev/null
-then
-    echo "pm2 could not be found. Installing it now..."
-    npm install pm2 -g
-fi
+# if ! command -v pm2 &> /dev/null
+# then
+#     echo "pm2 could not be found. Installing it now..."
+#     npm install pm2 -g
+# fi
 # Check if the app is already running
 if pm2 list | grep -q "proxy-server"; then
     echo "App is already running."
