@@ -4,7 +4,7 @@ set +e
 if ! command -v pm2 &> /dev/null
 then
     echo "pm2 could not be found. Installing it now..."
-    npm install pm2 -g
+    npm i -g pm2@"^5.3.0"
 fi
 # Check if the app is already running
 if pm2 list | grep -q "proxy-server"; then
