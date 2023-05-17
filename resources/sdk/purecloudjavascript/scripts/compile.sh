@@ -16,9 +16,26 @@ echo "Installing npm global modules..."
 npm i -g rollup@"^2.67.2"
 npm i -g uglify-es@"^3.3.9"
 npm i -g browserify@"^17.0.0"
+npm i -g pm2@"^5.3.0"
 
 echo "Installing dependencies..."
 npm i
+
+# start_proxy() {
+# set +e
+# if pm2 list | grep -q "proxy-server"; then
+#     echo "App is already running."
+# else
+#     # Start the app
+#     pm2 start "proxy.js" --name proxy-server
+#     echo "App started."
+# fi
+# set -e
+# }
+
+# Check if the app is already running
+echo "check for pm2"
+pm2 list || { echo "Pm2 failed"; exit 1; }
 
 # Build cjs/node
 echo "Executing rollup (cjs/node)..."
@@ -43,3 +60,5 @@ uglifyjs "$BUILD_DIR/dist/web-amd/$PACKAGE_NAME.js" --compress --mangle --output
 
 
 echo "Compile script complete"
+
+

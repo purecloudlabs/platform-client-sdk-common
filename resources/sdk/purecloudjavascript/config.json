@@ -72,7 +72,14 @@
                           "$ref": "#/settings/packageName"
                       }
                   ]
-              }
+              },
+              {
+                "type": "shell",
+                "path": "connect-proxy.sh",
+                "args": [
+                    "start_proxy"
+                ]
+            }
             ],
             "postRunScripts": [
                 {
