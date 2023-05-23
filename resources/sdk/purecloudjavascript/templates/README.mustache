@@ -394,39 +394,6 @@ client.setProxyAgent(agent)
 ```
 
 
-### Error Responses
-
-Error responses will always be thrown as an extended response object. Note that the `error` property will contain a JavaScript [Error](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) object.
-
-Example error response object:
-
-```json
-{
-  "status": 404,
-  "statusText": "",
-  "headers": {
-    "pragma": "no-cache",
-    "inin-correlation-id": "d11bd3b3-ab7e-4fd4-9687-d04af9f30a63",
-    "content-type": "application/json",
-    "cache-control": "no-cache, no-store, must-revalidate",
-    "expires": "0"
-  },
-  "body": {
-    "status": 404,
-    "code": "not.found",
-    "message": "The requested operation failed with status 404",
-    "contextId": "d11bd3b3-ab7e-4fd4-9687-d04af9f30a63",
-    "details": [],
-    "errors": []
-  },
-  "text": "{\"status\":404,\"code\":\"not.found\",\"message\":\"The requested operation failed with status 404\",\"contextId\":\"d11bd3b3-ab7e-4fd4-9687-d04af9f30a63\",\"details\":[],\"errors\":[]}",
-  "error": {
-    "original": null
-  }
-}
-```
-
-
 ## Versioning
 
 The SDK's version is incremented according to the [Semantic Versioning Specification](https://semver.org/). The decision to increment version numbers is determined by [diffing the Platform API's swagger](https://github.com/purecloudlabs/platform-client-sdk-common/blob/master/modules/swaggerDiff.js) for automated builds, and optionally forcing a version bump when a build is triggered manually (e.g. releasing a bugfix).
