@@ -634,7 +634,7 @@ public class WebMessagingClient {
                 break;
             case "SessionClearedEvent":
                 for (SessionListener sessionListener : sessionListeners) {
-                    sessionListener.sessionExpiredEvent((SessionClearedEvent) response, rawMessage);
+                    sessionListener.sessionClearedEvent((SessionClearedEvent) response, rawMessage);
                 }
                 break;
             case "JwtResponse":
