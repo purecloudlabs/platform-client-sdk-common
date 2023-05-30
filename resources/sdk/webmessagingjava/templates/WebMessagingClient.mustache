@@ -151,7 +151,11 @@ public class WebMessagingClient {
             }
 
             @Override
-                public void sessionClearedEvent(SessionClearedEvent sessionClearedResponse, String rawMessage) {
+            public void sessionClearedEvent(SessionClearedEvent sessionClearedResponse, String rawMessage) {
+            }
+
+            @Override
+            public void getConfigurationResponse(GetConfigurationResponse response, String rawMessage) {
             }
 
             @Override
@@ -339,6 +343,27 @@ public class WebMessagingClient {
             configureAuthenticatedSessionRequest.setToken(token);
             configureAuthenticatedSessionRequest.setData(data);
             String payload = objectMapper.writeValueAsString(configureAuthenticatedSessionRequest);
+
+            webSocket.sendText(payload, true);
+        } catch (JsonProcessingException e) {
+            // no-op
+        }
+    }
+
+    public void getSupportedContentConfiguration(String deploymentId, String token, String origin) {
+        try {
+            this.token = token;
+            this.deploymentId = deploymentId;
+            if (apiClient == null) {
+                initializeApiClient(origin);
+            }
+
+            // Create configuration request
+            GetConfigurationRequest getConfigurationRequest = new GetConfigurationRequest();
+            getConfigurationRequest.setAction(RequestTypeGetConfiguration.GETCONFIGURATION);
+            getConfigurationRequest.setDeploymentId(deploymentId);
+            getConfigurationRequest.setToken(token);
+            String payload = objectMapper.writeValueAsString(getConfigurationRequest);
 
             webSocket.sendText(payload, true);
         } catch (JsonProcessingException e) {
@@ -640,6 +665,11 @@ public class WebMessagingClient {
                     sessionListener.sessionClearedEvent((SessionClearedEvent) response, rawMessage);
                 }
                 break;
+            case "GetConfigurationResponse":
+                for (SessionListener sessionListener : sessionListeners) {
+                    sessionListener.getConfigurationResponse((GetConfigurationResponse) response, rawMessage);
+                }
+                break;
             case "JwtResponse":
                 for (SessionListener sessionListener : sessionListeners) {
                     sessionListener.jwtResponse((JwtResponse) response, rawMessage);
@@ -836,6 +866,15 @@ public class WebMessagingClient {
          * @param rawMessage  The raw message payload JSON as a string
          */
         public void jwtResponse(JwtResponse jwtResponse, String rawMessage);
+
+
+        /**
+        * Raised for responses to url requests (type == BaseResponseType.RESPONSE, class = SessionResponse)
+        *
+        * @param response    The deserialized response
+        * @param rawMessage  The raw message payload JSON as a string
+        */
+        public void getConfigurationResponse(GetConfigurationResponse response, String rawMessage);
 
         /**
          * Raised for unmatched BaseResponseType
