@@ -41,22 +41,24 @@ echo '<?xml version="1.0" encoding="utf-8"?>'\
 '		<description>A .NET library to interface with the PureCloud Public API</description>'\
 '		<dependencies>'\
 '		<group targetFramework=".NETStandard2.0">'\
-'			<dependency id="Newtonsoft.Json" version="11.0.2" />'\
-'			<dependency id="RestSharp" version="106.3.1" />'\
+'			<dependency id="Newtonsoft.Json" version="13.0.3" />'\
+'			<dependency id="RestSharp" version="110.2.0" />'\
 '			<dependency id="ini-parser" version="2.5.2" />'\
+'			<dependency id="System.Net.Http" version="4.3.4" />'\
 '		</group>'\
-'		<group targetFramework=".NETFramework4.5.2">'\
-'			<dependency id="Newtonsoft.Json" version="11.0.2" />'\
-'			<dependency id="RestSharp" version="106.3.1" />'\
+'		<group targetFramework=".NETFramework4.7.1">'\
+'			<dependency id="Newtonsoft.Json" version="13.0.3" />'\
+'			<dependency id="RestSharp" version="110.2.0" />'\
 '			<dependency id="ini-parser" version="2.5.2" />'\
+'			<dependency id="System.Net.Http" version="4.3.4" />'\
 '		</group>'\
 '		</dependencies>'\
 '	</metadata>'\
 '	<files>'\
 "		<file src=\"netstandard2.0/$NAMESPACE.dll\" target=\"lib/netstandard2.0/$NAMESPACE.dll\" />"\
 "		<file src=\"netstandard2.0/$NAMESPACE.xml\" target=\"lib/netstandard2.0/$NAMESPACE.xml\" />"\
-"		<file src=\"net4.5.2/$NAMESPACE.dll\" target=\"lib/net452/$NAMESPACE.dll\" />"\
-"		<file src=\"net4.5.2/$NAMESPACE.xml\" target=\"lib/net452/$NAMESPACE.xml\" />"\
+"		<file src=\"net4.7.1/$NAMESPACE.dll\" target=\"lib/net471/$NAMESPACE.dll\" />"\
+"		<file src=\"net4.7.1/$NAMESPACE.xml\" target=\"lib/net471/$NAMESPACE.xml\" />"\
 '	</files>'\
 '</package>' > $BUILD_DIR/bin/$NAMESPACE.nuspec
 

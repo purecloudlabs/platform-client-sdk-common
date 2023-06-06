@@ -85,8 +85,8 @@ namespace {{=it.packageName}}.Extensions
             headerParams["Authorization"] = "Basic " + basicAuth;
 
             // make the HTTP request
-            IRestResponse response = (IRestResponse)CallTokenApi(apiClient, path_,
-                Method.POST, queryParams, postBody, headerParams, formParams, fileParams,
+            RestResponse response = (RestResponse)CallTokenApi(apiClient, path_,
+                Method.Post, queryParams, postBody, headerParams, formParams, fileParams,
                 pathParams, httpContentType);
 
             int statusCode = (int) response.StatusCode;
@@ -164,8 +164,8 @@ namespace {{=it.packageName}}.Extensions
             headerParams["Authorization"] = "Basic " + basicAuth;
 
             // make the HTTP request
-            IRestResponse response = (IRestResponse)CallTokenApi(apiClient, path_,
-                Method.POST, queryParams, postBody, headerParams, formParams, fileParams,
+            RestResponse response = (RestResponse)CallTokenApi(apiClient, path_,
+                Method.Post, queryParams, postBody, headerParams, formParams, fileParams,
                 pathParams, httpContentType);
 
             int statusCode = (int) response.StatusCode;
@@ -190,9 +190,12 @@ namespace {{=it.packageName}}.Extensions
             String contentType)
         {
             var regex = new Regex(@"://(api)\.");
-            var authUrl = regex.Replace(apiClient.RestClient.BaseUrl.ToString(), "://login.");
-            var restClient = new RestClient(authUrl);
-            restClient.Proxy = apiClient.RestClient.Proxy;
+            var authUrl = regex.Replace(apiClient.RestClient.Options.BaseUrl.ToString(), "://login.");
+
+            var restClient = apiClient.RestClient;
+
+            restClient.Options.BaseUrl =  new Uri(authUrl);
+            restClient.Options.Proxy = apiClient.RestClient.Options.Proxy;
 
             var request = PrepareTokenRequest(
                 path, method, queryParams, postBody, headerParams, formParams, fileParams,
@@ -238,7 +241,7 @@ namespace {{=it.packageName}}.Extensions
 
             // add file parameter, if any
             foreach (var param in fileParams)
-                request.AddFile(param.Value.Name, param.Value.Writer, param.Value.FileName, param.Value.ContentLength, param.Value.ContentType);
+                request.AddFile(param.Value.Name, param.Value.GetFile, param.Value.FileName, param.Value.ContentType);
 
             if (postBody != null) // http body (model or byte[]) parameter
             {

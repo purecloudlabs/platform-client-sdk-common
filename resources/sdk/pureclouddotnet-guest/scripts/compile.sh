@@ -26,7 +26,7 @@ mono $COMMON_DIR/resources/sdk/pureclouddotnet-guest/bin/nuget.exe install $BUIL
 mkdir -p $BUILD_DIR/bin;
 
 cp $BUILD_DIR/packages/Newtonsoft.Json.11.0.2/lib/net45/Newtonsoft.Json.dll $BUILD_DIR/bin/Newtonsoft.Json.dll;
-cp $BUILD_DIR/packages/RestSharp.106.3.1/lib/net452/RestSharp.dll $BUILD_DIR/bin/RestSharp.dll;
+cp $BUILD_DIR/packages/RestSharp.110.2.0/lib/net471/RestSharp.dll $BUILD_DIR/bin/RestSharp.dll;
 
 echo "Compiling SDK..."
 mcs -r:$BUILD_DIR/bin/Newtonsoft.Json.dll,\

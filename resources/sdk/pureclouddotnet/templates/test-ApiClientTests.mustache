@@ -60,7 +60,7 @@ public class ApiClientTests
             RetryMax = 50
         };
 
-        var mockRestClient = new Mock<IRestClient>();
+        var mockRestClient = new Mock<RestClient>();
         RestResponse response = GetTestResponse(429, "3");
 
         mockRestClient.Setup(x => x.Execute(It.IsAny<RestRequest>())).Returns(response);
@@ -86,7 +86,7 @@ public class ApiClientTests
             RetryMax = 50
         };
 
-        var mockRestClient = new Mock<IRestClient>();
+        var mockRestClient = new Mock<RestClient>();
         RestResponse response = GetTestResponse(429, "3");
 
         mockRestClient.Setup(x => x.Execute(It.IsAny<RestRequest>())).Returns(response);
@@ -113,7 +113,7 @@ public class ApiClientTests
             RetryMax = 50
         };
 
-        var mockRestClient = new Mock<IRestClient>();
+        var mockRestClient = new Mock<RestClient>();
         RestResponse response = new RestResponse();
         response.StatusCode = (HttpStatusCode)502;
 
@@ -141,7 +141,7 @@ public class ApiClientTests
             RetryMax = 50
         };
 
-        var mockRestClient = new Mock<IRestClient>();
+        var mockRestClient = new Mock<RestClient>();
         RestResponse response = new RestResponse();
         response.StatusCode = (HttpStatusCode)503;
 
@@ -168,7 +168,7 @@ public class ApiClientTests
             RetryMax = 50
         };
 
-        var mockRestClient = new Mock<IRestClient>();
+        var mockRestClient = new Mock<RestClient>();
         RestResponse response = new RestResponse();
         response.StatusCode = (HttpStatusCode)504;
 
@@ -194,7 +194,7 @@ public class ApiClientTests
             RetryMax = 50
         };
 
-        var mockRestClient = new Mock<IRestClient>();
+        var mockRestClient = new Mock<RestClient>();
         RestResponse response = new RestResponse();
         response.StatusCode = (HttpStatusCode)504;
 
@@ -220,10 +220,10 @@ public class ApiClientTests
             RetryMax = 50
         };
 
-        var mockRestClient = new Mock<IRestClient>();
+        var mockRestClient = new Mock<RestClient>();
         RestResponse response = GetTestResponse(429, "1");
 
-        mockRestClient.Setup(x => x.ExecuteTaskAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<IRestResponse>(response));
+        mockRestClient.Setup(x => x.ExecuteAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<RestResponse>(response));
 
         var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
@@ -245,10 +245,10 @@ public class ApiClientTests
             RetryMax = 50
         };
 
-        var mockRestClient = new Mock<IRestClient>();
+        var mockRestClient = new Mock<RestClient>();
         RestResponse response = GetTestResponse(429, "1");
 
-        mockRestClient.Setup(x => x.ExecuteTaskAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<IRestResponse>(response));
+        mockRestClient.Setup(x => x.ExecuteAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<RestResponse>(response));
 
         var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
@@ -272,11 +272,11 @@ public class ApiClientTests
             RetryMax = 50
         };
 
-        var mockRestClient = new Mock<IRestClient>();
+        var mockRestClient = new Mock<RestClient>();
         RestResponse response = new RestResponse();
         response.StatusCode = (HttpStatusCode)502;
 
-        mockRestClient.Setup(x => x.ExecuteTaskAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<IRestResponse>(response));
+        mockRestClient.Setup(x => x.ExecuteAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<RestResponse>(response));
 
         var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
@@ -300,11 +300,11 @@ public class ApiClientTests
             RetryMax = 50
         };
 
-        var mockRestClient = new Mock<IRestClient>();
+        var mockRestClient = new Mock<RestClient>();
         RestResponse response = new RestResponse();
         response.StatusCode = (HttpStatusCode)503;
 
-        mockRestClient.Setup(x => x.ExecuteTaskAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<IRestResponse>(response));
+        mockRestClient.Setup(x => x.ExecuteAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<RestResponse>(response));
 
         var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
@@ -327,11 +327,11 @@ public class ApiClientTests
             RetryMax = 50
         };
 
-        var mockRestClient = new Mock<IRestClient>();
+        var mockRestClient = new Mock<RestClient>();
         RestResponse response = new RestResponse();
         response.StatusCode = (HttpStatusCode)504;
 
-        mockRestClient.Setup(x => x.ExecuteTaskAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<IRestResponse>(response));
+        mockRestClient.Setup(x => x.ExecuteAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<RestResponse>(response));
 
         var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
@@ -353,11 +353,11 @@ public class ApiClientTests
             RetryMax = 50
         };
 
-        var mockRestClient = new Mock<IRestClient>();
+        var mockRestClient = new Mock<RestClient>();
         RestResponse response = new RestResponse();
         response.StatusCode = (HttpStatusCode)504;
 
-        mockRestClient.Setup(x => x.ExecuteTaskAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<IRestResponse>(response));
+        mockRestClient.Setup(x => x.ExecuteAsync(It.IsAny<RestRequest>())).Returns(Task.FromResult<RestResponse>(response));
 
         var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
