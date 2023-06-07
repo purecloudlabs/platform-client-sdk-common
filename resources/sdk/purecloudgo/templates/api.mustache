@@ -39,7 +39,9 @@ func New{{classname}}WithConfig(config *Configuration) *{{classname}} {
 //
 // {{notes}}{{/notes}}{{#isDeprecated}}
 //
-// Deprecated: {{nickname}} is deprecated{{/isDeprecated}}
+// Deprecated: {{nickname}} is deprecated{{/isDeprecated}}{{#vendorExtensions.x-genesys-preview}}
+//
+// Preview Endpoint{{/vendorExtensions.x-genesys-preview}}
 func (a {{classname}}) {{nickname}}({{#allParams}}{{paramName}} {{{dataType}}}{{^-last}}, {{/-last}}{{/allParams}}) ({{#returnType}}{{^isArray}}*{{/isArray}}{{{returnType}}}, {{/returnType}}*APIResponse, error) {
 	var httpMethod = "{{httpMethod}}"
 	// create path and map variables
