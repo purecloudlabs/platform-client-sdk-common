@@ -32,6 +32,11 @@ cp $BUILD_DIR/packages/NUnit.3.10.1/lib/net45/nunit.framework.dll $BUILD_DIR/bin
 cp $BUILD_DIR/packages/Moq.4.5.3/lib/net45/Moq.dll $BUILD_DIR/bin/Moq.dll;
 cp $BUILD_DIR/packages/ini-parser.2.5.2/lib/net20/INIFileParser.dll $BUILD_DIR/bin/INIFileParser.dll;
 cp $BUILD_DIR/packages/System.Net.Http.4.3.4/lib/net46/System.Net.Http.dll $BUILD_DIR/bin/System.Net.Http.dll;
+cp $BUILD_DIR/packages/RichardSzalay.MockHttp.6.0.0/lib/net45/RichardSzalay.MockHttp.dll $BUILD_DIR/bin/RichardSzalay.MockHttp.dll;
+cp $BUILD_DIR/packages/System.Text.Json.7.0.2/lib/net462/System.Text.Json.dll $BUILD_DIR/bin/System.Text.Json.dll;
+cp $BUILD_DIR/packages/System.Text.Encodings.Web.7.0.0/lib/net462/System.Text.Encodings.Web.dll $BUILD_DIR/bin/System.Text.Encodings.Web.dll;
+cp $BUILD_DIR/packages/System.Threading.Tasks.Extensions.4.5.4/lib/net461/System.Threading.Tasks.Extensions.dll $BUILD_DIR/bin/System.Threading.Tasks.Extensions.dll;
+
 
 echo "Compiling SDK..."
 echo "Target: netstandard2.0"
@@ -40,6 +45,10 @@ $BUILD_DIR/bin/RestSharp.dll,\
 $BUILD_DIR/bin/websocket-sharp.dll,\
 $BUILD_DIR/bin/INIFileParser.dll,\
 $BUILD_DIR/bin/System.Net.Http.dll,\
+$BUILD_DIR/bin/System.Text.Json.dll,\
+$BUILD_DIR/bin/System.Text.Encodings.Web.dll,\
+$BUILD_DIR/bin/System.Threading.Tasks.Extensions.dll,\
+$BUILD_DIR/bin/RichardSzalay.MockHttp.dll,\
 System.Runtime.Serialization.dll \
 -target:library \
 -out:$BUILD_DIR/bin/netstandard2.0/${ROOT_NAMESPACE}.dll \
@@ -67,9 +76,13 @@ $BUILD_DIR/bin/RestSharp.dll,\
 $BUILD_DIR/bin/websocket-sharp.dll,\
 $BUILD_DIR/bin/INIFileParser.dll,\
 $BUILD_DIR/bin/System.Net.Http.dll,\
+$BUILD_DIR/bin/System.Text.Json.dll,\
+$BUILD_DIR/bin/System.Text.Encodings.Web.dll,\
+$BUILD_DIR/bin/System.Threading.Tasks.Extensions.dll,\
 System.Runtime.Serialization.dll,\
 $BUILD_DIR/bin/${ROOT_NAMESPACE}.dll,\
 $BUILD_DIR/bin/nunit.framework.dll,\
+$BUILD_DIR/bin/RichardSzalay.MockHttp.dll,\
 $BUILD_DIR/bin/Moq.dll \
 -target:library \
 -out:$BUILD_DIR/bin/${ROOT_NAMESPACE}.Tests.dll \

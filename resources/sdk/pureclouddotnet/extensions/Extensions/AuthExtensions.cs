@@ -190,12 +190,19 @@ namespace {{=it.packageName}}.Extensions
             String contentType)
         {
             var regex = new Regex(@"://(api)\.");
-            var authUrl = regex.Replace(apiClient.RestClient.Options.BaseUrl.ToString(), "://login.");
-
-            var restClient = apiClient.RestClient;
-
-            restClient.Options.BaseUrl =  new Uri(authUrl);
-            restClient.Options.Proxy = apiClient.RestClient.Options.Proxy;
+            var authUrl = regex.Replace(apiClient.ClientOptions.BaseUrl.ToString(), "://login.");
+            var options = new RestClientOptions(new Uri(authUrl));
+            
+            if (apiClient.ClientOptions != null && apiClient.ClientOptions.Proxy != null)
+            {
+                options = new RestClientOptions(new Uri(authUrl))
+                {
+                    Proxy = apiClient.ClientOptions.Proxy
+                };
+               
+            }
+            
+            var restClient = new RestClient(options);
 
             var request = PrepareTokenRequest(
                 path, method, queryParams, postBody, headerParams, formParams, fileParams,

@@ -38,8 +38,19 @@
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Net.Http">
-     <Private>True</Private>
-  </Reference> 
+    <Private>True</Private>
+   </Reference>
+    <Reference Include="System.Text.Json" />
+    <Reference Include="System.Text.Encodings.Web" />
+    <Reference Include="System.Threading.Tasks.Extensions" />
+
+     <Reference Include="RichardSzalay.MockHttp">
+        <HintPath Condition="Exists('$(SolutionDir)\packages')">$(SolutionDir)\packages\RichardSzalay.MockHttp.6.0.0\lib\net45\RichardSzalay.MockHttp.dll</HintPath>
+        <HintPath Condition="Exists('..\packages')">..\packages\RichardSzalay.MockHttp.6.0.0\lib\net45\RichardSzalay.MockHttp.dll</HintPath>
+        <HintPath Condition="Exists('..\..\packages')">..\..\packages\RichardSzalay.MockHttp.6.0.0\lib\net45\RichardSzalay.MockHttp.dll</HintPath>
+        <HintPath Condition="Exists('{{binRelativePath}}')">{{binRelativePath}}\RichardSzalay.MockHttp.6.0.0\lib\net45\RichardSzalay.MockHttp.dll</HintPath>
+      </Reference>
+
     <Reference Include="Newtonsoft.Json">
         <HintPath Condition="Exists('$(SolutionDir)\packages')">$(SolutionDir)\packages\Newtonsoft.Json.8.0.2\lib\{{targetFrameworkNuget}}\Newtonsoft.Json.dll</HintPath>
         <HintPath Condition="Exists('..\packages')">..\packages\Newtonsoft.Json.8.0.2\lib\{{targetFrameworkNuget}}\Newtonsoft.Json.dll</HintPath>

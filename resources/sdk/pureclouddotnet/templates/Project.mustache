@@ -76,6 +76,30 @@
       <HintPath Condition="Exists('..\..\packages')">..\..\packages\System.Net.Http.4.3.4\lib\net46\System.Net.Http.dll</HintPath>
       <HintPath Condition="Exists('..\..\vendor')">..\..\vendor\System.Net.Http.4.3.4\lib\net46\System.Net.Http.dll</HintPath>
     </Reference>
+    <Reference Include="RichardSzalay.MockHttp">
+        <HintPath Condition="Exists('$(SolutionDir)\packages')">$(SolutionDir)\packages\RichardSzalay.MockHttp.6.0.0\lib\net45\RichardSzalay.MockHttp.dll</HintPath>
+        <HintPath Condition="Exists('..\packages')">..\packages\RichardSzalay.MockHttp.6.0.0\lib\net45\RichardSzalay.MockHttp.dll</HintPath>
+        <HintPath Condition="Exists('..\..\packages')">..\..\packages\RichardSzalay.MockHttp.6.0.0\lib\net45\RichardSzalay.MockHttp.dll</HintPath>
+        <HintPath Condition="Exists('{{binRelativePath}}')">{{binRelativePath}}\RichardSzalay.MockHttp.6.0.0\lib\net45\RichardSzalay.MockHttp.dll</HintPath>
+      </Reference>
+    <Reference Include="System.Text.Json, Version=7.0.0.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51">
+      <HintPath Condition="Exists('$(SolutionDir)\packages')">..\packages\System.Text.Json.7.0.2\lib\net462\System.Text.Json.dll</HintPath>
+      <HintPath Condition="Exists('..\packages')">..\packages\System.Text.Json.7.0.2\lib\net462\System.Text.Json.dll</HintPath>
+      <HintPath Condition="Exists('..\..\packages')">..\..\packages\System.Text.Json.7.0.2\lib\net462\System.Text.Json.dll</HintPath>
+      <HintPath Condition="Exists('..\..\vendor')">..\..\vendor\System.Text.Json.7.0.2\lib\net462\System.Text.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Text.Encodings.Web, Version=7.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51">
+      <HintPath Condition="Exists('$(SolutionDir)\packages')">..\packages\System.Text.Encodings.Web.7.0.0\lib\net462\System.Text.Encodings.Web.dll</HintPath>
+      <HintPath Condition="Exists('..\packages')">..\packages\System.Text.Encodings.Web.7.0.0\lib\net462\System.Text.Encodings.Web.dll</HintPath>
+      <HintPath Condition="Exists('..\..\packages')">..\..\packages\System.Text.Encodings.Web.7.0.0\lib\net462\System.Text.Encodings.Web.dll</HintPath>
+      <HintPath Condition="Exists('..\..\vendor')">..\..\vendor\System.Text.Encodings.Web.7.0.0\lib\net462\System.Text.Encodings.Web.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51">
+      <HintPath Condition="Exists('$(SolutionDir)\packages')">..\packages\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Text.Encodings.Web.dll</HintPath>
+      <HintPath Condition="Exists('..\packages')">..\packages\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Text.Encodings.Web.dll</HintPath>
+      <HintPath Condition="Exists('..\..\packages')">..\..\packages\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Text.Encodings.Web.dll</HintPath>
+      <HintPath Condition="Exists('..\..\vendor')">..\..\vendor\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Text.Encodings.Web.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="**\*.cs"/>

@@ -15,6 +15,7 @@ using System.Text;
 using Newtonsoft.Json;
 using RestSharp;
 using {{packageName}}.Extensions;
+using System.Net.Http;
 
 namespace {{packageName}}.Client
 {
@@ -39,9 +40,11 @@ namespace {{packageName}}.Client
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
             Configuration = Configuration.Default;
-            var options = new RestClientOptions("{{basePath}}") {};
+            // var options = new RestClientOptions("{{basePath}}") {};
 
-            RestClient = new RestClient(options);
+            // RestClient = new RestClient(options);
+            ClientOptions = new ClientRestOptions();
+            ClientOptions.BaseUrl = new Uri("{{basePath}}");
             RetryConfig = DEFAULT_RETRY_CONFIG;
             AddSerializerSettings();
         }
@@ -61,9 +64,12 @@ namespace {{packageName}}.Client
             else
                 Configuration = config;
 
-            var options = new RestClientOptions("{{basePath}}") {};
+            ClientOptions = new ClientRestOptions();
+            ClientOptions.BaseUrl = new Uri("{{basePath}}");
 
-            RestClient = new RestClient(options);
+            // var options = new RestClientOptions("{{basePath}}") {};
+
+            // RestClient = new RestClient(options);
             RetryConfig = DEFAULT_RETRY_CONFIG;
             AddSerializerSettings();
         }
@@ -81,9 +87,12 @@ namespace {{packageName}}.Client
             if (String.IsNullOrEmpty(basePath))
                 throw new ArgumentException("basePath cannot be empty");
 
-            var options = new RestClientOptions(basePath) {};
+            ClientOptions = new ClientRestOptions();
+            ClientOptions.BaseUrl = new Uri(basePath);
 
-            RestClient = new RestClient(options);
+            // var options = new RestClientOptions(basePath) {};
+
+            // RestClient = new RestClient(options);
 
             RetryConfig = DEFAULT_RETRY_CONFIG;
             Configuration = Configuration.Default;
@@ -224,16 +233,35 @@ namespace {{packageName}}.Client
                 pathParams, contentType);
 
             // set timeout
-            RestClient.Options.MaxTimeout = Configuration.Timeout;
-
-            // set user agent
-            RestClient.Options.UserAgent = Configuration.UserAgent;
+           ClientOptions.MaxTimeout = Configuration.Timeout;
+           ClientOptions.UserAgent = Configuration.UserAgent;
 
             // Set SDK version
             request.AddHeader("purecloud-sdk", "{{packageVersion}}");
 
             Retry retry = new Retry(this.RetryConfig);
             RestResponse response;
+
+
+            var options = new RestClientOptions(ClientOptions.BaseUrl)
+            {
+                MaxTimeout = ClientOptions.MaxTimeout,
+                UserAgent = ClientOptions.UserAgent
+            };
+            
+            if (ClientOptions.HttpMessageHandler != null)
+            {
+                options = new RestClientOptions(ClientOptions.BaseUrl)
+                {
+                    MaxTimeout = ClientOptions.MaxTimeout,
+                    UserAgent = ClientOptions.UserAgent,
+                    ConfigureMessageHandler = _ => ClientOptions.HttpMessageHandler 
+                };
+               
+            }
+
+            RestClient = new RestClient(options);
+
             var fullUrl = RestClient.BuildUri(request);
             string url = fullUrl == null ? path : fullUrl.ToString();
             do
@@ -291,6 +319,26 @@ namespace {{packageName}}.Client
 
              Retry retry = new Retry(this.RetryConfig);
              RestResponse response;
+
+             var options = new RestClientOptions(ClientOptions.BaseUrl)
+            {
+                MaxTimeout = ClientOptions.MaxTimeout,
+                UserAgent = ClientOptions.UserAgent
+            };
+            
+            if (ClientOptions.HttpMessageHandler != null)
+            {
+                options = new RestClientOptions(ClientOptions.BaseUrl)
+                {
+                    MaxTimeout = ClientOptions.MaxTimeout,
+                    UserAgent = ClientOptions.UserAgent,
+                    ConfigureMessageHandler = _ => ClientOptions.HttpMessageHandler 
+                };
+               
+            }
+
+            RestClient = new RestClient(options);
+            
             do
             {
                 response = await RestClient.ExecuteAsync(request);
@@ -378,8 +426,8 @@ namespace {{packageName}}.Client
             if (String.IsNullOrEmpty(basePath))
                 throw new ArgumentException("basePath cannot be empty");
                 
-                RestClient.Options.BaseUrl = new Uri(basePath);
-                return RestClient;
+                ClientOptions.BaseUrl = new Uri(basePath);
+                return new RestClient(new RestClientOptions(new Uri(basePath)));
 
         }
         /// <summary>
@@ -683,6 +731,77 @@ namespace {{packageName}}.Client
                     this.retryMax = value;
                 }
             }
+        }
+
+        public ClientRestOptions ClientOptions { get; set; }
+        public class ClientRestOptions
+        {
+            private Uri baseUrl;
+            private string userAgent;
+            private System.Net.IWebProxy proxy;
+            private int maxTimeout;
+            private HttpMessageHandler httpMessageHandler;
+
+            public HttpMessageHandler HttpMessageHandler
+            {
+                get
+                {
+                    return httpMessageHandler;
+                }
+                set
+                {
+                    this.httpMessageHandler = value;
+                }
+            }
+
+            public Uri BaseUrl
+            {
+                get
+                {
+                    return baseUrl;
+                }
+                set
+                {
+                    this.baseUrl = value;
+                }
+            }
+
+            public string UserAgent
+            {
+                get
+                {
+                    return userAgent;
+                }
+                set
+                {
+                    this.userAgent = value;
+                }
+            }
+
+            public System.Net.IWebProxy Proxy
+            {
+                get
+                {
+                    return proxy;
+                }
+                set
+                {
+                    this.proxy = value;
+                }
+            }
+
+            public int MaxTimeout
+            {
+                get
+                {
+                    return maxTimeout;
+                }
+                set
+                {
+                    this.maxTimeout = value;
+                }
+            }
+            
         }
 
         private class Retry
