@@ -46,19 +46,22 @@ SwaggerDiff.prototype.getAndDiff = function(oldSwaggerPath, newSwaggerPath, prev
 		log.warn(`Invalid newSwaggerPath: ${newSwaggerPath}`);
 	}
 
-	// Retrieve preview swagger
-	if (fs.existsSync(previewSwaggerPath)) {
-		log.info(`Loading preview swagger from disk: ${previewSwaggerPath}`);
-		previewSwagger = JSON.parse(fs.readFileSync(previewSwaggerPath, 'utf8'));
-	} else if (previewSwaggerPath.toLowerCase().startsWith('http')) {
-		log.info(`Downloading preview swagger from: ${previewSwaggerPath}`);
-		previewSwagger = JSON.parse(downloadFile(previewSwaggerPath));
-	} else {
-		log.warn(`Invalid newSwaggerPath: ${previewSwaggerPath}`);
-	}
+	// Check to see if preview swagger path is present. Internal builds do not need the preview swagger
+	if (previewSwaggerPath){
+		// Retrieve preview swagger
+		if (fs.existsSync(previewSwaggerPath)) {
+			log.info(`Loading preview swagger from disk: ${previewSwaggerPath}`);
+			previewSwagger = JSON.parse(fs.readFileSync(previewSwaggerPath, 'utf8'));
+		} else if (previewSwaggerPath.toLowerCase().startsWith('http')) {
+			log.info(`Downloading preview swagger from: ${previewSwaggerPath}`);
+			previewSwagger = JSON.parse(downloadFile(previewSwaggerPath));
+		} else {
+			log.warn(`Invalid newSwaggerPath: ${previewSwaggerPath}`);
+		}
 
-	// Add the preview swagger and the public swagger together to create the full new swagger
-	newSwagger = combineSwagger(newSwagger, previewSwagger)
+		// Add the preview swagger and the public swagger together to create the full new swagger
+		newSwagger = combineSwagger(newSwagger, previewSwagger);
+	}
 
 	log.debug(`New swagger length: ${JSON.stringify(newSwagger).length}`);
 
