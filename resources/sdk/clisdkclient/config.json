@@ -12,10 +12,11 @@
     "logLevel": "debug",
     "extensionsDestination": "${SDK_REPO}/build/gc/",
     "swagger": {
-      "oldSwaggerPath": "${SDK_REPO}/swagger.json",
-      "newSwaggerPath": "https://api.mypurecloud.com/api/v2/docs/swagger",
-      "saveNewSwaggerPath": "${SDK_REPO}/swagger.json"
-    },
+			"oldSwaggerPath": "${SDK_REPO}/swagger.json",
+			"newSwaggerPath": "https://api.mypurecloud.com/api/v2/docs/swagger",
+			"previewSwaggerPath": "https://api.mypurecloud.com/api/v2/docs/swaggerpreview",
+			"saveNewSwaggerPath": "${SDK_REPO}/swagger.json"
+		},
     "swaggerCodegen": {
       "resourceLanguage": "clisdkclient",
       "codegenLanguage": "clisdkclient",
