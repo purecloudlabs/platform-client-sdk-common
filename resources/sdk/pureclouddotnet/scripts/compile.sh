@@ -48,7 +48,6 @@ $BUILD_DIR/bin/System.Net.Http.dll,\
 $BUILD_DIR/bin/System.Text.Json.dll,\
 $BUILD_DIR/bin/System.Text.Encodings.Web.dll,\
 $BUILD_DIR/bin/System.Threading.Tasks.Extensions.dll,\
-$BUILD_DIR/bin/RichardSzalay.MockHttp.dll,\
 System.Runtime.Serialization.dll \
 -target:library \
 -out:$BUILD_DIR/bin/netstandard2.0/${ROOT_NAMESPACE}.dll \
