@@ -30,7 +30,6 @@ namespace {{packageName}}.Api
         {{#allParams}}/// <param name="{{paramName}}">{{description}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}</param>
         {{/allParams}}/// <returns>{{#returnType}}{{returnType}}{{/returnType}}</returns>
         {{#isDeprecated}}[Obsolete]{{/isDeprecated}}
-        {{#vendorExtensions.x-genesys-preview}}/// Preview Endpoint{{/vendorExtensions.x-genesys-preview}}
         {{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}void{{/returnType}} {{operationId}} ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{^-last}}, {{/-last}}{{/allParams}});
 
         /// <summary>
@@ -44,7 +43,6 @@ namespace {{packageName}}.Api
         {{#allParams}}/// <param name="{{paramName}}">{{description}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}</param>
         {{/allParams}}/// <returns>ApiResponse of {{#returnType}}{{returnType}}{{/returnType}}{{^returnType}}Object(void){{/returnType}}</returns>
         {{#isDeprecated}}[Obsolete]{{/isDeprecated}}
-        {{#vendorExtensions.x-genesys-preview}}/// Preview Endpoint{{/vendorExtensions.x-genesys-preview}}
         ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Object{{/returnType}}> {{operationId}}WithHttpInfo ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{^-last}}, {{/-last}}{{/allParams}});
         {{/operation}}
 
@@ -65,7 +63,6 @@ namespace {{packageName}}.Api
         {{#allParams}}/// <param name="{{paramName}}">{{description}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}</param>
         {{/allParams}}/// <returns>Task of {{#returnType}}{{returnType}}{{/returnType}}{{^returnType}}void{{/returnType}}</returns>
         {{#isDeprecated}}[Obsolete]{{/isDeprecated}}
-        {{#vendorExtensions.x-genesys-preview}}/// Preview Endpoint{{/vendorExtensions.x-genesys-preview}}
         {{#returnType}}System.Threading.Tasks.Task<{{{returnType}}}>{{/returnType}}{{^returnType}}System.Threading.Tasks.Task{{/returnType}} {{operationId}}Async ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{^-last}}, {{/-last}}{{/allParams}});
 
         /// <summary>
@@ -79,7 +76,6 @@ namespace {{packageName}}.Api
         {{#allParams}}/// <param name="{{paramName}}">{{description}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}</param>
         {{/allParams}}/// <returns>Task of ApiResponse{{#returnType}} ({{returnType}}){{/returnType}}</returns>
         {{#isDeprecated}}[Obsolete]{{/isDeprecated}}
-        {{#vendorExtensions.x-genesys-preview}}/// Preview Endpoint{{/vendorExtensions.x-genesys-preview}}
         System.Threading.Tasks.Task<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Object{{/returnType}}>> {{operationId}}AsyncWithHttpInfo ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{^-last}}, {{/-last}}{{/allParams}});
         {{/operation}}
 
@@ -186,7 +182,6 @@ namespace {{packageName}}.Api
         {{#allParams}}/// <param name="{{paramName}}">{{description}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}</param>
         {{/allParams}}/// <returns>{{#returnType}}{{returnType}}{{/returnType}}</returns>
         {{#isDeprecated}}[Obsolete]{{/isDeprecated}}
-        {{#vendorExtensions.x-genesys-preview}}/// Preview Endpoint{{/vendorExtensions.x-genesys-preview}}
         public {{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}void{{/returnType}} {{operationId}} ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{^-last}}, {{/-last}}{{/allParams}})
         {
              {{#returnType}}ApiResponse<{{{returnType}}}> localVarResponse = {{operationId}}WithHttpInfo({{#allParams}}{{paramName}}{{^-last}}, {{/-last}}{{/allParams}});
@@ -202,7 +197,6 @@ namespace {{packageName}}.Api
         {{#allParams}}/// <param name="{{paramName}}">{{description}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}</param>
         {{/allParams}}/// <returns>ApiResponse of {{#returnType}}{{returnType}}{{/returnType}}{{^returnType}}Object(void){{/returnType}}</returns>
         {{#isDeprecated}}[Obsolete]{{/isDeprecated}}
-        {{#vendorExtensions.x-genesys-preview}}/// Preview Endpoint{{/vendorExtensions.x-genesys-preview}}
         public ApiResponse<{{#returnType}} {{{returnType}}} {{/returnType}}{{^returnType}}Object{{/returnType}}> {{operationId}}WithHttpInfo ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{^-last}}, {{/-last}}{{/allParams}})
         { {{#allParams}}{{#required}}
             // verify the required parameter '{{paramName}}' is set
@@ -318,7 +312,6 @@ namespace {{packageName}}.Api
         {{#allParams}}/// <param name="{{paramName}}">{{description}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}</param>
         {{/allParams}}/// <returns>Task of {{#returnType}}{{returnType}}{{/returnType}}{{^returnType}}void{{/returnType}}</returns>
         {{#isDeprecated}}[Obsolete]{{/isDeprecated}}
-        {{#vendorExtensions.x-genesys-preview}}/// Preview Endpoint{{/vendorExtensions.x-genesys-preview}}
         {{#returnType}}public async System.Threading.Tasks.Task<{{{returnType}}}>{{/returnType}}{{^returnType}}public async System.Threading.Tasks.Task{{/returnType}} {{operationId}}Async ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{^-last}}, {{/-last}}{{/allParams}})
         {
              {{#returnType}}ApiResponse<{{{returnType}}}> localVarResponse = await {{operationId}}AsyncWithHttpInfo({{#allParams}}{{paramName}}{{^-last}}, {{/-last}}{{/allParams}});
@@ -335,7 +328,6 @@ namespace {{packageName}}.Api
         {{#allParams}}/// <param name="{{paramName}}">{{description}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}</param>
         {{/allParams}}/// <returns>Task of ApiResponse{{#returnType}} ({{returnType}}){{/returnType}}</returns>
         {{#isDeprecated}}[Obsolete]{{/isDeprecated}}
-        {{#vendorExtensions.x-genesys-preview}}/// Preview Endpoint{{/vendorExtensions.x-genesys-preview}}
         public async System.Threading.Tasks.Task<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Object{{/returnType}}>> {{operationId}}AsyncWithHttpInfo ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{^-last}}, {{/-last}}{{/allParams}})
         { {{#allParams}}{{#required}}
             // verify the required parameter '{{paramName}}' is set
