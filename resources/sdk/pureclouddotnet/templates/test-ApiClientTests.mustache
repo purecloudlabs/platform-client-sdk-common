@@ -62,27 +62,21 @@ public class ApiClientTests
             RetryMax = 50
         };
 
-            var mockHttp = new MockHttpMessageHandler();
+        var mockHttp = new MockHttpMessageHandler();
 
-            mockHttp
-             .When("*")
-            .Respond((req) =>
-{
-    var response = new HttpResponseMessage((System.Net.HttpStatusCode)429);
-    response.Headers.Add("Retry-After", "3");
-    return Task.FromResult(response);
-});
+        mockHttp.When("*").Respond((req) =>
+        {
+            var response = new HttpResponseMessage((System.Net.HttpStatusCode)429);
+            response.Headers.Add("Retry-After", "3");
+            return Task.FromResult(response);
+        });
 
-            var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
-            apiClient.RetryConfig = retryConfig;
-            apiClient.ClientOptions.HttpMessageHandler = mockHttp;
-
+        var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
+        apiClient.RetryConfig = retryConfig;
+        apiClient.ClientOptions.HttpMessageHandler = mockHttp;
 
         stopwatch = Stopwatch.StartNew();
         RestResponse user = (RestResponse)apiClient.CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
-        Console.WriteLine((int)user.StatusCode);
-        Console.WriteLine(stopwatch.ElapsedMilliseconds);
-        Console.WriteLine("InvokeTestWith_429");
         Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 6000 && stopwatch.ElapsedMilliseconds < 6100, "It will wait for every 100 Mills and retry until 6 Seconds");
         Assert.AreEqual(429, (int)user.StatusCode);
         stopwatch.Stop();
@@ -99,16 +93,13 @@ public class ApiClientTests
         };
 
         var mockHttp = new MockHttpMessageHandler();
-
         var response = new HttpResponseMessage((System.Net.HttpStatusCode)429);
         response.Headers.Add("Retry-After", "3");
-
-            mockHttp
-             .When("*")
-            .Respond(response);
+        mockHttp.When("*").Respond(response);
+        
         var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
-       apiClient.ClientOptions.HttpMessageHandler = mockHttp;
+        apiClient.ClientOptions.HttpMessageHandler = mockHttp;
 
         stopwatch = Stopwatch.StartNew();
         RestResponse user = (RestResponse)apiClient.CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
@@ -131,12 +122,10 @@ public class ApiClientTests
 
         var mockHttp = new MockHttpMessageHandler();
 
-            mockHttp
-             .When("*")
-            .Respond((System.Net.HttpStatusCode)502);
+        mockHttp.When("*").Respond((System.Net.HttpStatusCode)502);
         var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
-       apiClient.ClientOptions.HttpMessageHandler = mockHttp;
+        apiClient.ClientOptions.HttpMessageHandler = mockHttp;
 
         stopwatch = Stopwatch.StartNew();
         RestResponse user = (RestResponse)apiClient.CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
@@ -158,13 +147,10 @@ public class ApiClientTests
         };
 
         var mockHttp = new MockHttpMessageHandler();
-
-            mockHttp
-             .When("*")
-            .Respond((System.Net.HttpStatusCode)503);
+        mockHttp.When("*").Respond((System.Net.HttpStatusCode)503);
         var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
-       apiClient.ClientOptions.HttpMessageHandler = mockHttp;
+        apiClient.ClientOptions.HttpMessageHandler = mockHttp;
 
         stopwatch = Stopwatch.StartNew();
         RestResponse user = (RestResponse)apiClient.CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
@@ -186,12 +172,10 @@ public class ApiClientTests
 
         var mockHttp = new MockHttpMessageHandler();
 
-            mockHttp
-             .When("*")
-            .Respond((System.Net.HttpStatusCode)504);
+        mockHttp.When("*").Respond((System.Net.HttpStatusCode)504);
         var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
-       apiClient.ClientOptions.HttpMessageHandler = mockHttp;
+        apiClient.ClientOptions.HttpMessageHandler = mockHttp;
 
         stopwatch = Stopwatch.StartNew();
         RestResponse user = (RestResponse)apiClient.CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
@@ -210,14 +194,12 @@ public class ApiClientTests
             RetryMax = 50
         };
 
-         var mockHttp = new MockHttpMessageHandler();
-
-            mockHttp
-             .When("*")
-            .Respond((System.Net.HttpStatusCode)504);
+        var mockHttp = new MockHttpMessageHandler();
+        mockHttp.When("*").Respond((System.Net.HttpStatusCode)504);
+        
         var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
-       apiClient.ClientOptions.HttpMessageHandler = mockHttp;
+        apiClient.ClientOptions.HttpMessageHandler = mockHttp;
 
         stopwatch = Stopwatch.StartNew();
         RestResponse user = (RestResponse)apiClient.CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
@@ -237,26 +219,20 @@ public class ApiClientTests
         };
 
         var mockHttp = new MockHttpMessageHandler();
+        mockHttp.When("*").Respond((req) =>
+        {
+            var response = new HttpResponseMessage((System.Net.HttpStatusCode)429);
+            response.Headers.Add("Retry-After", "1");
+            return Task.FromResult(response);
+        });
 
-
-            mockHttp
-             .When("*")
-            .Respond((req) =>
-{
-    var response = new HttpResponseMessage((System.Net.HttpStatusCode)429);
-    response.Headers.Add("Retry-After", "1");
-    return Task.FromResult(response);
-});
-
-            var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
-            apiClient.RetryConfig = retryConfig;
-            apiClient.ClientOptions.HttpMessageHandler = mockHttp;
+        var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
+        apiClient.RetryConfig = retryConfig;
+        apiClient.ClientOptions.HttpMessageHandler = mockHttp;
 
         stopwatch = Stopwatch.StartNew();
         RestResponse user = (RestResponse)await apiClient.CallApiAsync(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
-         Console.WriteLine((int)user.StatusCode);
-        Console.WriteLine(stopwatch.ElapsedMilliseconds);
-        Console.WriteLine("InvokeAsyncTestWith_429");
+        
         Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 5000 && stopwatch.ElapsedMilliseconds < 5100, "It will wait for every 1 Sec provided by Retry-After header Sec and retry for 5 Sec");
         Assert.AreEqual(429, (int)user.StatusCode);
         stopwatch.Stop();
@@ -271,17 +247,15 @@ public class ApiClientTests
             RetryMax = 50
         };
 
-       var mockHttp = new MockHttpMessageHandler();
-var response = new HttpResponseMessage((System.Net.HttpStatusCode)429);
+        var mockHttp = new MockHttpMessageHandler();
+        var response = new HttpResponseMessage((System.Net.HttpStatusCode)429);
         response.Headers.Add("Retry-After", "1");
 
-            mockHttp
-             .When("*")
-            .Respond(response);
+        mockHttp.When("*").Respond(response);
 
-            var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
-            apiClient.RetryConfig = retryConfig;
-            apiClient.ClientOptions.HttpMessageHandler = mockHttp;
+        var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
+        apiClient.RetryConfig = retryConfig;
+        apiClient.ClientOptions.HttpMessageHandler = mockHttp;
 
         stopwatch = Stopwatch.StartNew();
         RestResponse user = (RestResponse)await apiClient.CallApiAsync(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
@@ -302,18 +276,16 @@ var response = new HttpResponseMessage((System.Net.HttpStatusCode)429);
             RetryMax = 50
         };
 
-         var mockHttp = new MockHttpMessageHandler();
+        var mockHttp = new MockHttpMessageHandler();
 
-            mockHttp
-             .When("*")
-            .Respond((req) =>
-{
-    var response = new HttpResponseMessage((System.Net.HttpStatusCode)502);
-    return Task.FromResult(response);
-});
+        mockHttp.When("*").Respond((req) =>
+        {
+            var response = new HttpResponseMessage((System.Net.HttpStatusCode)502);
+            return Task.FromResult(response);
+        });
         var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
-       apiClient.ClientOptions.HttpMessageHandler = mockHttp;
+        apiClient.ClientOptions.HttpMessageHandler = mockHttp;
 
         stopwatch = Stopwatch.StartNew();
         RestResponse user = (RestResponse)await apiClient.CallApiAsync(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
@@ -334,18 +306,16 @@ var response = new HttpResponseMessage((System.Net.HttpStatusCode)429);
             RetryMax = 50
         };
 
-       var mockHttp = new MockHttpMessageHandler();
-
-            mockHttp
-             .When("*")
-            .Respond((req) =>
-{
-    var response = new HttpResponseMessage((System.Net.HttpStatusCode)503);
-    return Task.FromResult(response);
-});
+        var mockHttp = new MockHttpMessageHandler();
+        mockHttp.When("*").Respond((req) =>
+        {
+            var response = new HttpResponseMessage((System.Net.HttpStatusCode)503);
+            return Task.FromResult(response);
+        });
+        
         var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
-       apiClient.ClientOptions.HttpMessageHandler = mockHttp;
+        apiClient.ClientOptions.HttpMessageHandler = mockHttp;
 
         stopwatch = Stopwatch.StartNew();
         RestResponse user = (RestResponse)await apiClient.CallApiAsync(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
@@ -364,18 +334,16 @@ var response = new HttpResponseMessage((System.Net.HttpStatusCode)429);
             RetryMax = 50
         };
 
-       var mockHttp = new MockHttpMessageHandler();
-
-            mockHttp
-             .When("*")
-            .Respond((req) =>
-{
-    var response = new HttpResponseMessage((System.Net.HttpStatusCode)504);
-    return Task.FromResult(response);
-});
+        var mockHttp = new MockHttpMessageHandler();
+        mockHttp.When("*").Respond((req) =>
+        {
+            var response = new HttpResponseMessage((System.Net.HttpStatusCode)504);
+            return Task.FromResult(response);
+        });
+        
         var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
-       apiClient.ClientOptions.HttpMessageHandler = mockHttp;
+        apiClient.ClientOptions.HttpMessageHandler = mockHttp;
 
         stopwatch = Stopwatch.StartNew();
         RestResponse user = (RestResponse)await apiClient.CallApiAsync(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
@@ -394,16 +362,15 @@ var response = new HttpResponseMessage((System.Net.HttpStatusCode)429);
         };
 
         var mockHttp = new MockHttpMessageHandler();
-            mockHttp
-             .When("*")
-            .Respond((req) =>
-{
-    var response = new HttpResponseMessage((System.Net.HttpStatusCode)504);
-    return Task.FromResult(response);
-});
+        mockHttp.When("*").Respond((req) =>
+        {
+            var response = new HttpResponseMessage((System.Net.HttpStatusCode)504);
+            return Task.FromResult(response);
+        });
+        
         var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
-       apiClient.ClientOptions.HttpMessageHandler = mockHttp;
+        apiClient.ClientOptions.HttpMessageHandler = mockHttp;
 
         stopwatch = Stopwatch.StartNew();
         RestResponse user = (RestResponse)await apiClient.CallApiAsync(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);

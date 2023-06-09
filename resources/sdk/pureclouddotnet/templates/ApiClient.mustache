@@ -40,9 +40,7 @@ namespace {{packageName}}.Client
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
             Configuration = Configuration.Default;
-            // var options = new RestClientOptions("{{basePath}}") {};
-
-            // RestClient = new RestClient(options);
+            
             ClientOptions = new ClientRestOptions();
             ClientOptions.BaseUrl = new Uri("{{basePath}}");
             RetryConfig = DEFAULT_RETRY_CONFIG;
@@ -67,9 +65,6 @@ namespace {{packageName}}.Client
             ClientOptions = new ClientRestOptions();
             ClientOptions.BaseUrl = new Uri("{{basePath}}");
 
-            // var options = new RestClientOptions("{{basePath}}") {};
-
-            // RestClient = new RestClient(options);
             RetryConfig = DEFAULT_RETRY_CONFIG;
             AddSerializerSettings();
         }
@@ -89,10 +84,6 @@ namespace {{packageName}}.Client
 
             ClientOptions = new ClientRestOptions();
             ClientOptions.BaseUrl = new Uri(basePath);
-
-            // var options = new RestClientOptions(basePath) {};
-
-            // RestClient = new RestClient(options);
 
             RetryConfig = DEFAULT_RETRY_CONFIG;
             Configuration = Configuration.Default;
@@ -338,7 +329,6 @@ namespace {{packageName}}.Client
             }
 
             RestClient = new RestClient(options);
-            
             do
             {
                 response = await RestClient.ExecuteAsync(request);
@@ -421,21 +411,23 @@ namespace {{packageName}}.Client
         /// <summary>
         /// Creates a restclient with a base path string input
         /// </summary>
-        /// <returns>Returns a rest client</returns>
-        public RestClient setBasePath(String basePath){
+        /// <returns>Return changed from RestClient to Void . Since no purpose to expose underlying RestClient to Consumer and 
+        ///  design changed to One Restclient per API</returns>
+        public void setBasePath(String basePath){
             if (String.IsNullOrEmpty(basePath))
                 throw new ArgumentException("basePath cannot be empty");
                 
                 ClientOptions.BaseUrl = new Uri(basePath);
-                return new RestClient(new RestClientOptions(new Uri(basePath)));
+                
 
         }
         /// <summary>
         /// Creates a restclient with a PureCloudRegionHost string input
         /// </summary>
-        /// <returns>Returns a rest client</returns>
-        public RestClient setBasePath(PureCloudRegionHosts region){
-         return setBasePath(region.GetDescription());
+        /// <returns>Return changed from RestClient to Void . Since no purpose to expose underlying RestClient to Consumer and 
+        ///  design changed to One Restclient per API</returns>
+        public void setBasePath(PureCloudRegionHosts region){
+             setBasePath(region.GetDescription());
         }
 
         /// <summary>
