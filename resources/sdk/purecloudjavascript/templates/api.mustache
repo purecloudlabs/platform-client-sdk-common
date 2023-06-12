@@ -30,12 +30,12 @@ class {{classname}} {
 	 * @param {{&vendorExtensions.x-jsdoc-type}} opts.{{paramName}} {{{description}}}{{#defaultValue}} (default to {{.}}){{/defaultValue}}{{/required}}{{/allParams}}{{/hasOptionalParams}}{{#isDeprecated}}
      	 * @deprecated{{/isDeprecated}}
 	 */{{/emitJSDoc}}
-	{{nickname}}({{vendorExtensions.x-codegen-arg-list}}) { {{#hasOptionalParams}}
+	{{operationId}}({{vendorExtensions.x-codegen-arg-list}}) { {{#hasOptionalParams}}
 		opts = opts || {};
 		{{/hasOptionalParams}}{{#allParams}}{{#required}}
 		// verify the required parameter '{{paramName}}' is set
 		if ({{paramName}} === undefined || {{paramName}} === null) {
-			throw 'Missing the required parameter "{{paramName}}" when calling {{nickname}}';
+			throw 'Missing the required parameter "{{paramName}}" when calling {{operationId}}';
 		}{{/required}}{{/allParams}}
 
 		return this.apiClient.callApi(
