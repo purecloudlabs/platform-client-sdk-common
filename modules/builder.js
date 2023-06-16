@@ -243,6 +243,7 @@ function prebuildImpl() {
 				swaggerDiff.getAndDiff(
 					_this.config.settings.swagger.oldSwaggerPath,
 					_this.config.settings.swagger.newSwaggerPath,
+					_this.config.settings.swagger.previewSwaggerPath,
 					_this.config.settings.swagger.saveOldSwaggerPath,
 					_this.config.settings.swagger.saveNewSwaggerPath
 				);
