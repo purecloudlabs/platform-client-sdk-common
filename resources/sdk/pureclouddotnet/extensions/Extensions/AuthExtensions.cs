@@ -101,7 +101,9 @@ namespace {{=it.packageName}}.Extensions
             apiClient.Configuration.AuthTokenInfo = authTokenInfo;
 
             return new ApiResponse<AuthTokenInfo>(statusCode,
-                response.Headers.ToDictionary(x => x.Name, x => x.Value.ToString()),
+                response.Headers
+                 .Select(header => new { Name = header.GetType().GetProperty("Name").GetValue(header), Value = header.GetType().GetProperty("Value").GetValue(header) })
+                                    .ToDictionary(header => header.Name.ToString(), header => header.Value.ToString()),
                 authTokenInfo,
                 response.Content,
                 response.StatusDescription);
@@ -177,7 +179,8 @@ namespace {{=it.packageName}}.Extensions
                     response.ErrorMessage);
 
             return new ApiResponse<AuthTokenInfo>(statusCode,
-                response.Headers.ToDictionary(x => x.Name, x => x.Value.ToString()),
+                response.Headers.Select(header => new { Name = header.GetType().GetProperty("Name").GetValue(header), Value = header.GetType().GetProperty("Value").GetValue(header) })
+                                    .ToDictionary(header => header.Name.ToString(), header => header.Value.ToString()),
                 (AuthTokenInfo) apiClient.Deserialize(response, typeof (AuthTokenInfo)),
                 response.Content,
                 response.StatusDescription);
@@ -213,11 +216,13 @@ namespace {{=it.packageName}}.Extensions
             int statusCode = (int)response.StatusCode;
             var fullUrl = restClient.BuildUri(request);
             string url = fullUrl == null ? path : fullUrl.ToString();
-            apiClient.Configuration.Logger.Trace(method.ToString(), url, postBody, statusCode, headerParams, response.Headers.ToDictionary(x => x.Name, x => x.Value.ToString()));
+            apiClient.Configuration.Logger.Trace(method.ToString(), url, postBody, statusCode, headerParams, response.Headers.Select(header => new { Name = header.GetType().GetProperty("Name").GetValue(header), Value = header.GetType().GetProperty("Value").GetValue(header) })
+                                    .ToDictionary(header => header.Name.ToString(), header => header.Value.ToString()));
             apiClient.Configuration.Logger.Debug(method.ToString(), url, postBody, statusCode, headerParams);
 
             if (statusCode >= 400 || statusCode == 0)
-                apiClient.Configuration.Logger.Error(method.ToString(), url, postBody, response.Content, statusCode, headerParams, response.Headers.ToDictionary(x => x.Name, x => x.Value.ToString()));
+                apiClient.Configuration.Logger.Error(method.ToString(), url, postBody, response.Content, statusCode, headerParams, response.Headers.Select(header => new { Name = header.GetType().GetProperty("Name").GetValue(header), Value = header.GetType().GetProperty("Value").GetValue(header) })
+                                    .ToDictionary(header => header.Name.ToString(), header => header.Value.ToString()));
 
             return (Object) response;
         }
