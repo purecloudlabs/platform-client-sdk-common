@@ -42,21 +42,27 @@ echo '<?xml version="1.0" encoding="utf-8"?>'\
 '		<dependencies>'\
 '		<group targetFramework=".NETStandard2.0">'\
 '			<dependency id="Newtonsoft.Json" version="11.0.2" />'\
-'			<dependency id="RestSharp" version="106.3.1" />'\
+'			<dependency id="RestSharp" version="110.2.0" />'\
 '			<dependency id="ini-parser" version="2.5.2" />'\
+'			<dependency id="System.Text.Json" version="6.0.0" />'\
+'			<dependency id="System.Text.Encodings.Web" version="7.0.0" />'\
+'			<dependency id="System.Threading.Tasks.Extensions" version="4.5.4" />'\
 '		</group>'\
-'		<group targetFramework=".NETFramework4.5.2">'\
+'		<group targetFramework=".NETFramework4.7.1">'\
 '			<dependency id="Newtonsoft.Json" version="11.0.2" />'\
-'			<dependency id="RestSharp" version="106.3.1" />'\
+'			<dependency id="RestSharp" version="110.2.0" />'\
 '			<dependency id="ini-parser" version="2.5.2" />'\
+'			<dependency id="System.Text.Json" version="6.0.0" />'\
+'			<dependency id="System.Text.Encodings.Web" version="7.0.0" />'\
+'			<dependency id="System.Threading.Tasks.Extensions" version="4.5.4" />'\
 '		</group>'\
 '		</dependencies>'\
 '	</metadata>'\
 '	<files>'\
 "		<file src=\"netstandard2.0/$NAMESPACE.dll\" target=\"lib/netstandard2.0/$NAMESPACE.dll\" />"\
 "		<file src=\"netstandard2.0/$NAMESPACE.xml\" target=\"lib/netstandard2.0/$NAMESPACE.xml\" />"\
-"		<file src=\"net4.5.2/$NAMESPACE.dll\" target=\"lib/net452/$NAMESPACE.dll\" />"\
-"		<file src=\"net4.5.2/$NAMESPACE.xml\" target=\"lib/net452/$NAMESPACE.xml\" />"\
+"		<file src=\"net4.7.1/$NAMESPACE.dll\" target=\"lib/net471/$NAMESPACE.dll\" />"\
+"		<file src=\"net4.7.1/$NAMESPACE.xml\" target=\"lib/net471/$NAMESPACE.xml\" />"\
 '	</files>'\
 '</package>' > $BUILD_DIR/bin/$NAMESPACE.nuspec
 
