@@ -151,6 +151,10 @@ public class WebMessagingClient {
             }
 
             @Override
+                public void sessionClearedEvent(SessionClearedEvent sessionClearedResponse, String rawMessage) {
+            }
+
+            @Override
             public void jwtResponse(JwtResponse jwtResponse, String rawMessage) {
                 jwt = jwtResponse.getJwt();
             }
@@ -414,11 +418,12 @@ public class WebMessagingClient {
     }
 
     /**
-     * send an event of type Presence join
+     * send a Presence event by specifying the subtype
      *
      * @see EventPresence
+     * @see EventPresenceType
      */
-    public void sendPresenceEvent() {
+    public void sendPresenceEvent(EventPresenceType type) {
         try {
             SendMessageRequest sendMessageRequest = new SendMessageRequest();
             sendMessageRequest.token(this.token);
@@ -428,7 +433,7 @@ public class WebMessagingClient {
                     .events(Collections.singletonList(new MessageEvent()
                             .eventType(EventType.PRESENCE)
                             .presence(new EventPresence()
-                                    .type(EventPresenceType.JOIN))
+                                    .type(type))
                     ))
             );
             String payload = objectMapper.writeValueAsString(sendMessageRequest);
@@ -436,6 +441,35 @@ public class WebMessagingClient {
         } catch (JsonProcessingException e) {
             // no-op
         }
+    }
+
+    /**
+     * send an event of type Presence join for backward compatibility
+     *
+     * @see EventPresence
+     * @see #sendPresenceEventJoin()
+     */
+    public void sendPresenceEvent() {
+        sendPresenceEventJoin();
+    }
+
+
+    /**
+     * send an event of type Presence join
+     *
+     * @see EventPresence
+     */
+    public void sendPresenceEventJoin() {
+        sendPresenceEvent(EventPresenceType.JOIN);
+    }
+
+    /**
+     * send an event of type Presence clear
+     *
+     * @see EventPresence
+     */
+    public void sendPresenceEventEndUserClear() {
+        sendPresenceEvent(EventPresenceType.CLEAR);
     }
 
     /**
@@ -597,6 +631,11 @@ public class WebMessagingClient {
             case "SessionExpiredEvent":
                 for (SessionListener sessionListener : sessionListeners) {
                     sessionListener.sessionExpiredEvent((SessionExpiredEvent) response, rawMessage);
+                }
+                break;
+            case "SessionClearedEvent":
+                for (SessionListener sessionListener : sessionListeners) {
+                    sessionListener.sessionClearedEvent((SessionClearedEvent) response, rawMessage);
                 }
                 break;
             case "JwtResponse":
@@ -779,6 +818,14 @@ public class WebMessagingClient {
          * @param rawMessage  The raw message payload JSON as a string
          */
         public void sessionExpiredEvent(SessionExpiredEvent sessionExpiredEvent, String rawMessage);
+
+        /**
+         * Raised for responses to url requests (type == BaseResponseType.RESPONSE, class = SessionResponse)
+         *
+         * @param sessionClearedEvent    The deserialized event
+         * @param rawMessage  The raw message payload JSON as a string
+         */
+        public void sessionClearedEvent(SessionClearedEvent sessionClearedEvent, String rawMessage);
 
         /**
          * Raised for responses to url requests (type == BaseResponseType.RESPONSE, class = SessionResponse)
