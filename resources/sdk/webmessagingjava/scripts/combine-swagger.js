@@ -88,13 +88,6 @@ function addDefinitions(definitionBody) {
             addDefinitions(internalSwagger.definitions[responseValuesSchemaDefinition])
         }
 
-        if (propertyValues["$ref"]) {
-            responseValuesSchemaDefinition = propertyValues["$ref"].replace("#/definitions/", "")
-            newSwagger["definitions"][responseValuesSchemaDefinition] = internalSwagger.definitions[responseValuesSchemaDefinition]
-            existingDefinitions.push(responseValuesSchemaDefinition)
-            addDefinitions(internalSwagger.definitions[responseValuesSchemaDefinition])
-        }
-
         // Get definitions by ref from nested objects
         for (const propertyValueKeys of Object.keys(propertyValues)) {
             if (!propertyValues[propertyValueKeys]["$ref"])
