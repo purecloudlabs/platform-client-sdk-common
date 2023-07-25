@@ -1,4 +1,9 @@
 {
+	"/api/v2/alerting/alerts/{alertId}": {
+		"patch": {
+			"name": "patch"
+		}
+	},
 	"/api/v2/analytics/conversations/details": {
 		"get": {
 			"name": "list"
