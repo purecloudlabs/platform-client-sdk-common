@@ -19,12 +19,19 @@ set -e
 
 
 stop_proxy() {
-set +e
-pm2 delete proxy-server
-if [ $? -ne 0 ]; then
-  echo "Process is stopped"
-fi
-set -e
+    set +e
+    if ! command -v pm2 &> /dev/null; then
+        echo "pm2 is not installed. Exiting..."
+        exit 0
+    fi
+
+    if pm2 list | grep -q "proxy-server"; then
+        pm2 delete proxy-server
+        echo "Process proxy-server is stopped."
+    else
+        echo "process proxy-server is not running."
+    fi
+    set -e
 }
 
 "$@"
