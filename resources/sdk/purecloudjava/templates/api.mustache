@@ -39,7 +39,8 @@ public class {{classname}} {
   {{#operation}}
   /**
    * {{{summary}}}
-   * {{{notes}}}{{#allParams}}
+   * {{{notes}}}{{#vendorExtensions.x-genesys-preview}}
+   * {{operationId}} is a preview method and is subject to both breaking and non-breaking changes at any time without notice{{/vendorExtensions.x-genesys-preview}}{{#allParams}}
    * @param {{paramName}} {{{description}}}{{#required}} (required){{/required}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}{{/allParams}}{{#returnType}}
    * @return {{{returnType}}}{{/returnType}}
    * @throws ApiException if the request fails on the server
@@ -52,7 +53,8 @@ public class {{classname}} {
 
   /**
    * {{{summary}}}
-   * {{{notes}}}{{#allParams}}
+   * {{{notes}}}{{#vendorExtensions.x-genesys-preview}}
+   * {{operationId}} is a preview method and is subject to both breaking and non-breaking changes at any time without notice{{/vendorExtensions.x-genesys-preview}}{{#allParams}}
    * @param {{paramName}} {{{description}}}{{#required}} (required){{/required}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}{{/allParams}}{{#returnType}}
    * @return {{{returnType}}}{{/returnType}}
    * @throws IOException if the request fails to be processed{{#isDeprecated}}
@@ -72,7 +74,8 @@ public class {{classname}} {
 
   /**
    * {{{summary}}}
-   * {{{notes}}}
+   * {{{notes}}}{{#vendorExtensions.x-genesys-preview}}
+   * {{operationId}} is a preview method and is subject to both breaking and non-breaking changes at any time without notice{{/vendorExtensions.x-genesys-preview}}
    * @param request The request object{{#returnType}}
    * @return {{{returnType}}}{{/returnType}}
    * @throws ApiException if the request fails on the server
@@ -92,7 +95,8 @@ public class {{classname}} {
 
   /**
    * {{{summary}}}
-   * {{{notes}}}
+   * {{{notes}}}{{#vendorExtensions.x-genesys-preview}}
+   * {{operationId}} is a preview method and is subject to both breaking and non-breaking changes at any time without notice{{/vendorExtensions.x-genesys-preview}}
    * @param request The request object
    * @return the response
    * @throws IOException if the request fails to be processed{{#isDeprecated}}
