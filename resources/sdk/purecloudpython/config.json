@@ -49,6 +49,14 @@
             }
           ],
           "failOnError": true
+        },
+        {
+          "type": "node",
+          "path": "${COMMON_ROOT}/resources/scripts/proxy-npm.js",
+          "args": [
+            "start"
+          ],
+          "failOnError": true
         }
       ]
     },
@@ -81,7 +89,16 @@
       "gitCommit": false,
       "publishRelease": false,
       "preRunScripts": [],
-      "postRunScripts": []
+      "postRunScripts": [
+        {
+          "type": "node",
+          "path": "${COMMON_ROOT}/resources/scripts/proxy-npm.js",
+          "args": [
+            "stop"
+          ],
+          "failOnError": false
+        }
+      ]
     }
   }
 }

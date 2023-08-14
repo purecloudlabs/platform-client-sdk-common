@@ -53,6 +53,14 @@
                         }
                     ],
                     "failOnError": true
+                },
+                {
+                    "type": "node",
+                    "path": "${COMMON_ROOT}/resources/scripts/proxy-npm.js",
+                    "args": [
+                             "start"
+                     ],
+                    "failOnError": true
                 }
             ]
         },
@@ -103,6 +111,14 @@
                       "${SDK_REPO}/build/APIData.json"
                     ],
                     "failOnError": true
+                },
+                {
+                    "type": "node",
+                    "path": "${COMMON_ROOT}/resources/scripts/proxy-npm.js",
+                    "args": [
+                      "stop"
+                    ],
+                    "failOnError": false
                 }
             ]
         },
