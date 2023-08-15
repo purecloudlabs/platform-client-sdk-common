@@ -5,9 +5,9 @@ function Proxy() {}
 function setupProxy() {
   console.log("called pm2")
   
-  exec('./modules/connect-proxy.sh start_proxy', (error, stdout, stderr) => {
+  exec('./resources/scripts/connect-proxy.sh start_proxy', (error, stdout, stderr) => {
     if (error) {
-      console.error(`Error installing Proxy: ${error.message}`);
+      console.error(`Error Starting Proxy: ${error.message}`);
       return;
     }
     if (stderr) {
@@ -19,7 +19,7 @@ function setupProxy() {
 };
 
 function stopProxy() {
-  exec('./modules/connect-proxy.sh stop_proxy', (error, stdout, stderr) => {
+  exec('./resources/scripts/connect-proxy.sh stop_proxy', (error, stdout, stderr) => {
     if (error) {
       console.error(`Error stopping Proxy: ${error.message}`);
       return;
@@ -32,3 +32,13 @@ function stopProxy() {
 };
 
 module.exports = { setupProxy, stopProxy };
+
+
+const proxyInstsruction = process.argv[2];
+
+if(proxyInstsruction === "start"){
+  setupProxy();
+}
+else {
+  stopProxy();
+}
