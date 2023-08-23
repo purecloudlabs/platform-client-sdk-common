@@ -355,7 +355,7 @@
     <maven-plugin-version>1.0.0</maven-plugin-version>
     <testng-version>7.5</testng-version>
     <apache-httpclient-version>4.5.14</apache-httpclient-version>
-    <okhttpclient-version>4.10.0</okhttpclient-version>
+    <okhttpclient-version>4.11.0</okhttpclient-version>
     <ning-asynchttpclient-version>2.12.3</ning-asynchttpclient-version>
     <nv-websocket-client-version>2.14</nv-websocket-client-version>
     <guava-version>31.1-jre</guava-version>
