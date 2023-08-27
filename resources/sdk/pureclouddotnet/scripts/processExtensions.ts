@@ -3,9 +3,6 @@ import fs from 'fs-extra';
 import klawSync from 'klaw-sync';
 import path from 'path';
 
-
-
-
 export class ProcessExtensions {
 	init() {
 

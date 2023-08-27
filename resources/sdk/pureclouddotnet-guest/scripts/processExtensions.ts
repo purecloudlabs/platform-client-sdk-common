@@ -1,6 +1,6 @@
 import dot from 'dot';
 import fs from 'fs-extra';
-import klawSync from 'mustache';
+import klawSync from 'klaw-sync';
 import path from 'path';
 
 

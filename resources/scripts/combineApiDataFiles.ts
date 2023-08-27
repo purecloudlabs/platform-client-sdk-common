@@ -2,11 +2,11 @@ import fs from 'fs';
 import path from 'path';
 
 interface APIData {
-    operationId:  string;
-    functionName: string;
-    signature:    string;
+    operationId?:  string;
+    functionName?: string;
+    signature?:    string;
     parameters?:  Parameter[];
-    example:      string;
+    example?:      string;
     return?:      string;
 }
 
@@ -19,7 +19,7 @@ interface Parameter {
 
 export default class CombineApis {
 
-	dataFile: APIData;
+    dataFile: APIData = {};
 	dirent: fs.Dirent;
 
 	combineApiDataFiles(docsDir: string, dataFileName: string) {

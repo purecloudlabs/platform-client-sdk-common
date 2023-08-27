@@ -218,17 +218,7 @@ namespace {{packageName}}.Client
         /// Gets or sets the HTTP timeout (milliseconds) of ApiClient. Default to 100000 milliseconds.
         /// </summary>
         /// <value>Timeout.</value>
-        public int Timeout
-        {
-            get { 
-                return ApiClient.ClientOptions.MaxTimeout;
-            }
-
-            set {
-                if (ApiClient != null)
-                    ApiClient.ClientOptions.MaxTimeout = value;
-            }
-        }
+        public int Timeout { get; set; }
 
         /// <summary>
         /// Gets or sets the default API client for making HTTP calls.

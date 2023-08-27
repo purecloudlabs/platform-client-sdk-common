@@ -10,7 +10,7 @@ const log = new Logger();
 export default class SwaggerDiff {
 
 	changes: { [key: string]: any } = {};
-	changeCount: number;
+	changeCount: number = 0;
 	swaggerInfo: Info;
 	oldSwagger: Swagger;
 	newSwagger: Swagger;
