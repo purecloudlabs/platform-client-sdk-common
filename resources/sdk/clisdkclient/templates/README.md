@@ -110,6 +110,10 @@ Logging is configured on a per-profile basis so the above commands will only con
 # Tracing progress information
 Passing the flag `-i` or `--indicateprogress` to any command will result in progress information traced to stderr and written to the application log file.  For example, to see progress information for a list operation and ignore API output, use `gc users list --autopaginate -i > /dev/null`.
 
+# Preview API's
+
+Preview API's are included in the CLI. These resources are subject to both breaking and non-breaking changes at any time without notice. This includes, but is not limited to, changing resource names, paths, contracts, documentation, and removing resources entirely. For a full list of the preview API's see [here](https://developer.genesys.cloud/platform/preview-apis)
+
 # Notifications
 Create a channel:
 ```
@@ -167,20 +171,23 @@ The 'ProxyConfiguration' has another section which is an optional section. If th
 'userName' and 'password' needs to be mentioned under the 'ProxyConfiguration'. This section can be removed from the JSON file if no authentication is required.
 
 JSON configuration file:
-
+```
 {
-        "host": "hostname",
-        "protocol": "http",
-        "port": "8888",
-        "userName": "username",
-        "password": "password"
+  "host": "hostname",
+  "protocol": "http",
+  "port": "8888",
+  "userName": "username",
+  "password": "password"
 }
-
+```
 Command to Enable Proxy:
+```
 gc proxy --file=proxy.json
-
+```
 To disable this Proxy Configuration, run the following command.
+```
 gc proxy disable
+```
 
 # Autocompletion
 
