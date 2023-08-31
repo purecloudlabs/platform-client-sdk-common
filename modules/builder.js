@@ -34,6 +34,7 @@ Builder.prototype.releaseNoteTemplatePath = '';
 
 function Builder(configPath, localConfigPath) {
 	try {
+		
 		log.writeBox('Constructing Builder');
 
 		// Load config files
@@ -241,6 +242,7 @@ function prebuildImpl() {
 				swaggerDiff.getAndDiff(
 					_this.config.settings.swagger.oldSwaggerPath,
 					_this.config.settings.swagger.newSwaggerPath,
+					_this.config.settings.swagger.previewSwaggerPath,
 					_this.config.settings.swagger.saveOldSwaggerPath,
 					_this.config.settings.swagger.saveNewSwaggerPath
 				);
@@ -338,6 +340,7 @@ function prebuildImpl() {
 				data.hasExtraNotes = data.extraNotes !== undefined;
 				data.apiVersionData = _this.apiVersionData;
 
+
 				// Get release notes
 				log.info('Generating release notes...');
 				_this.releaseNotes = swaggerDiff.generateReleaseNotes(_this.releaseNoteTemplatePath, data);
@@ -398,6 +401,7 @@ function buildImpl() {
 		} else {
 			log.warn(`Extensions path does not exist! Path: ${_this.resourcePaths.extensions}`);
 		}
+ 
 		// Ensure compile scripts fail on error
 		_.forEach(_this.config.stageSettings.build.compileScripts, function (script) {
 			script.failOnError = true;

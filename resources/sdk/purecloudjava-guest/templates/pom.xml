@@ -79,7 +79,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
-        <version>3.3.0</version>
+        <version>3.4.0</version>
         <executions>
           <execution>
             <id>add_sources</id>
@@ -155,7 +155,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-gpg-plugin</artifactId>
-        <version>3.0.1</version>
+        <version>3.1.0</version>
         <executions>
           <execution>
             <id>sign-artifacts</id>
@@ -278,12 +278,12 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <swagger-annotations-version>1.6.11</swagger-annotations-version>
-    <slf4j-version>2.0.6</slf4j-version>
-    <jackson-version>2.14.2</jackson-version>
+    <jackson-version>2.15.0</jackson-version>
+    <slf4j-version>2.0.7</slf4j-version>
     <jodatime-version>2.12.5</jodatime-version>
     <testng-version>6.14.3</testng-version>
     <apache-httpclient-version>4.5.14</apache-httpclient-version>
-    <okhttpclient-version>4.10.0</okhttpclient-version>
+    <okhttpclient-version>4.11.0</okhttpclient-version>
     <ning-asynchttpclient-version>2.12.3</ning-asynchttpclient-version>
     <nv-websocket-client-version>2.14</nv-websocket-client-version>
     <guava-version>31.1-jre</guava-version>

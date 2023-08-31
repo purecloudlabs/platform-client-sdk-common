@@ -31,11 +31,11 @@ from six import iteritems
 
 from ..configuration import Configuration
 from ..api_client import ApiClient
+from ..utils import deprecated
 
 from typing import List
 from typing import Dict
 from typing import Any
-from typing import deprecated
 
 from ..models import Empty
 {{#imports}}from ..models import {{classname}}
@@ -59,13 +59,13 @@ class {{classname}}(object):
             if not config.api_client:
                 config.api_client = ApiClient()
             self.api_client = config.api_client
-{{#operation}}
-
-    {{#isDeprecated}}@deprecated("{{operationId}} is deprecated"){{/isDeprecated}}
+{{#operation}}{{#isDeprecated}}
+    @deprecated("{{operationId}} is deprecated"){{/isDeprecated}}
     def {{operationId}}(self, {{#sortParamsByRequiredFlag}}{{#allParams}}{{#required}}{{paramName}}: {{#vendorExtensions}}{{{x-dataType}}}{{/vendorExtensions}}, {{/required}}{{/allParams}}{{/sortParamsByRequiredFlag}}**kwargs) -> {{#returnType}}{{#vendorExtensions}}{{{x-returnType}}}{{/vendorExtensions}}{{/returnType}}{{^returnType}}None{{/returnType}}:
         """
         {{{summary}}}
-        {{{notes}}}
+        {{{notes}}}{{#vendorExtensions.x-genesys-preview}}
+	    {{operationId}} is a preview method and is subject to both breaking and non-breaking changes at any time without notice{{/vendorExtensions.x-genesys-preview}}
 
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please define a `callback` function

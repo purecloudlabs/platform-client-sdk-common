@@ -94,12 +94,12 @@ namespace {{packageName}}.Client
         /// <value>Timeout.</value>
         public int Timeout
         {
-            get { return ApiClient.RestClient.Timeout; }
+            get { return ApiClient.ClientOptions.MaxTimeout; }
 
             set
             {
                 if (ApiClient != null)
-                    ApiClient.RestClient.Timeout = value;
+                    ApiClient.ClientOptions.MaxTimeout = value;
             }
         }
 

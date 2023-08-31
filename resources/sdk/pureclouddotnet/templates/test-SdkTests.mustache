@@ -12,6 +12,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Net;
 
 namespace {{packageName}}.Tests
 {
@@ -195,8 +196,10 @@ namespace {{packageName}}.Tests
         }
 
         [Test, Order(7)]
-        public void DeleteUser()
+        public void DeleteUserWithProxy()
         {
+            {{packageName}}.Client.Configuration.Default.ApiClient.ClientOptions.Proxy = new WebProxy("http://localhost:4001", true);
+        
             usersApi.DeleteUser(userId);
         }
 
