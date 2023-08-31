@@ -110,6 +110,10 @@ Logging is configured on a per-profile basis so the above commands will only con
 # Tracing progress information
 Passing the flag `-i` or `--indicateprogress` to any command will result in progress information traced to stderr and written to the application log file.  For example, to see progress information for a list operation and ignore API output, use `gc users list --autopaginate -i > /dev/null`.
 
+# Preview API's
+
+Preview API's are included in the CLI. These resources are subject to both breaking and non-breaking changes at any time without notice. This includes, but is not limited to, changing resource names, paths, contracts, documentation, and removing resources entirely. For a full list of the preview API's see [here](https://developer.genesys.cloud/platform/preview-apis)
+
 # Notifications
 Create a channel:
 ```
@@ -152,6 +156,38 @@ To check if auto-pagination in config is enabled or disabled:
 gc autopagination status
 ```
 In addition, there is a new `--stream` or `-s` flag for paginatable resources. This will paginate through the results and print them one page at a time leaving the page information intact.
+
+# Proxy Configuration
+
+To add a proxy configuration for the CLI , you can pass file parameter with proxy configuration
+in it.
+
+The `ProxyConfiguration` object has 3 properties that determine the URL for proxying.
+Port - Port of the Proxy server
+Host - Host Ip or DNS of the proxy server
+Protocol - Protocol required to connect to the Proxy (http or https)
+
+The 'ProxyConfiguration' has another section which is an optional section. If the proxy requires authentication to connect to
+'userName' and 'password' needs to be mentioned under the 'ProxyConfiguration'. This section can be removed from the JSON file if no authentication is required.
+
+JSON configuration file:
+```
+{
+  "host": "hostname",
+  "protocol": "http",
+  "port": "8888",
+  "userName": "username",
+  "password": "password"
+}
+```
+Command to Enable Proxy:
+```
+gc proxy --file=proxy.json
+```
+To disable this Proxy Configuration, run the following command.
+```
+gc proxy disable
+```
 
 # Autocompletion
 

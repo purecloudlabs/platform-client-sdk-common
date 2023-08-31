@@ -23,7 +23,7 @@ try {
 		packageCompany: 'Genesys',
 		packageCopyright: 'Copyright © Genesys 2020',
 		httpUserAgent: 'PureCloud Guest Chat SDK',
-		targetFramework: 'net452'
+		targetFramework: 'v4.7'
 	};
 
 	fs.writeFileSync(swaggerCodegenConfigFilePath, JSON.stringify(config, null, 2));

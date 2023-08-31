@@ -34,6 +34,7 @@ Builder.prototype.releaseNoteTemplatePath = '';
 
 function Builder(configPath, localConfigPath) {
 	try {
+		
 		log.writeBox('Constructing Builder');
 
 		// Load config files
@@ -241,9 +242,18 @@ function prebuildImpl() {
 				swaggerDiff.getAndDiff(
 					_this.config.settings.swagger.oldSwaggerPath,
 					_this.config.settings.swagger.newSwaggerPath,
+					_this.config.settings.swagger.previewSwaggerPath,
 					_this.config.settings.swagger.saveOldSwaggerPath,
 					_this.config.settings.swagger.saveNewSwaggerPath
 				);
+			})
+			.then(() => {
+				// For Jenkins only. 
+				if (newSwaggerTempFile.includes('build-platform-sdks-internal-pipeline') && process.argv.includes("build-contains-upstream-changes")) {
+					if (swaggerDiff.changeCount == 0) {
+						throw new Error('The build contains upstream changes, but the Swagger definition has not changed.');
+					}
+				}
 			})
 			.then(() => {
 				return addNotifications();
@@ -330,6 +340,7 @@ function prebuildImpl() {
 				data.hasExtraNotes = data.extraNotes !== undefined;
 				data.apiVersionData = _this.apiVersionData;
 
+
 				// Get release notes
 				log.info('Generating release notes...');
 				_this.releaseNotes = swaggerDiff.generateReleaseNotes(_this.releaseNoteTemplatePath, data);
@@ -365,7 +376,7 @@ function buildImpl() {
 		command += 'java ';
 		command += `-DapiTests=${_this.config.settings.swaggerCodegen.generateApiTests} `;
 		command += `-DmodelTests=${_this.config.settings.swaggerCodegen.generateModelTests} `;
-		command += `${getEnv('JAVA_OPTS', '')} -XX:MaxPermSize=256M -Xmx2g -DloggerPath=conf/log4j.properties `;
+		command += `${getEnv('JAVA_OPTS', '')} -XX:MaxMetaspaceSize=256M -Xmx2g -DloggerPath=conf/log4j.properties `;
 		// Swagger-codegen jar file
 		command += `-jar ${_this.config.settings.swaggerCodegen.jarPath} `;
 		// Swagger-codegen options
@@ -390,6 +401,7 @@ function buildImpl() {
 		} else {
 			log.warn(`Extensions path does not exist! Path: ${_this.resourcePaths.extensions}`);
 		}
+ 
 		// Ensure compile scripts fail on error
 		_.forEach(_this.config.stageSettings.build.compileScripts, function (script) {
 			script.failOnError = true;

@@ -10,6 +10,10 @@ A JavaScript library to interface with the Genesys Cloud Platform API. View the 
 [![npm](https://img.shields.io/npm/v/{{projectName}}.svg)](https://www.npmjs.com/package/{{projectName}})
 [![Release Notes Badge](https://developer-content.genesys.cloud/images/sdk-release-notes.png)](https://github.com/MyPureCloud/platform-client-sdk-javascript/blob/master/releaseNotes.md)
 
+## Preview API's
+
+**Warning:** Preview API's are included in this SDK. These resources are subject to both breaking and non-breaking changes at any time without notice. This includes, but is not limited to, changing resource names, paths, contracts, documentation, and removing resources entirely. For a full list of the preview API's see [here](https://developer.genesys.cloud/platform/preview-apis)
+
 ## CommonJS
 
 For node.js via [NPM](https://www.npmjs.com/package/{{projectName}}):
@@ -376,62 +380,26 @@ Extended response object example (`body` and `text` have been truncated):
 
 ### Using a Proxy (Node.js only)
 
-Using a proxy is accomplished by setting the proxy settings on the `client` object
+Using a proxy is accomplished by setting the `proxyAgent` on the `ApiClient` object.
+The `proxyAgent` will be used to set the `httpsAgent` on the axios request object used in all api calls. See [axios documentation](https://axios-http.com/docs/req_config) for details.
+We recommended using the npm package `hpagent` https://www.npmjs.com/package/hpagent to create a proxyAgent although other options are available.
+An example using `hpagent` to create the proxy is shown below
 
-NOTE: SDK proxy configuration is only available in the node.js package due to the axios proxy incompatibility with browsers.
+NOTE: The hpagent package is a NodeJS package. As such, web applications that wish to use this proxy must configure their build tools to handle transpiling and polyfilling the NodeJS package for their desired web target.
 
 ```javascript
+const {HttpsProxyAgent} = require('hpagent')
 const client = {{moduleName}}.ApiClient.instance;
-// Documentation: https://axios-http.com/docs/req_config
-client.proxy = {
-  host: '172.1.1.100',
-  port: 443,
-  protocol: 'https',
-  auth: {
-    username: 'john_doe',
-    password: 'abc123'
-  }
-};
+
+agent = new HttpsProxyAgent({
+  proxy: proxyUrl,
+});
+client.setProxyAgent(agent)
 ```
-
-
-### Error Responses
-
-Error responses will always be thrown as an extended response object. Note that the `error` property will contain a JavaScript [Error](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) object.
-
-Example error response object:
-
-```json
-{
-  "status": 404,
-  "statusText": "",
-  "headers": {
-    "pragma": "no-cache",
-    "inin-correlation-id": "d11bd3b3-ab7e-4fd4-9687-d04af9f30a63",
-    "content-type": "application/json",
-    "cache-control": "no-cache, no-store, must-revalidate",
-    "expires": "0"
-  },
-  "body": {
-    "status": 404,
-    "code": "not.found",
-    "message": "The requested operation failed with status 404",
-    "contextId": "d11bd3b3-ab7e-4fd4-9687-d04af9f30a63",
-    "details": [],
-    "errors": []
-  },
-  "text": "{\"status\":404,\"code\":\"not.found\",\"message\":\"The requested operation failed with status 404\",\"contextId\":\"d11bd3b3-ab7e-4fd4-9687-d04af9f30a63\",\"details\":[],\"errors\":[]}",
-  "error": {
-    "original": null
-  }
-}
-```
-
 
 ## Versioning
 
 The SDK's version is incremented according to the [Semantic Versioning Specification](https://semver.org/). The decision to increment version numbers is determined by [diffing the Platform API's swagger](https://github.com/purecloudlabs/platform-client-sdk-common/blob/master/modules/swaggerDiff.js) for automated builds, and optionally forcing a version bump when a build is triggered manually (e.g. releasing a bugfix).
-
 
 ## Support
 

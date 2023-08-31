@@ -37,12 +37,16 @@ func New{{classname}}WithConfig(config *Configuration) *{{classname}} {
 //
 // {{{summary}}}{{/summary}}{{#notes}}
 //
-// {{notes}}{{/notes}}
+// {{notes}}{{/notes}}{{#isDeprecated}}
+//
+// Deprecated: {{nickname}} is deprecated{{/isDeprecated}}{{#vendorExtensions.x-genesys-preview}}
+//
+// Preview: {{nickname}} is a preview method and is subject to both breaking and non-breaking changes at any time without notice{{/vendorExtensions.x-genesys-preview}}
 func (a {{classname}}) {{nickname}}({{#allParams}}{{paramName}} {{{dataType}}}{{^-last}}, {{/-last}}{{/allParams}}) ({{#returnType}}{{^isArray}}*{{/isArray}}{{{returnType}}}, {{/returnType}}*APIResponse, error) {
 	var httpMethod = "{{httpMethod}}"
 	// create path and map variables
 	path := a.Configuration.BasePath + "{{path}}"{{#pathParams}}
-	path = strings.Replace(path, "{{=[[ ]]=}}{[[baseName]]}[[={{ }}=]]", fmt.Sprintf("%v", {{paramName}}), -1){{/pathParams}}{{#returnType}}
+	path = strings.Replace(path, "{{=[[ ]]=}}{[[baseName]]}[[={{ }}=]]", url.PathEscape(fmt.Sprintf("%v", {{paramName}})), -1){{/pathParams}}{{#returnType}}
 	defaultReturn := {{#isArray}}make{{/isArray}}{{^isArray}}new{{/isArray}}({{{returnType}}}{{#isArray}}, 0{{/isArray}}){{/returnType}}
 	if true == false {
 		return {{#returnType}}defaultReturn, {{/returnType}}nil, errors.New("This message brought to you by the laws of physics being broken")
@@ -84,6 +88,17 @@ func (a {{classname}}) {{nickname}}({{#allParams}}{{paramName}} {{{dataType}}}{{
 	{{#hasQueryParams}}{{#queryParams}}
 	queryParams["{{paramName}}"] = a.Configuration.APIClient.ParameterToString({{paramName}}, "{{#collectionFormat}}{{collectionFormat}}{{/collectionFormat}}")
 	{{/queryParams}}{{/hasQueryParams}}
+
+	// Find an replace keys that were altered to avoid clashes with go keywords 
+	correctedQueryParams := make(map[string]string)
+	for k, v := range queryParams {
+		if k == "varType" {
+			correctedQueryParams["type"] = v
+			continue
+		}
+		correctedQueryParams[k] = v
+	}
+	queryParams = correctedQueryParams
 
 	// to determine the Content-Type header
 	localVarHttpContentTypes := []string{ {{^consumes}}"application/json", {{/consumes}}{{#consumes}}"{{mediaType}}", {{/consumes}} }

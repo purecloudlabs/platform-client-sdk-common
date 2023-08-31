@@ -22,7 +22,7 @@ namespace Example
             // Configuration.Default.ApiKeyPrefix.Add("{{{keyParamName}}}", "BEARER");{{/isApiKey}}{{#isOAuth}}
             // Configure OAuth2 access token for authorization: {{{name}}}
             // The following example is using the Client Credentials Grant
-            var accessTokenInfo = Configuration.Default.ApiClient.PostToken("18a4c365-7ea3-4f0g-9fb7-884fb4d2e9c6", "M7FfdYQyL5TA6BdbEZ8M9-Wx4uZai1rNQ7jcuFdcJJo");{{/isOAuth}}{{/authMethods}}{{/hasAuthMethods}}
+            var accessTokenInfo = Configuration.Default.ApiClient.PostToken("your_client_credential_grant_id", "your_client_credential_grant_secret");{{/isOAuth}}{{/authMethods}}{{/hasAuthMethods}}
 
             var apiInstance = new {{baseName}}Api();{{#allParams}}{{#isPrimitiveType}}
             {{#isString}}var {{paramName}} = "{{{example}}}";  // {{{dataType}}} | {{{description}}}{{^required}} (optional) {{/required}}{{#defaultValue}} (default to {{{.}}}){{/defaultValue}}{{/isString}}{{#isDate}}var {{paramName}} = new Date();  // {{{dataType}}} | {{{description}}}{{^required}} (optional) {{/required}}{{#defaultValue}} (default to {{{.}}}){{/defaultValue}}{{/isDate}}{{^isString}}{{^isDate}}{{#isDateTime}}var {{paramName}} = new DateTime();  // {{{dataType}}} | {{{description}}}{{^required}} (optional) {{/required}}{{#defaultValue}} (default to {{{.}}}){{/defaultValue}}{{/isDateTime}}var {{paramName}} = {{{example}}};  // {{{dataType}}} | {{{description}}}{{^required}} (optional) {{/required}}{{#defaultValue}} (default to {{{.}}}){{/defaultValue}}{{/isDate}}{{/isString}}{{/isPrimitiveType}}{{^isPrimitiveType}}

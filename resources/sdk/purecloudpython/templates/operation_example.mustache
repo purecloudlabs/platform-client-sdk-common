@@ -15,7 +15,7 @@ PureCloudPlatformClientV2.configuration.access_token = 'your_access_token'{{/isO
 {{/hasAuthMethods}}
 
 # create an instance of the API class
-api_instance = {{{packageName}}}.{{{classname}}}()
+api_instance = {{{packageName}}}.{{{apiName}}}();
 {{#allParams}}{{paramName}} = {{{example}}} # {{{dataType}}} | {{{description}}}{{^required}} (optional){{/required}}{{#defaultValue}} (default to {{{.}}}){{/defaultValue}}
 {{/allParams}}
 
@@ -24,4 +24,4 @@ try:
 {{/summary}}    {{#returnType}}api_response = {{/returnType}}api_instance.{{{operationId}}}({{#allParams}}{{#required}}{{paramName}}{{/required}}{{^required}}{{paramName}}={{paramName}}{{/required}}{{#hasMore}}, {{/hasMore}}{{/allParams}}){{#returnType}}
     pprint(api_response){{/returnType}}
 except ApiException as e:
-    print("Exception when calling {{classname}}->{{operationId}}: %s\n" % e){{/operation}}
+    print("Exception when calling {{apiName}}->{{operationId}}: %s\n" % e){{/operation}}

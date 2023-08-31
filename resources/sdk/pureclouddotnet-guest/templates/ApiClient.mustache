@@ -14,6 +14,8 @@ using System.Net;
 using System.Text;
 using Newtonsoft.Json;
 using RestSharp;
+using {{packageName}}.Extensions;
+using System.Net.Http;
 
 namespace {{packageName}}.Client
 {
@@ -24,7 +26,8 @@ namespace {{packageName}}.Client
     {
         private JsonSerializerSettings serializerSettings = new JsonSerializerSettings
         {
-            ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor
+            ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor,
+            MetadataPropertyHandling = MetadataPropertyHandling.Ignore
         };
 
         /// <summary>
@@ -37,7 +40,9 @@ namespace {{packageName}}.Client
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
             Configuration = Configuration.Default;
-            RestClient = new RestClient("{{basePath}}");
+            
+            ClientOptions = new ClientRestOptions();
+            ClientOptions.BaseUrl = new Uri("{{basePath}}");
             RetryConfig = DEFAULT_RETRY_CONFIG;
             AddSerializerSettings();
         }
@@ -57,7 +62,9 @@ namespace {{packageName}}.Client
             else
                 Configuration = config;
 
-            RestClient = new RestClient("{{basePath}}");
+            ClientOptions = new ClientRestOptions();
+            ClientOptions.BaseUrl = new Uri("{{basePath}}");
+
             RetryConfig = DEFAULT_RETRY_CONFIG;
             AddSerializerSettings();
         }
@@ -75,7 +82,9 @@ namespace {{packageName}}.Client
             if (String.IsNullOrEmpty(basePath))
                 throw new ArgumentException("basePath cannot be empty");
 
-            RestClient = new RestClient(basePath);
+            ClientOptions = new ClientRestOptions();
+            ClientOptions.BaseUrl = new Uri(basePath);
+
             RetryConfig = DEFAULT_RETRY_CONFIG;
             Configuration = Configuration.Default;
             AddSerializerSettings();
@@ -104,11 +113,16 @@ namespace {{packageName}}.Client
         /// Gets or sets the RestClient.
         /// </summary>
         /// <value>An instance of the RestClient</value>
-        public IRestClient RestClient { get; set; }
+        public RestClient RestClient { get; set; }
 
         private RetryConfiguration retryConfig;
         public RetryConfiguration RetryConfig { get; set; }
         private static readonly RetryConfiguration DEFAULT_RETRY_CONFIG = new RetryConfiguration();
+
+        // These fields are only applicable to the Code Authorization OAuth flow:
+        public bool UsingCodeAuth { get; set; }
+        public string ClientId { get; set; }
+        public string ClientSecret { get; set; }
 
         // Creates and sets up a RestRequest prior to a call.
         private RestRequest PrepareRequest(
@@ -138,7 +152,7 @@ namespace {{packageName}}.Client
             // add file parameter, if any
             foreach(var param in fileParams)
             {
-                request.AddFile(param.Value.Name, param.Value.Writer, param.Value.FileName, param.Value.ContentLength, param.Value.ContentType);
+                request.AddFile(param.Value.Name, param.Value.GetFile, param.Value.FileName, param.Value.ContentType);
             }
 
             if (postBody != null) // http body (model or byte[]) parameter
@@ -180,16 +194,37 @@ namespace {{packageName}}.Client
                 pathParams, contentType);
 
             // set timeout
-            RestClient.Timeout = Configuration.Timeout;
-
-            // set user agent
-            RestClient.UserAgent = Configuration.UserAgent;
+           ClientOptions.MaxTimeout = Configuration.Timeout;
+           ClientOptions.UserAgent = Configuration.UserAgent;
 
             // Set SDK version
             request.AddHeader("purecloud-sdk", "{{packageVersion}}");
 
             Retry retry = new Retry(this.RetryConfig);
-            IRestResponse response;
+            RestResponse response;
+
+
+            var options = new RestClientOptions(ClientOptions.BaseUrl)
+            {
+                MaxTimeout = ClientOptions.MaxTimeout,
+                UserAgent = ClientOptions.UserAgent
+            };
+            
+            if (ClientOptions.HttpMessageHandler != null)
+            {
+                options = new RestClientOptions(ClientOptions.BaseUrl)
+                {
+                    MaxTimeout = ClientOptions.MaxTimeout,
+                    UserAgent = ClientOptions.UserAgent,
+                    ConfigureMessageHandler = _ => ClientOptions.HttpMessageHandler 
+                };
+               
+            }
+
+            RestClient = new RestClient(options);
+
+            var fullUrl = RestClient.BuildUri(request);
+            string url = fullUrl == null ? path : fullUrl.ToString();
             do
             {
             {{^supportsUWP}}
@@ -197,7 +232,7 @@ namespace {{packageName}}.Client
             {{/supportsUWP}}
             {{#supportsUWP}}
             // Using async method to perform sync call (uwp-only)
-               response = RestClient.ExecuteTaskAsync(request).Result;
+               response = RestClient.ExecuteAsync(request).Result;
             {{/supportsUWP}}
             }while(retry.ShouldRetry(response));
             return (Object) response;
@@ -227,10 +262,29 @@ namespace {{packageName}}.Client
                 pathParams, contentType);
 
              Retry retry = new Retry(this.RetryConfig);
-             IRestResponse response;
+             RestResponse response;
+
+             var options = new RestClientOptions(ClientOptions.BaseUrl)
+            {
+                MaxTimeout = ClientOptions.MaxTimeout,
+                UserAgent = ClientOptions.UserAgent
+            };
+            
+            if (ClientOptions.HttpMessageHandler != null)
+            {
+                options = new RestClientOptions(ClientOptions.BaseUrl)
+                {
+                    MaxTimeout = ClientOptions.MaxTimeout,
+                    UserAgent = ClientOptions.UserAgent,
+                    ConfigureMessageHandler = _ => ClientOptions.HttpMessageHandler 
+                };
+               
+            }
+
+            RestClient = new RestClient(options);
             do
             {
-                response = await RestClient.ExecuteTaskAsync(request);
+                response = await RestClient.ExecuteAsync(request);
             }while(retry.ShouldRetry(response));
 
             return (Object)response;
@@ -296,22 +350,26 @@ namespace {{packageName}}.Client
                 return Convert.ToString (obj);
         }
 
-         /// <summary>
+        /// <summary>
         /// Creates a restclient with a base path string input
-        /// <returns>Returns a rest client</returns>
-        public IRestClient setBasePath(String basePath){
+        /// </summary>
+        /// <returns>Return changed from RestClient to Void . Since no purpose to expose underlying RestClient to Consumer and 
+        ///  design changed to One Restclient per API</returns>
+        public void setBasePath(String basePath){
             if (String.IsNullOrEmpty(basePath))
                 throw new ArgumentException("basePath cannot be empty");
-
-                 RestClient.BaseUrl = new Uri(basePath);
-                 return RestClient;
+                
+                ClientOptions.BaseUrl = new Uri(basePath);
+                
 
         }
         /// <summary>
         /// Creates a restclient with a PureCloudRegionHost string input
-        /// <returns>Returns a rest client</returns>
-        public IRestClient setBasePath(PureCloudRegionHosts region){
-         return setBasePath(region.GetDescription());
+        /// </summary>
+        /// <returns>Return changed from RestClient to Void . Since no purpose to expose underlying RestClient to Consumer and 
+        ///  design changed to One Restclient per API</returns>
+        public void setBasePath(PureCloudRegionHosts region){
+             setBasePath(region.GetDescription());
         }
 
         /// <summary>
@@ -320,9 +378,9 @@ namespace {{packageName}}.Client
         /// <param name="response">The HTTP response.</param>
         /// <param name="type">Object type.</param>
         /// <returns>Object representation of the JSON string.</returns>
-        public object Deserialize(IRestResponse response, Type type)
+        public object Deserialize(RestResponse response, Type type)
         {
-            IList<Parameter> headers = response.Headers;
+            IReadOnlyCollection<RestSharp.HeaderParameter> headers = response.Headers;
             if (type == typeof(byte[])) // return byte array
             {
                 return response.RawBytes;
@@ -575,22 +633,109 @@ namespace {{packageName}}.Client
             }
         }
 
-        public int MaxRetryTimeSec
-        {
-            get
+            public int MaxRetryTimeSec
             {
-                return maxRetryTimeSec;
-            }
-            set
-            {
-                if (value < 0)
+                get
                 {
-                    throw new ArgumentException("MaxRetryTimeSec should be a positive integer");
+                    return maxRetryTimeSec;
                 }
-                this.maxRetryTimeSec = value;
+                set
+                {
+                    if (value < 0)
+                    {
+                        throw new ArgumentException("MaxRetryTimeSec should be a positive integer");
+                    }
+                    this.maxRetryTimeSec = value;
+                }
+            }
+
+            public int RetryMax
+            {
+                get
+                {
+                    return retryMax;
+                }
+                set
+                {
+                    if (value < 0)
+                    {
+                        throw new ArgumentException("RetryMax should be a positive integer");
+                    }
+                    this.retryMax = value;
+                }
             }
         }
-    }
+
+        public ClientRestOptions ClientOptions { get; set; }
+        public class ClientRestOptions
+        {
+            private Uri baseUrl;
+            private string userAgent;
+            private System.Net.IWebProxy proxy;
+            private int maxTimeout;
+            private HttpMessageHandler httpMessageHandler;
+
+            public HttpMessageHandler HttpMessageHandler
+            {
+                get
+                {
+                    return httpMessageHandler;
+                }
+                set
+                {
+                    this.httpMessageHandler = value;
+                }
+            }
+
+            public Uri BaseUrl
+            {
+                get
+                {
+                    return baseUrl;
+                }
+                set
+                {
+                    this.baseUrl = value;
+                }
+            }
+
+            public string UserAgent
+            {
+                get
+                {
+                    return userAgent;
+                }
+                set
+                {
+                    this.userAgent = value;
+                }
+            }
+
+            public System.Net.IWebProxy Proxy
+            {
+                get
+                {
+                    return proxy;
+                }
+                set
+                {
+                    this.proxy = value;
+                }
+            }
+
+            public int MaxTimeout
+            {
+                get
+                {
+                    return maxTimeout;
+                }
+                set
+                {
+                    this.maxTimeout = value;
+                }
+            }
+            
+        }
 
     private class Retry
     {
@@ -615,9 +760,9 @@ namespace {{packageName}}.Client
         /// <summary>
         /// Check if retryable
         /// </summary>
-        /// <param name="response">IRestResponse</param>
+        /// <param name="response">RestResponse</param>
         /// <returns>bool</returns>
-        public bool ShouldRetry(IRestResponse response)
+        public bool ShouldRetry(RestResponse response)
         {
             if (stopwatch.ElapsedMilliseconds < maxRetryTimeSec * 1000L && statusCodes.Contains((int)response.StatusCode))
             {
