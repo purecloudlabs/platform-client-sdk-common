@@ -17,6 +17,6 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.16.0
 	github.com/tidwall/pretty v1.2.1
-	golang.org/x/term v0.8.0
+	golang.org/x/term v0.12.0
 	sigs.k8s.io/yaml v1.3.0
 )
