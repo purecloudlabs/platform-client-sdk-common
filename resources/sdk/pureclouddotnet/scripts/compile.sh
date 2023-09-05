@@ -20,17 +20,24 @@ fi
 
 # Install packages
 echo "Installing packages"
+mono --version
+echo "mono version"
 mono $COMMON_DIR/resources/sdk/pureclouddotnet/bin/nuget.exe install $BUILD_DIR/src/$ROOT_NAMESPACE/packages.config -o $BUILD_DIR/packages -NoCache -Verbosity detailed;
 mono $COMMON_DIR/resources/sdk/pureclouddotnet/bin/nuget.exe install $BUILD_DIR/src/$ROOT_NAMESPACE.Tests/packages.config -o $BUILD_DIR/packages -NoCache -Verbosity detailed;
 
 mkdir -p $BUILD_DIR/bin/netstandard2.0;
 
 cp $BUILD_DIR/packages/Newtonsoft.Json.11.0.2/lib/net45/Newtonsoft.Json.dll $BUILD_DIR/bin/Newtonsoft.Json.dll;
-cp $BUILD_DIR/packages/RestSharp.106.3.1/lib/net452/RestSharp.dll $BUILD_DIR/bin/RestSharp.dll;
+cp $BUILD_DIR/packages/RestSharp.110.2.0/lib/net471/RestSharp.dll $BUILD_DIR/bin/RestSharp.dll;
 cp $BUILD_DIR/packages/WebSocketSharp.1.0.3-rc11/lib/websocket-sharp.dll $BUILD_DIR/bin/websocket-sharp.dll;
 cp $BUILD_DIR/packages/NUnit.3.10.1/lib/net45/nunit.framework.dll $BUILD_DIR/bin/nunit.framework.dll;
 cp $BUILD_DIR/packages/Moq.4.5.3/lib/net45/Moq.dll $BUILD_DIR/bin/Moq.dll;
 cp $BUILD_DIR/packages/ini-parser.2.5.2/lib/net20/INIFileParser.dll $BUILD_DIR/bin/INIFileParser.dll;
+cp $BUILD_DIR/packages/RichardSzalay.MockHttp.6.0.0/lib/net45/RichardSzalay.MockHttp.dll $BUILD_DIR/bin/RichardSzalay.MockHttp.dll;
+cp $BUILD_DIR/packages/System.Text.Json.7.0.2/lib/net462/System.Text.Json.dll $BUILD_DIR/bin/System.Text.Json.dll;
+cp $BUILD_DIR/packages/System.Text.Encodings.Web.7.0.0/lib/net462/System.Text.Encodings.Web.dll $BUILD_DIR/bin/System.Text.Encodings.Web.dll;
+cp $BUILD_DIR/packages/System.Threading.Tasks.Extensions.4.5.4/lib/net461/System.Threading.Tasks.Extensions.dll $BUILD_DIR/bin/System.Threading.Tasks.Extensions.dll;
+
 
 echo "Compiling SDK..."
 echo "Target: netstandard2.0"
@@ -38,6 +45,10 @@ mcs -r:$BUILD_DIR/bin/Newtonsoft.Json.dll,\
 $BUILD_DIR/bin/RestSharp.dll,\
 $BUILD_DIR/bin/websocket-sharp.dll,\
 $BUILD_DIR/bin/INIFileParser.dll,\
+System.Net.Http.dll,\
+$BUILD_DIR/bin/System.Text.Json.dll,\
+$BUILD_DIR/bin/System.Text.Encodings.Web.dll,\
+$BUILD_DIR/bin/System.Threading.Tasks.Extensions.dll,\
 System.Runtime.Serialization.dll \
 -target:library \
 -out:$BUILD_DIR/bin/netstandard2.0/${ROOT_NAMESPACE}.dll \
@@ -56,7 +67,7 @@ function compile_sdk() {
 		/p:DocumentationFile=$BUILD_DIR/bin/net$1/${ROOT_NAMESPACE}.xml
 }
 
-compile_sdk "4.5.2"
+compile_sdk "4.7.1"
 
 cp $BUILD_DIR/bin/netstandard2.0/${ROOT_NAMESPACE}.dll $BUILD_DIR/bin/${ROOT_NAMESPACE}.dll
 echo "Compiling tests..."
@@ -64,9 +75,14 @@ mcs -r:$BUILD_DIR/bin/Newtonsoft.Json.dll,\
 $BUILD_DIR/bin/RestSharp.dll,\
 $BUILD_DIR/bin/websocket-sharp.dll,\
 $BUILD_DIR/bin/INIFileParser.dll,\
+System.Net.Http.dll,\
+$BUILD_DIR/bin/System.Text.Json.dll,\
+$BUILD_DIR/bin/System.Text.Encodings.Web.dll,\
+$BUILD_DIR/bin/System.Threading.Tasks.Extensions.dll,\
 System.Runtime.Serialization.dll,\
 $BUILD_DIR/bin/${ROOT_NAMESPACE}.dll,\
 $BUILD_DIR/bin/nunit.framework.dll,\
+$BUILD_DIR/bin/RichardSzalay.MockHttp.dll,\
 $BUILD_DIR/bin/Moq.dll \
 -target:library \
 -out:$BUILD_DIR/bin/${ROOT_NAMESPACE}.Tests.dll \

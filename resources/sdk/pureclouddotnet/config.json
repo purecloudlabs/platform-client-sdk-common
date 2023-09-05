@@ -17,6 +17,7 @@
     "swagger": {
       "oldSwaggerPath": "${SDK_REPO}/swagger.json",
       "newSwaggerPath": "https://api.mypurecloud.com/api/v2/docs/swagger",
+      "previewSwaggerPath": "https://api.mypurecloud.com/api/v2/docs/swaggerpreview",
       "saveNewSwaggerPath": "${SDK_REPO}/swagger.json"
     },
     "swaggerCodegen": {
@@ -54,6 +55,14 @@
             "${SDK_REPO}/notificationMappings.json",
             "${COMMON_ROOT}/resources/sdk/pureclouddotnet/extensions/Client/NotificationTopics.cs",
             "${COMMON_ROOT}/resources/sdk/pureclouddotnet/bin/nuget.exe"
+          ],
+          "failOnError": true
+        },
+        {
+          "type": "node",
+          "path": "${COMMON_ROOT}/resources/scripts/proxy-npm.js",
+          "args": [
+            "start"
           ],
           "failOnError": true
         }
@@ -117,7 +126,16 @@
       "gitCommit": false,
       "publishRelease": false,
       "preRunScripts": [],
-      "postRunScripts": []
+      "postRunScripts": [
+        {
+          "type": "node",
+          "path": "${COMMON_ROOT}/resources/scripts/proxy-npm.js",
+          "args": [
+            "stop"
+          ],
+          "failOnError": false
+        }
+      ]
     }
   }
 }

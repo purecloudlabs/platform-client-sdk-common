@@ -4,7 +4,7 @@
   "description": "SDK tests",
   "main": "index.js",
   "scripts": {
-    "test": "./node_modules/mocha/bin/mocha --bail index.js"
+    "test": "mocha --bail index.js"
   },
   "author": "",
   "license": "MIT",

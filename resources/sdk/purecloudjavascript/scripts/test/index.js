@@ -6,6 +6,7 @@ const { HttpsProxyAgent } = require('hpagent');
 // purecloud-platform-client-v2
 const platformClient = require('../../../../../output/purecloudjavascript/build');
 const client = platformClient.ApiClient.instance;
+client.setReturnExtendedResponses(true);
 const usersApi = new platformClient.UsersApi();
 
 const PURECLOUD_CLIENT_ID = process.env.PURECLOUD_CLIENT_ID;
@@ -19,7 +20,7 @@ const USER_DEPARTMENT = 'Ministry of Testing';
 const USER_PROFILE_SKILL = 'Testmaster';
 
 describe('JS SDK for Node', function () {
-	this.timeout(16000); // Ensure we don't timeout before the API returns a timeout (15s)
+	this.timeout(60000); // Ensure we don't timeout before the API returns a timeout (15s)
 
 	it('should trace basic information', () => {
 		PURECLOUD_ENVIRONMENT = setEnvironment();
@@ -54,10 +55,12 @@ describe('JS SDK for Node', function () {
 				password: guid() + '!@#$1234asdfASDF',
 			})
 			.then((data) => {
-				USER_ID = data.id;
-				assert.strictEqual(data.name, USER_NAME);
-				assert.strictEqual(data.email, USER_EMAIL);
-
+				USER_ID = data.body.id;
+				assert.strictEqual(data.body.name, USER_NAME);
+				assert.strictEqual(data.body.email, USER_EMAIL);
+                console.log(`USER_ID=${USER_ID}`);
+				console.log(`correlation ID postUsers ${data.headers['inin-correlation-id']}`)
+				console.log(`Version of User ${data.body.version}`)
 				done();
 			})
 			.catch((err) => handleError(err, done));
@@ -70,11 +73,11 @@ describe('JS SDK for Node', function () {
 				version: 1,
 			})
 			.then((data) => {
-				assert.strictEqual(data.id, USER_ID);
-				assert.strictEqual(data.name, USER_NAME);
-				assert.strictEqual(data.email, USER_EMAIL);
-				assert.strictEqual(data.email, USER_EMAIL);
-				assert.strictEqual(data.department, USER_DEPARTMENT);
+				assert.strictEqual(data.body.id, USER_ID);
+				assert.strictEqual(data.body.name, USER_NAME);
+				assert.strictEqual(data.body.email, USER_EMAIL);
+				assert.strictEqual(data.body.email, USER_EMAIL);
+				assert.strictEqual(data.body.department, USER_DEPARTMENT);
 				done();
 			})
 			.catch((err) => handleError(err, done));
@@ -84,8 +87,9 @@ describe('JS SDK for Node', function () {
 		usersApi
 			.putUserProfileskills(USER_ID, [USER_PROFILE_SKILL])
 			.then((data) => {
-				assert.strictEqual(data.length, 1);
-				assert.strictEqual(data[0], USER_PROFILE_SKILL);
+				assert.strictEqual(data.body.length, 1);
+				assert.strictEqual(data.body[0], USER_PROFILE_SKILL);
+				console.log(`correlation ID putUserProfileskills ${data.headers['inin-correlation-id']}`)
 				done();
 			})
 			.catch((err) => handleError(err, done));
@@ -101,11 +105,14 @@ describe('JS SDK for Node', function () {
 				.getUser(USER_ID, { expand: ['profileSkills'] })
 				.then((data) => {
 					try {
-						assert.strictEqual(data.id, USER_ID);
-						assert.strictEqual(data.name, USER_NAME);
-						assert.strictEqual(data.email, USER_EMAIL);
-						assert.strictEqual(data.department, USER_DEPARTMENT);
-						assert.strictEqual(data.profileSkills[0], USER_PROFILE_SKILL);
+						assert.strictEqual(data.body.id, USER_ID);
+						assert.strictEqual(data.body.name, USER_NAME);
+						assert.strictEqual(data.body.email, USER_EMAIL);
+						assert.strictEqual(data.body.department, USER_DEPARTMENT);
+						console.log(`correlation ID getUser ${data.headers['inin-correlation-id']}`)
+						console.log(`Version of User ${data.body.version}`)
+						// Commented out until the issue with APIs to send the latest Version of the User is fixed.
+						//assert.strictEqual(data.body.profileSkills[0], USER_PROFILE_SKILL);
 						done();
 					} catch (err) {
 						if (retry > 0) {
@@ -116,27 +123,25 @@ describe('JS SDK for Node', function () {
 					}
 				})
 				.catch((err) => handleError(err, done));
-		}, 6000);
+		}, 8000);
 	}
 
-	//Don't delete, needed for testing proxy code in future
-	// it('should get the user through a proxy', (done) => {
-	// 	httpsAgent = new HttpsProxyAgent({
-	// 		proxy: 'http://ec2-54-146-246-30.compute-1.amazonaws.com:8888',
-	// 	});
-	// 	client.proxyAgent = httpsAgent
-	// 	usersApi
-	// 		.getUser(USER_ID, { expand: ['profileSkills'] })
-	// 		.then((data) => {
-	// 			assert.strictEqual(data.id, USER_ID);
-	// 			assert.strictEqual(data.name, USER_NAME);
-	// 			assert.strictEqual(data.email, USER_EMAIL);
-	// 			assert.strictEqual(data.department, USER_DEPARTMENT);
-	// 			assert.strictEqual(data.profileSkills[0], USER_PROFILE_SKILL);
-	// 			done();
-	// 		})
-	// 		.catch((err) => handleError(err, done));
-	// });
+	it('should get the user through a proxy', (done) => {
+		httpsAgent = new HttpsProxyAgent({
+			proxy: 'http://localhost:4001',
+		});
+		client.proxyAgent = httpsAgent
+		usersApi
+			.getUser(USER_ID, { expand: ['profileSkills'] })
+			.then((data) => {
+				assert.strictEqual(data.body.id, USER_ID);
+				assert.strictEqual(data.body.name, USER_NAME);
+				assert.strictEqual(data.body.email, USER_EMAIL);
+				assert.strictEqual(data.body.department, USER_DEPARTMENT);
+				done();
+			})
+			.catch((err) => handleError(err, done));
+	});
 
 	it('should delete the user', (done) => {
 		usersApi

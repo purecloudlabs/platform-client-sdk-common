@@ -13,6 +13,10 @@ Latest version: {{packageVersion}} [![GitHub release](https://img.shields.io/git
 Some macOS users encounter the error "argument list too long" when building or installing this package if their golang version is less than 1.15. Visit [Go Downloads](https://golang.org/dl/) and install _go1.15_ or newer if this error is thrown.
 :::
 
+## Preview API's
+
+**Warning:** Preview API's are included in this SDK. These resources are subject to both breaking and non-breaking changes at any time without notice. This includes, but is not limited to, changing resource names, paths, contracts, documentation, and removing resources entirely. For a full list of the preview API's see [here](https://developer.genesys.cloud/platform/preview-apis)
+
 ## Get SDK Package
 
 Retrieve the package from https://github.com/MyPureCloud/platform-client-sdk-go using `go get`:
@@ -105,6 +109,32 @@ config.LoggingConfiguration.SetLogToConsole(true)
 config.LoggingConfiguration.SetLogFilePath("/var/log/golangsdk.log")
 ```
 
+#### SDK Proxy
+
+Using a proxy is accomplished by setting the proxy settings on the configuration object
+
+The `ProxyConfiguration` object has 3 properties that determine the URL for proxying.
+Port - Port of the Proxy server
+Host - Host Ip or DNS of the proxy server
+Protocol - Protocol required to connect to the Proxy (http or https)
+
+The 'ProxyConfiguration' has another section which is an optional section. If the proxy requires authentication to connect to
+'Auth' needs to be mentioned under the 'ProxyConfiguration'.
+
+Example logging configuration:
+```go
+proxyconf := ProxyConfiguration{}
+config.ProxyConfiguration := &proxyconf
+config.ProxyConfiguration.Host = platformclientv2.LTrace
+config.ProxyConfiguration.Port = true
+config.ProxyConfiguration.Protocol = true
+
+auth := Auth{}
+config.ProxyConfiguration.Auth = &auth
+config.ProxyConfiguration.Auth.UserName = userName
+config.ProxyConfiguration.Auth.Password = password
+```
+
 #### Configuration file
 
 A number of configuration parameters can be applied using a configuration file. There are two sources for this file:
@@ -134,6 +164,12 @@ refresh_token_wait_max = 10
 [general]
 live_reload_config = true
 host = https://api.mypurecloud.com
+[proxy]
+port = 8888
+host = hostserverip
+protocol = http
+auth-username = username
+auth-password = password
 ```
 
 JSON:
@@ -159,7 +195,18 @@ JSON:
     "general": {
         "live_reload_config": true,
         "host": "https://api.mypurecloud.com"
+    },
+    {
+    "proxy": {
+        "host": "hostname",
+        "protocol": "http",
+        "port": "8888"
+        "auth": {
+            "username": "username",
+            "password": "password"
+        }
     }
+}
 }
 ```
 
@@ -277,11 +324,9 @@ This serializes to the JSON document below. Note that only the properties set us
 }
 ```
 
-
 ## Versioning
 
 The SDK's version is incremented according to the [Semantic Versioning Specification](https://semver.org/). The decision to increment version numbers is determined by [diffing the Platform API's swagger](https://github.com/purecloudlabs/platform-client-sdk-common/blob/master/modules/swaggerDiff.js) for automated builds, and optionally forcing a version bump when a build is triggered manually (e.g. releasing a bugfix).
-
 
 ## Support
 

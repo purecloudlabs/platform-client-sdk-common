@@ -118,8 +118,14 @@ func (c *APIClient) CallAPI(path string, method string,
 	// Set post body
 	if postBody != nil {
 		request.Header.Set("Content-Type", "application/json")
-		j, _ := json.Marshal(postBody)
-		request.SetBody(ioutil.NopCloser(bytes.NewReader(j)))
+		// Check if postBody is of type *string
+		if body, ok := postBody.(*string); ok {
+			j := []byte(*body)
+			request.SetBody(ioutil.NopCloser(bytes.NewReader(j)))
+		} else {
+			j, _ := json.Marshal(postBody)
+			request.SetBody(ioutil.NopCloser(bytes.NewReader(j)))
+		}
 	}
 
 	// Set provided headers
@@ -147,6 +153,32 @@ func (c *APIClient) CallAPI(path string, method string,
 			}
 		}
 	}
+
+	if c.configuration.ProxyConfiguration != nil {
+
+                var proxyUrl *url.URL
+
+                if c.configuration.ProxyConfiguration.Auth != nil && c.configuration.ProxyConfiguration.Auth.UserName != "" && c.configuration.ProxyConfiguration.Auth.Password != "" {
+                        proxyUrl = &url.URL{
+                                Scheme: c.configuration.ProxyConfiguration.Protocol,
+                                User: url.UserPassword(c.configuration.ProxyConfiguration.Auth.UserName,
+                                        c.configuration.ProxyConfiguration.Auth.Password),
+                                Host: c.configuration.ProxyConfiguration.Host + ":" + c.configuration.ProxyConfiguration.Port,
+                        }
+                } else {
+
+                        urlString := c.configuration.ProxyConfiguration.Protocol + "://" +
+                                c.configuration.ProxyConfiguration.Host + ":" +
+                                c.configuration.ProxyConfiguration.Port
+                        proxyUrl, _ = url.Parse(urlString)
+                }
+
+                tr := &http.Transport{
+                        Proxy: http.ProxyURL(proxyUrl),
+                }
+
+                c.client.HTTPClient.Transport = tr
+        }
 
 	requestBody, _ := request.BodyBytes()
 
@@ -178,23 +210,6 @@ func (c *APIClient) CallAPI(path string, method string,
 	}
 
 	return NewAPIResponse(res, body)
-}
-
-func buildURL(basePath string, path string, queryParams map[string]string) (*url.URL, error) {
-	urlString := basePath + path
-	if len(queryParams) > 0 {
-		urlString += "?"
-		for k, v := range queryParams {
-			urlString += fmt.Sprintf("%v=%v&", strings.TrimSpace(k), strings.TrimSpace(v))
-		}
-		urlString = urlString[:len(urlString)-1]
-	}
-
-	u, err := url.Parse(urlString)
-	if err != nil {
-		return nil, err
-	}
-	return u, nil
 }
 
 // ParameterToString joins a parameter in the desired format

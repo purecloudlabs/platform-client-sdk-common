@@ -543,6 +543,9 @@ public class ApiClient implements AutoCloseable {
      * Content-Type (only JSON is supported for now).
      */
     public String serialize(Object obj) throws IOException {
+        if (obj instanceof String) {
+            return obj.toString();
+        }
         return objectMapper.writeValueAsString(obj);
     }
 

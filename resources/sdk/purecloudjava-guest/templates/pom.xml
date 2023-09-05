@@ -79,7 +79,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
-        <version>3.3.0</version>
+        <version>3.4.0</version>
         <executions>
           <execution>
             <id>add_sources</id>
@@ -98,7 +98,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.10.1</version>
+        <version>3.11.0</version>
         <configuration>
           <source>1.7</source>
           <target>1.7</target>
@@ -109,7 +109,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
-        <version>3.2.1</version>
+        <version>3.3.0</version>
         <executions>
           <execution>
             <id>attach-sources</id>
@@ -124,7 +124,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <version>3.4.1</version>
+        <version>3.5.0</version>
         <configuration>
           <additionalparam>-Xdoclint:none</additionalparam>
         </configuration>
@@ -155,7 +155,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-gpg-plugin</artifactId>
-        <version>3.0.1</version>
+        <version>3.1.0</version>
         <executions>
           <execution>
             <id>sign-artifacts</id>
@@ -170,7 +170,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>properties-maven-plugin</artifactId>
-        <version>1.1.0</version>
+        <version>1.2.0</version>
         <executions>
           <execution>
             <phase>initialize</phase>
@@ -277,16 +277,16 @@
   </dependencies>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <swagger-annotations-version>1.6.9</swagger-annotations-version>
-    <slf4j-version>2.0.6</slf4j-version>
-    <jackson-version>2.14.1</jackson-version>
-    <jodatime-version>2.12.2</jodatime-version>
+    <swagger-annotations-version>1.6.11</swagger-annotations-version>
+    <jackson-version>2.15.2</jackson-version>
+    <slf4j-version>2.0.9</slf4j-version>
+    <jodatime-version>2.12.5</jodatime-version>
     <testng-version>6.14.3</testng-version>
     <apache-httpclient-version>4.5.14</apache-httpclient-version>
-    <okhttpclient-version>4.10.0</okhttpclient-version>
+    <okhttpclient-version>4.11.0</okhttpclient-version>
     <ning-asynchttpclient-version>2.12.3</ning-asynchttpclient-version>
     <nv-websocket-client-version>2.14</nv-websocket-client-version>
-    <guava-version>31.1-jre</guava-version>
+    <guava-version>32.1.2-jre</guava-version>
     <ini4j-version>0.5.4</ini4j-version>
     <name>${props.name}</name>
     <version>${props.version}</version>
