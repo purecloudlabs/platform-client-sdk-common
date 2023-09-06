@@ -269,7 +269,7 @@
     <jodatime-version>2.12.5</jodatime-version>
     <maven-plugin-version>1.0.0</maven-plugin-version>
     <apache-httpclient-version>4.5.14</apache-httpclient-version>
-    <okhttpclient-version>4.10.0</okhttpclient-version>
+    <okhttpclient-version>4.11.0</okhttpclient-version>
     <guava-version>31.1-jre</guava-version>
     <name>${props.name}</name>
     <version>${props.version}</version>
