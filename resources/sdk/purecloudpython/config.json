@@ -35,8 +35,8 @@
       "preRunScripts": [],
       "postRunScripts": [
         {
-          "type": "node",
-          "path": "prebuild-postrun.js",
+          "type": "tsx",
+          "path": "prebuild-postrun.ts",
           "args": [
             {
               "$ref": "#/settings/swaggerCodegen/configFile"
@@ -47,6 +47,14 @@
             {
               "$ref": "#/settings/packageName"
             }
+          ],
+          "failOnError": true
+        },
+        {
+          "type": "tsx",
+          "path": "${COMMON_ROOT}/resources/scripts/proxy-npm.js",
+          "args": [
+            "start"
           ],
           "failOnError": true
         }
@@ -67,7 +75,7 @@
       ],
       "postRunScripts": [
         {
-          "type": "node",
+          "type": "tsx",
           "path": "${COMMON_ROOT}/resources/scripts/combineApiDataFiles.js",
           "args": [
             "${SDK_REPO}/build/docs",
@@ -81,7 +89,16 @@
       "gitCommit": false,
       "publishRelease": false,
       "preRunScripts": [],
-      "postRunScripts": []
+      "postRunScripts": [
+        {
+          "type": "tsx",
+          "path": "${COMMON_ROOT}/resources/scripts/proxy-npm.js",
+          "args": [
+            "stop"
+          ],
+          "failOnError": false
+        }
+      ]
     }
   }
 }

@@ -11,7 +11,7 @@ if pm2 list | grep -q "proxy-server"; then
     echo "App is already running."
 else
     # Start the app
-    pm2 start ./modules/pm2.config.js
+    pm2 start ./resources/scripts/pm2.config.cjs
     echo "App started."
 fi
 set -e

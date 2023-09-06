@@ -37,8 +37,8 @@
 			"preRunScripts": [],
 			"postRunScripts": [
 				{
-					"type": "node",
-					"path": "prebuild-postrun.js",
+					"type": "tsx",
+					"path": "prebuild-postrun.ts",
 					"args": [
 						{
 							"$ref": "#/settings/swaggerCodegen/configFile"
@@ -51,7 +51,7 @@
 					"failOnError": true
 				},
 				{
-					"type": "node",
+					"type": "tsx",
 					"path": "combine-swagger.js",
 					"args": [
 						{
@@ -83,7 +83,7 @@
 					"failOnError": true
 				},
 				{
-					"type": "node",
+					"type": "tsx",
 					"path": "generate-custom-markdown.js",
 					"args": [
 						"${SDK_REPO}/build/src/main/java/cloud/genesys/webmessaging/sdk/",
@@ -95,7 +95,7 @@
 			],
 			"postRunScripts": [
 				{
-					"type": "node",
+					"type": "tsx",
 					"path": "${COMMON_ROOT}/resources/scripts/combineApiDataFiles.js",
 					"args": [
 					  "${SDK_REPO}/build/docs",

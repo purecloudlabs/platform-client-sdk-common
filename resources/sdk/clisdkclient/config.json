@@ -37,8 +37,8 @@
       "preRunScripts": [],
       "postRunScripts": [
         {
-          "type": "node",
-          "path": "prebuild-postrun.js",
+          "type": "tsx",
+          "path": "prebuild-postrun.ts",
           "args": [
             {
               "$ref": "#/settings/swaggerCodegen/configFile"
@@ -50,7 +50,7 @@
           "failOnError": true
         },
         {
-          "type": "node",
+          "type": "tsx",
           "path": "preprocess-swagger.js",
           "args": [
             {
@@ -62,6 +62,14 @@
             "${COMMON_ROOT}/resources/sdk/clisdkclient/resources/operationNameOverrides.json"
           ],
           "failOnError": true
+        },
+        {
+          "type": "tsx",
+          "path": "${COMMON_ROOT}/resources/scripts/proxy-npm.js",
+          "args": [
+            "start"
+          ],
+          "failOnError": true
         }
       ]
     },
@@ -70,7 +78,7 @@
       "compileScripts": [],
       "postRunScripts": [
         {
-          "type": "node",
+          "type": "tsx",
           "path": "post-process.js",
           "args": [
             "${SDK_REPO}/build/gc/cmd/root.go",
@@ -87,7 +95,7 @@
       "preRunScripts": [],
       "postRunScripts": [
         {
-          "type": "node",
+          "type": "tsx",
           "path": "postbuild-postrun.js",
           "args": [
             "${SDK_REPO}"
@@ -95,7 +103,7 @@
           "failOnError": true
         },
         {
-          "type": "node",
+          "type": "tsx",
           "path": "${COMMON_ROOT}/resources/scripts/combineApiDataFiles.js",
           "args": [
             "${SDK_REPO}/docs",
@@ -109,6 +117,14 @@
           "cwd": "${SDK_REPO}",
           "args":[ "build", "test" ],
           "failOnError": true
+        },
+        {
+          "type": "tsx",
+          "path": "${COMMON_ROOT}/resources/scripts/proxy-npm.js",
+          "args": [
+            "stop"
+          ],
+          "failOnError": false
         }
       ]
     }
