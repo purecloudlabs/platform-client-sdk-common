@@ -4,12 +4,12 @@
   "description": "SDK tests",
   "main": "index.js",
   "scripts": {
-    "test": "./node_modules/mocha/bin/mocha --bail index.js"
+    "test": "mocha --bail index.js"
   },
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "mocha": "^5.2.0",
+    "mocha": "^10.2.0",
     "hpagent": "^1.2.0"
   },
   "dependencies": {}
