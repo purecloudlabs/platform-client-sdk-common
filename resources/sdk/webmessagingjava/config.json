@@ -52,7 +52,7 @@
 				},
 				{
 					"type": "tsx",
-					"path": "combine-swagger.js",
+					"path": "combine-swagger.ts",
 					"args": [
 						{
 							"$ref": "#/settings/swagger/newSwaggerPath"
@@ -84,7 +84,7 @@
 				},
 				{
 					"type": "tsx",
-					"path": "generate-custom-markdown.js",
+					"path": "generate-custom-markdown.ts",
 					"args": [
 						"${SDK_REPO}/build/src/main/java/cloud/genesys/webmessaging/sdk/",
 						"WebMessagingClient",
@@ -96,7 +96,7 @@
 			"postRunScripts": [
 				{
 					"type": "tsx",
-					"path": "${COMMON_ROOT}/resources/scripts/combineApiDataFiles.js",
+					"path": "${COMMON_ROOT}/resources/scripts/combineApiDataFiles.ts",
 					"args": [
 					  "${SDK_REPO}/build/docs",
 					  "${SDK_REPO}/build/APIData.json"

@@ -40,7 +40,7 @@
       "preRunScripts": [
         {
           "type": "tsx",
-          "path": "pruneSwagger.js",
+          "path": "pruneSwagger.ts",
           "args": [
             {
               "$ref": "#/settings/swagger/newSwaggerSourcePath"
@@ -76,7 +76,7 @@
       "preRunScripts": [
         {
           "type": "tsx",
-          "path": "processExtensions.js",
+          "path": "processExtensions.ts",
           "args": [
             "${COMMON_ROOT}/resources/sdk/pureclouddotnet-guest/extensions",
             {
@@ -105,7 +105,7 @@
       "postRunScripts": [
         {
           "type": "tsx",
-          "path": "${COMMON_ROOT}/resources/scripts/combineApiDataFiles.js",
+          "path": "${COMMON_ROOT}/resources/scripts/combineApiDataFiles.ts",
           "args": [
             "${SDK_REPO}/build/docs",
             "${SDK_REPO}/build/APIData.json"

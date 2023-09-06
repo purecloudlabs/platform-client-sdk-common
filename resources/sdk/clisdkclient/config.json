@@ -51,7 +51,7 @@
         },
         {
           "type": "tsx",
-          "path": "preprocess-swagger.js",
+          "path": "preprocess-swagger.ts",
           "args": [
             {
               "$ref": "#/settings/swagger/newSwaggerPath"
@@ -65,7 +65,7 @@
         },
         {
           "type": "tsx",
-          "path": "${COMMON_ROOT}/resources/scripts/proxy-npm.js",
+          "path": "${COMMON_ROOT}/resources/scripts/proxy-npm.ts",
           "args": [
             "start"
           ],
@@ -79,7 +79,7 @@
       "postRunScripts": [
         {
           "type": "tsx",
-          "path": "post-process.js",
+          "path": "post-process.ts",
           "args": [
             "${SDK_REPO}/build/gc/cmd/root.go",
             "${SDK_TEMP}/topLevelCommands.json",
@@ -96,7 +96,7 @@
       "postRunScripts": [
         {
           "type": "tsx",
-          "path": "postbuild-postrun.js",
+          "path": "postbuild-postrun.ts",
           "args": [
             "${SDK_REPO}"
           ],
@@ -104,7 +104,7 @@
         },
         {
           "type": "tsx",
-          "path": "${COMMON_ROOT}/resources/scripts/combineApiDataFiles.js",
+          "path": "${COMMON_ROOT}/resources/scripts/combineApiDataFiles.ts",
           "args": [
             "${SDK_REPO}/docs",
             "${SDK_REPO}/APIData.json"
@@ -120,7 +120,7 @@
         },
         {
           "type": "tsx",
-          "path": "${COMMON_ROOT}/resources/scripts/proxy-npm.js",
+          "path": "${COMMON_ROOT}/resources/scripts/proxy-npm.ts",
           "args": [
             "stop"
           ],

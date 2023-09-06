@@ -1,10 +1,10 @@
-export interface resourcepaths {
+export interface Resourcepaths {
     extensions:          string;
     scripts:       string;
     templates:      string;
 }
 
-export interface version {
+export interface Version {
     major:          number;
     minor:       number;
     point:      number;
@@ -27,4 +27,25 @@ export interface ApiVersionData {
     BuildTime: string;
     BuildVersion: string;
     ImplementationVersion: string;
+}
+
+export interface Data {
+    extraNotes:   string;
+    hasExtraNotes: boolean;
+    apiVersionData: ApiVersionData;
+}
+
+export interface APIData {
+    operationId:  string;
+    functionName: string;
+    signature:    string;
+    parameters?:  Parameter[];
+    example:      string;
+    return?:      string;
+}
+
+export interface Parameter {
+    name:     string;
+    type:     string;
+    required: string;
 }

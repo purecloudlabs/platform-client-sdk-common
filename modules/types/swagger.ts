@@ -185,7 +185,9 @@ export interface Info {
     title:          string;
     termsOfService: string;
     contact:        Contact;
-    license:        License;
+    license?:        License;
+    swagger?: string;
+    host?: string;
 }
 
 export interface Contact {
@@ -232,7 +234,7 @@ export interface DeleteParameter {
     required:          boolean;
     type?:             ItemsType;
     default?:          boolean | string;
-    schema?:           ParameterAdditionalProperties;
+    schema?:           any;
     enum?:             string[];
     items?:            AdditionalPropertiesClass;
     collectionFormat?: CollectionFormat;
@@ -310,16 +312,17 @@ export interface DeleteResponses {
 
 export interface The202_Class {
     description: string;
-    schema?:     AdditionalProperties;
+    schema?:     any;
 }
 
 export interface The202_Value {
     description: string;
-    schema?:     ItemsClass;
+    schema?:     any;
 }
 
 export interface The204 {
     description: string;
+    schema?:     any;
 }
 
 export interface The500_Class {
@@ -463,7 +466,7 @@ export interface StickyXIninErrorCodes {
 
 export interface The429 {
     description:          string;
-    schema?:              ItemsClass;
+    schema?:              any;
     "x-inin-error-codes": The429_XIninErrorCodes;
 }
 
@@ -630,12 +633,12 @@ export interface PurpleSchema {
 
 export interface The202 {
     description: string;
-    schema?:     SchemaClass;
+    schema?:     any;
 }
 
 export interface Fluffy408 {
     description:          string;
-    schema:               ItemsClass;
+    schema?:     any;
     "x-inin-error-codes": AmbitiousXIninErrorCodes;
 }
 
@@ -715,6 +718,7 @@ export interface Head {
     security?:                 HeadSecurity[];
     "x-purecloud-method-name": string;
     "x-genesys-visibility"?:   XGenesysVisibility;
+    deprecated?:  boolean;
 }
 
 export interface HeadParameter {
@@ -808,7 +812,7 @@ export interface PatchParameter {
     name:              string;
     description?:      string;
     required:          boolean;
-    schema?:           The201_Schema;
+    schema?:           any;
     type?:             ItemsType;
     enum?:             string[];
     default?:          number;
@@ -850,7 +854,7 @@ export interface PatchResponses {
 
 export interface The201_Class {
     description: string;
-    schema?:     The201_Schema;
+    schema?:     any;
 }
 
 export interface Fluffy405 {
@@ -865,7 +869,7 @@ export interface The405_XIninErrorCodes {
 
 export interface Tentacled409 {
     description:           The409_Description;
-    schema?:               ItemsClass;
+    schema?:               any;
     "x-inin-error-codes"?: { [key: string]: string };
 }
 
@@ -942,7 +946,7 @@ export interface PostParameter {
     name:              string;
     description?:      string;
     required:          boolean;
-    schema?:           ResponseSchema;
+    schema?:           any;
     type?:             ItemsType;
     items?:            FluffyItems;
     collectionFormat?: CollectionFormat;
@@ -995,12 +999,12 @@ export interface PostResponses {
 
 export interface Fluffy200 {
     description: string;
-    schema?:     ResponseSchema;
+    schema?:     any;
 }
 
 export interface Fluffy400 {
     description:          string;
-    schema?:              ItemsClass;
+    schema?:              any;
     "x-inin-error-codes": { [key: string]: string };
 }
 
@@ -1018,7 +1022,7 @@ export interface XIninErrorCodes4 {
 
 export interface Sticky409 {
     description:           string;
-    schema?:               ItemsClass;
+    schema?:               any;
     "x-inin-error-codes"?: { [key: string]: string };
 }
 
@@ -1034,7 +1038,7 @@ export interface XIninErrorCodes5 {
 
 export interface Fluffy413 {
     description:          RequestEntityTooLargeEnum;
-    schema?:              ItemsClass;
+    schema?:              any;
     "x-inin-error-codes": XIninErrorCodes6;
 }
 
@@ -1118,7 +1122,7 @@ export interface PutParameter {
     description?:      string;
     required:          boolean;
     type?:             ItemsType;
-    schema?:           ResponseSchema;
+    schema?:           any;
     items?:            FluffyItems;
     collectionFormat?: CollectionFormat;
     enum?:             string[];
@@ -1127,7 +1131,7 @@ export interface PutParameter {
 
 export interface PutResponse {
     description?:          string;
-    schema?:               ResponseSchema;
+    schema?:               any;
     "x-inin-error-codes"?: { [key: string]: string };
 }
 

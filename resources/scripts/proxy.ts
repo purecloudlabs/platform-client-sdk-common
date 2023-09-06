@@ -10,11 +10,8 @@ export default class ProxyServer {
   public proxy: any;
   public server: any;
 
-  constructor(){
+  constructor() {
     this.proxy = createProxyServer();
-    console.log(this.proxy);
-    console.log("proxy");
-
     this.server = http.createServer((req, res) => {
       const { hostname, port } = url.parse(req.url);
       if (hostname && port) {
@@ -25,38 +22,36 @@ export default class ProxyServer {
       }
     });
 
-   this.server.on('connect', this.handleConnectRequest.bind(this));
+    this.server.on('connect', this.handleConnectRequest.bind(this));
   }
 
-    
 
-    private handleConnectRequest(req: http.IncomingMessage, clientSocket: net.Socket, head: Buffer) {
-      const { port, hostname } = url.parse(`//${req.url}`, false, true);
-      if (hostname && port) {
-        const serverSocket = net.connect(parseInt(port, 10), hostname, () => {
-          clientSocket.write('HTTP/1.1 200 Connection Established\r\n' +
-            'Proxy-agent: Node.js-Proxy\r\n' +
-            '\r\n');
-          serverSocket.write(head);
-          serverSocket.pipe(clientSocket);
-          clientSocket.pipe(serverSocket);
-        });
-      } else {
-        clientSocket.write('HTTP/1.1 400 Bad Request\r\n' +
-          'Content-Type: text/plain\r\n' +
-          '\r\n' +
-          'Invalid request');
-        clientSocket.end();
-      }
+
+  private handleConnectRequest(req: http.IncomingMessage, clientSocket: net.Socket, head: Buffer) {
+    const { port, hostname } = url.parse(`//${req.url}`, false, true);
+    if (hostname && port) {
+      const serverSocket = net.connect(parseInt(port, 10), hostname, () => {
+        clientSocket.write('HTTP/1.1 200 Connection Established\r\n' +
+          'Proxy-agent: Node.js-Proxy\r\n' +
+          '\r\n');
+        serverSocket.write(head);
+        serverSocket.pipe(clientSocket);
+        clientSocket.pipe(serverSocket);
+      });
+    } else {
+      clientSocket.write('HTTP/1.1 400 Bad Request\r\n' +
+        'Content-Type: text/plain\r\n' +
+        '\r\n' +
+        'Invalid request');
+      clientSocket.end();
     }
-
   }
 
- 
+}
 
-  const proxyServer = new ProxyServer();
-  console.log('HTTP proxy server trying to start on port 4001');
-  proxyServer.server.listen(4001, () => {
+const proxyServer = new ProxyServer();
+console.log('HTTP proxy server trying to start on port 4001');
+proxyServer.server.listen(4001, () => {
   console.log('HTTP proxy server listening on port 4001');
 });
 

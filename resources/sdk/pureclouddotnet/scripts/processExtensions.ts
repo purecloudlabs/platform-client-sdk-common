@@ -7,44 +7,42 @@ import path from 'path';
 
 
 export class ProcessExtensions {
-    init() {
-        
-try {
-	dot.templateSettings.strip = false;
-	const extensionsSource = path.resolve(process.argv[2]);
-	const extensionsDest = path.resolve(process.argv[3]);
-	const packageName = process.argv[4];
+	init() {
 
-	console.log(`extensionsSource=${extensionsSource}`);
-	console.log(`extensionsDest=${extensionsDest}`);
-	console.log(`packageName=${packageName}`);
+		try {
+			dot.templateSettings.strip = false;
+			const extensionsSource = path.resolve(process.argv[2]);
+			const extensionsDest = path.resolve(process.argv[3]);
+			const packageName = process.argv[4];
 
-	let paths = klawSync(extensionsSource, {
-		nodir: true,
-		filter: (data) => data.path.toLowerCase().endsWith('.cs')
-	});
+			console.log(`extensionsSource=${extensionsSource}`);
+			console.log(`extensionsDest=${extensionsDest}`);
+			console.log(`packageName=${packageName}`);
 
-	paths.forEach((filePath) => {
-		// Determine output location
-		let fileDest = filePath.path.replace(extensionsSource, extensionsDest);
-		fs.ensureDirSync(path.dirname(fileDest));
+			let paths = klawSync(extensionsSource, {
+				nodir: true,
+				filter: (data) => data.path.toLowerCase().endsWith('.cs')
+			});
 
-		let templateString = fs.readFileSync(filePath.path, 'utf8');
-		let template = dot.template(templateString, null, { packageName: packageName });
-		let result = template({ packageName: packageName });
-		fs.writeFileSync(filePath.path.replace(extensionsSource, extensionsDest), result);
-		console.log(`Extension templated to ${fileDest}`);
-	});
-} catch (err) {
-	process.exitCode = 1;
-	console.log(err);
-}
-    }
-    ;
+			paths.forEach((filePath) => {
+				// Determine output location
+				let fileDest = filePath.path.replace(extensionsSource, extensionsDest);
+				fs.ensureDirSync(path.dirname(fileDest));
+
+				let templateString = fs.readFileSync(filePath.path, 'utf8');
+				let template = dot.template(templateString, null, { packageName: packageName });
+				let result = template({ packageName: packageName });
+				fs.writeFileSync(filePath.path.replace(extensionsSource, extensionsDest), result);
+				console.log(`Extension templated to ${fileDest}`);
+			});
+		} catch (err) {
+			process.exitCode = 1;
+			console.log(err);
+		}
+	}
+	;
 }
 
 // Call the method directly
 const processExtensions = new ProcessExtensions();
 processExtensions.init();
-//# sourceMappingURL=prebuild-postrun.js.map
-//# sourceMappingURL=prebuild-postrun.js.map

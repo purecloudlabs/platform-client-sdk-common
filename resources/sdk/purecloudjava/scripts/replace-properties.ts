@@ -3,10 +3,10 @@ import path from 'path';
 
 export class ReplaceProperties {
     init() {
-		try {
+        try {
             var propertiesFilePath = path.resolve(process.argv[2])
             var pomFilePath = path.resolve(process.argv[3])
-        
+
             const propertiesFile = fs.readFileSync(propertiesFilePath, "utf-8")
             const propertiesFileSplit = propertiesFile.replace(/props.[a-zA-Z]{0,}\=/g, "").split("\n")
             var pomFile = fs.readFileSync(pomFilePath, "utf-8")

@@ -52,7 +52,7 @@
         },
         {
           "type": "tsx",
-          "path": "${COMMON_ROOT}/resources/scripts/proxy-npm.js",
+          "path": "${COMMON_ROOT}/resources/scripts/proxy-npm.ts",
           "args": [
             "start"
           ],
@@ -76,7 +76,7 @@
       "postRunScripts": [
         {
           "type": "tsx",
-          "path": "${COMMON_ROOT}/resources/scripts/combineApiDataFiles.js",
+          "path": "${COMMON_ROOT}/resources/scripts/combineApiDataFiles.ts",
           "args": [
             "${SDK_REPO}/build/docs",
             "${SDK_REPO}/build/APIData.json"
@@ -92,7 +92,7 @@
       "postRunScripts": [
         {
           "type": "tsx",
-          "path": "${COMMON_ROOT}/resources/scripts/proxy-npm.js",
+          "path": "${COMMON_ROOT}/resources/scripts/proxy-npm.ts",
           "args": [
             "stop"
           ],

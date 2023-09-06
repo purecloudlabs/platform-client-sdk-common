@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
 export class PreBuildPostRun {
-    init() {
+	init() {
 		try {
 			var swaggerCodegenConfigFilePath = process.argv[2];
 			var version = fs.readJsonSync(process.argv[3]);
@@ -10,15 +10,15 @@ export class PreBuildPostRun {
 				packageVersion: version.displayFull,
 				httpUserAgent: 'PureCloud SDK',
 			};
-		
+
 			fs.writeFileSync(swaggerCodegenConfigFilePath, JSON.stringify(config, null, 2));
 			console.log(`Config file written to ${swaggerCodegenConfigFilePath}`);
 		} catch (err) {
 			process.exitCode = 1;
 			console.log(err);
 		}
-    }
-    ;
+	}
+	;
 }
 // Call the method directly
 const preBuildPostRun = new PreBuildPostRun();

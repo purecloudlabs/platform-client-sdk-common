@@ -1,16 +1,9 @@
 import program from 'commander';
 import path from 'path';
 import { existsSync }  from 'fs';
-import { Builder } from './modules/builder.js'
+import { Builder } from './modules/build/builder'
 
-//const program = require('commander');
-//const path = require('path');
-//const fs = require('fs');
-
-//const swaggerDiff = require('./modules/swaggerDiff');
-//const Builder = require('./modules/builder');
 const sdkLanguageRegex = /^(purecloudjava|purecloudjava-guest|purecloudjavascript|purecloudjavascript-guest|pureclouddotnet|pureclouddotnet-guest|purecloudpython|purecloudios|purecloudswift4|purecloudgo|purecloudkotlin|clisdkclient|webmessagingjava)$/i;
-
 
 export class SdkBuilder {
 	constructor() {
@@ -52,13 +45,6 @@ export class SdkBuilder {
 	}
 }
 
-
-
-
-const sdkBuilder = new SdkBuilder();
-
-
-
 function abort(err: Error) {
 	console.log(err);
 	console.log('Exiting SDK Builder with exit code 1');
@@ -66,11 +52,13 @@ function abort(err: Error) {
 }
 
 function build(configPath: string, localConfigPath: string) {
-	let builder = new Builder(configPath, localConfigPath);
-	builder.fullBuild()
+	let b = new Builder();
+	b.init(configPath, localConfigPath).then(() => 
+			b.fullBuild())
 		.then(() => console.log('SDK Builder script complete'))
 		.catch((err) => abort(err));
 }
+
 
 function jsonOrYaml(filePath : string) {
 	let jsonConfig = `${filePath}.json`;
@@ -89,4 +77,6 @@ function jsonOrYaml(filePath : string) {
 	console.log(`Unable to find config file: ${filePath}`);
 	return;
 }
+
+new SdkBuilder();
 

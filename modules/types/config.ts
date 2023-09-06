@@ -83,10 +83,12 @@ export interface Prebuild {
 export interface Script {
     type:                   string;
     path:                   string;
-    args:                   Array<ArgClass | string | boolean>;
+    args:                   any;
     failOnError:            boolean;
     appendIsNewReleaseArg?: boolean;
     appendVersionArg?:      boolean;
+    cwd?:                   string;
+    command?:               string;
 }
 
 export interface ArgClass {

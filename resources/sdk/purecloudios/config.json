@@ -70,7 +70,7 @@
       "postRunScripts": [
         {
           "type": "tsx",
-          "path": "${COMMON_ROOT}/resources/scripts/combineApiDataFiles.js",
+          "path": "${COMMON_ROOT}/resources/scripts/combineApiDataFiles.ts",
           "args": [
             "${SDK_REPO}/build/docs",
             "${SDK_REPO}/build/APIData.json"

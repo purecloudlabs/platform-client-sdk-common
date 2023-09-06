@@ -1,26 +1,26 @@
 import fs from 'fs-extra';
 import child_process from 'child_process';
-import {Swagger} from '../../../../modules/types/swagger';
-import {ResourceDefinitions} from './resourceDefinitions';
+import { Swagger } from '../../../../modules/types/swagger';
+import { ResourceDefinitions } from './resourceDefinitions';
 import childProcess from 'child_process';
 const maxFileBufferSize = 1024 * 1024 * 1024;
 
 export class PreProcessSwagger {
-    init() {
+	init() {
 		try {
 			const newSwaggerPath: string = process.argv[2];
 			const saveNewSwaggerPath: string = process.argv[3];
 			const saveSuperCommandsPath: string = process.argv[4];
 			const saveResourceDefinitionsPath: string = process.argv[5];
 			const overridesPath: string = process.argv[6];
-		
+
 			let newSwagger: Swagger = retrieveSwagger(newSwaggerPath);
 			newSwagger = processRefs(newSwagger);
 			const overrides = JSON.parse(fs.readFileSync(overridesPath, 'utf8'));
 			const resourceDefinitions: ResourceDefinitions = overrideDefinitions(createDefinitions(newSwagger), overrides)
 			let [superCommands, includedSwaggerPathObjects]: [Set<string>, Swagger["paths"]] = initialProcessOfDefinitions(newSwagger, resourceDefinitions);
 			newSwagger['paths'] = processDefinitions(includedSwaggerPathObjects, resourceDefinitions, newSwagger);
-		
+
 			if (saveNewSwaggerPath) {
 				console.log(`Writing new swagger to ${saveNewSwaggerPath}`);
 				fs.writeFileSync(saveNewSwaggerPath, JSON.stringify(newSwagger));
@@ -29,7 +29,7 @@ export class PreProcessSwagger {
 				console.log(`Writing top level commands to ${saveSuperCommandsPath}`);
 				fs.writeFileSync(saveSuperCommandsPath, JSON.stringify(Array.from(superCommands)));
 			}
-		
+
 			if (saveResourceDefinitionsPath) {
 				console.log(`Writing resource definitions commands to ${saveResourceDefinitionsPath}`);
 				fs.writeFileSync(saveResourceDefinitionsPath, JSON.stringify(resourceDefinitions));
@@ -38,7 +38,7 @@ export class PreProcessSwagger {
 			process.exitCode = 1;
 			console.log(err);
 		}
-    };
+	};
 }
 
 
@@ -78,7 +78,7 @@ function firstIndexOfCapital(str) {
 	return -1;
 }
 
-function processDefinitions(includedSwaggerPathObjects :Swagger["paths"], resourceDefinitions: ResourceDefinitions , newSwagger: Swagger) {
+function processDefinitions(includedSwaggerPathObjects: Swagger["paths"], resourceDefinitions: ResourceDefinitions, newSwagger: Swagger) {
 	let paths = {};
 	for (const path of Object.keys(includedSwaggerPathObjects)) {
 		// Override tags if possible
@@ -103,8 +103,8 @@ function processDefinitions(includedSwaggerPathObjects :Swagger["paths"], resour
 			// post -> create
 			// patch or put -> update (will cause a clash if a resource has both, this would have to be resolved by overriding one or both operationIds)
 			value.operationId = value.operationId
-					.replace(/^post/g, "create")
-					.replace(/^patch|^put/g, "update");
+				.replace(/^post/g, "create")
+				.replace(/^patch|^put/g, "update");
 			value.operationId = value.operationId.replace(/s*$/g, "");
 
 			value['x-purecloud-category'] = value.tags[0];
@@ -136,7 +136,7 @@ function processDefinitions(includedSwaggerPathObjects :Swagger["paths"], resour
 	return paths;
 }
 
-function initialProcessOfDefinitions(newSwagger: Swagger, resourceDefinitions: ResourceDefinitions): [Set<string>, Swagger["paths"]]  {
+function initialProcessOfDefinitions(newSwagger: Swagger, resourceDefinitions: ResourceDefinitions): [Set<string>, Swagger["paths"]] {
 	let superCommands = new Set<string>();
 	let includedSwaggerPathObjects: Swagger["paths"] = {};
 	for (const path of Object.keys(newSwagger['paths'])) {
@@ -190,7 +190,7 @@ function separatePath(path) {
 	return path.split("/")
 }
 
-function processPath(path) { 
+function processPath(path) {
 	return path
 		.replace("_", "/")
 		.replace(/[\/]{2,}/g, "/")
@@ -201,7 +201,7 @@ function processPath(path) {
 function getName(path) {
 	let names = separatePath(path)
 
-	return names[names.length -1].replace(/-/g, "")
+	return names[names.length - 1].replace(/-/g, "")
 }
 
 function getSuperCommand(path) {
@@ -222,10 +222,10 @@ function canPaginate(schema, newSwagger) {
 	const properties = newSwagger.definitions[definitionName].properties
 	if (properties == undefined) return false
 
-	return properties.pageNumber !== undefined 
-			|| properties.cursor !== undefined
-			|| properties.nextUri !== undefined
-			|| properties.startIndex !== undefined
+	return properties.pageNumber !== undefined
+		|| properties.cursor !== undefined
+		|| properties.nextUri !== undefined
+		|| properties.startIndex !== undefined
 }
 
 function canList(path, successResponse, newSwagger) {
@@ -240,7 +240,7 @@ function canList(path, successResponse, newSwagger) {
 	if (properties == undefined) return false
 
 	return definitionName.endsWith("List")
-			|| properties.entities !== undefined
+		|| properties.entities !== undefined
 }
 
 function overrideDefinitions(resourceDefinitions, overrides) {

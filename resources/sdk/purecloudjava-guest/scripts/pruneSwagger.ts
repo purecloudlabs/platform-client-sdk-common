@@ -3,65 +3,66 @@ import fs from 'fs-extra';
 import request from 'request-promise';
 import path from 'path';
 export class PruneSwagger {
-    init() {
-try {
-	// Get swagger from here and process
-	var newSwaggerSourcePath = process.argv[2];
-	// Put it here
-	var newSwaggerPath = process.argv[3];
+	init() {
+		try {
+			// Get swagger from here and process
+			var newSwaggerSourcePath = process.argv[2];
+			// Put it here
+			var newSwaggerPath = process.argv[3];
 
-	console.log(`newSwaggerSourcePath=${newSwaggerSourcePath}`);
-	console.log(`newSwaggerPath=${newSwaggerPath}`);
+			console.log(`newSwaggerSourcePath=${newSwaggerSourcePath}`);
+			console.log(`newSwaggerPath=${newSwaggerPath}`);
 
-	const loadPromise = newSwaggerSourcePath.startsWith('http') ? downloadFile(newSwaggerSourcePath) : readFile(newSwaggerSourcePath);
+			const loadPromise = newSwaggerSourcePath.startsWith('http') ? downloadFile(newSwaggerSourcePath) : readFile(newSwaggerSourcePath);
 
-	loadPromise
-		.then((swagger) => {
-			const guestPaths = {};
-			const models = {};
-			_.forOwn(swagger.paths, (resource, resourcePath) => {
-				if (!resourcePath.startsWith('/api/v2/webchat/guest')) return;
+			loadPromise
+				.then((swagger) => {
+					const guestPaths = {};
+					const models = {};
+					_.forOwn(swagger.paths, (resource, resourcePath) => {
+						if (!resourcePath.startsWith('/api/v2/webchat/guest')) return;
 
-				// Add resource
-				guestPaths[resourcePath] = resource;
+						// Add resource
+						guestPaths[resourcePath] = resource;
 
-				// Get models from each resource method body and response
-				_.forOwn(resource, (methodConfig, method) => {
-					console.log(`Adding resource: ${method.toUpperCase()} ${resourcePath}`);
+						// Get models from each resource method body and response
+						_.forOwn(resource, (methodConfig, method) => {
+							console.log(`Adding resource: ${method.toUpperCase()} ${resourcePath}`);
 
-					// Get body param models
-					let bodyParam;
-					methodConfig.parameters.some((param) => {
-						if (param.in === 'body') {
-							bodyParam = param;
-							return true;
-						}
+							// Get body param models
+							let bodyParam;
+							methodConfig.parameters.some((param) => {
+								if (param.in === 'body') {
+									bodyParam = param;
+									return true;
+								}
+							});
+							if (bodyParam && bodyParam.schema) extractModels(bodyParam.schema, swagger.definitions, models);
+
+							// Get response models
+							_.forOwn(methodConfig.responses, (responseConfig, responseCode) => {
+								if (responseConfig.schema) {
+									extractModels(responseConfig.schema, swagger.definitions, models);
+								}
+							});
+						});
 					});
-					if (bodyParam && bodyParam.schema) extractModels(bodyParam.schema, swagger.definitions, models);
 
-					// Get response models
-					_.forOwn(methodConfig.responses, (responseConfig, responseCode) => {
-						if (responseConfig.schema) {
-							extractModels(responseConfig.schema, swagger.definitions, models);
-						}
-					});
+					swagger.paths = guestPaths;
+					swagger.definitions = models;
+
+					fs.outputJsonSync(newSwaggerPath, swagger);
+				})
+				.catch((err) => {
+					process.exitCode = 1;
+					console.log(err);
 				});
-			});
-
-			swagger.paths = guestPaths;
-			swagger.definitions = models;
-
-			fs.outputJsonSync(newSwaggerPath, swagger);
-		})
-		.catch((err) => {
+		} catch (err) {
 			process.exitCode = 1;
 			console.log(err);
-		});
-} catch (err) {
-	process.exitCode = 1;
-	console.log(err);
-}}
-;
+		}
+	}
+	;
 }
 
 function downloadFile(url) {
@@ -102,10 +103,6 @@ function extractModels(schema, modelSource, models = {}) {
 }
 
 
-
-
-		
-    
 // Call the method directly
 const pruneSwagger = new PruneSwagger();
 pruneSwagger.init();
