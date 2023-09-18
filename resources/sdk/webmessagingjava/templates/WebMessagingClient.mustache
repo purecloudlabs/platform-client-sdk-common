@@ -41,6 +41,27 @@ public class WebMessagingClient {
     private final ArrayList<SessionListener> sessionListeners = new ArrayList<>();
     private ApiClient apiClient;
 
+    private AllowedMedia allowedMediaInbound;
+
+    public AllowedMedia getAllowedMediaInbound() {
+        return allowedMediaInbound;
+    }
+
+    public void setAllowedMediaInbound(AllowedMedia allowedMediaInbound) {
+        this.allowedMediaInbound = allowedMediaInbound;
+    }
+
+    /**
+     * check if a provided mime type is among the allowed one in configuration for inbound content.
+     * @param mimeType
+     * @return true if the mime type is part of the allowed media, false otherwise
+     * @see #getSupportedContentConfiguration(String, String, String)
+     * @see #allowedMediaInbound
+     */
+    public boolean isMimeTypeAllowedInbound(String mimeType) {
+        return FileUtils.isMimeTypeSupported(mimeType, allowedMediaInbound.getInbound());
+    }
+
     /**
     * Inspect a StructuredMessage, looking for Presence events ({@link EventType#PRESENCE} )
     * @param message message to introspect for Presence events
@@ -151,7 +172,11 @@ public class WebMessagingClient {
             }
 
             @Override
-                public void sessionClearedEvent(SessionClearedEvent sessionClearedResponse, String rawMessage) {
+            public void sessionClearedEvent(SessionClearedEvent sessionClearedResponse, String rawMessage) {
+            }
+
+            @Override
+            public void getConfigurationResponse(GetConfigurationResponse response, String rawMessage) {
             }
 
             @Override
@@ -337,6 +362,27 @@ public class WebMessagingClient {
             configureAuthenticatedSessionRequest.setToken(token);
             configureAuthenticatedSessionRequest.setData(data);
             String payload = objectMapper.writeValueAsString(configureAuthenticatedSessionRequest);
+
+            webSocket.sendText(payload, true);
+        } catch (JsonProcessingException e) {
+            // no-op
+        }
+    }
+
+    public void getSupportedContentConfiguration(String deploymentId, String token, String origin) {
+        try {
+            this.token = token;
+            this.deploymentId = deploymentId;
+            if (apiClient == null) {
+                initializeApiClient(origin);
+            }
+
+            // Create configuration request
+            GetConfigurationRequest getConfigurationRequest = new GetConfigurationRequest();
+            getConfigurationRequest.setAction(RequestTypeGetConfiguration.GETCONFIGURATION);
+            getConfigurationRequest.setDeploymentId(deploymentId);
+            getConfigurationRequest.setToken(token);
+            String payload = objectMapper.writeValueAsString(getConfigurationRequest);
 
             webSocket.sendText(payload, true);
         } catch (JsonProcessingException e) {
@@ -598,6 +644,8 @@ public class WebMessagingClient {
         Object response = objectMapper.convertValue(baseMessage.getBody(), messageClass);
         switch (className) {
             case "SessionResponse":
+                //set the configured allowed media for Supported Content Profile
+                setAllowedMediaInbound(((SessionResponse)response).getAllowedMedia());
                 // Invoke each listener
                 for (SessionListener sessionListener : sessionListeners) {
                     sessionListener.sessionResponse((SessionResponse) response, rawMessage);
@@ -636,6 +684,12 @@ public class WebMessagingClient {
             case "SessionClearedEvent":
                 for (SessionListener sessionListener : sessionListeners) {
                     sessionListener.sessionClearedEvent((SessionClearedEvent) response, rawMessage);
+                }
+                break;
+            case "GetConfigurationResponse":
+                setAllowedMediaInbound(((GetConfigurationResponse)response).getAllowedMedia());
+                for (SessionListener sessionListener : sessionListeners) {
+                    sessionListener.getConfigurationResponse((GetConfigurationResponse) response, rawMessage);
                 }
                 break;
             case "JwtResponse":
@@ -834,6 +888,15 @@ public class WebMessagingClient {
          * @param rawMessage  The raw message payload JSON as a string
          */
         public void jwtResponse(JwtResponse jwtResponse, String rawMessage);
+
+
+        /**
+        * Raised for responses to url requests (type == BaseResponseType.RESPONSE, class = SessionResponse)
+        *
+        * @param response    The deserialized response
+        * @param rawMessage  The raw message payload JSON as a string
+        */
+        public void getConfigurationResponse(GetConfigurationResponse response, String rawMessage);
 
         /**
          * Raised for unmatched BaseResponseType
