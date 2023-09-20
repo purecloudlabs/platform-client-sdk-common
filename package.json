@@ -61,6 +61,7 @@
   },
   "devDependencies": {
     "@apidevtools/json-schema-ref-parser": "^10.1.0",
+    "@types/commander": "^2.12.2",
     "@types/dot": "^1.1.5",
     "@types/fs-extra": "^11.0.1",
     "@types/lodash": "^4.14.195",

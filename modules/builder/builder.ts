@@ -6,10 +6,10 @@ import githubApi from "github-api-promise";
 import https from 'https';
 import path from 'path';
 import pluralize from 'pluralize';
-import { Config, Script } from '../types/config'
-import { LocalConfig, Overrides } from '../types/localConfig'
+import { Config, Script, Haystack, PureCloud } from '../types/config'
+import { LocalConfig, Overrides, Settings , StageSettings , valueOverides} from '../types/localConfig'
 import moment, { Moment } from 'moment-timezone';
-import { Resourcepaths, Version, PureCloud, ApiVersionData, Data } from '../types/builderTypes'
+import { Resourcepaths, Version, ApiVersionData, Data, Release } from '../types/builderTypes'
 import { ItemsType, Format } from '../types/swagger'
 import platformClient from 'purecloud-platform-client-v2';
 import yaml from 'js-yaml';
@@ -17,6 +17,7 @@ import Logger from '../log/logger';
 import SwaggerDiff from '../swagger/swaggerDiff';
 import GitModule from '../git/gitModule';
 import Zip from '../util/zip';
+import { Models } from 'purecloud-platform-client-v2';
 
 
 const log = new Logger();
@@ -131,14 +132,14 @@ export class Builder {
 				// Set env vars
 				setEnv('COMMON_ROOT', path.resolve('./'));
 				setEnv('SDK_REPO', path.resolve(path.join('./output', this.config.settings.swaggerCodegen.codegenLanguage)));
-				fs.removeSync(getEnv('SDK_REPO'));
+				fs.removeSync(getEnv('SDK_REPO') as string);
 				setEnv('SDK_TEMP', path.resolve(path.join('./temp', this.config.settings.swaggerCodegen.codegenLanguage)));
-				fs.emptyDirSync(getEnv('SDK_TEMP'));
+				fs.emptyDirSync(getEnv('SDK_TEMP') as string);
 	
 				// Load env vars from config
 				_.forOwn(this.config.envVars, (value, key) => setEnv(key, value));
 				_.forOwn(this.localConfig.envVars, (group, groupKey) => {
-					if (group && group.groupDisabled !== true) _.forOwn(group, (value, key) => setEnv(key, value));
+					if (group) _.forOwn(group, (value, key) => setEnv(key, value));
 				});
 	
 				// Resolve env vars in config
@@ -165,11 +166,11 @@ export class Builder {
 						this.config.settings.resourcePaths.templates ? this.config.settings.resourcePaths.templates : path.join(resourceRoot, 'templates')
 					),
 				};
-				newSwaggerTempFile = path.join(getEnv('SDK_TEMP'), 'newSwagger.json');
+				newSwaggerTempFile = path.join(getEnv('SDK_TEMP') as string, 'newSwagger.json');
 				this.pureCloud = {
-					clientId: getEnv('PURECLOUD_CLIENT_ID'),
-					clientSecret: getEnv('PURECLOUD_CLIENT_SECRET'),
-					environment: getEnv('PURECLOUD_ENVIRONMENT', 'mypurecloud.com', true),
+					clientId: getEnv('PURECLOUD_CLIENT_ID') as string,
+					clientSecret: getEnv('PURECLOUD_CLIENT_SECRET') as string,
+					environment: getEnv('PURECLOUD_ENVIRONMENT', 'mypurecloud.com', true) as string,
 				};
 				this.releaseNoteTemplatePath = this.config.settings.releaseNoteTemplatePath
 					? this.config.settings.releaseNoteTemplatePath
@@ -179,7 +180,7 @@ export class Builder {
 					: './resources/templates/releaseNoteSummary.md';
 	
 				// Initialize other things
-				git.authToken = getEnv('GITHUB_TOKEN');
+				git.authToken = getEnv('GITHUB_TOKEN') as string;
 			resolve("");
 		}
 		catch (err) {
@@ -296,7 +297,7 @@ function prebuildImpl(): Promise<string> {
 			let startTime = moment();
 			log.info(`Cloning ${_this.config.settings.sdkRepo.repo} (${_this.config.settings.sdkRepo.branch}) to ${getEnv('SDK_REPO')}`);
 			git
-				.clone(_this.config.settings.sdkRepo.repo, _this.config.settings.sdkRepo.branch, getEnv('SDK_REPO'))
+				.clone(_this.config.settings.sdkRepo.repo, _this.config.settings.sdkRepo.branch, getEnv('SDK_REPO') as string)
 				.then(function () {
 					log.debug(`Clone operation completed in ${measureDurationFrom(startTime)}`);
 				})
@@ -409,7 +410,7 @@ function prebuildImpl(): Promise<string> {
 
 					
 					const data: Data = {
-						extraNotes: getEnv('RELEASE_NOTES'),
+						extraNotes: getEnv('RELEASE_NOTES') as string,
 						hasExtraNotes: false,
 						apiVersionData: _this.apiVersionData,
 					};
@@ -421,7 +422,7 @@ function prebuildImpl(): Promise<string> {
 					_this.releaseNotes = swaggerDiff.generateReleaseNotes(_this.releaseNoteTemplatePath, data);
 					_this.releaseNoteSummary = swaggerDiff.generateReleaseNotes(_this.releaseNoteSummaryTemplatePath, data);
 
-					let releaseNotePath = path.join(getEnv('SDK_REPO'), 'releaseNotes.md');
+					let releaseNotePath = path.join(getEnv('SDK_REPO') as string, 'releaseNotes.md');
 					log.info(`Writing release notes to ${releaseNotePath}`);
 					fs.writeFileSync(releaseNotePath, _this.releaseNotes);
 				})
@@ -443,7 +444,7 @@ function buildImpl(): Promise<string> {
 			// Pre-run scripts
 			executeScripts(_this.config.stageSettings.build.preRunScripts, 'custom build pre-run');
 
-			let outputDir = path.join(getEnv('SDK_REPO'), 'build');
+			let outputDir = path.join(getEnv('SDK_REPO') as string, 'build');
 			log.debug(`SDK build dir -> ${outputDir}`);
 			fs.emptyDirSync(outputDir);
 
@@ -488,23 +489,23 @@ function buildImpl(): Promise<string> {
 
 			// Copy readme from build to docs and repo root
 			log.info('Copying readme...');
-			fs.ensureDirSync(path.join(getEnv('SDK_REPO'), 'build/docs'));
-			fs.createReadStream(path.join(getEnv('SDK_REPO'), 'build/README.md')).pipe(
-				fs.createWriteStream(path.join(getEnv('SDK_REPO'), 'build/docs/index.md'))
+			fs.ensureDirSync(path.join(getEnv('SDK_REPO') as string, 'build/docs'));
+			fs.createReadStream(path.join(getEnv('SDK_REPO') as string, 'build/README.md')).pipe(
+				fs.createWriteStream(path.join(getEnv('SDK_REPO')as string , 'build/docs/index.md'))
 			);
-			fs.createReadStream(path.join(getEnv('SDK_REPO'), 'build/README.md')).pipe(
-				fs.createWriteStream(path.join(getEnv('SDK_REPO'), 'README.md'))
+			fs.createReadStream(path.join(getEnv('SDK_REPO') as string , 'build/README.md')).pipe(
+				fs.createWriteStream(path.join(getEnv('SDK_REPO') as string, 'README.md'))
 			);
 
 			//Copy the release notes from the build directory to the docs directory
 			log.info('Copying releaseNotes.md...');
-			fs.createReadStream(path.join(getEnv('SDK_REPO'), 'releaseNotes.md')).pipe(
-				fs.createWriteStream(path.join(getEnv('SDK_REPO'), 'build/docs/releaseNotes.md'))
+			fs.createReadStream(path.join(getEnv('SDK_REPO') as string, 'releaseNotes.md')).pipe(
+				fs.createWriteStream(path.join(getEnv('SDK_REPO') as string , 'build/docs/releaseNotes.md'))
 			);
 
 			log.info('Zipping docs...');
 			zip
-				.zipDir(path.join(outputDir, 'docs'), path.join(getEnv('SDK_TEMP'), 'docs.zip'))
+				.zipDir(path.join(outputDir, 'docs'), path.join(getEnv('SDK_TEMP') as string, 'docs.zip'))
 				.then(() => executeScripts(_this.config.stageSettings.build.postRunScripts, 'custom build post-run'))
 				.then(() => resolve(""))
 				.catch((err: Error) => reject(err));
@@ -533,10 +534,10 @@ function postbuildImpl(): Promise<string> {
 
 /* PRIVATE FUNCTIONS */
 
-function applyOverrides(original: Config, overrides: { [key: string]: any }) {
+function applyOverrides(original: Config, overrides: valueOverides) {
 	if (!original || !overrides) return;
 
-	_.forOwn(overrides, function (value, key) {
+	_.forOwn(overrides, function (value : valueOverides, key) {
 		if (Array.isArray(value)) {
 			log.verbose(`Overriding array ${key}. Length old/new => ${original[key].length}/${value.length}`);
 			original[key] = value;
@@ -571,7 +572,7 @@ function createRelease(): Promise<string> {
 		}
 
 		git
-			.saveChanges(_this.config.settings.sdkRepo.repo, getEnv('SDK_REPO'), _this.version.displayFull)
+			.saveChanges(_this.config.settings.sdkRepo.repo, getEnv('SDK_REPO') as string, _this.version.displayFull)
 			.then(() => {
 				if (_this.config.stageSettings.postbuild.publishRelease !== true) {
 					log.warn('Skipping github release creation! Set postbuild.publishRelease=true to release.');
@@ -588,7 +589,7 @@ function createRelease(): Promise<string> {
 
 				githubApi.config.repo = repoName;
 				githubApi.config.owner = repoOwner;
-				githubApi.config.token = getEnv('GITHUB_TOKEN');
+				githubApi.config.token = getEnv('GITHUB_TOKEN') as string;
 
 				const tagName = _this.config.settings.sdkRepo.tagFormat.replace('{version}', _this.version.displayFull);
 				let createReleaseOptions = {
@@ -603,7 +604,7 @@ function createRelease(): Promise<string> {
 				// Create release
 				return githubApi.repos.releases.createRelease(createReleaseOptions);
 			})
-			.then((release: any) => {
+			.then((release: Release) => {
 				log.info(`Created release #${release.id}, \
 				${release.name}, tag: ${release.tag_name}, \
 				published on ${release.published_at}`);
@@ -636,7 +637,7 @@ function addNotifications(): Promise<string> {
 				.then(() => {
 					return notificationsApi.getNotificationsAvailabletopics({ 'expand': ['schema'] });
 				})
-				.then((notifications: any) => {
+				.then((notifications:  Models.AvailableTopicEntityListing) => {
 					//let notificationMappings = { notifications: [] };
 
 					type Notification = {
@@ -644,12 +645,12 @@ function addNotifications(): Promise<string> {
 						class: string;
 					}
 
-					// Define the type for the 'persons' object
+				
 					type NotificationMappings = {
 						notifications: Notification[];
 					};
 
-					// Create an object 'persons' with an 'addresses' property initialized as an empty array.
+					
 					const notificationMappings: NotificationMappings = { notifications: [] };
 
 					// Process schemas
@@ -660,7 +661,7 @@ function addNotifications(): Promise<string> {
 							return;
 						}
 
-						const schemaName = getNotificationClassName(entity.schema.id);
+						const schemaName = getNotificationClassName(entity.schema.id.toString());
 						log.info(`Notification mapping: ${entity.id} (${schemaName})`);
 						notificationMappings.notifications.push({ topic: entity.id, class: schemaName });
 						extractDefinitons(entity.schema);
@@ -668,7 +669,7 @@ function addNotifications(): Promise<string> {
 					});
 
 					// Write mappings to file
-					let mappingFilePath = path.resolve(path.join(getEnv('SDK_REPO'), 'notificationMappings.json'));
+					let mappingFilePath = path.resolve(path.join(getEnv('SDK_REPO') as string, 'notificationMappings.json'));
 					log.info(`Writing Notification mappings to ${mappingFilePath}`);
 					fs.writeFileSync(mappingFilePath, JSON.stringify(notificationMappings, null, 2));
 
@@ -769,6 +770,7 @@ function processRefs() {
 	});
 }
 
+// Receives AvailableTopic.schema of Type "schema"?: { [key: string]: object; };
 function extractDefinitons(entity: { [key: string]: any }) {
 	try {
 		_.forOwn(entity, (property, key) => {
@@ -913,7 +915,7 @@ function getScriptPath(script: Script) {
 }
 
 
-function maybeInit(haystack: { [key: string]: any }, needle: string, defaultValue: any, warning: string = "Haystack was undefined!"): void {
+function maybeInit(haystack: Builder | Haystack, needle: string, defaultValue: Haystack, warning: string = "Haystack was undefined!"): void {
 	if (!haystack) {
 		log.warn(warning);
 		return;
@@ -923,7 +925,7 @@ function maybeInit(haystack: { [key: string]: any }, needle: string, defaultValu
 	}
 }
 
-function checkAndThrow(haystack: { [key: string]: any }, needle: string, message: string = `${needle} must be set!`): void {
+function checkAndThrow(haystack: Builder | Haystack, needle: string, message: string = `${needle} must be set!`): void {
 	if (!haystack[needle] || haystack[needle] === '') {
 		throw new Error(message);
 	}
@@ -933,7 +935,7 @@ function getEnv(
 	varname: string,
 	defaultValue: string = '',
 	isdefaultValue: boolean = false
-): any {
+): string | boolean {
 	varname = varname.trim();
 	const envVar = process.env[varname];
 	log.silly(`ENV: ${varname}->${envVar}`);
@@ -968,11 +970,12 @@ function setEnv(varname: string, value: any) {
 	process.env[varname] = values[0];
 }
 
+//recursive for config, localconfig, enVars, Settings
 function resolveEnvVars(config: { [key: string]: any }) {
 	_.forOwn(config, function (value, key) {
 		if (typeof value == 'string') {
 			config[key] = value.replace(/\$\{(.+?)\}/gi, function (match, p1, offset, string) {
-				return getEnv(p1);
+				return getEnv(p1) as string;
 			});
 		} else {
 			resolveEnvVars(value);

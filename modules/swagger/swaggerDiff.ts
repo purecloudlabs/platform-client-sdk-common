@@ -2,14 +2,14 @@ import childProcess from 'child_process';
 import fs from 'fs';
 import swaggerDiffImpl from './swaggerDiffImpl';
 import Logger from '../log/logger';
-import { Swagger , Info } from '../types/swagger';
+import { Swagger , Info, Changes } from '../types/swagger';
 import { Data, Version } from '../types/builderTypes';
 
 const log = new Logger();
 
 export default class SwaggerDiff {
 
-	changes: { [key: string]: any } = {};
+	changes: Changes;
 	changeCount: number = 0;
 	swaggerInfo: Info;
 	oldSwagger: Swagger;

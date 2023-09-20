@@ -8,7 +8,7 @@ const log = new Logger();
 
 export default class Git {
 
-	public authToken: any = undefined;
+	public authToken: string = undefined;
 
 	private defaultWidth: number = 0;
 

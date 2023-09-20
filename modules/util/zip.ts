@@ -3,9 +3,6 @@ import fs from 'fs-extra';
 
 export default class Zip {
 
-	public proxy: any;
-	public server: any;
-
 	public zipDir(inputDir: string, outputPath: string): Promise<string> {
 		return new Promise<string>((resolve, reject) => {
 

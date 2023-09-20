@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import dot from 'dot';
 import pluralize from 'pluralize';
-import { Swagger, Info , Path , Property} from '../types/swagger';
+import { Swagger, Info , Path , TypeResponse, ItemsType, Property, HttpMethod, valueTypes, Parameter, Changes} from '../types/swagger';
 import { Version, Data } from '../types/builderTypes';
 
 /* PRIVATE VARS */
@@ -39,7 +39,7 @@ Array.prototype.pushApply = function <T>(arr: T[]): void {
 
 class SwaggerDiffImpl {
 
-	changes: { [key: string]: any } = {};
+	changes : Changes;
 	changeCount: number = 0;
 	swaggerInfo: Info;
 	oldSwagger: Swagger;
@@ -103,6 +103,9 @@ class SwaggerDiffImpl {
 			point: {},
 			minor: {},
 		};
+		
+
+	
 		_.forOwn(changesObject, function (impactGroup, key) {
 			_.forOwn(impactGroup, function (changeGroup: any) {
 				changesData[`${key}Count`] += changeGroup.changes.length;
@@ -193,7 +196,7 @@ if (typeof window !== 'undefined') {
 
 /* PRIVATE FUNCTIONS */
 
-function addChange(id : string, key : string, location : string, impact : string, oldValue : any, newValue : any, description: string) {
+function addChange(id : string, key : string, location : string, impact : string, oldValue : valueTypes, newValue : valueTypes, description: string) {
 	// Generate default description
 	if (!description) {
 		if (!oldValue && newValue) description = `${location.capitalizeFirstLetter()} ${key} was added`;
@@ -220,7 +223,7 @@ function addChange(id : string, key : string, location : string, impact : string
 	_this.changeCount++;
 }
 
-function checkForChange(id : string, key : string, location : string, impact : string, property: string, oldObject: any, newObject: any, description : string) {
+function checkForChange(id : string, key : string, location : string, impact : string, property: string, oldObject : TypeResponse , newObject: TypeResponse , description : string) {
 	// Initialize property values
 	// Use property=undefined for direct object comparison
 	var oldPropertyValue = property ? (oldObject ? oldObject[property] : undefined) : oldObject;
@@ -234,7 +237,7 @@ function checkForChange(id : string, key : string, location : string, impact : s
 function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 	if (!oldSwagger) return;
 	// Check for removed paths
-	_.forEach(oldSwagger.paths, function (oldPath, pathKey) {
+	_.forEach(oldSwagger.paths, function (oldPath : Path, pathKey) {
 		var newPath = newSwagger.paths[pathKey];
 		if (!newPath) {
 			addChange(pathKey, pathKey, LOCATION_PATH, IMPACT_MAJOR, pathKey, undefined, undefined);
@@ -254,7 +257,7 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 			});
 		} else {
 			// Check for removed operations
-			_.forEach(oldPath, function (oldOperation, methodKey) {
+			_.forEach(oldPath, function (oldOperation : HttpMethod, methodKey) {
 				var newOperation = newPath[methodKey];
 				if (!newOperation) {
 					addChange(pathKey, methodKey.toUpperCase(), LOCATION_OPERATION, IMPACT_MAJOR, methodKey, undefined, undefined);
@@ -263,7 +266,7 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 
 			// Check for changed and added operations
 			_.forEach(newPath, function (newOperation, methodKey) {
-				var oldOperation = oldPath[methodKey];
+				var oldOperation: HttpMethod = oldPath[methodKey];
 				if (!oldOperation) {
 					// Operation was added
 					addChange(
@@ -335,12 +338,12 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 					}
 
 					// Make parameters KVPs
-					var oldParams: { [key: string]: any } = {};
-					var newParams: { [key: string]: any } = {};
-					_.forEach(oldOperation.parameters, function (p) {
+					var oldParams: { [key: string]: Parameter } = {};
+					var newParams: { [key: string]: Parameter } = {};
+					_.forEach(oldOperation.parameters, function (p: Parameter) {
 						oldParams[p.name] = p;
 					});
-					_.forEach(newOperation.parameters, function (p: any) {
+					_.forEach(newOperation.parameters, function (p: Parameter) {
 						newParams[p.name] = p;
 					});
 
@@ -408,7 +411,7 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 					});
 
 					// Check for removed responses
-					_.forEach(oldOperation.responses, function (oldResponse, oldResponseCode) {
+					_.forEach(oldOperation.responses, function (oldResponse, oldResponseCode ) {
 						if (!newOperation.responses[oldResponseCode]) {
 							addChange(operationMethodAndPath, oldResponseCode, LOCATION_RESPONSE, IMPACT_MAJOR, oldResponseCode, undefined, undefined);
 						}
@@ -416,7 +419,7 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 
 					// Check for changed and added responses
 					_.forEach(newOperation.responses, function (newResponse, newResponseCode) {
-						var oldResponse = oldOperation.responses[newResponseCode];
+						var oldResponse: TypeResponse  = oldOperation.responses[newResponseCode];
 						if (!oldResponse) {
 							// Response was added
 							addChange(operationMethodAndPath, newResponseCode, LOCATION_RESPONSE, IMPACT_MINOR, undefined, newResponseCode, undefined);
@@ -461,7 +464,7 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 	}); // end path iteration
 }
 
-function getSchemaType(schema: any) {
+function getSchemaType(schema: Property) {
 	if (schema && schema['$ref']) return schema['$ref'].replace('#/definitions/', '');
 
 	if (schema && schema.type) {
@@ -512,8 +515,8 @@ function checkModels(oldSwagger: Swagger, newSwagger: Swagger) {
 				var oldProperty = oldModel.properties[propertyKey];
 				if (!oldProperty) {
 					// Property was added
-					var type: any = newProperty.type;
-					if (!type) type = newProperty['$ref'] ? newProperty['$ref'].replace('#/definitions/', '') : undefined;
+					var type: ItemsType = newProperty.type;
+					if (!type) type = newProperty['$ref'] ? newProperty['$ref'].replace('#/definitions/', '')  as ItemsType : undefined as ItemsType; 
 
 					// New required properties are major changes
 					if (newModel.required && newModel.required.includes(propertyKey)) {

@@ -27,6 +27,23 @@ export interface Definition {
     description?: string;
 }
 
+export interface ChangeItem {
+    parent: string; 
+    impact: string; 
+    key: string; 
+    location: string; 
+    oldValue: any; 
+    newValue: any; 
+    description: string; 
+}
+
+// Assuming 'changes' is an object with string keys and arrays of ChangeItem
+export interface Changes {
+    [id: string]: {
+        [impact: string]: ChangeItem[];
+    };
+}
+
 export interface Property {
     type?:                      ItemsType;
     description?:               string;
@@ -227,6 +244,8 @@ export interface Delete {
     consumes?:                      ProduceElement[];
 }
 
+export type Parameter = DeleteParameter | GetParameter | PostParameter | PutParameter | PatchParameter | HeadParameter;
+
 export interface DeleteParameter {
     name:              string;
     in:                In;
@@ -284,6 +303,16 @@ export enum Ref {
     DefinitionsUserRoutingLanguagePost = "#/definitions/UserRoutingLanguagePost",
     DefinitionsUserRoutingSkillPost = "#/definitions/UserRoutingSkillPost",
 }
+
+export type RestResponse = 
+  | GetResponses[keyof GetResponses]
+  | PatchResponses[keyof PatchResponses]
+  | HeadResponses[keyof HeadResponses]
+  | PostResponses[keyof PostResponses]
+  | DeleteResponses[keyof DeleteResponses]
+  | PutResponse;
+
+  export type TypeResponse = RestResponse | RestResponse["schema"]
 
 export interface DeleteResponses {
     "204"?:   The204;
@@ -935,6 +964,11 @@ export interface Post {
     deprecated?:                    boolean;
 }
 
+export type HttpMethod = Post | Get | Put | Delete | Head | Patch;
+
+export type valueTypes = ItemsType  | string | boolean | number | object | File
+
+
 export enum PostConsume {
     ApplicationJSON = "application/json",
     ApplicationScimJSON = "application/scim+json",
@@ -1051,6 +1085,7 @@ export interface XIninErrorCodes6 {
 
 export interface The423 {
     description:           string;
+    schema?:              any;
     "x-inin-error-codes"?: The423_XIninErrorCodes;
 }
 

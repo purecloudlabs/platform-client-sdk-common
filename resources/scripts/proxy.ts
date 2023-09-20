@@ -7,8 +7,8 @@ const { createProxyServer } = pkg;
 
 export default class ProxyServer {
 
-  public proxy: any;
-  public server: any;
+  public proxy: pkg.httpProxy;
+  public server: http.Server;
 
   constructor() {
     this.proxy = createProxyServer();

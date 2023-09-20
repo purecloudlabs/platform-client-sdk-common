@@ -1,7 +1,7 @@
 import program from 'commander';
 import path from 'path';
 import { existsSync }  from 'fs';
-import { Builder } from './modules/build/builder'
+import { Builder } from './modules/builder/builder'
 
 const sdkLanguageRegex = /^(purecloudjava|purecloudjava-guest|purecloudjavascript|purecloudjavascript-guest|pureclouddotnet|pureclouddotnet-guest|purecloudpython|purecloudios|purecloudswift4|purecloudgo|purecloudkotlin|clisdkclient|webmessagingjava)$/i;
 

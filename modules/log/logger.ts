@@ -4,7 +4,7 @@ import Winston from 'winston';
 
 export default class Logger {
 
-	public log: any;
+	public log: Winston.LoggerInstance;
 
 	private defaultWidth: number = 0;
 
@@ -28,7 +28,7 @@ export default class Logger {
 	}
 
 	public setUseColor(useColor: boolean) {
-		this.log.transports.console.colorize = useColor === true;
+		(this.log.transports.console as Winston.ConsoleTransportInstance).colorize = useColor === true;
 		this.log.info(`Logger will use color: ${useColor}`);
 	};
 
@@ -86,25 +86,25 @@ export default class Logger {
 	};
 
 
-	public writeBoxTop(width, level) {
+	public writeBoxTop(width: number, level: string) {
 		level = checkLevel(level);
 		if (!width) width = this.defaultWidth;
 		this.log.log(level, '╔' + pad('', width - 2, '═') + '╗');
 	};
 
-	public writeBoxSeparator(width, level) {
+	public writeBoxSeparator(width: number, level: string) {
 		level = checkLevel(level);
 		if (!width) width = this.defaultWidth;
 		this.log.log(level, '╟' + pad('', width - 2, '─') + '╢');
 	};
 
-	public writeBoxBottom(width, level) {
+	public writeBoxBottom(width: number, level: string) {
 		level = checkLevel(level);
 		if (!width) width = this.defaultWidth;
 		this.log.log(level, '╚' + pad('', width - 2, '═') + '╝');
 	};
 
-	public writeBox(string, width = 0, level = "info") {
+	public writeBox(string : string, width : number = 0, level:string = "info") {
 		// default boxes to info
 		level = level ? level : 'info';
 
@@ -115,10 +115,10 @@ export default class Logger {
 	};
 }
 
-function pad(value, length, padchar) {
+function pad(value: string, length:number, padchar:string) {
 	return value.toString().length < length ? pad(value + padchar, length, padchar) : value;
 }
 
-function checkLevel(level) {
+function checkLevel(level: string) {
 	return level ? level : 'debug';
 }

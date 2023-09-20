@@ -1,6 +1,6 @@
 
 export  interface LocalConfig {
-    envVars:   { [key: string]: any };
+    envVars:   EnvVars;
     overrides: Overrides;
 }
 
@@ -20,6 +20,8 @@ export interface Swagger {
     newSwaggerPath:     string;
     saveNewSwaggerPath: string;
 }
+
+export type valueOverides = Overrides | Settings | StageSettings | Postbuild | Script[] | Prebuild | Build | string | boolean | Array<ArgClass | string | boolean>;
 
 export interface StageSettings {
     postbuild: Postbuild;
@@ -59,3 +61,7 @@ export interface Script {
 export interface ArgClass {
     $ref: string;
 }
+
+interface EnvVars {
+    [key: string]: Record<string, string | number | boolean> | string;
+  }

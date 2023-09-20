@@ -1,8 +1,19 @@
 export  interface Config {
     name:          string;
-    envVars:       { [key: string]: any };
+    envVars:       EnvVars;
     settings:      Settings;
     stageSettings: StageSettings;
+}
+
+interface EnvVars {
+    [key: string]: Record<string, string | number | boolean> | string;
+  }
+
+export interface PureCloud {
+    EXCLUDE_NOTIFICATIONS?:   boolean;
+    clientId:     string;
+    clientSecret: string;
+    environment:   string;
 }
 
 export interface Settings {
@@ -30,7 +41,7 @@ export interface ResourcePaths {
 export interface SDKRepo {
     repo:   string;
     branch: string;
-    tagFormat: string;
+    tagFormat?: string;
 }
 
 export interface Swagger {
@@ -46,7 +57,7 @@ export interface SwaggerCodegen {
     codegenLanguage:       string;
     jarPath:               string;
     configFile:            string;
-    extraGeneratorOptions: any[];
+    extraGeneratorOptions: string[];
     generateApiTests: boolean;
     generateModelTests: boolean;
 
@@ -83,7 +94,7 @@ export interface Prebuild {
 export interface Script {
     type:                   string;
     path:                   string;
-    args:                   any;
+    args:                   (string | boolean | { $ref: string })[];
     failOnError:            boolean;
     appendIsNewReleaseArg?: boolean;
     appendVersionArg?:      boolean;
@@ -95,3 +106,4 @@ export interface ArgClass {
     $ref: string;
 }
 
+export type Haystack = Config | Settings | SwaggerCodegen | SDKRepo | StageSettings | Swagger | PureCloud | boolean | {};

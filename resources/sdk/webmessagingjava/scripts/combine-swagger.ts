@@ -1,6 +1,6 @@
 import fs from 'fs';
 import childProcess from 'child_process';
-import { Swagger , Definition} from '../../../../modules/types/swagger';
+import { Swagger , Definition, Property} from '../../../../modules/types/swagger';
 export class CombineSwagger {
     internalSwagger: Swagger;
     newSwagger: Swagger;
@@ -75,8 +75,8 @@ export class CombineSwagger {
         }
     }
 
-    addDefinitions(definitionBody) {
-        let propertyValues: any;
+    addDefinitions(definitionBody:  Definition ) {
+        let propertyValues;
         for (propertyValues of Object.values(definitionBody.properties)) {
             let responseValuesSchemaDefinition
             // Get definitions by ref from root level of object
@@ -112,7 +112,7 @@ export class CombineSwagger {
                 if (!propertyValues[propertyValueKeys]["$ref"])
                     continue
     
-                let newResponseValuesSchemaDefinition = propertyValues.items["$ref"].replace("#/definitions/", "")
+                let newResponseValuesSchemaDefinition = propertyValues.items["$ref"].replace("#/definitions/", "") 
                 if (this.existingDefinitions !== undefined && this.existingDefinitions.includes(newResponseValuesSchemaDefinition))
                     continue
     
@@ -124,7 +124,7 @@ export class CombineSwagger {
         }
     }
     
-    processRefs(swagger) {
+    processRefs(swagger : Swagger) {
         const keys = Object.keys(swagger.definitions);
         keys.forEach((key, index) => {
             let obj = swagger.definitions[key].properties;
@@ -149,7 +149,7 @@ export class CombineSwagger {
         return swagger;
     }
     
-    downloadFile(url) {
+    downloadFile(url : string) {
         var i = 0
         while (i < 10) {
             i++
