@@ -104,7 +104,7 @@ export default class Logger {
 		this.log.log(level, '╚' + pad('', width - 2, '═') + '╝');
 	};
 
-	public writeBox(string : string, width : number = 0, level:string = "info") {
+	public writeBox(string: string, width: number = 0, level: string = "info") {
 		// default boxes to info
 		level = level ? level : 'info';
 
@@ -115,7 +115,7 @@ export default class Logger {
 	};
 }
 
-function pad(value: string, length:number, padchar:string) {
+function pad(value: string, length: number, padchar: string) {
 	return value.toString().length < length ? pad(value + padchar, length, padchar) : value;
 }
 

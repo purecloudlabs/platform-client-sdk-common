@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import dot from 'dot';
 import pluralize from 'pluralize';
-import { Swagger, Info , Path , TypeResponse, ItemsType, Property, HttpMethod, valueTypes, Parameter, Changes} from '../types/swagger';
+import { Swagger, Info, Path, TypeResponse, ItemsType, Property, HttpMethod, valueTypes, Parameter, Changes } from '../types/swagger';
 import { Version, Data } from '../types/builderTypes';
 
 /* PRIVATE VARS */
@@ -39,7 +39,7 @@ Array.prototype.pushApply = function <T>(arr: T[]): void {
 
 class SwaggerDiffImpl {
 
-	changes : Changes;
+	changes: Changes;
 	changeCount: number = 0;
 	swaggerInfo: Info;
 	oldSwagger: Swagger;
@@ -49,7 +49,7 @@ class SwaggerDiffImpl {
 	constructor() {
 		dot.templateSettings.strip = false;
 	}
-	public diff(oldSwagger : Swagger, newSwagger: Swagger): void {
+	public diff(oldSwagger: Swagger, newSwagger: Swagger): void {
 		console.log('Diffing swagger files...');
 
 		// Set data
@@ -58,7 +58,7 @@ class SwaggerDiffImpl {
 		this.swaggerInfo = newSwagger.info;
 		this.swaggerInfo.swagger = newSwagger.swagger;
 		this.swaggerInfo.host = newSwagger.host;
-
+		this.changes = {};
 		// Diff
 		checkOperations(oldSwagger, newSwagger);
 		checkModels(oldSwagger, newSwagger);
@@ -103,9 +103,9 @@ class SwaggerDiffImpl {
 			point: {},
 			minor: {},
 		};
-		
 
-	
+
+
 		_.forOwn(changesObject, function (impactGroup, key) {
 			_.forOwn(impactGroup, function (changeGroup: any) {
 				changesData[`${key}Count`] += changeGroup.changes.length;
@@ -135,7 +135,7 @@ class SwaggerDiffImpl {
 		return compiledTemplate(defs);
 	};
 
-	public incrementVersion = function (version: Version, forceMajor : boolean, forceMinor : boolean , forcePoint : boolean) {
+	public incrementVersion = function (version: Version, forceMajor: boolean, forceMinor: boolean, forcePoint: boolean) {
 		// Major
 		if (
 			forceMajor === true ||
@@ -176,7 +176,7 @@ class SwaggerDiffImpl {
 		return version;
 	};
 
-	public stringifyVersion = function (version : Version, includePrerelease : boolean) {
+	public stringifyVersion = function (version: Version, includePrerelease: boolean) {
 		return (
 			`${version.major}.${version.minor}.${version.point}` +
 			(includePrerelease === true && version.prerelease && version.prerelease.length > 0 ? `-${version.prerelease}` : '')
@@ -196,14 +196,13 @@ if (typeof window !== 'undefined') {
 
 /* PRIVATE FUNCTIONS */
 
-function addChange(id : string, key : string, location : string, impact : string, oldValue : valueTypes, newValue : valueTypes, description: string) {
+function addChange(id: string, key: string, location: string, impact: string, oldValue: valueTypes, newValue: valueTypes, description: string) {
 	// Generate default description
 	if (!description) {
 		if (!oldValue && newValue) description = `${location.capitalizeFirstLetter()} ${key} was added`;
 		else if (oldValue && !newValue) description = `${location.capitalizeFirstLetter()} ${key} was removed`;
 		else description = `${location.capitalizeFirstLetter()} ${key} was changed from ${oldValue} to ${newValue}`;
 	}
-
 	// Initialize
 	if (!_this.changes[id]) _this.changes[id] = {};
 	if (!_this.changes[id][impact]) _this.changes[id][impact] = [];
@@ -223,7 +222,7 @@ function addChange(id : string, key : string, location : string, impact : string
 	_this.changeCount++;
 }
 
-function checkForChange(id : string, key : string, location : string, impact : string, property: string, oldObject : TypeResponse , newObject: TypeResponse , description : string) {
+function checkForChange(id: string, key: string, location: string, impact: string, property: string, oldObject: TypeResponse, newObject: TypeResponse, description: string) {
 	// Initialize property values
 	// Use property=undefined for direct object comparison
 	var oldPropertyValue = property ? (oldObject ? oldObject[property] : undefined) : oldObject;
@@ -237,7 +236,7 @@ function checkForChange(id : string, key : string, location : string, impact : s
 function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 	if (!oldSwagger) return;
 	// Check for removed paths
-	_.forEach(oldSwagger.paths, function (oldPath : Path, pathKey) {
+	_.forEach(oldSwagger.paths, function (oldPath: Path, pathKey) {
 		var newPath = newSwagger.paths[pathKey];
 		if (!newPath) {
 			addChange(pathKey, pathKey, LOCATION_PATH, IMPACT_MAJOR, pathKey, undefined, undefined);
@@ -257,7 +256,7 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 			});
 		} else {
 			// Check for removed operations
-			_.forEach(oldPath, function (oldOperation : HttpMethod, methodKey) {
+			_.forEach(oldPath, function (oldOperation: HttpMethod, methodKey) {
 				var newOperation = newPath[methodKey];
 				if (!newOperation) {
 					addChange(pathKey, methodKey.toUpperCase(), LOCATION_OPERATION, IMPACT_MAJOR, methodKey, undefined, undefined);
@@ -411,7 +410,7 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 					});
 
 					// Check for removed responses
-					_.forEach(oldOperation.responses, function (oldResponse, oldResponseCode ) {
+					_.forEach(oldOperation.responses, function (oldResponse, oldResponseCode) {
 						if (!newOperation.responses[oldResponseCode]) {
 							addChange(operationMethodAndPath, oldResponseCode, LOCATION_RESPONSE, IMPACT_MAJOR, oldResponseCode, undefined, undefined);
 						}
@@ -419,7 +418,7 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 
 					// Check for changed and added responses
 					_.forEach(newOperation.responses, function (newResponse, newResponseCode) {
-						var oldResponse: TypeResponse  = oldOperation.responses[newResponseCode];
+						var oldResponse: TypeResponse = oldOperation.responses[newResponseCode];
 						if (!oldResponse) {
 							// Response was added
 							addChange(operationMethodAndPath, newResponseCode, LOCATION_RESPONSE, IMPACT_MINOR, undefined, newResponseCode, undefined);
@@ -516,7 +515,7 @@ function checkModels(oldSwagger: Swagger, newSwagger: Swagger) {
 				if (!oldProperty) {
 					// Property was added
 					var type: ItemsType = newProperty.type;
-					if (!type) type = newProperty['$ref'] ? newProperty['$ref'].replace('#/definitions/', '')  as ItemsType : undefined as ItemsType; 
+					if (!type) type = newProperty['$ref'] ? newProperty['$ref'].replace('#/definitions/', '') as ItemsType : undefined as ItemsType;
 
 					// New required properties are major changes
 					if (newModel.required && newModel.required.includes(propertyKey)) {

@@ -13,9 +13,6 @@ export class CombineSwagger {
             const internalSwaggerPath = process.argv[3]
             const saveNewSwaggerPath = process.argv[4];
 
-            console.log("newSwaggerPath")
-            console.log(newSwaggerPath)
-
             // Retrieve internal swagger
             if (fs.existsSync(internalSwaggerPath)) {
                 console.log(`Loading internal swagger from disk: ${internalSwaggerPath}`)
@@ -53,8 +50,6 @@ export class CombineSwagger {
 
             for (const responseValues of Object.values(responses)) {
                 let responseValuesSchemaDefinition = responseValues["schema"]["$ref"].replace("#/definitions/", "")
-                console.log(this.existingDefinitions);
-                console.log("this.existingDefinitions");
                 if (this.existingDefinitions !== undefined && this.existingDefinitions.includes(responseValuesSchemaDefinition))
                     continue
 

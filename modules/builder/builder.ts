@@ -7,7 +7,7 @@ import https from 'https';
 import path from 'path';
 import pluralize from 'pluralize';
 import { Config, Script, Haystack, PureCloud } from '../types/config'
-import { LocalConfig, Overrides, Settings , StageSettings , valueOverides} from '../types/localConfig'
+import { LocalConfig, Overrides, Settings, StageSettings, valueOverides } from '../types/localConfig'
 import moment, { Moment } from 'moment-timezone';
 import { Resourcepaths, Version, ApiVersionData, Data, Release } from '../types/builderTypes'
 import { ItemsType, Format } from '../types/swagger'
@@ -44,45 +44,45 @@ export class Builder {
 	releaseNoteTemplatePath: string = '';
 	releaseNoteSummaryTemplatePath: string = '';
 
-	init(configPath: string, localConfigPath: string) : Promise<string> {
+	init(configPath: string, localConfigPath: string): Promise<string> {
 		return new Promise<string>((resolve, reject) => {
-	
-		this.constructBuilder(configPath, localConfigPath)
+
+			this.constructBuilder(configPath, localConfigPath)
 				.then(() => this.deref()
-				.then(() => this.postConstructBuilder()
-				.then(()=> console.log("Builder construct Completed")))
-				.then(() => resolve(""))
-				.catch((err: Error) => reject(err)));
-		
-	});
+					.then(() => this.postConstructBuilder()
+						.then(() => console.log("Builder construct Completed")))
+					.then(() => resolve(""))
+					.catch((err: Error) => reject(err)));
+
+		});
 	}
 
 	constructBuilder(configPath: string, localConfigPath: string): Promise<string> {
 		return new Promise<string>((resolve, reject) => {
 			try {
-			log.writeBox('Constructing Builder');
+				log.writeBox('Constructing Builder');
 
-			// Load config files
-			if (fs.existsSync(configPath)) {
-				this.config = loadConfig(configPath);
+				// Load config files
+				if (fs.existsSync(configPath)) {
+					this.config = loadConfig(configPath);
+				}
+				else throw new Error(`Config file doesn't exist! Path: ${configPath}`);
+
+				if (fs.existsSync(localConfigPath)) this.localConfig = loadConfig(localConfigPath);
+				else {
+					this.localConfig = {} as LocalConfig;
+					log.warn(`No local config provided. Path: ${localConfigPath}`);
+				}
+
+				// Apply overrides
+				log.info('Applying overrides...');
+				applyOverrides(this.config, this.localConfig.overrides);
+				resolve("");
 			}
-			else throw new Error(`Config file doesn't exist! Path: ${configPath}`);
-
-			if (fs.existsSync(localConfigPath)) this.localConfig = loadConfig(localConfigPath);
-			else {
-				this.localConfig = {} as LocalConfig;
-				log.warn(`No local config provided. Path: ${localConfigPath}`);
+			catch (err) {
+				console.log(err);
+				reject(err)
 			}
-
-			// Apply overrides
-			log.info('Applying overrides...');
-			applyOverrides(this.config, this.localConfig.overrides);
-			resolve("");
-		}
-		catch (err) {
-			console.log(err);
-			reject(err)
-		}
 		});
 	}
 
@@ -94,7 +94,7 @@ export class Builder {
 				// https://github.com/winstonjs/winston#logging-levels
 				// silly > debug > verbose > info > warn > error
 				if (this.config.settings.logLevel) log.setLogLevel(this.config.settings.logLevel);
-	
+
 				// Checketh thyself before thou wrecketh thyself
 				maybeInit(this, 'config', {}, "1 config");
 				maybeInit(this, 'localConfig', {}, "1 localConfig");
@@ -110,15 +110,15 @@ export class Builder {
 				maybeInit(this.config.stageSettings, 'build', {}, "1build");
 				maybeInit(this.config.stageSettings, 'postbuild', {}, "1postbuild");
 				maybeInit(this.config.settings.sdkRepo, 'tagFormat', '{version}', "1tagFormat");
-	
+
 				// Check for required settings
 				checkAndThrow(this.config.settings.swagger, 'oldSwaggerPath', "1oldSwaggerPath");
 				checkAndThrow(this.config.settings.swagger, 'newSwaggerPath', "1newSwaggerPath");
-				checkAndThrow(this.config.settings, 'swaggerCodegen',"1sss");
+				checkAndThrow(this.config.settings, 'swaggerCodegen', "1sss");
 				checkAndThrow(this.config.settings.swaggerCodegen, 'codegenLanguage', "1codegenLanguage");
 				checkAndThrow(this.config.settings.swaggerCodegen, 'resourceLanguage', "1resourceLanguage");
 				checkAndThrow(this.config.settings.swaggerCodegen, 'configFile', "1configFile");
-	
+
 				// Normalize sdkRepo
 				if (typeof this.config.settings.sdkRepo === 'string') {
 					this.config.settings.sdkRepo = {
@@ -127,21 +127,20 @@ export class Builder {
 						tagFormat: ''
 					};
 				}
-				
-				console.log(this.config.settings.swaggerCodegen.codegenLanguage);
+
 				// Set env vars
 				setEnv('COMMON_ROOT', path.resolve('./'));
 				setEnv('SDK_REPO', path.resolve(path.join('./output', this.config.settings.swaggerCodegen.codegenLanguage)));
 				fs.removeSync(getEnv('SDK_REPO') as string);
 				setEnv('SDK_TEMP', path.resolve(path.join('./temp', this.config.settings.swaggerCodegen.codegenLanguage)));
 				fs.emptyDirSync(getEnv('SDK_TEMP') as string);
-	
+
 				// Load env vars from config
 				_.forOwn(this.config.envVars, (value, key) => setEnv(key, value));
 				_.forOwn(this.localConfig.envVars, (group, groupKey) => {
 					if (group) _.forOwn(group, (value, key) => setEnv(key, value));
 				});
-	
+
 				// Resolve env vars in config
 				resolveEnvVars(this.config);
 				resolveEnvVars(this.localConfig);
@@ -149,7 +148,7 @@ export class Builder {
 					log.debug('Local config file: \n' + JSON.stringify(this.localConfig, null, 2));
 					log.debug('Config file: \n' + JSON.stringify(this.config, null, 2));
 				}
-	
+
 				// Initialize instance settings
 				log.setUseColor(this.config.settings.enableLoggerColor === true);
 				let resourceRoot = `./resources/sdk/${this.config.settings.swaggerCodegen.resourceLanguage}/`;
@@ -178,60 +177,47 @@ export class Builder {
 				this.releaseNoteSummaryTemplatePath = this.config.settings.releaseNoteSummaryTemplatePath
 					? this.config.settings.releaseNoteSummaryTemplatePath
 					: './resources/templates/releaseNoteSummary.md';
-	
+
 				// Initialize other things
 				git.authToken = getEnv('GITHUB_TOKEN') as string;
-			resolve("");
-		}
-		catch (err) {
-			console.log(err);
-			reject(err)
-		}
+				resolve("");
+			}
+			catch (err) {
+				console.log(err);
+				reject(err)
+			}
 		});
 	}
 
 	deref(): Promise<string> {
-
 		return new Promise<string>((resolve, reject) => {
-			log.writeBox('deref Builder');
-		$RefParser.dereference(this.config, (err, schema) => {
-			if (err) {
-				console.error(err);
-				reject(err);
-			}
-			else {
-				
-				console.log(JSON.stringify(this.config, null, 2));
-				this.config = schema as typeof this.config;
-				console.log(JSON.stringify(this.config, null, 2));
-			}
-		})
+			$RefParser.dereference(this.config, (err, schema) => {
+				if (err) {
+					console.error(err);
+					reject(err);
+				}
+				else {
+					this.config = schema as typeof this.config;
+				}
+			})
 
-		$RefParser.dereference(this.localConfig, (err, schema) => {
-			if (err) {
-				console.error(err);
-				reject(err);
-			}
-			else {
-				this.localConfig = schema as typeof this.localConfig;
-				log.writeBox('deref compleetd');
-				resolve("");
-			}
-		})
-		
-	});
-
+			$RefParser.dereference(this.localConfig, (err, schema) => {
+				if (err) {
+					console.error(err);
+					reject(err);
+				}
+				else {
+					this.localConfig = schema as typeof this.localConfig;
+					resolve("");
+				}
+			})
+		});
 	}
 
 	fullBuild(): Promise<string> {
-		
 		return new Promise<string>((resolve, reject) => {
-
 			log.info('Full build initiated!');
-
 			let fullBuildStartTime = moment();
-
-
 			this.prebuild()
 				.then(() => this.build())
 				.then(() => this.postbuild())
@@ -239,20 +225,16 @@ export class Builder {
 				.then(() => resolve(""))
 				.catch((err: Error) => reject(err));
 		});
-	
 	}
 
 	prebuild(): Promise<string> {
 		return new Promise<string>((resolve, reject) => {
-
 			log.writeBox('STAGE: pre-build');
 			let prebuildStartTime = moment();
-
 			prebuildImpl()
 				.then(() => log.info(`Pre-build complete at ${moment().format(TIMESTAMP_FORMAT)} in ${measureDurationFrom(prebuildStartTime)}`))
 				.then(() => resolve(""))
 				.catch((err) => reject(err));
-
 		});
 	}
 
@@ -395,11 +377,9 @@ function prebuildImpl(): Promise<string> {
 
 				})
 				.then(function (apiVersionData: string) {
-					console.log(apiVersionData)
 					// Sanitize and store API version data
 					let apiVersionDataClean = {} as ApiVersionData;
 					_.forIn(apiVersionData, function (value, key) {
-						console.log(key.replace(/\W+/g, ''));
 						apiVersionDataClean[key.replace(/\W+/g, '')] = value;
 					});
 					_this.apiVersionData = apiVersionDataClean;
@@ -408,7 +388,7 @@ function prebuildImpl(): Promise<string> {
 
 					// Get extra release note data
 
-					
+
 					const data: Data = {
 						extraNotes: getEnv('RELEASE_NOTES') as string,
 						hasExtraNotes: false,
@@ -491,16 +471,16 @@ function buildImpl(): Promise<string> {
 			log.info('Copying readme...');
 			fs.ensureDirSync(path.join(getEnv('SDK_REPO') as string, 'build/docs'));
 			fs.createReadStream(path.join(getEnv('SDK_REPO') as string, 'build/README.md')).pipe(
-				fs.createWriteStream(path.join(getEnv('SDK_REPO')as string , 'build/docs/index.md'))
+				fs.createWriteStream(path.join(getEnv('SDK_REPO') as string, 'build/docs/index.md'))
 			);
-			fs.createReadStream(path.join(getEnv('SDK_REPO') as string , 'build/README.md')).pipe(
+			fs.createReadStream(path.join(getEnv('SDK_REPO') as string, 'build/README.md')).pipe(
 				fs.createWriteStream(path.join(getEnv('SDK_REPO') as string, 'README.md'))
 			);
 
 			//Copy the release notes from the build directory to the docs directory
 			log.info('Copying releaseNotes.md...');
 			fs.createReadStream(path.join(getEnv('SDK_REPO') as string, 'releaseNotes.md')).pipe(
-				fs.createWriteStream(path.join(getEnv('SDK_REPO') as string , 'build/docs/releaseNotes.md'))
+				fs.createWriteStream(path.join(getEnv('SDK_REPO') as string, 'build/docs/releaseNotes.md'))
 			);
 
 			log.info('Zipping docs...');
@@ -537,7 +517,7 @@ function postbuildImpl(): Promise<string> {
 function applyOverrides(original: Config, overrides: valueOverides) {
 	if (!original || !overrides) return;
 
-	_.forOwn(overrides, function (value : valueOverides, key) {
+	_.forOwn(overrides, function (value: valueOverides, key) {
 		if (Array.isArray(value)) {
 			log.verbose(`Overriding array ${key}. Length old/new => ${original[key].length}/${value.length}`);
 			original[key] = value;
@@ -637,7 +617,7 @@ function addNotifications(): Promise<string> {
 				.then(() => {
 					return notificationsApi.getNotificationsAvailabletopics({ 'expand': ['schema'] });
 				})
-				.then((notifications:  Models.AvailableTopicEntityListing) => {
+				.then((notifications: Models.AvailableTopicEntityListing) => {
 					//let notificationMappings = { notifications: [] };
 
 					type Notification = {
@@ -645,12 +625,12 @@ function addNotifications(): Promise<string> {
 						class: string;
 					}
 
-				
+
 					type NotificationMappings = {
 						notifications: Notification[];
 					};
 
-					
+
 					const notificationMappings: NotificationMappings = { notifications: [] };
 
 					// Process schemas
@@ -836,22 +816,19 @@ function executeScript(script: Script) {
 
 	try {
 		let args = script.args ? script.args.slice() : [];
-		console.log(args);
 		let options: { [key: string]: string } = { stdio: 'inherit' };
 		if (script.cwd) {
 			log.debug('cwd: ' + script.cwd);
 			options['cwd'] = path.resolve(script.cwd);
 		}
 
-		if (script.appendIsNewReleaseArg === true) args.push(_this.isNewVersion);
+		if (script.appendIsNewReleaseArg === true) args.push(_this.isNewVersion.toString());
 
 		if (script.appendVersionArg === true) args.push(_this.version.displayFull);
 
-		console.log(args);
 		switch (script.type.toLowerCase()) {
 			case 'tsx': {
 				args.unshift(getScriptPath(script));
-				console.log(args.join(' '));
 				log.verbose(`Executing node script: ${args.join(' ')}`);
 				code = childProcess.execFileSync('tsx', args, options);
 
@@ -881,7 +858,6 @@ function executeScript(script: Script) {
 		} else {
 			bufferCode = parseInt(code.toString(), 10);
 		}
-		console.log(bufferCode);
 	} catch (err: unknown) {
 		if (err instanceof Error) {
 			if (err.message) log.error(err.message);

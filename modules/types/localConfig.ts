@@ -1,23 +1,23 @@
 
-export  interface LocalConfig {
-    envVars:   EnvVars;
+export interface LocalConfig {
+    envVars: EnvVars;
     overrides: Overrides;
 }
 
 export interface Overrides {
-    settings:      Settings;
+    settings: Settings;
     stageSettings: StageSettings;
 }
 
 export interface Settings {
-    versionFile:       string;
-    swagger:           Swagger;
+    versionFile: string;
+    swagger: Swagger;
     apiHealthCheckUrl: string;
 }
 
 export interface Swagger {
-    oldSwaggerPath:     string;
-    newSwaggerPath:     string;
+    oldSwaggerPath: string;
+    newSwaggerPath: string;
     saveNewSwaggerPath: string;
 }
 
@@ -30,7 +30,7 @@ export interface StageSettings {
 }
 
 export interface Postbuild {
-    gitCommit:      boolean;
+    gitCommit: boolean;
     publishRelease: boolean;
     postRunScripts: Script[];
     preRunScripts: Script[];
@@ -50,12 +50,12 @@ export interface Build {
 }
 
 export interface Script {
-    type:                  string;
-    path:                  string;
-    args:                  Array<ArgClass | string | boolean>;
+    type: string;
+    path: string;
+    args: Array<ArgClass | string | boolean>;
     appendIsNewReleaseArg: boolean;
-    appendVersionArg:      boolean;
-    failOnError:           boolean;
+    appendVersionArg: boolean;
+    failOnError: boolean;
 }
 
 export interface ArgClass {
@@ -64,4 +64,4 @@ export interface ArgClass {
 
 interface EnvVars {
     [key: string]: Record<string, string | number | boolean> | string;
-  }
+}

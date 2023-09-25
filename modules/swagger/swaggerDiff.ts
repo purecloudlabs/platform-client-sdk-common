@@ -2,7 +2,7 @@ import childProcess from 'child_process';
 import fs from 'fs';
 import swaggerDiffImpl from './swaggerDiffImpl';
 import Logger from '../log/logger';
-import { Swagger , Info, Changes } from '../types/swagger';
+import { Swagger, Info, Changes } from '../types/swagger';
 import { Data, Version } from '../types/builderTypes';
 
 const log = new Logger();
@@ -17,9 +17,9 @@ export default class SwaggerDiff {
 
 	useSdkVersioning: boolean = false;
 
-	public getAndDiff(oldSwaggerPath : string, newSwaggerPath : string, previewSwaggerPath: string, 
-						saveOldSwaggerPath: string, saveNewSwaggerPath: string) {
-		let oldSwagger : Swagger, newSwagger: Swagger, previewSwagger: Swagger;
+	public getAndDiff(oldSwaggerPath: string, newSwaggerPath: string, previewSwaggerPath: string,
+		saveOldSwaggerPath: string, saveNewSwaggerPath: string) {
+		let oldSwagger: Swagger, newSwagger: Swagger, previewSwagger: Swagger;
 
 		// Retrieve old swagger
 		if (fs.existsSync(oldSwaggerPath)) {
@@ -78,7 +78,7 @@ export default class SwaggerDiff {
 		this.diff(oldSwagger, newSwagger);
 	};
 
-	public diff(oldSwagger: Swagger, newSwagger : Swagger) {
+	public diff(oldSwagger: Swagger, newSwagger: Swagger) {
 		this.copyPropertiesToImpl();
 
 		// Diff
@@ -94,7 +94,7 @@ export default class SwaggerDiff {
 		return retval;
 	};
 
-	public generateReleaseNotes(template : string, data: Data) {
+	public generateReleaseNotes(template: string, data: Data) {
 		this.copyPropertiesToImpl();
 
 		let templateString = template;
@@ -106,9 +106,9 @@ export default class SwaggerDiff {
 	};
 
 	public incrementVersion(version: Version) {
-		var forceMajor : boolean = getEnv('INCREMENT_MAJOR', false, true);
-		var forceMinor : boolean = getEnv('INCREMENT_MINOR', false, true);
-		var forcePoint : boolean = getEnv('INCREMENT_POINT', false, true);
+		var forceMajor: boolean = getEnv('INCREMENT_MAJOR', false, true);
+		var forceMinor: boolean = getEnv('INCREMENT_MINOR', false, true);
+		var forcePoint: boolean = getEnv('INCREMENT_POINT', false, true);
 		if (forceMajor === true) log.info('Forcing major release!');
 		if (forceMinor === true) log.info('Forcing minor release!');
 		if (forcePoint === true) log.info('Forcing point release!');
