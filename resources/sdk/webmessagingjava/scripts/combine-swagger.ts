@@ -89,7 +89,6 @@ export class CombineSwagger {
                 this.addDefinitions(this.internalSwagger.definitions[responseValuesSchemaDefinition])
             }
     
-    
             // Get definitions by ref from nested objects
             for (const propertyValueKeys of Object.keys(propertyValues)) {
                 if (!propertyValues[propertyValueKeys]["$ref"])

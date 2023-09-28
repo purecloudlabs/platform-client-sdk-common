@@ -7,7 +7,7 @@ export default class Proxy {
 
     exec('./resources/scripts/connect-proxy.sh start_proxy', (error, stdout, stderr) => {
       if (error) {
-        console.error(`Error installing Proxy: ${error.message}`);
+        console.error(`Error Starting Proxy: ${error.message}`);
         return;
       }
       if (stderr) {

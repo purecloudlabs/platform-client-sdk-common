@@ -8,7 +8,7 @@ Pod::Spec.new do |s|
   s.source = { :git => 'https://github.com/MyPureCloud/platform-client-sdk-ios.git', :tag => '{{podVersion}}' }{{#podAuthors}}
   s.authors = '{{podAuthors}}'{{/podAuthors}}{{#podSocialMediaURL}}
   s.social_media_url = '{{podSocialMediaURL}}'{{/podSocialMediaURL}}{{#podDocsetURL}}
-  s.docset_url = '{{podDocsetURL}}'{{/podDocsetURL}}
+  #s.docset_url = '{{podDocsetURL}}'{{/podDocsetURL}}
   s.license = {{#podLicense}}'{{& podLicense}}'{{/podLicense}}{{^podLicense}}'Proprietary'{{/podLicense}}{{#podHomepage}}
   s.homepage = '{{podHomepage}}'{{/podHomepage}}{{#podSummary}}
   s.summary = '{{podSummary}}'{{/podSummary}}{{#podDescription}}

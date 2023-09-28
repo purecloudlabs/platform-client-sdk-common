@@ -91,8 +91,8 @@ class SdkTests(unittest.TestCase):
 	@retry((AssertionError, TypeError) , tries=2, delay=8.0)
 	def test_6_get_user(self):
 		time.sleep(6.0)
-		user = SdkTests.users_api.get_user(SdkTests.userId, expand = [ 'profileSkills' ])
-    	
+		user = SdkTests.users_api.get_user(SdkTests.userId, expand = [ 'profileSkills','dateLastLogin' ])
+		
 		self.assertEqual(user.id, SdkTests.userId)
 		self.assertEqual(user.name, SdkTests.userName)
 		self.assertEqual(user.email, SdkTests.userEmail)

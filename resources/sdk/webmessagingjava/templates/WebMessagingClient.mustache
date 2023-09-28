@@ -181,7 +181,7 @@ public class WebMessagingClient {
     }
 
     public void connect(String deploymentId, String origin) {
-        connect(deploymentId, origin, Optional.empty());
+        connect(deploymentId, origin, Optional.empty(), Optional.empty());
     }
 
 
@@ -191,8 +191,9 @@ public class WebMessagingClient {
      * @param deploymentId      deploymentId to connect to
      * @param origin            origin header to add
      * @param connectionTimeout connection timeout, in second, to use
+     * @param userAgent user-agent string to be set in header connecting to the websocket. Optional, default of WebMessagingSdk-"version" will be used
      */
-    public void connect(String deploymentId, String origin, Optional<Integer> connectionTimeout) {
+    public void connect(String deploymentId, String origin, Optional<Integer> connectionTimeout, Optional<String> userAgent) {
         // Create listener
         Listener listener = new Listener() {
             @Override
@@ -233,7 +234,8 @@ public class WebMessagingClient {
                 .newHttpClient()
                 .newWebSocketBuilder()
                 .header("Origin", origin)
-                .header("deploymentId", deploymentId);
+                .header("deploymentId", deploymentId)
+                .header("user-agent", userAgent.orElse("WebMessagingSDK-{{version}}"));
 
         if (connectionTimeout.isPresent()) {
             builder.connectTimeout(Duration.ofSeconds(connectionTimeout.get()));

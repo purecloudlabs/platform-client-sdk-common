@@ -105,6 +105,7 @@
         </configuration>
       </plugin>
 
+
       <!-- Generate sources JAR -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -124,7 +125,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <version>3.5.0</version>
+        <version>3.6.0</version>
         <configuration>
           <additionalparam>-Xdoclint:none</additionalparam>
         </configuration>
