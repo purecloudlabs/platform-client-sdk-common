@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import childProcess from 'child_process';
 import $RefParser from "@apidevtools/json-schema-ref-parser";
 import fs from 'fs-extra';
@@ -269,8 +268,6 @@ export class Builder {
 
 function prebuildImpl(): Promise<string> {
 	return new Promise<string>((resolve, reject) => {
-		//let deferred = Q.defer();
-
 		try {
 			// Pre-run scripts
 			executeScripts(_this.config.stageSettings.prebuild.preRunScripts, 'custom prebuild pre-run');
@@ -359,7 +356,6 @@ function prebuildImpl(): Promise<string> {
 						}
 
 						// Get API version from health check endpoint
-						//let deferred = Q.defer();
 						let resString = '';
 						log.info(`Getting API version from ${_this.config.settings.apiHealthCheckUrl}`);
 						https.get(_this.config.settings.apiHealthCheckUrl, function (res) {

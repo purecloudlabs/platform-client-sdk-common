@@ -140,7 +140,6 @@ func (r *RESTClient) callAPI(method string, uri string, data string) (string, er
         }
 
         setProxyConf(r.configuration)
-
         //Executing the request
         resp, err := ClientDo(request)
         if err != nil {

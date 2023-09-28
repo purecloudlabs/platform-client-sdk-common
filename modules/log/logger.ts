@@ -1,7 +1,6 @@
 import _ from 'lodash';
 import Winston from 'winston';
 
-
 export default class Logger {
 
 	public log: Winston.LoggerInstance;

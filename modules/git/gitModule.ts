@@ -1,7 +1,6 @@
 import _ from 'lodash';
 import fs from 'fs-extra';
 import { spawn, SpawnOptions } from 'child_process';
-import Q from 'q';
 import Logger from '../log/logger';
 
 const log = new Logger();

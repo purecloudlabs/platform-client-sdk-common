@@ -162,12 +162,6 @@ export class CombineSwagger {
     }
 }
 
-
-
-
-
-
-
 // Call the method directly
 const combineSwagger = new CombineSwagger();
 combineSwagger.init();
