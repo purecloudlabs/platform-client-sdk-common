@@ -2,24 +2,24 @@ import fs from 'fs';
 import path from 'path';
 
 interface APIData {
-    operationId?:  string;
-    functionName?: string;
-    signature?:    string;
-    parameters?:  Parameter[];
-    example?:      string;
-    return?:      string;
+	operationId?: string;
+	functionName?: string;
+	signature?: string;
+	parameters?: Parameter[];
+	example?: string;
+	return?: string;
 }
 
 interface Parameter {
-    name:     string;
-    type:     string;
-    required: string;
+	name: string;
+	type: string;
+	required: string;
 }
 
 
 export default class CombineApis {
 
-    dataFile: APIData = {};
+	dataFile: APIData = {};
 	dirent: fs.Dirent;
 
 	combineApiDataFiles(docsDir: string, dataFileName: string) {
@@ -80,6 +80,3 @@ const combineApis = new CombineApis();
 const docsDir = process.argv[2];
 const dataFileName = process.argv[3];
 combineApis.combineApiDataFiles(docsDir, dataFileName);
-
-
-

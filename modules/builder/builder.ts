@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import childProcess from 'child_process';
 import $RefParser from "@apidevtools/json-schema-ref-parser";
 import fs from 'fs-extra';
@@ -694,7 +695,7 @@ function processAnyTypes() {
 			keys.forEach((key2, index) => {
 				let obj2 = swaggerDiff.newSwagger.definitions[key].properties[key2];
 				if (obj2) {
-					if (obj2.hasOwnProperty("type") && obj2["type"]['String'] === "any") {
+					if (obj2.hasOwnProperty("type") && obj2["type"] === "any") {
 						obj2.type = "string" as ItemsType;
 						obj2.format = "date-time" as Format;
 					}

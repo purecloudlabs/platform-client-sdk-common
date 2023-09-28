@@ -10,10 +10,11 @@
   ],
   "scripts": {
     "test": "jasmine",
-    "browserify": "browserify modules/swaggerDiffImpl.js -o docs/swaggerDiffImpl.js",
-    "ios": "node sdkBuilder.js --sdk purecloudswift4",
-    "webmessaging": "node sdkBuilder.js --sdk webmessagingjava",
-    "run-ts": "node --loader ts-node/esm"
+    "browserify": "browserify modules/swagger/swaggerDiffImpl.ts -o docs/swaggerDiffImpl.ts",
+    "ios": "tsx sdkBuilder.ts --sdk purecloudswift4",
+    "webmessaging": "tsx sdkBuilder.ts --sdk webmessagingjava",
+    "run-ts": "node --loader ts-node/esm",
+    "synk": "snyk test --file=package-lock.json --severity-threshold=high --skip-unresolved=true"
   },
   "repository": {
     "type": "git",
@@ -51,13 +52,14 @@
     "request-promise": "^4.2.2",
     "semver": "^7.5.2",
     "superagent": "^6.0.1",
+    "synk": "^0.0.2",
     "wget": "^0.0.1",
     "winston": "^2.3.1",
     "yamljs": "^0.2.8"
   },
   "homepage": "https://github.com/MyPureCloud/purecloud_api_sdk_common",
   "bin": {
-    "sdk-builder": "./sdkBuilder.js"
+    "sdk-builder": "./sdkBuilder.ts"
   },
   "devDependencies": {
     "@apidevtools/json-schema-ref-parser": "^10.1.0",
