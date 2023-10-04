@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "module": "esnext",
+    "target": "es6",
+    "declarationDir": "build",
+    "lib": ["es6", "DOM", "es2016", "es2017"],
+    "preserveConstEnums": true,
+    "declaration": true,
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "strict": false,
+    "moduleResolution": "node",
+    "skipLibCheck": true
+  },
+  "exclude": ["node_modules","output", "build"]
+}
