@@ -578,13 +578,12 @@ function createRelease(): Promise<string> {
 					prerelease: false,
 				};
 
+				console.log(createReleaseOptions);
 				// Create release
 				return githubApi.repos.releases.createRelease(createReleaseOptions);
 			})
 			.then((release) => {
-				log.info(`Created release #${release.id}, \
-				${release.name}, tag: ${release.tag_name}, \
-				published on ${release.published_at}`);
+				log.info(`Created release #${release}`);
 			})
 			.then(() => resolve(""))
 			.catch((err: Error) => reject(err));
