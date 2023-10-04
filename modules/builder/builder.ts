@@ -532,21 +532,21 @@ function applyOverrides(original: Config, overrides: valueOverides) {
 function createRelease(): Promise<string> {
 	return new Promise<string>((resolve, reject) => {
 
-		if (!_this.config.settings.sdkRepo.repo || _this.config.settings.sdkRepo.repo === '') {
-			log.warn('Skipping github release creation! Repo is undefined.');
-			resolve("");
-			return;
-		}
-		if (_this.config.stageSettings.postbuild.gitCommit !== true) {
-			log.warn('Skipping git commit and github release creation! Set postbuild.gitCommit=true to commit changes.');
-			resolve("");
-			return;
-		}
+		// if (!_this.config.settings.sdkRepo.repo || _this.config.settings.sdkRepo.repo === '') {
+		// 	log.warn('Skipping github release creation! Repo is undefined.');
+		// 	resolve("");
+		// 	return;
+		// }
+		// if (_this.config.stageSettings.postbuild.gitCommit !== true) {
+		// 	log.warn('Skipping git commit and github release creation! Set postbuild.gitCommit=true to commit changes.');
+		// 	resolve("");
+		// 	return;
+		// }
 
-		if (_this.isNewVersion !== true) {
-			log.warn('Skipping github release creation! Build did not produce a new version.');
-			resolve("");
-		}
+		// if (_this.isNewVersion !== true) {
+		// 	log.warn('Skipping github release creation! Build did not produce a new version.');
+		// 	resolve("");
+		// }
 
 		git
 			.saveChanges(_this.config.settings.sdkRepo.repo, getEnv('SDK_REPO') as string, _this.version.displayFull)
@@ -578,6 +578,7 @@ function createRelease(): Promise<string> {
 					prerelease: false,
 				};
 
+				console.log(createReleaseOptions);
 				// Create release
 				return githubApi.repos.releases.createRelease(createReleaseOptions);
 			})
