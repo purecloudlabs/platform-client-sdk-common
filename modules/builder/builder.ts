@@ -581,7 +581,7 @@ function createRelease(): Promise<string> {
 				// Create release
 				return githubApi.repos.releases.createRelease(createReleaseOptions);
 			})
-			.then((release: Release) => {
+			.then((release) => {
 				log.info(`Created release #${release.id}, \
 				${release.name}, tag: ${release.tag_name}, \
 				published on ${release.published_at}`);
