@@ -546,6 +546,7 @@ function createRelease(): Promise<string> {
 		if (_this.isNewVersion !== true) {
 			log.warn('Skipping github release creation! Build did not produce a new version.');
 			resolve("");
+			return;
 		}
 
 		git
