@@ -59,7 +59,10 @@
             "${SDK_TEMP}/newSwagger.json",
             "${SDK_TEMP}/topLevelCommands.json",
             "${SDK_TEMP}/resourceDefinitions.json",
-            "${COMMON_ROOT}/resources/sdk/clisdkclient/resources/operationNameOverrides.json"
+            "${COMMON_ROOT}/resources/sdk/clisdkclient/resources/operationNameOverrides.json",
+            {
+              "$ref": "#/settings/swagger/previewSwaggerPath"
+            }
           ],
           "failOnError": true
         },
