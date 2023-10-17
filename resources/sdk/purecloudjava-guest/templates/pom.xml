@@ -278,7 +278,7 @@
   </dependencies>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <swagger-annotations-version>1.6.11</swagger-annotations-version>
+    <swagger-annotations-version>1.6.12</swagger-annotations-version>
     <jackson-version>2.15.3</jackson-version>
     <slf4j-version>2.0.9</slf4j-version>
     <jodatime-version>2.12.5</jodatime-version>
