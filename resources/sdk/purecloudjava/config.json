@@ -35,8 +35,8 @@
     "prebuild": {
       "preRunScripts": [
         {
-          "type": "node",
-          "path": "test.js",
+          "type": "tsx",
+          "path": "test.ts",
           "args": [
             "prebuild-prerun"
           ],
@@ -45,8 +45,8 @@
       ],
       "postRunScripts": [
         {
-          "type": "node",
-          "path": "prebuild-postrun.js",
+          "type": "tsx",
+          "path": "prebuild-postrun.ts",
           "args": [
             {
               "$ref": "#/settings/swaggerCodegen/configFile"
@@ -57,14 +57,22 @@
             "platform-client-v2"
           ],
           "failOnError": true
+        },
+        {
+          "type": "tsx",
+          "path": "${COMMON_ROOT}/resources/scripts/proxy-npm.ts",
+          "args": [
+            "start"
+          ],
+          "failOnError": true
         }
       ]
     },
     "build": {
       "preRunScripts": [
         {
-          "type": "node",
-          "path": "test.js",
+          "type": "tsx",
+          "path": "test.ts",
           "args": [
             "build-prerun"
           ],
@@ -82,8 +90,8 @@
 	        "failOnError": true
         },
         {
-          "type": "node",
-          "path": "replace-properties.js",
+          "type": "tsx",
+          "path": "replace-properties.ts",
           "args": [
             "${SDK_REPO}/build/props.properties",
             "${SDK_REPO}/build/pom.xml"
@@ -107,21 +115,29 @@
       ],
       "postRunScripts": [
         {
-          "type": "node",
-          "path": "test.js",
+          "type": "tsx",
+          "path": "test.ts",
           "args": [
             "build-postrun"
           ],
           "failOnError": true
         },
         {
-          "type": "node",
-          "path": "${COMMON_ROOT}/resources/scripts/combineApiDataFiles.js",
+          "type": "tsx",
+          "path": "${COMMON_ROOT}/resources/scripts/combineApiDataFiles.ts",
           "args": [
             "${SDK_REPO}/build/docs",
             "${SDK_REPO}/build/APIData.json"
           ],
           "failOnError": true
+        },
+        {
+          "type": "tsx",
+          "path": "${COMMON_ROOT}/resources/scripts/proxy-npm.ts",
+          "args": [
+            "stop"
+          ],
+          "failOnError": false
         }
       ]
     },

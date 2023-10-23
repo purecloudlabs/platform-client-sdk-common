@@ -37,8 +37,8 @@
       "preRunScripts": [],
       "postRunScripts": [
         {
-          "type": "node",
-          "path": "prebuild-postrun.js",
+          "type": "tsx",
+          "path": "prebuild-postrun.ts",
           "args": [
             {
               "$ref": "#/settings/swaggerCodegen/configFile"
@@ -50,8 +50,8 @@
           "failOnError": true
         },
         {
-          "type": "node",
-          "path": "preprocess-swagger.js",
+          "type": "tsx",
+          "path": "preprocess-swagger.ts",
           "args": [
             {
               "$ref": "#/settings/swagger/newSwaggerPath"
@@ -59,7 +59,18 @@
             "${SDK_TEMP}/newSwagger.json",
             "${SDK_TEMP}/topLevelCommands.json",
             "${SDK_TEMP}/resourceDefinitions.json",
-            "${COMMON_ROOT}/resources/sdk/clisdkclient/resources/operationNameOverrides.json"
+            "${COMMON_ROOT}/resources/sdk/clisdkclient/resources/operationNameOverrides.json",
+            {
+              "$ref": "#/settings/swagger/previewSwaggerPath"
+            }
+          ],
+          "failOnError": true
+        },
+        {
+          "type": "tsx",
+          "path": "${COMMON_ROOT}/resources/scripts/proxy-npm.ts",
+          "args": [
+            "start"
           ],
           "failOnError": true
         }
@@ -70,8 +81,8 @@
       "compileScripts": [],
       "postRunScripts": [
         {
-          "type": "node",
-          "path": "post-process.js",
+          "type": "tsx",
+          "path": "post-process.ts",
           "args": [
             "${SDK_REPO}/build/gc/cmd/root.go",
             "${SDK_TEMP}/topLevelCommands.json",
@@ -87,16 +98,16 @@
       "preRunScripts": [],
       "postRunScripts": [
         {
-          "type": "node",
-          "path": "postbuild-postrun.js",
+          "type": "tsx",
+          "path": "postbuild-postrun.ts",
           "args": [
             "${SDK_REPO}"
           ],
           "failOnError": true
         },
         {
-          "type": "node",
-          "path": "${COMMON_ROOT}/resources/scripts/combineApiDataFiles.js",
+          "type": "tsx",
+          "path": "${COMMON_ROOT}/resources/scripts/combineApiDataFiles.ts",
           "args": [
             "${SDK_REPO}/docs",
             "${SDK_REPO}/APIData.json"
@@ -109,6 +120,14 @@
           "cwd": "${SDK_REPO}",
           "args":[ "build", "test" ],
           "failOnError": true
+        },
+        {
+          "type": "tsx",
+          "path": "${COMMON_ROOT}/resources/scripts/proxy-npm.ts",
+          "args": [
+            "stop"
+          ],
+          "failOnError": false
         }
       ]
     }

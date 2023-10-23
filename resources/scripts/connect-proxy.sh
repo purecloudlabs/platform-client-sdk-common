@@ -7,13 +7,10 @@ then
     npm install pm2 -g
 fi
 # Check if the app is already running
-if pm2 list | grep -q "proxy-server"; then
-    echo "App is already running."
-else
-    # Start the app
-    pm2 start ./resources/scripts/proxy.js --name proxy-server
-    echo "App started."
-fi
+# Start the app
+pm2 start ./resources/scripts/pm2.config.cjs
+echo "App started."
+
 set -e
 }
 

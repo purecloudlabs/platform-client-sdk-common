@@ -390,5 +390,35 @@
 		"patch": {
 			"name": "update"
 		}
+	},
+	"/api/v2/taskmanagement/workitems/schemas/{schemaId}/versions": {
+		"get" : {
+			"name": "list"
+		}
+	},
+	"/api/v2/orgauthorization/trustees": {
+		"delete": {
+			"name": "bulkdelete"
+		}
+	},
+	"/api/v2/orgauthorization/trustors" : {
+		"delete": {
+			"name": "bulkdelete"
+		}
+	},
+	"/api/v2/chats/users/{userId}/messages" : {
+		"get": {
+			"name": "list"
+		}
+	},
+	"/api/v2/integrations/speech/nuance/{nuanceIntegrationId}/bots/jobs": {
+		"post": {
+			"name": "list"
+		}
+	},
+	"/api/v2/integrations/speech/nuance/{nuanceIntegrationId}/bots/jobs/{jobId}": {
+		"get": {
+			"name": "listBotsJob"
+		}
 	}
 }

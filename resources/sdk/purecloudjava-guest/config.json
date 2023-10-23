@@ -36,8 +36,8 @@
     "prebuild": {
       "preRunScripts": [
         {
-          "type": "node",
-          "path": "pruneSwagger.js",
+          "type": "tsx",
+          "path": "pruneSwagger.ts",
           "args": [
             {
               "$ref": "#/settings/swagger/newSwaggerSourcePath"
@@ -51,8 +51,8 @@
       ],
       "postRunScripts": [
         {
-          "type": "node",
-          "path": "prebuild-postrun.js",
+          "type": "tsx",
+          "path": "prebuild-postrun.ts",
           "args": [
             {
               "$ref": "#/settings/swaggerCodegen/configFile"
@@ -85,8 +85,8 @@
       ],
       "postRunScripts": [
         {
-          "type": "node",
-          "path": "${COMMON_ROOT}/resources/scripts/combineApiDataFiles.js",
+          "type": "tsx",
+          "path": "${COMMON_ROOT}/resources/scripts/combineApiDataFiles.ts",
           "args": [
             "${SDK_REPO}/build/docs",
             "${SDK_REPO}/build/APIData.json"
