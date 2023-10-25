@@ -9,15 +9,15 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket.Builder;
 import java.net.http.WebSocket.Listener;
 import java.net.http.WebSocket;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EventListener;
@@ -216,9 +216,9 @@ public class WebMessagingClient {
      * @param deploymentId      deploymentId to connect to
      * @param origin            origin header to add
      * @param connectionTimeout connection timeout, in second, to use
-     * @param userAgent user-agent string to be set in header connecting to the websocket. Optional, default of WebMessagingSdk-"version" will be used
+     * @param applicationName string to be set in query parameter when connecting to the websocket. Will be URL encoded. Optional, default of WebMessagingSdk-"version" will be used
      */
-    public void connect(String deploymentId, String origin, Optional<Integer> connectionTimeout, Optional<String> userAgent) {
+    public void connect(String deploymentId, String origin, Optional<Integer> connectionTimeout, Optional<String> applicationName) {
         // Create listener
         Listener listener = new Listener() {
             @Override
@@ -259,13 +259,15 @@ public class WebMessagingClient {
                 .newHttpClient()
                 .newWebSocketBuilder()
                 .header("Origin", origin)
-                .header("deploymentId", deploymentId)
-                .header("user-agent", userAgent.orElse("WebMessagingSDK-{{version}}"));
+                .header("deploymentId", deploymentId);
 
         if (connectionTimeout.isPresent()) {
             builder.connectTimeout(Duration.ofSeconds(connectionTimeout.get()));
         }
-        CompletableFuture<WebSocket> completableFuture = builder.buildAsync(URI.create(webSocketAddress + "?deploymentId=" + deploymentId), listener);
+        String urlEncodedAppName = URLEncoder.encode(applicationName.orElse("WebMessagingSDK-{{version}}"), StandardCharsets.UTF_8);
+
+        CompletableFuture<WebSocket> completableFuture = builder.buildAsync(URI.create(webSocketAddress + "?deploymentId=" + deploymentId +
+                "&application="+urlEncodedAppName), listener);
 
         // Connect to WebSocket server
         completableFuture.join();
