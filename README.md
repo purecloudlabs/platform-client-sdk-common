@@ -41,11 +41,11 @@ npm install
 Then start the build process by specifying which SDK to build. This command will look in `./resources/sdk/<language>` to find the primary config file (`config.json` or `config.yaml`) and a local config file (`localConfig.json` or `localConfig.yaml`). If a JSON and YAML config file exist, the JSON file will be preferred.
 
 ```
-node sdkBuilder --sdk purecloudjava
+npx tsx sdkBuilder.ts --sdk purecloudjava
 ```
 
 The above command is equivalent to providing these paths to config files (assuming JSON files exist):
 
 ```
-node sdkBuilder --config ./resources/sdk/purecloudjava/config.json --localconfig ./resources/sdk/purecloudjava/localConfig.json
+npx tsx sdkBuilder.ts --config ./resources/sdk/purecloudjava/config.json --localconfig ./resources/sdk/purecloudjava/localConfig.json
 ```

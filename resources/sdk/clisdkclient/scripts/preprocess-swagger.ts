@@ -13,8 +13,9 @@ export class PreProcessSwagger {
 			const saveSuperCommandsPath: string = process.argv[4];
 			const saveResourceDefinitionsPath: string = process.argv[5];
 			const overridesPath: string = process.argv[6];
+			const previewSwaggerPath: string = process.argv[7]
 
-			let newSwagger: Swagger = retrieveSwagger(newSwaggerPath);
+			let newSwagger: Swagger = retrieveSwagger(newSwaggerPath, previewSwaggerPath);
 			newSwagger = processRefs(newSwagger);
 			const overrides = JSON.parse(fs.readFileSync(overridesPath, 'utf8'));
 			const resourceDefinitions: ResourceDefinitions = overrideDefinitions(createDefinitions(newSwagger), overrides)
@@ -40,9 +41,6 @@ export class PreProcessSwagger {
 		}
 	};
 }
-
-
-
 
 function processRefs(swagger: Swagger) {
 	const keys = Object.keys(swagger.definitions);
@@ -252,8 +250,10 @@ function overrideDefinitions(resourceDefinitions, overrides) {
 	return resourceDefinitions
 }
 
-function retrieveSwagger(newSwaggerPath: string) {
+function retrieveSwagger(newSwaggerPath: string, previewSwaggerPath: string) {
 	let newSwagger;
+	let previewSwagger
+
 	// Retrieve new swagger
 	if (fs.existsSync(newSwaggerPath)) {
 		console.log(`Loading new swagger from disk: ${newSwaggerPath}`);
@@ -265,7 +265,71 @@ function retrieveSwagger(newSwaggerPath: string) {
 		throw `Invalid newSwaggerPath: ${newSwaggerPath}`;
 	}
 
+	// Check to see if preview swagger path is present. Internal builds do not need the preview swagger
+	if (previewSwaggerPath) {
+		// Retrieve preview swagger
+		if (fs.existsSync(previewSwaggerPath)) {
+			console.log(`Loading preview swagger from disk: ${previewSwaggerPath}`);
+			previewSwagger = JSON.parse(fs.readFileSync(previewSwaggerPath, 'utf8'));
+		} else if (previewSwaggerPath.toLowerCase().startsWith('http')) {
+			console.log(`Downloading preview swagger from: ${previewSwaggerPath}`);
+			previewSwagger = JSON.parse(downloadFile(previewSwaggerPath));
+		} else {
+			throw `Invalid previewSwaggerPath: ${previewSwaggerPath}`;
+		}
+
+		// Add the preview swagger and the public swagger together to create the full new swagger
+		newSwagger = combineSwagger(newSwagger, previewSwagger);
+	}
+
 	return newSwagger;
+}
+
+// This function will combine the public swagger with the preview swagger
+function combineSwagger(publicSwagger: Swagger, preview: Swagger) {
+	// Set new file equal to public file for now
+	let newSwaggerFile = publicSwagger;
+
+	// Search for tags that are in the preview swagger but not in the public swagger and add to new new JSON object
+	preview.tags.forEach((previewTag) => {
+		let duplicate = publicSwagger.tags.some((publicTag) => publicTag.name === previewTag.name);
+		if (!duplicate) {
+			newSwaggerFile.tags.push(previewTag);
+		}
+	});
+
+	// mark preview paths as preview(similar to marking as deprecated)
+	for (const [key1, value1] of Object.entries(preview.paths)) {
+		for (const [key, value] of Object.entries(value1)) {
+			preview.paths[key1][key]['x-genesys-preview'] = true;
+		}
+	}
+
+	// Search for paths in the preview swagger not in the public swagger(should be all paths) and add preview paths to new JSON object
+	let previewPaths = Object.keys(preview.paths);
+	let publicPaths = Object.keys(publicSwagger.paths);
+	for (let i = 0; i < previewPaths.length; i++) {
+		if (publicPaths.includes(previewPaths[i])) {
+			// Path does exist in public swagger, add the preview HTTP method to the existing path in the new JSON object
+			for (const [key, value] of Object.entries(preview.paths[previewPaths[i]])) {
+				newSwaggerFile.paths[previewPaths[i]][key] = value;
+			}
+		} else {
+			// Path does not exist in public swagger, add the preview path to the new JSON objects paths
+			newSwaggerFile.paths[previewPaths[i]] = preview.paths[previewPaths[i]];
+		}
+	}
+
+	// Search for definitions in the preview swagger not in the public swagger and add preview definitions to new JSON object
+	let previewDefinitions = Object.keys(preview.definitions);
+	let publicDefinitions = Object.keys(publicSwagger.definitions);
+	for (let i = 0; i < previewDefinitions.length; i++) {
+		if (!publicDefinitions.includes(previewDefinitions[i])) {
+			newSwaggerFile.definitions[previewDefinitions[i]] = preview.definitions[previewDefinitions[i]];
+		}
+	}
+
+	return newSwaggerFile
 }
 
 function downloadFile(url: string) {
