@@ -6,6 +6,7 @@ require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig v2.22.0+incompatible
+	github.com/cpuguy83/go-md2man/v2 v2.0.3 // indirect
 	github.com/google/uuid v1.3.1
 	github.com/gorilla/websocket v1.5.0
 	github.com/hashicorp/go-retryablehttp v0.7.4
@@ -17,6 +18,6 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.16.0
 	github.com/tidwall/pretty v1.2.1
-	golang.org/x/term v0.12.0
+	golang.org/x/term v0.13.0
 	sigs.k8s.io/yaml v1.3.0
 )
