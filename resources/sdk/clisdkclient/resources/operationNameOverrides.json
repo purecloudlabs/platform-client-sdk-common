@@ -24,7 +24,7 @@
 			"name": "listcategoryschemas"
 		}
 	},
-	"/api/v2/configuration/schemas/edges/vnext/{schemaCategory}/{schemaType}":{
+	"/api/v2/configuration/schemas/edges/vnext/{schemaCategory}/{schemaType}": {
 		"get": {
 			"name": "getcategoryschemas"
 		}
@@ -39,11 +39,11 @@
 			"name": "getschemametadata"
 		}
 	},
-    "/api/v2/conversations/callbacks": {
-        "patch": {
-            "name": "updatescheduledcallback"
-        }
-    },
+	"/api/v2/conversations/callbacks": {
+		"patch": {
+			"name": "updatescheduledcallback"
+		}
+	},
 	"/api/v2/conversations/emails/{conversationId}/messages/draft": {
 		"patch": {
 			"name": "patch"
@@ -295,10 +295,10 @@
 		}
 	},
 	"/api/v2/speechandtextanalytics/sentimentfeedback/{sentimentFeedbackId}": {
-        "delete": {
-            "name": "deletebyid"
-        }
-    },
+		"delete": {
+			"name": "deletebyid"
+		}
+	},
 	"/api/v2/speechandtextanalytics/settings": {
 		"patch": {
 			"name": "patch"
@@ -392,7 +392,7 @@
 		}
 	},
 	"/api/v2/taskmanagement/workitems/schemas/{schemaId}/versions": {
-		"get" : {
+		"get": {
 			"name": "list"
 		}
 	},
@@ -401,12 +401,12 @@
 			"name": "bulkdelete"
 		}
 	},
-	"/api/v2/orgauthorization/trustors" : {
+	"/api/v2/orgauthorization/trustors": {
 		"delete": {
 			"name": "bulkdelete"
 		}
 	},
-	"/api/v2/chats/users/{userId}/messages" : {
+	"/api/v2/chats/users/{userId}/messages": {
 		"get": {
 			"name": "list"
 		}
@@ -419,6 +419,11 @@
 	"/api/v2/integrations/speech/nuance/{nuanceIntegrationId}/bots/jobs/{jobId}": {
 		"get": {
 			"name": "listBotsJob"
+		}
+	},
+	"/api/v2/telephony/providers/edges/sites/{siteId}/siteconnections": {
+		"patch": {
+			"name": "patch"
 		}
 	}
 }
