@@ -272,6 +272,28 @@ if err != nil {
 }
 ```
 
+#### PKCE Grant
+
+* The app is authenticating as a human, the [PKCE Grant](https://developer.genesys.cloud/authorization/platform-auth/use-pkce)
+* The app is served via a web server
+* There is server-side code that will be making API requests
+
+Use the `AuthorizePKCEGrant` function on the client to make a request to Genesys Cloud to exchange the client id, code verifier and authorization code for an access token. If no error was returned, the configuration instance is now authorized and can begin making API requests. 
+
+```go
+authData, err := config.AuthorizePKCEGrant(clientId, codeVerifier, authCode, redirectUri)
+if err != nil {
+    panic(err)
+}
+```
+
+The SDK provides methods to generate a PKCE Code Verifier and to compute PKCE Code Challenge.
+
+```go
+codeVerifier, err := config.GeneratePKCECodeVerifier(128)
+codeChallenge, err := config.ComputePKCECodeChallenge(codeVerifier)
+```go
+
 ### Making Requests
 
 Once the SDK is authorized, API requests can be made. Each function on the API instance returns three values, or just the latter two if the resource does not return any value (e.g. a DELETE operation):
