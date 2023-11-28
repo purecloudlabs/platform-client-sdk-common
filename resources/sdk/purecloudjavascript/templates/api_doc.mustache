@@ -58,7 +58,7 @@ let {{{name}}} = {{{moduleName}}}.ApiClient.instance.authentications['{{{name}}}
 {{{name}}}.apiKey = 'YOUR API KEY';
 // Uncomment the following line to set a prefix for the API key, e.g. "Token" (defaults to void)
 //{{{name}}}.apiKeyPrefix = 'Token';{{/isApiKey}}{{#isOAuth}}
-// Manually set auth token or use loginImplicitGrant(...) or loginClientCredentialsGrant(...)
+// Manually set auth token or use loginImplicitGrant(...) or loginClientCredentialsGrant(...) or loginPKCEGrant(...)
 {{{moduleName}}}.ApiClient.instance.setAccessToken(yourAccessToken);{{/isOAuth}}
 {{/authMethods}}
 {{/hasAuthMethods}}
