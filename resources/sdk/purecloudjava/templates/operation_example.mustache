@@ -9,7 +9,7 @@ public class Example{{operationId}} {
     public static void main(String[] args) {
         // Create ApiClient instance
         ApiClient apiClient = ApiClient.Builder.standard()
-                .withAccessToken("your_access_token")   // or use authorizeClientCredentials(...), authorizeCodeAuthorization(...) or authorizeSaml2Bearer(...)
+                .withAccessToken("your_access_token")   // or use authorizeClientCredentials(...), authorizeCodeAuthorization(...), authorizePKCE(...) or authorizeSaml2Bearer(...)
                 .withBasePath("https://api.mypurecloud.com") // expected format: https://api.[base path]
                 .build();
         {{#hasAuthMethods}}{{#authMethods}}{{#isBasic}}

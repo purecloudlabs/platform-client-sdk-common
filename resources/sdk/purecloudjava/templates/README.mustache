@@ -118,6 +118,31 @@ refreshToken = authResponse.getBody().getRefresh_token();
 expiresIn = authResponse.getBody().getExpires_in();
 ```
 
+#### Authentication with PKCE
+
+See example on how to authenticate with a pkce code below. For more information see the article on [PKCE Grant](https://developer.genesys.cloud/authorization/platform-auth/use-pkce)
+
+```java
+String clientId = "a0bda580-cb41-4ff6-8f06-28ffb4227594";
+String codeVerifier = "YourCodeVerifier"; // Your code verifier 
+String authorizationCode = "YourAuthorizationCode"; // Your authorization code 
+String redirectUri= ""; // Your redirect URI
+
+//Set Region
+PureCloudRegionHosts region = PureCloudRegionHosts.us_east_1;
+
+ApiClient apiClient = ApiClient.Builder.standard().withBasePath(region).build();
+ApiResponse<AuthResponse> authResponse = apiClient.authorizePKCE(clientId,codeVerifier,authorizationCode,redirectUri);
+System.out.println("Authentication successful. Access token expires in " + authResponse.getBody().getExpires_in() + " seconds");
+```
+
+The SDK provides methods to generate a PKCE Code Verifier and to compute PKCE Code Challenge.
+
+```java
+String codeVerifier = apiClient.generatePKCECodeVerifier(128);
+String codeChallenge = apiClient.computePKCECodeChallenge(codeVerifier);
+```
+
 ### Building an ApiClient Instance
 
 `ApiClient` implements a builder pattern to construct new instances:
