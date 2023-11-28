@@ -11,7 +11,7 @@ PureCloudPlatformClientV2.configuration.api_key['{{{keyParamName}}}'] = 'YOUR_AP
 # PureCloudPlatformClientV2.configuration.api_key_prefix['{{{keyParamName}}}'] = 'BEARER'{{/isApiKey}}{{#isOAuth}}
 # Configure OAuth2 access token for authorization: {{{name}}}
 PureCloudPlatformClientV2.configuration.access_token = 'your_access_token'{{/isOAuth}}{{/authMethods}}
-# or use get_client_credentials_token(...), get_saml2bearer_token(...) or get_code_authorization_token(...)
+# or use get_client_credentials_token(...), get_saml2bearer_token(...), get_code_authorization_token(...) or get_pkce_token(...)
 {{/hasAuthMethods}}
 
 # create an instance of the API class
