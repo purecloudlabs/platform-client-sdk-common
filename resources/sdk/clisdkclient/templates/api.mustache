@@ -72,7 +72,7 @@ var {{operationId}}Cmd = &cobra.Command{
 
 		{{#hasQueryParams}}{{#queryParams}}{{paramName}} := utils.GetFlag(cmd.Flags(), "{{{dataType}}}", "{{paramName}}")
 		if {{paramName}} != "" {
-			queryParams["{{paramName}}"] = {{paramName}}
+			queryParams["{{baseName}}"] = {{paramName}}
 		}
 		{{/queryParams}}{{/hasQueryParams}}urlString := path
 		if len(queryParams) > 0 {
