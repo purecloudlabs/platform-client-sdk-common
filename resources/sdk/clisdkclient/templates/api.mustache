@@ -70,9 +70,9 @@ var {{operationId}}Cmd = &cobra.Command{
 		{{paramName}}, args := args[0], args[1:]
 		path = strings.Replace(path, "{{=[[ ]]=}}{[[baseName]]}[[={{ }}=]]", fmt.Sprintf("%v", {{paramName}}), -1){{/pathParams}}
 
-		{{#hasQueryParams}}{{#queryParams}}{{paramName}} := utils.GetFlag(cmd.Flags(), "{{{dataType}}}", "{{baseName}}")
+		{{#hasQueryParams}}{{#queryParams}}{{paramName}} := utils.GetFlag(cmd.Flags(), "{{{dataType}}}", "{{paramName}}")
 		if {{paramName}} != "" {
-			queryParams["{{paramName}}"] = {{paramName}}
+			queryParams["{{baseName}}"] = {{paramName}}
 		}
 		{{/queryParams}}{{/hasQueryParams}}urlString := path
 		if len(queryParams) > 0 {
