@@ -561,7 +561,7 @@ class ApiClient {
 			return new Promise((resolve, reject) => {
 				window.crypto.subtle.digest("SHA-256", utf8).then((hashBuffer) => {
 					const hashBase64 = Buffer.from(hashBuffer).toString('base64');
-					let hashBase64Url = hashBase64.replace("+", "-").replace("/", "_");
+					let hashBase64Url = hashBase64.replaceAll("+", "-").replaceAll("/", "_");
 					hashBase64Url = hashBase64Url.split("=")[0];
 					resolve(hashBase64Url);
 				})
