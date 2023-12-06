@@ -522,7 +522,7 @@ class ApiClient {
 					.join('');
 				return randomString;
 			} catch (err) {
-				// do nothing
+				throw new Error(`Crypto module is missing/not supported.`);
 			}
 		} else {
 			const unreservedCharacters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-._~";
@@ -553,7 +553,7 @@ class ApiClient {
 					resolve(hashBase64Url);
 				});
 			} catch (err) {
-				// do nothing
+				throw new Error(`Crypto module is missing/not supported.`);
 			}
 		} else {
 			// browser

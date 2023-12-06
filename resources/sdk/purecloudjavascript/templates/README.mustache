@@ -174,11 +174,12 @@ client.authorizePKCEGrant(clientId,codeVerifier,authCode,redirectUri)
   });
 ```
 
-The SDK provides methods to generate a PKCE Code Verifier and to compute PKCE Code Challenge.
+The SDK also provides methods to generate a PKCE Code Verifier and to compute PKCE Code Challenge.  
+**This requires Node version 18 (or above). The generatePKCECodeVerifier and computePKCECodeChallenge methods will fail with older Node versions.**
 
 ```javascript
 let codeVerifier = client.generatePKCECodeVerifier(128);
-let codeChallenge = client.computePKCECodeChallenge(codeVerifier);
+let codeChallenge = await client.computePKCECodeChallenge(codeVerifier);
 ```
 
 **Web** [PKCE Grant](https://developer.genesys.cloud/authorization/platform-auth/use-pkce)
@@ -218,11 +219,11 @@ client.loginPKCEGrant(clientId, redirectUri, { state: state }, codeVerifier)
   });
 ```
 
-The SDK provides methods to generate a PKCE Code Verifier and to compute PKCE Code Challenge.
+The SDK also provides methods to generate a PKCE Code Verifier and to compute PKCE Code Challenge.
 
 ```javascript
 let codeVerifier = client.generatePKCECodeVerifier(128);
-let codeChallenge = client.computePKCECodeChallenge(codeVerifier);
+let codeChallenge = await client.computePKCECodeChallenge(codeVerifier);
 ```
 
 **Web** [Implicit grant](https://developer.genesys.cloud/authorization/platform-auth/use-implicit-grant)
