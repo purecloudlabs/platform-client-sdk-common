@@ -409,7 +409,7 @@ func (c *Configuration) AuthorizeClientCredentials(clientID string, clientSecret
 	formParams := url.Values{}
 	formParams["grant_type"] = []string{"client_credentials"}
 	response, err := c.APIClient.CallAPI(authHost+"/oauth/token", "POST", nil, headerParams, nil, formParams, "", nil)
-	if err != nil {
+	if err != nil && response == nil {
 		return err
 	}
 
@@ -419,7 +419,7 @@ func (c *Configuration) AuthorizeClientCredentials(clientID string, clientSecret
 		if err != nil {
 			return err
 		}
-		return fmt.Errorf("Auth Error: %v (%v - %v)", authErrorResponse.Description, authErrorResponse.Error, authErrorResponse.ErrorDescription)
+		return fmt.Errorf("Auth Error: %v - %v (%v)", response.StatusCode, authErrorResponse.Error, authErrorResponse.ErrorDescription)
 	}
 
 	var authResponse *AuthResponse
@@ -450,7 +450,7 @@ func (c *Configuration) AuthorizeCodeGrant(clientID string, clientSecret string,
 	formParams["code"] = []string{authCode}
 	formParams["redirect_uri"] = []string{redirectUri}
 	response, err := c.APIClient.CallAPI(authHost+"/oauth/token", "POST", nil, headerParams, nil, formParams, "", nil)
-	if err != nil {
+	if err != nil && response == nil {
 		return nil, err
 	}
 
@@ -460,7 +460,7 @@ func (c *Configuration) AuthorizeCodeGrant(clientID string, clientSecret string,
 		if err != nil {
 			return nil, err
 		}
-		return nil, fmt.Errorf("Auth Error: %v (%v - %v)", authErrorResponse.Description, authErrorResponse.Error, authErrorResponse.ErrorDescription)
+		return  nil, fmt.Errorf("Auth Error: %v - %v (%v)", response.StatusCode, authErrorResponse.Error, authErrorResponse.ErrorDescription)
 	}
 
 	var authResponse *AuthResponse
@@ -492,7 +492,7 @@ func (c *Configuration) RefreshAuthorizationCodeGrant(clientID string, clientSec
 	formParams["grant_type"] = []string{"refresh_token"}
 	formParams["refresh_token"] = []string{refreshToken}
 	response, err := c.APIClient.CallAPI(authHost+"/oauth/token", "POST", nil, headerParams, nil, formParams, "", nil)
-	if err != nil {
+	if err != nil && response == nil {
 		return nil, err
 	}
 
@@ -502,7 +502,7 @@ func (c *Configuration) RefreshAuthorizationCodeGrant(clientID string, clientSec
 		if err != nil {
 			return nil, err
 		}
-		return nil, fmt.Errorf("Auth Error: %v (%v - %v)", authErrorResponse.Description, authErrorResponse.Error, authErrorResponse.ErrorDescription)
+		return  nil, fmt.Errorf("Auth Error: %v - %v (%v)", response.StatusCode, authErrorResponse.Error, authErrorResponse.ErrorDescription)
 	}
 
 	var authResponse *AuthResponse
@@ -570,7 +570,7 @@ func (c *Configuration) AuthorizePKCEGrant(clientID string, codeVerifier string,
 	formParams["client_id"] = []string{clientID}
 	formParams["redirect_uri"] = []string{redirectUri}
 	response, err := c.APIClient.CallAPI(authHost+"/oauth/token", "POST", nil, headerParams, nil, formParams, "", nil)
-	if err != nil {
+	if err != nil && response == nil {
 		return nil, err
 	}
 
@@ -580,7 +580,7 @@ func (c *Configuration) AuthorizePKCEGrant(clientID string, codeVerifier string,
 		if err != nil {
 			return nil, err
 		}
-		return nil, fmt.Errorf("Auth Error: %v (%v - %v)", authErrorResponse.Description, authErrorResponse.Error, authErrorResponse.ErrorDescription)
+		return  nil, fmt.Errorf("Auth Error: %v - %v (%v)", response.StatusCode, authErrorResponse.Error, authErrorResponse.ErrorDescription)
 	}
 
 	var authResponse *AuthResponse
