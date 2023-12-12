@@ -425,5 +425,15 @@
 		"patch": {
 			"name": "patch"
 		}
+	},
+	"/api/v2/outbound/importtemplates":{
+		"delete": {
+			"name": "deleteall"
+		}
+	},
+	"/api/v2/outbound/contactlisttemplates":{
+		"delete":{
+			"name":"deleteall"
+		}
 	}
 }
