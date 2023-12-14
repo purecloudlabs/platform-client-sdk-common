@@ -1,6 +1,6 @@
 {{#operation}}config := platformclientv2.GetDefaultConfiguration()
 config.BasePath = ""    // expected format: mypurecloud.com
-config.AccessToken = "your_access_token" // or use AuthorizeClientCredentials(...) or AuthorizeCodeGrant(...)
+config.AccessToken = "your_access_token" // or use AuthorizeClientCredentials(...), AuthorizeCodeGrant(...) or AuthorizePKCEGrant(...)
 
 apiInstance := platformclientv2.New{{baseName}}ApiWithConfig(config)
 
