@@ -11,8 +11,10 @@ public enum PureCloudRegionHosts {
     ap_northeast_2("https://api.apne2.pure.cloud"),
     eu_west_2("https://api.euw2.pure.cloud"),
     ap_south_1("https://api.aps1.pure.cloud"),
-    us_east_2("https://api.use2.us-gov-pure.cloud");
-
+    us_east_2("https://api.use2.us-gov-pure.cloud"),
+    me_central_1("https://api.mec1.pure.cloud"),
+    ap_northeast_3("https://api.apne3.pure.cloud"),
+    eu_central_2("https://api.euc2.pure.cloud");
 
     private String apiHost;
     PureCloudRegionHosts(String apiHost) {
