@@ -123,9 +123,6 @@ namespace {{packageName}}.Tests
             Console.WriteLine($"CorrelationId for PutUserProfileskillsWithHttpInfo {skills.CorrelationId}");
         }
 
-        /*
-        // Temporarily removing test until we can figure what changed with the API
-        // Fixing with DEVTOOLING-306
         [Test, Order(5)]
         public void TestNotifications()
         {
@@ -179,7 +176,7 @@ namespace {{packageName}}.Tests
             Assert.AreEqual(busyReceived, true);
             Assert.AreEqual(availableReceived, true);
         }
-        */
+
 
         [Test, Retry(2), Order(6)]
         public void GetUser()
