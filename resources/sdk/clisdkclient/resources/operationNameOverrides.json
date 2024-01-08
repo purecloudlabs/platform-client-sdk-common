@@ -435,5 +435,10 @@
 		"delete":{
 			"name":"deleteall"
 		}
+	},
+	"/api/v2/chats/rooms/{roomJid}/participants":{
+		"get":{
+			"name":"getRoomParticipants"
+		}
 	}
 }
