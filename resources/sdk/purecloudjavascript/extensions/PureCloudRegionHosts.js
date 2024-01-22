@@ -7,6 +7,9 @@ export default  {
     us_west_2: "usw2.pure.cloud",
     ca_central_1: "cac1.pure.cloud",
     ap_northeast_2: "apne2.pure.cloud",
-    eu_west_2: "euw2.pure.cloud"
+    eu_west_2: "euw2.pure.cloud",
+    me_central_1: "mec1.pure.cloud",
+    ap_northeast_3: "apne3.pure.cloud",
+    eu_central_2: "euc2.pure.cloud"
    }
    
