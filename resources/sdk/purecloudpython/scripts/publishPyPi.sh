@@ -19,7 +19,7 @@ echo "VERSION=$VERSION"
 # python3.6 -m pip install --user -U pip setuptools
 # echo "PIP setuptools version info (2):"
 # python3.6 -m pip show setuptools
-echo "Installing Twine:"
+echo "Installing Twine"
 python3.6 -m pip install --upgrade twine
 
 echo "Creating the distribution package"
