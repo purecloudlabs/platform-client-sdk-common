@@ -24,8 +24,8 @@ echo "Upgrading PIP"
 python3.6 -m pip install --upgrade pip
 
 echo "Installing Twine and Wheel"
-python3.6 -m pip install twine --user
-python3.6 -m pip install wheel --user	
+python3.6 -m pip install twine wheel setuptools --user --upgrade
+
 
 echo "Creating the distribution package"
 python3.6 setup.py sdist bdist_wheel
@@ -34,7 +34,7 @@ echo "Running twine check"
 python3.6 -m twine check dist/*
 
 echo "uploading to the pypi test server"
-python3.6 -m twine upload --repository testpypi dist/* -u __token__ -p $PYPI_TOKEN
+python3.6 -m twine upload --repository https://testpypi.python.org/pypi dist/* -u __token__ -p $PYPI_TOKEN
 
 # Publish egg on PyPi
 # echo "Registering egg..."
