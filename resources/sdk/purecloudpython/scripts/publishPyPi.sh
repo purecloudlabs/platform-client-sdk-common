@@ -34,7 +34,7 @@ echo "Running twine check"
 python3.6 -m twine check dist/*
 
 echo "uploading to the pypi test server"
-python3.6 -m twine upload --repository-url https://testpypi.python.org/pypi dist/* -u __token__ -p $PYPI_TOKEN
+python3.6 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/* -u __token__ -p $PYPI_TOKEN
 
 # Publish egg on PyPi
 # echo "Registering egg..."
