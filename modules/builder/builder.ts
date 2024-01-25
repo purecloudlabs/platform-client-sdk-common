@@ -346,9 +346,8 @@ function prebuildImpl(): Promise<string> {
 						let newVersion = swaggerDiff.stringifyVersion(_this.version, true);
 
 						// Determine if new version
-						//_this.isNewVersion = getEnv('BRANCH_NAME') !== 'master' ? false : oldVersion !== newVersion;
-						//TODO - Change this back to the line above
-						_this.isNewVersion = true;
+						_this.isNewVersion = getEnv('BRANCH_NAME') !== 'master' ? false : oldVersion !== newVersion;
+						
 						setEnv('SDK_NEW_VERSION', _this.isNewVersion);
 						if (_this.isNewVersion === true) log.info(`New version: ${_this.version.displayFull}`);
 						else log.warn('Version was not incremented');
