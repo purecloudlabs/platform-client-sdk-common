@@ -29,7 +29,7 @@ echo "Running twine check"
 twine check dist/*
 
 echo "uploading to the pypi test server"
-twine upload --repository testpypi dist/* -r $INDEX_SERVER -u __token__ -p $PYPI_TOKEN
+twine upload --repository testpypi dist/* -u __token__ -p $PYPI_TOKEN
 
 # Publish egg on PyPi
 # echo "Registering egg..."
