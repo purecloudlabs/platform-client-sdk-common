@@ -21,16 +21,16 @@ echo "VERSION=$VERSION"
 # python3.6 -m pip show setuptools
 echo "Installing Twine and Wheel"
 python3.6 -m pip install twine --user
-python3.6 -m pip install wheel --user
+python3.6 -m pip install wheel --user	
 
 echo "Creating the distribution package"
 python3.6 setup.py sdist bdist_wheel
 
 echo "Running twine check"
-twine check dist/*
+python3.6 -m twine check dist/*
 
 echo "uploading to the pypi test server"
-twine upload --repository testpypi dist/* -u __token__ -p $PYPI_TOKEN
+python3.6 -m twine upload --repository testpypi dist/* -u __token__ -p $PYPI_TOKEN
 
 # Publish egg on PyPi
 # echo "Registering egg..."
