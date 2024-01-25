@@ -6,19 +6,11 @@ echo "INDEX_SERVER=$INDEX_SERVER"
 echo "IS_NEW_RELEASE=$IS_NEW_RELEASE"
 echo "VERSION=$VERSION"
 
-# if [ ! "$IS_NEW_RELEASE" = "true" ]
-# then
-# 	echo "Skipping PyPi deploy"
-# 	exit 0
-# fi
-
-# Upgrade to latest version of setuptools
-# echo "PIP setuptools version info (1):"
-# python3.6 -m pip show setuptools
-# echo "Installing pip, setuptools..."
-# python3.6 -m pip install --user -U pip setuptools
-# echo "PIP setuptools version info (2):"
-# python3.6 -m pip show setuptools
+if [ ! "$IS_NEW_RELEASE" = "true" ]
+then
+	echo "Skipping PyPi deploy"
+	exit 0
+fi
 
 echo "Upgrading PIP"
 python3.6 -m pip install --upgrade --user pip
@@ -38,10 +30,3 @@ python3.6 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/* 
 
 echo "uploading to the pypi prod server"
 python3.6 -m twine upload --repository-url https://upload.pypi.org/legacy/ dist/* -u __token__ -p $PROD_PYPI_TOKEN
-
-
-# Publish egg on PyPi
-# echo "Registering egg..."
-# python3.6 setup.py register -r $INDEX_SERVER
-# echo "Uploading egg..."
-# python3.6 setup.py sdist upload -r $INDEX_SERVER
