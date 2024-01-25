@@ -37,7 +37,7 @@ echo "uploading to the pypi test server"
 python3.6 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/* -u __token__ -p $TEST_PYPI_TOKEN
 
 echo "uploading to the pypi prod server"
-python3.6 -m twine upload --repository-url https://pypi.org/legacy/ dist/* -u __token__ -p $PROD_PYPI_TOKEN
+python3.6 -m twine upload --repository-url https://upload.pypi.org/legacy/ dist/* -u __token__ -p $PROD_PYPI_TOKEN
 
 
 # Publish egg on PyPi
