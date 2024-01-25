@@ -19,8 +19,9 @@ echo "VERSION=$VERSION"
 # python3.6 -m pip install --user -U pip setuptools
 # echo "PIP setuptools version info (2):"
 # python3.6 -m pip show setuptools
-echo "Installing Twine"
+echo "Installing Twine and Wheel"
 python3.6 -m pip install twine --user
+python3.6 -m pip install wheel --user
 
 echo "Creating the distribution package"
 python3.6 setup.py sdist bdist_wheel
