@@ -13,15 +13,26 @@ then
 fi
 
 # Upgrade to latest version of setuptools
-echo "PIP setuptools version info (1):"
-python3.6 -m pip show setuptools
-echo "Installing pip, setuptools..."
-python3.6 -m pip install --user -U pip setuptools
-echo "PIP setuptools version info (2):"
-python3.6 -m pip show setuptools
+# echo "PIP setuptools version info (1):"
+# python3.6 -m pip show setuptools
+# echo "Installing pip, setuptools..."
+# python3.6 -m pip install --user -U pip setuptools
+# echo "PIP setuptools version info (2):"
+# python3.6 -m pip show setuptools
+echo "Installing Twine:"
+python3.6 -m pip install --upgrade twine
+
+echo "Creating the distribution package"
+python3.6 setup.py sdist bdist_wheel
+
+echo "Running twine check"
+twine check dist/*
+
+echo "uploading to the pypi test server"
+twine upload --repository testpypi dist/* -r $INDEX_SERVER -u __token__ -p $PYPI_TOKEN
 
 # Publish egg on PyPi
-echo "Registering egg..."
-python3.6 setup.py register -r $INDEX_SERVER
-echo "Uploading egg..."
-python3.6 setup.py sdist upload -r $INDEX_SERVER
+# echo "Registering egg..."
+# python3.6 setup.py register -r $INDEX_SERVER
+# echo "Uploading egg..."
+# python3.6 setup.py sdist upload -r $INDEX_SERVER
