@@ -6,11 +6,11 @@ echo "INDEX_SERVER=$INDEX_SERVER"
 echo "IS_NEW_RELEASE=$IS_NEW_RELEASE"
 echo "VERSION=$VERSION"
 
-if [ ! "$IS_NEW_RELEASE" = "true" ]
-then
-	echo "Skipping PyPi deploy"
-	exit 0
-fi
+# if [ ! "$IS_NEW_RELEASE" = "true" ]
+# then
+# 	echo "Skipping PyPi deploy"
+# 	exit 0
+# fi
 
 # Upgrade to latest version of setuptools
 # echo "PIP setuptools version info (1):"
