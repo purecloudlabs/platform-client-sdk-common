@@ -19,6 +19,10 @@ echo "VERSION=$VERSION"
 # python3.6 -m pip install --user -U pip setuptools
 # echo "PIP setuptools version info (2):"
 # python3.6 -m pip show setuptools
+
+echo "Upgrading PIP"
+python3.6 pip install --upgrade pip
+
 echo "Installing Twine and Wheel"
 python3.6 -m pip install twine --user
 python3.6 -m pip install wheel --user	
