@@ -347,7 +347,6 @@ function prebuildImpl(): Promise<string> {
 
 						// Determine if new version
 						_this.isNewVersion = getEnv('BRANCH_NAME') !== 'master' ? false : oldVersion !== newVersion;
-						
 						setEnv('SDK_NEW_VERSION', _this.isNewVersion);
 						if (_this.isNewVersion === true) log.info(`New version: ${_this.version.displayFull}`);
 						else log.warn('Version was not incremented');
