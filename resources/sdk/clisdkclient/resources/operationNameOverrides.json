@@ -440,5 +440,10 @@
 		"get":{
 			"name":"getRoomParticipants"
 		}
+	},
+	"/api/v2/workforcemanagement/alternativeshifts/trades": {
+		"get": {
+			"name": "list"
+		}
 	}
 }
