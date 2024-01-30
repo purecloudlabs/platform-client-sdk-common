@@ -25,7 +25,7 @@ echo "Running twine check"
 python3.6 -m twine check dist/*
 
 echo "uploading to the pypi test server"
-python3.6 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/* -u __token__ -p $DEVTOOLING_TEST_PYPI_TOKEN
+python3.6 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/* -u __token__ -p $DEVTOOLING_SDK_PYPI_TEST
 
 echo "uploading to the pypi prod server"
-python3.6 -m twine upload --repository-url https://upload.pypi.org/legacy/ dist/* -u __token__ -p $DEVTOOLING_PROD_PYPI_TOKEN
+python3.6 -m twine upload --repository-url https://upload.pypi.org/legacy/ dist/* -u __token__ -p $DEVTOOLING_SDK_PYPI_PROD
