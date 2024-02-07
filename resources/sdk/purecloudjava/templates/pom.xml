@@ -351,7 +351,7 @@
     <swagger-annotations-version>1.6.13</swagger-annotations-version>
     <jersey-version>1.19.1</jersey-version>
     <jackson-version>2.16.1</jackson-version>
-    <jodatime-version>2.12.6</jodatime-version>
+    <jodatime-version>2.12.7</jodatime-version>
     <maven-plugin-version>1.0.0</maven-plugin-version>
     <testng-version>7.5</testng-version>
     <apache-httpclient-version>4.5.14</apache-httpclient-version>
