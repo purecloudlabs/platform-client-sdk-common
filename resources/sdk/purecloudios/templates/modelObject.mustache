@@ -2,9 +2,8 @@
 public class {{classname}}: Codable {
 
 {{#allVars}}
-{{#isEnum}}
-{{> modelInlineEnumDeclaration}}
-{{/isEnum}}
+{{#isEnum}}{{^isBoolean}}{{> modelInlineEnumDeclaration}}{{/isBoolean}}{{/isEnum}}
+{{^isEnum}}{{#isArray}}{{#enumName}}{{> modelInlineEnumDeclaration}}{{/enumName}}{{/isArray}}{{/isEnum}}
 {{/allVars}}
 {{#allVars}}
 {{#isEnum}}
@@ -12,6 +11,12 @@ public class {{classname}}: Codable {
     {{/description}}public var {{name}}: {{{datatypeWithEnum}}}{{^required_ifSwaggerDocsGuaranteed}}?{{/required_ifSwaggerDocsGuaranteed}}{{#defaultValue}} = {{{defaultValue}}}{{/defaultValue}}
 {{/isEnum}}
 {{^isEnum}}
+{{#isArray}}
+{{#enumName}}
+    {{#description}}/** {{{description}}} */
+    {{/description}}public var {{name}}: {{{datatypeWithEnum}}}{{^required_ifSwaggerDocsGuaranteed}}?{{/required_ifSwaggerDocsGuaranteed}}{{#defaultValue}} = {{{defaultValue}}}{{/defaultValue}}
+{{/enumName}}
+{{^enumName}}
     {{#description}}/** {{{description}}} */
     {{/description}}public var {{name}}: {{{datatype}}}{{^required_ifSwaggerDocsGuaranteed}}?{{/required_ifSwaggerDocsGuaranteed}}{{#defaultValue}} = {{{defaultValue}}}{{/defaultValue}}{{#objcCompatible}}{{#vendorExtensions.x-swift-optional-scalar}}
     public var {{name}}Num: NSNumber? {
@@ -19,6 +24,17 @@ public class {{classname}}: Codable {
             return {{name}}.map({ return NSNumber(value: $0) })
         }
     }{{/vendorExtensions.x-swift-optional-scalar}}{{/objcCompatible}}
+{{/enumName}}
+{{/isArray}}
+{{^isArray}}
+    {{#description}}/** {{{description}}} */
+    {{/description}}public var {{name}}: {{{datatype}}}{{^required_ifSwaggerDocsGuaranteed}}?{{/required_ifSwaggerDocsGuaranteed}}{{#defaultValue}} = {{{defaultValue}}}{{/defaultValue}}{{#objcCompatible}}{{#vendorExtensions.x-swift-optional-scalar}}
+    public var {{name}}Num: NSNumber? {
+        get {
+            return {{name}}.map({ return NSNumber(value: $0) })
+        }
+    }{{/vendorExtensions.x-swift-optional-scalar}}{{/objcCompatible}}
+{{/isArray}}
 {{/isEnum}}
 {{/allVars}}
 
@@ -30,48 +46,7 @@ public class {{classname}}: Codable {
     }
 {{/hasVars}}
 {{#additionalPropertiesType}}
-    public var additionalProperties: [String:{{{additionalPropertiesType}}}] = [:]
-
-    public subscript(key: String) -> {{{additionalPropertiesType}}}? {
-        get {
-            if let value = additionalProperties[key] {
-                return value
-            }
-            return nil
-        }
-
-        set {
-            additionalProperties[key] = newValue
-        }
-    }
-
-    // Encodable protocol methods
-
-    public func encode(to encoder: Encoder) throws {
-
-        var container = encoder.container(keyedBy: String.self)
-
-        {{#allVars}}
-        try container.encode{{^required_ifSwaggerDocsGuaranteed}}IfPresent{{/required_ifSwaggerDocsGuaranteed}}({{{name}}}, forKey: "{{{baseName}}}")
-        {{/allVars}}
-        try container.encodeMap(additionalProperties)
-    }
-
-    // Decodable protocol methods
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: String.self)
-
-        {{#allVars}}
-        {{name}} = try container.decode{{^required_ifSwaggerDocsGuaranteed}}IfPresent{{/required_ifSwaggerDocsGuaranteed}}({{{datatypeWithEnum}}}.self, forKey: "{{{baseName}}}")
-        {{/allVars}}
-        var nonAdditionalPropertyKeys = Set<String>()
-        {{#allVars}}
-        nonAdditionalPropertyKeys.insert("{{{baseName}}}")
-        {{/allVars}}
-        additionalProperties = try container.decodeMap({{{additionalPropertiesType}}}.self, excludedKeys: nonAdditionalPropertyKeys)
-    }
-
+    // TAG-REMOVE-MODEL-FILE
 {{/additionalPropertiesType}}
 {{^additionalPropertiesType}}{{#vendorExtensions.x-codegen-has-escaped-property-names}}
     public enum CodingKeys: String, CodingKey { {{#allVars}}

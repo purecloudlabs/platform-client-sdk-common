@@ -20,8 +20,12 @@ open class {{classname}} {
     public enum {{#enumName}}{{enumName}}{{/enumName}}{{^enumName}}{{datatypeWithEnum}}{{/enumName}}_{{operationId}}: {{^isContainer}}{{{dataType}}}{{/isContainer}}{{#isContainer}}String{{/isContainer}} { {{#allowableValues}}{{#enumVars}}
         case {{name}} = {{#isContainer}}"{{/isContainer}}{{#isString}}"{{/isString}}{{{value}}}{{#isString}}"{{/isString}}{{#isContainer}}"{{/isContainer}}{{/enumVars}}{{/allowableValues}}
     }
-
     {{/isBoolean}}{{/isEnum}}
+    {{^isEnum}}{{#isArray}}{{#enumName}}
+    public enum {{#enumName}}{{enumName}}{{/enumName}}{{^enumName}}{{datatypeWithEnum}}{{/enumName}}_{{operationId}}: {{^isContainer}}{{{dataType}}}{{/isContainer}}{{#isContainer}}String{{/isContainer}} { {{#allowableValues}}{{#enumVars}}
+        case {{name}} = {{#isContainer}}{{^isString}}"{{/isString}}{{/isContainer}}{{#isString}}"{{/isString}}{{{value}}}{{#isString}}"{{/isString}}{{#isContainer}}{{^isString}}"{{/isString}}{{/isContainer}}{{/enumVars}}{{/allowableValues}}
+    }
+    {{/enumName}}{{/isArray}}{{/isEnum}}
     {{/allParams}}
     /**
      {{#summary}}
@@ -96,13 +100,13 @@ open class {{classname}} {
         let body: Data? = nil
             {{/hasFormParams}}
         {{/bodyParam}}{{#hasQueryParams}}
-        var url = URLComponents(string: URLString)
-        url?.queryItems = APIHelper.mapValuesToQueryItems([
+        var requestUrl = URLComponents(string: URLString)
+        requestUrl?.queryItems = APIHelper.mapValuesToQueryItems([
             {{#queryParams}}
             {{#isEnum}}{{#isBoolean}}"{{paramName}}": {{paramName}}{{/isBoolean}}{{^isBoolean}}{{> _param}}{{/isBoolean}}{{/isEnum}}{{^isEnum}}{{> _param}}{{/isEnum}}{{^-last}}, {{/-last}}
             {{/queryParams}}
         ]){{/hasQueryParams}}{{^hasQueryParams}}
-        let url = URLComponents(string: URLString){{/hasQueryParams}}{{#headerParams}}{{^secondaryParam}}
+        let requestUrl = URLComponents(string: URLString){{/hasQueryParams}}{{#headerParams}}{{^secondaryParam}}
         let nillableHeaders: [String: Any?] = [{{/secondaryParam}}
             {{> _param}}{{^-last}},{{/-last}}{{#-last}}
         ]
@@ -110,7 +114,7 @@ open class {{classname}} {
 
         let requestBuilder: RequestBuilder<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}>.Type = {{projectName}}API.requestBuilderFactory.{{#returnType}}getBuilder(){{/returnType}}{{^returnType}}getBuilder(){{/returnType}}
 
-        return requestBuilder.init(method: "{{httpMethod}}", url: url!, body: body{{#headerParams}}{{^secondaryParam}}, headers: headerParameters{{/secondaryParam}}{{/headerParams}})
+        return requestBuilder.init(method: "{{httpMethod}}", url: requestUrl!, body: body{{#headerParams}}{{^secondaryParam}}, headers: headerParameters{{/secondaryParam}}{{/headerParams}})
     }
 
 {{/operation}}
