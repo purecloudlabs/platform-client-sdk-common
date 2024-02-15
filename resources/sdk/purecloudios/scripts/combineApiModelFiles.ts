@@ -27,7 +27,7 @@ export default class CombineModels {
 					this.aggregatedModelFiles.set(indexFile.toString(), baseFile);
 				}
 			} else {
-				console.log('Modulo must be between 1 and 100');
+				console.log('Error - Modulo must be between 1 and 100');
 				process.exit(-1);
 			}
 		}
@@ -78,6 +78,7 @@ export default class CombineModels {
 			}
 		} catch (err) {
 			console.log(err);
+			console.log('Error - Failed to combine iOS Swift SDK model files');
 			process.exit(-1);
 		}
 
