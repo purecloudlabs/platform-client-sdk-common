@@ -5,6 +5,7 @@ VERSION=$3
 echo "INDEX_SERVER=$INDEX_SERVER"
 echo "IS_NEW_RELEASE=$IS_NEW_RELEASE"
 echo "VERSION=$VERSION"
+echo "PJCC=$$DEVTOOLING_SDK_PYPI_TEST"
 
 if [ ! "$IS_NEW_RELEASE" = "true" ]
 then
@@ -25,7 +26,7 @@ echo "Running twine check"
 python3.6 -m twine check dist/*
 
 echo "uploading to the pypi test server"
-python3.6 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/* -u __token__ -p $DEVTOOLING_SDK_PYPI_TEST
+python3.6 -m twine upload --verbose --repository-url https://test.pypi.org/legacy/ dist/* -u __token__ -p $DEVTOOLING_SDK_PYPI_TEST
 
 echo "uploading to the pypi prod server"
-python3.6 -m twine upload --repository-url https://upload.pypi.org/legacy/ dist/* -u __token__ -p $DEVTOOLING_SDK_PYPI_PROD
+python3.6 -m twine upload --verbose --repository-url https://upload.pypi.org/legacy/ dist/* -u __token__ -p $DEVTOOLING_SDK_PYPI_PROD
