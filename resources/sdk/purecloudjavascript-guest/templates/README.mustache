@@ -186,7 +186,7 @@ client.config.logger.setLogger(); // To apply above changes
 A number of configuration parameters can be applied using a configuration file. There are two sources for this file:
 
 1. The SDK will look for `%USERPROFILE%\.genesyscloudjavascript-guest\config` on Windows if the environment variable USERPROFILE is defined, otherwise uses the path to the profile directory of the current user as home, or `$HOME/.genesyscloudjavascript-guest/config` on Unix.
-2. Provide a valid file path to `client.config.setConfigPath("path/to/config")`
+2. Provide a valid file path to `client.config.setConfigPath()`
 
 The SDK will constantly check to see if the config file has been updated, regardless of whether a config file was present at start-up. To disable this behaviour, set `client.config.live_reload_config` to false.  
 INI and JSON formats are supported. See below for examples of configuration values in both formats:
