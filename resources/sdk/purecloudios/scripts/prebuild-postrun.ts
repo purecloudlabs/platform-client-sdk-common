@@ -8,6 +8,7 @@ export class PreBuildPostRun {
 			const swaggerCodegenConfigFilePath = process.argv[2];
 			const version = fs.readJsonSync(process.argv[3]);
 			const packageName = process.argv[4];
+			const aggregateModels = process.argv[5];
 
 			var config = {
 				projectName: packageName || 'PureCloudPlatformApiSdk',
@@ -21,7 +22,8 @@ export class PreBuildPostRun {
 				podLicense: 'MIT',
 				podHomepage: 'https://developer.mypurecloud.com/',
 				podDocumentationURL: 'https://developer.mypurecloud.com/api/rest/client-libraries/ios/',
-				podVersion: version.displayFull
+				podVersion: version.displayFull,
+				aggregateModels: (aggregateModels.toLowerCase() === "true")
 			};
 
 			fs.writeFileSync(swaggerCodegenConfigFilePath, JSON.stringify(config, null, 2));

@@ -26,6 +26,8 @@
     "debugConfig": false,
     "enableLoggerColor": false,
     "packageName": "PureCloudPlatformClientV2",
+    "aggregateModels": true,
+    "aggregateModulo": 5,
     "extensionsDestination": "${SDK_REPO}/build/src/Libraries",
     "apiHealthCheckUrl": "https://api.mypurecloud.com/api/v2/health/check"
   },
@@ -45,6 +47,9 @@
             },
             {
               "$ref": "#/settings/packageName"
+            },
+            {
+              "$ref": "#/settings/aggregateModels"
             }
           ],
           "failOnError": true
@@ -74,6 +79,21 @@
           "args": [
             "${SDK_REPO}/build/docs",
             "${SDK_REPO}/build/APIData.json"
+          ],
+          "failOnError": true
+        },
+        {
+          "type": "tsx",
+          "path": "combineApiModelFiles.ts",
+          "args": [
+            "${SDK_REPO}/build/src/Models",
+            "${SDK_REPO}/build/src/Models/PlatformAPIModels",
+            {
+              "$ref": "#/settings/aggregateModels"
+            },
+            {
+              "$ref": "#/settings/aggregateModulo"
+            }
           ],
           "failOnError": true
         }
