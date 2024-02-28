@@ -450,5 +450,10 @@
 		"patch": {
 			"name": "updatecollection"
 		}
+	},
+	"/api/v2/integrations/unifiedcommunications/scheduler/users/{userId}/jobs":{
+		"get": {
+			"name": "list"
+		}
 	}
 }
