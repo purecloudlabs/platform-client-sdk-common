@@ -445,5 +445,10 @@
 		"get": {
 			"name": "list"
 		}
+	},
+	"/api/v2/analytics/reporting/exports/schedule": {
+		"patch": {
+			"name": "updatecollection"
+		}
 	}
 }
