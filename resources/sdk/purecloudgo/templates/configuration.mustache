@@ -447,7 +447,7 @@ func (c *Configuration) AuthorizeClientCredentials(clientID string, clientSecret
         go func(){
             select {
             case <-time.After(time.Second * time.Duration(c.AccessTokenExpiresIn - 60)):
-				log.Println("Refreshing access token")
+		log.Println("Refreshing access token")
                 err := c.AuthorizeClientCredentials(clientID, clientSecret)
                 if err != nil {
                     panic(err)
