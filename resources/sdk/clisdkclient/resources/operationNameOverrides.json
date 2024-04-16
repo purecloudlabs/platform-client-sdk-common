@@ -455,5 +455,10 @@
 		"get": {
 			"name": "list"
 		}
+	},
+	"/api/v2/outbound/campaigns/{campaignId}": {
+		"patch": {
+			"name": "patch"
+		}
 	}
 }
