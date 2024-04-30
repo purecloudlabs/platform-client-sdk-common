@@ -188,7 +188,8 @@ namespace {{packageName}}.Client
             }
             catch (Exception e)
             {
-                // no-op
+                Console.WriteLine("An error occurred in runConfigChecker(): " + e);
+                throw new Exception("An error occurred in runConfigChecker(): " + e.Message, e);
             }
         }
 
