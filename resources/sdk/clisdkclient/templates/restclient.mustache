@@ -1,6 +1,8 @@
 package restclient
 
 import (
+        "context"
+        cryptoTls "crypto/tls"
         "errors"
         "github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
         "github.com/mypurecloud/platform-client-sdk-cli/build/gc/models"
@@ -12,6 +14,7 @@ import (
 
         "os"
         "os/exec"
+        "regexp"
         "runtime"
         "strconv"
         "time"
@@ -38,6 +41,10 @@ var (
         OverridesApplied    = config.OverridesApplied
         openBrowserForLogin = openBrowserForLoginFunc
         startLocalServer    = startLocalServerFunc
+        redirectsErrorRe = regexp.MustCompile(`stopped after \d+ redirects\z`)
+        schemeErrorRe = regexp.MustCompile(`unsupported protocol scheme`)
+        invalidHeaderErrorRe = regexp.MustCompile(`invalid header`)
+        notTrustedErrorRe = regexp.MustCompile(`certificate is not trusted`)
 )
 
 type RESTClient struct {
@@ -140,7 +147,7 @@ func (r *RESTClient) callAPI(method string, uri string, data string) (string, er
                 }
         }
 
-        c.client.CheckRetry = DefaultRetryPolicy
+        Client.CheckRetry = DefaultRetryPolicy
 
         setProxyConf(r.configuration)
         //Executing the request
@@ -234,7 +241,12 @@ func newRetryPolicy(resp *http.Response, err error) (bool, error) {
 	return false, nil
 }
 
-func verifyRetryAfterHeader(headers []string, defaultMaxRetry int) bool {
+func isCertError(err error) bool {
+	_, ok := err.(*cryptoTls.CertificateVerificationError)
+	return ok
+}
+
+func verifyRetryAfterHeader(headers []string, defaultMaxRetry int64) bool {
 	if len(headers) == 0 || headers[0] == "" {
 		return true
 	}

@@ -2,12 +2,16 @@ package {{packageName}}
 
 import (
 	"bytes"
+	"context"
+    "crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"reflect"
+	"regexp"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -21,6 +25,19 @@ type APIClient struct {
 	configuration *Configuration
 }
 
+var (
+
+redirectsErrorRe = regexp.MustCompile(`stopped after \d+ redirects\z`)
+
+
+schemeErrorRe = regexp.MustCompile(`unsupported protocol scheme`)
+
+
+invalidHeaderErrorRe = regexp.MustCompile(`invalid header`)
+
+
+notTrustedErrorRe = regexp.MustCompile(`certificate is not trusted`)
+)
 // NewAPIClient creates a new API client
 func NewAPIClient(c *Configuration) APIClient {
 	timeout, err := time.ParseDuration("16s")
@@ -277,7 +294,12 @@ func newRetryPolicy(resp *http.Response, err error) (bool, error) {
 	return false, nil
 }
 
-func verifyRetryAfterHeader(headers []string, defaultMaxRetry int) bool {
+func isCertError(err error) bool {
+	_, ok := err.(*tls.CertificateVerificationError)
+	return ok
+}
+
+func verifyRetryAfterHeader(headers []string, defaultMaxRetry int64) bool {
 	if len(headers) == 0 || headers[0] == "" {
 		return true
 	}
