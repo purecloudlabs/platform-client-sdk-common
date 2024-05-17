@@ -927,6 +927,7 @@ class ApiClient private constructor(builder: Builder) : AutoCloseable {
         private var retryCountBeforeBackOff = 0
         private var retryAfterMs: Long = 0
         private var stopwatch: Stopwatch? = null
+        private var defaultMaxRetry: Long = 180000
         private val statusCodes = listOf(429, 502, 503, 504)
         fun shouldRetry(connectorResponse: ApiClientConnectorResponse?): Boolean {
             if (stopwatch!!.elapsed(TimeUnit.MILLISECONDS) < maxRetryTimeSec * 1000L && statusCodes.contains(connectorResponse!!.statusCode)) {
@@ -937,6 +938,11 @@ class ApiClient private constructor(builder: Builder) : AutoCloseable {
                 }
                 // If status code is 429 then wait until retry-after time and retry. OR If status code is retryable then for the first 5 times: wait until retry-after time and retry.
                 return if (connectorResponse.statusCode == 429 || retryCountBeforeBackOff++ < maxRetriesBeforeBackoff) {
+                    // Some APIs started sending in daily max limit breach with 429 and retry-after that can be anywhere from few minutes to hours. It is not a pausible option
+                    // to retry in such scenarios. For Java SDK this retry Max time is set to 3 Minutes.
+                    if (retryAfterMs > defaultMaxRetry) {
+                       return false;
+                    }
                     waitBeforeRetry(retryAfterMs)
                 } else {
                     // If status code is 50x then wait for every 3 Sec and retry until 5 minutes then after wait for every 9 Sec and retry until next 5 minutes afterwards wait for every 27 Sec and retry.
