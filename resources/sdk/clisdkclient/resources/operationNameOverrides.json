@@ -460,5 +460,10 @@
 		"patch": {
 			"name": "patch"
 		}
+	},
+	"/api/v2/workforcemanagement/businessunits/{businessUnitId}/mainforecast/continuousforecast/session": {
+		"get": {
+			"name": "getAllSessions"
+		}
 	}
 }
