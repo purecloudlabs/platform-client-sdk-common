@@ -8,6 +8,7 @@ This repository contains scripts, templates, and configuration files that are us
 * [Javascript](https://github.com/MyPureCloud/platform-client-sdk-javascript)
 * [.NET](https://github.com/MyPureCloud/platform-client-sdk-dotnet)
 * [Python](https://github.com/MyPureCloud/platform-client-sdk-python)
+* [Go](https://github.com/MyPureCloud/platform-client-sdk-go)
 * [Ruby](https://github.com/MyPureCloud/platform-client-sdk-ruby)
 * [WebMessaging (Java)](https://github.com/MyPureCloud/web-messaging-sdk-java)
 
