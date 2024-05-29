@@ -19,7 +19,7 @@
     "swaggerCodegen": {
       "resourceLanguage": "purecloudjava",
       "codegenLanguage": "purecloudjava",
-      "jarPath": "/Users/kbalasub/genesys_src/repos/openapi-generator/modules/openapi-generator-cli/target/openapi-generator-cli.jar",
+      "jarPath": "${WORKSPACE}/openapi-generator/modules/openapi-generator-cli/target/openapi-generator-cli.jar",
       "configFile": "${SDK_TEMP}/config.json",
       "extraGeneratorOptions": []
     },
@@ -27,7 +27,7 @@
     "releaseNoteSummaryTemplatePath": "${COMMON_ROOT}/resources/templates/githubSdkReleaseNoteSummary.md",
     "debugConfig": false,
     "enableLoggerColor": false,
-    "mavenSettingsFilePath": "/Users/kbalasub/genesys_src/repos/temp/settings.xml",
+    "mavenSettingsFilePath": "/var/build/settings.xml",
     "mavenTarget": "deploy",
     "apiHealthCheckUrl": "https://api.mypurecloud.com/api/v2/health/check"
   },
