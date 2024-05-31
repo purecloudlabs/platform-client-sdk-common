@@ -271,6 +271,11 @@
       <artifactId>async-http-client</artifactId>
       <version>${ning-asynchttpclient-version}</version>
     </dependency>
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-all</artifactId>
+      <version>${io-netty-version}</version>
+    </dependency>
     <!-- https://mvnrepository.com/artifact/xerces/xercesImpl -->
     <dependency>
       <groupId>xerces</groupId>
@@ -361,6 +366,7 @@
     <guava-version>33.2.0-jre</guava-version>
     <mockito.version>5.12.0</mockito.version>
     <ini4j-version>0.5.4</ini4j-version>
+    <io-netty-version>4.1.110.Final</io-netty-version>
     <name>${props.name}</name>
     <version>${props.version}</version>
     <description>${props.description}</description>
