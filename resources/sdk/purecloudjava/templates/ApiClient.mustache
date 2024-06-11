@@ -468,6 +468,8 @@ public class ApiClient implements AutoCloseable {
                 b.append(String.valueOf(o));
             }
             return b.toString();
+        } else if (param instanceof Boolean) {
+            return String.valueOf(param).toLowerCase();
         } else {
             return String.valueOf(param);
         }
