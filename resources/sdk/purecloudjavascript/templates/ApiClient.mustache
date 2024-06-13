@@ -1081,6 +1081,9 @@ class ApiClient {
 		if (param instanceof Date) {
 			return param.toJSON();
 		}
+		if (param instanceof Boolean) {
+			return param.toString().toLowerCase();
+		}
 		return param.toString();
 	}
 
