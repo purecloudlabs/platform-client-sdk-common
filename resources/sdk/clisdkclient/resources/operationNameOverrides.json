@@ -465,5 +465,10 @@
 		"get": {
 			"name": "getAllSessions"
 		}
+	},
+	"/api/v2/users/agentui/agents/autoanswer/{agentId}/settings": {
+		"patch": {
+			"name": "patch"
+		}
 	}
 }
