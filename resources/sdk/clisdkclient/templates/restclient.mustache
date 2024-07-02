@@ -324,7 +324,6 @@ func authorizePKCEGrant(c config.Configuration, code string, codeVerifier string
         form["redirect_uri"] = []string{c.RedirectURI()}
         form["code_verifier"] = []string{codeVerifier}
         request.Body = ioutil.NopCloser(strings.NewReader(form.Encode()))
-
         setProxyConf(c, "login")
 
         //Executing the request
@@ -404,7 +403,6 @@ func authorize(c config.Configuration) (models.OAuthTokenData, error) {
         form := url.Values{}
         form["grant_type"] = []string{"client_credentials"}
         request.Body = ioutil.NopCloser(strings.NewReader(form.Encode()))
-
         setProxyConf(c, "login")
 
         //Executing the request
@@ -441,7 +439,7 @@ func setProxyConf(c config.Configuration, path string) {
             var proxyConfiguration config.ProxyConfiguration
             err := json.Unmarshal([]byte(c.ProxyConfiguration()), &proxyConfiguration)
             if err !=nil {
-                logger.Warnf("Error parsing proxy URL: %v , %v", err c.ProxyConfiguration())
+                logger.Warnf("Error parsing proxy URL: %v , %v", err, c.ProxyConfiguration())
             }
 
                 if proxyConfiguration.Protocol != "" {
@@ -473,8 +471,6 @@ func setProxyConf(c config.Configuration, path string) {
                         if pathValue !="" {
                           proxyUrl.Path = pathValue
                         }
-
-                        fmt.Printf("proxyUrl after configuration %v", proxyUrl)
 
                         tr := &http.Transport{
                                 Proxy: http.ProxyURL(proxyUrl),
