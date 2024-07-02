@@ -498,6 +498,7 @@ func updateConfig(c configuration, loggingEnabled *bool, autoPaginationEnabled *
 		viper.Set(fmt.Sprintf("%s.secure_login_enabled", c.profileName), *secureLoginEnabled)
 	}
 
+
 	if c.proxyConfiguration != "" {
 
 		var proxyConfig ProxyConfiguration
@@ -508,12 +509,14 @@ func updateConfig(c configuration, loggingEnabled *bool, autoPaginationEnabled *
 		host := fmt.Sprintf("%s.proxy_host", c.ProfileName())
 		username := fmt.Sprintf("%s.proxy_username", c.ProfileName())
 		password := fmt.Sprintf("%s.proxy_password", c.ProfileName())
+
 		viper.Set(protocol, proxyConfig.Protocol)
 		viper.Set(port, proxyConfig.Port)
 		viper.Set(host, proxyConfig.Host)
 		viper.Set(username, proxyConfig.UserName)
 		viper.Set(password, proxyConfig.Password)
 		viper.Set(fmt.Sprintf("%s.proxy_pathparams", c.ProfileName()), getPathParamsFromProxy(proxyConfig.PathParams))
+
 	}
 
 	if viper.ConfigFileUsed() == "" {
