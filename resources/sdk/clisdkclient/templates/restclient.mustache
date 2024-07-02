@@ -149,7 +149,7 @@ func (r *RESTClient) callAPI(method string, uri string, data string) (string, er
 
         Client.CheckRetry = DefaultRetryPolicy
 
-        setProxyConf(r.configuration)
+        setProxyConf(r.configuration, "other")
         //Executing the request
         resp, err := ClientDo(request)
         if err != nil {
@@ -325,7 +325,7 @@ func authorizePKCEGrant(c config.Configuration, code string, codeVerifier string
         form["code_verifier"] = []string{codeVerifier}
         request.Body = ioutil.NopCloser(strings.NewReader(form.Encode()))
 
-        setProxyConf(c)
+        setProxyConf(c, "login")
 
         //Executing the request
         resp, err := ClientDo(request)
@@ -405,7 +405,7 @@ func authorize(c config.Configuration) (models.OAuthTokenData, error) {
         form["grant_type"] = []string{"client_credentials"}
         request.Body = ioutil.NopCloser(strings.NewReader(form.Encode()))
 
-        setProxyConf(c)
+        setProxyConf(c, "login")
 
         //Executing the request
         resp, err := ClientDo(request)
@@ -435,24 +435,46 @@ func authorize(c config.Configuration) (models.OAuthTokenData, error) {
         return createOAuthTokenResponse(c, *oAuthToken)
 }
 
-func setProxyConf(c config.Configuration) {
+func setProxyConf(c config.Configuration, path string) {
 
-        proxyConfiguration := c.ProxyConfiguration()
-                if proxyConfiguration != nil && proxyConfiguration.Protocol != "" {
+
+            var proxyConfiguration config.ProxyConfiguration
+            err := json.Unmarshal([]byte(c.ProxyConfiguration()), &proxyConfiguration)
+            if err !=nil {
+                logger.Warnf("Error parsing proxy URL: %v , %v", err c.ProxyConfiguration())
+            }
+
+                if proxyConfiguration.Protocol != "" {
                         var proxyUrl *url.URL
+                        pathValue := ""
+                        proxyConfiguration.Host = proxyConfiguration.Host + ":" + proxyConfiguration.Port
+                        if len(proxyConfiguration.PathParams) > 0 {
+                           params := proxyConfiguration.PathParams
+
+                           if tempValue, exists := params[path]; exists {
+                                pathValue = tempValue
+                            }
+
+                        }
+
                         if proxyConfiguration.UserName != "" && proxyConfiguration.Password != "" {
                                 proxyUrl = &url.URL{
                                         Scheme: proxyConfiguration.Protocol,
                                         User: url.UserPassword(proxyConfiguration.UserName,
                                                 proxyConfiguration.Password),
-                                        Host: proxyConfiguration.Host + ":" + proxyConfiguration.Port,
+                                        Host: proxyConfiguration.Host,
                                 }
                         } else {
                                 urlString := proxyConfiguration.Protocol + "://" +
-                                        proxyConfiguration.Host + ":" +
-                                        proxyConfiguration.Port
+                                        proxyConfiguration.Host
                                 proxyUrl, _ = url.Parse(urlString)
                         }
+
+                        if pathValue !="" {
+                          proxyUrl.Path = pathValue
+                        }
+
+                        fmt.Printf("proxyUrl after configuration %v", proxyUrl)
 
                         tr := &http.Transport{
                                 Proxy: http.ProxyURL(proxyUrl),
