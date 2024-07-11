@@ -63,34 +63,34 @@ public class WebMessagingClient {
     }
 
     /**
-    * Inspect a StructuredMessage, looking for Presence events ({@link EventType#PRESENCE} )
+    * Inspect a StructuredMessage, looking for Presence events ({@link EventTypeEnum#PRESENCE} )
     * @param message message to introspect for Presence events
     * @return true if a Presence event exists in this message, false otherwise
-    * @see EventType#PRESENCE
+    * @see EventTypeEnum#PRESENCE
     */
     static public boolean hasPresenceEvents(StructuredMessage message) {
-        return hasEvents(message, EventType.PRESENCE);
+        return hasEvents(message, EventTypeEnum.PRESENCE);
     }
 
     /**
-    * Inspect a StructuredMessage, looking for Typing events ({@link EventType#TYPING} )
+    * Inspect a StructuredMessage, looking for Typing events ({@link EventTypeEnum#TYPING} )
     * @param message message to introspect for Typing events
     * @return true if a Typing event exists in this message, false otherwise
-    * @see EventType#TYPING
+    * @see EventTypeEnum#TYPING
     */
     static public boolean hasTypingEvents(StructuredMessage message) {
-        return hasEvents(message, EventType.TYPING);
+        return hasEvents(message, EventTypeEnum.TYPING);
     }
 
     /**
-    * Inspect a StructuredMessage, looking for a type of event ({@link EventType} )
+    * Inspect a StructuredMessage, looking for a type of event ({@link EventTypeEnum} )
     *
     * @param message message to introspect for events
     * @param type type of event to look for
     * @return true if this type of event exists in this message, false otherwise
-    * @see EventType
+    * @see EventTypeEnum
     */
-    static public boolean hasEvents(StructuredMessage message, EventType type) {
+    static public boolean hasEvents(StructuredMessage message, EventTypeEnum type) {
         return message.getEvents().stream().anyMatch(messageEvent -> messageEvent.getEventType() == type);
     }
 
@@ -481,7 +481,7 @@ public class WebMessagingClient {
             sendMessageRequest.message(new IncomingNormalizedMessage()
                     .type(NormalizedType.EVENT)
                     .events(Collections.singletonList(new MessageEvent()
-                            .eventType(EventType.PRESENCE)
+                            .eventType(EventTypeEnum.PRESENCE)
                             .presence(new EventPresence()
                                     .type(type))
                     ))
@@ -535,7 +535,7 @@ public class WebMessagingClient {
             sendMessageRequest.message(new IncomingNormalizedMessage()
                     .type(NormalizedType.EVENT)
                     .events(Collections.singletonList(new MessageEvent()
-                            .eventType(EventType.TYPING)
+                            .eventType(EventTypeEnum.TYPING)
                             .typing(new EventTyping().type(EventTypingType.ON))
                     ))
             );
