@@ -426,19 +426,19 @@
 			"name": "patch"
 		}
 	},
-	"/api/v2/outbound/importtemplates":{
+	"/api/v2/outbound/importtemplates": {
 		"delete": {
 			"name": "deleteall"
 		}
 	},
-	"/api/v2/outbound/contactlisttemplates":{
-		"delete":{
-			"name":"deleteall"
+	"/api/v2/outbound/contactlisttemplates": {
+		"delete": {
+			"name": "deleteall"
 		}
 	},
-	"/api/v2/chats/rooms/{roomJid}/participants":{
-		"get":{
-			"name":"getRoomParticipants"
+	"/api/v2/chats/rooms/{roomJid}/participants": {
+		"get": {
+			"name": "getRoomParticipants"
 		}
 	},
 	"/api/v2/workforcemanagement/alternativeshifts/trades": {
@@ -451,7 +451,7 @@
 			"name": "updatecollection"
 		}
 	},
-	"/api/v2/integrations/unifiedcommunications/scheduler/users/{userId}/jobs":{
+	"/api/v2/integrations/unifiedcommunications/scheduler/users/{userId}/jobs": {
 		"get": {
 			"name": "list"
 		}
@@ -467,6 +467,21 @@
 		}
 	},
 	"/api/v2/users/agentui/agents/autoanswer/{agentId}/settings": {
+		"patch": {
+			"name": "patch"
+		}
+	},
+	"/api/v2/socialmedia/topics/{topicId}/dataingestionrules/twitter/{twitterIngestionRuleId}": {
+		"patch": {
+			"name": "patch"
+		}
+	},
+	"/api/v2/socialmedia/topics/{topicId}/dataingestionrules/open/{openId}": {
+		"patch": {
+			"name": "patch"
+		}
+	},
+	"/api/v2/socialmedia/topics/{topicId}/dataingestionrules/facebook/{facebookIngestionRuleId}": {
 		"patch": {
 			"name": "patch"
 		}
