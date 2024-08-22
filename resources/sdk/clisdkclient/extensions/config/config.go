@@ -219,24 +219,24 @@ func getGateWayConfig(profileName string) string {
 	protocol := viper.Get(fmt.Sprintf("%s.gateway_protocol", profileName))
 
 	if protocol != nil {
-		proxyconf := GateWayConfiguration{}
-		proxyconf.Port = viper.GetString(fmt.Sprintf("%s.gateway_port", profileName))
-		proxyconf.Protocol = viper.GetString(fmt.Sprintf("%s.gateway_protocol", profileName))
-		proxyconf.Host = viper.GetString(fmt.Sprintf("%s.gateway_host", profileName))
+		gconf := GateWayConfiguration{}
+		gconf.Port = viper.GetString(fmt.Sprintf("%s.gateway_port", profileName))
+		gconf.Protocol = viper.GetString(fmt.Sprintf("%s.gateway_protocol", profileName))
+		gconf.Host = viper.GetString(fmt.Sprintf("%s.gateway_host", profileName))
 		userName := viper.Get(fmt.Sprintf("%s.gateway_username", profileName))
 
 		pathParams := viper.Get(fmt.Sprintf("%s.gateway_pathparams", profileName))
 
 		if pathParams != nil {
 			pathParamsMap := parsePathParams(pathParams.(string))
-			proxyconf.PathParams = pathParamsMap
+			gconf.PathParams = pathParamsMap
 		}
 
 		if userName != nil {
-			proxyconf.UserName = viper.GetString(fmt.Sprintf("%s.gateway_username", profileName))
-			proxyconf.Password = viper.GetString(fmt.Sprintf("%s.gateway_password", profileName))
+			gconf.UserName = viper.GetString(fmt.Sprintf("%s.gateway_username", profileName))
+			gconf.Password = viper.GetString(fmt.Sprintf("%s.gateway_password", profileName))
 		}
-		jsonData, _ := json.MarshalIndent(proxyconf, "", "")
+		jsonData, _ := json.MarshalIndent(gconf, "", "")
 		return string(jsonData)
 	} else {
 		return ""
@@ -244,7 +244,7 @@ func getGateWayConfig(profileName string) string {
 }
 
 func (c *configuration) String() string {
-	return fmt.Sprintf(`{"profileName": "%s", "environment": "%s", "logFilePath": "%s", "loggingEnabled": "%v", "grantType": "%s", "clientName": "%s", "clientSecret": "%s", "secureLoginEnabled": "%v", "redirectURI": "%s", "accessToken": "%s", "autoPaginationEnabled": "%v" , "proxyConfiguration" : "%v"}`, c.ProfileName(), c.Environment(), c.LogFilePath(), c.LoggingEnabled(), c.GrantType(), c.ClientID(),
+	return fmt.Sprintf(`{"profileName": "%s", "environment": "%s", "logFilePath": "%s", "loggingEnabled": "%v", "grantType": "%s", "clientName": "%s", "clientSecret": "%s", "secureLoginEnabled": "%v", "redirectURI": "%s", "accessToken": "%s", "autoPaginationEnabled": "%v" , "proxyConfiguration" : "%v", "gatewayConfiguration": "%v"}`, c.ProfileName(), c.Environment(), c.LogFilePath(), c.LoggingEnabled(), c.GrantType(), c.ClientID(),
 		c.ClientSecret(), c.SecureLoginEnabled(), c.RedirectURI(), c.AccessToken(), c.AutoPaginationEnabled(), c.proxyString(), c.gateWayString())
 }
 
@@ -263,7 +263,7 @@ func (c *configuration) proxyString() string {
 func (c *configuration) gateWayString() string {
 	a := c.GateWayConfiguration()
 	var gateWayConfig GateWayConfiguration
-	_ = json.Unmarshal([]byte(c.proxyConfiguration), &gateWayConfig)
+	_ = json.Unmarshal([]byte(c.gatewayConfiguration), &gateWayConfig)
 
 	if a == "" {
 		return ""
@@ -380,6 +380,7 @@ func GetConfig(profileName string) (Configuration, error) {
 		autoPaginationEnabled: viper.GetBool(fmt.Sprintf("%s.auto_pagination_enabled", profileName)),
 		secureLoginEnabled:    viper.GetBool(fmt.Sprintf("%s.secure_login_enabled", profileName)),
 		proxyConfiguration:    getProxyConfig(profileName),
+		gatewayConfiguration:  getGateWayConfig(profileName),
 	}, nil
 }
 
