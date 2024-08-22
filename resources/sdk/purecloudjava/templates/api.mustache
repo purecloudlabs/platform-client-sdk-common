@@ -93,17 +93,6 @@ public class {{classname}} {
     }
   }
 
-  public {{#returnType}}{{{returnType}}} {{/returnType}}{{^returnType}}void {{/returnType}}{{operationId}}({{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}Request request) throws IOException, ApiException {
-      try {
-        ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> response = {{localVariablePrefix}}apiClient.invoke(request.withHttpInfo(), {{#returnType}}new TypeReference<{{{returnType}}}>() {}{{/returnType}}{{^returnType}}null{{/returnType}});
-        {{#returnType}}return response.getBody();{{/returnType}}
-      }
-      catch (ApiException | IOException exception) {
-        if ({{localVariablePrefix}}apiClient.getShouldThrowErrors()) throw exception;
-        {{#returnType}}return null;{{/returnType}}
-      }
-    }
-
   /**
    * {{{summary}}}
    * {{{notes}}}{{#vendorExtensions.x-genesys-preview}}

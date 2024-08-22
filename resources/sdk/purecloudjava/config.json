@@ -12,7 +12,7 @@
     "extensionsDestination": "${SDK_REPO}/build/src/main/java/com/mypurecloud/sdk/v2",
     "swagger": {
       "oldSwaggerPath": "${SDK_REPO}/swagger.json",
-      "newSwaggerPath": "https://api.inindca.com/api/v2/docs/swaggerall",
+      "newSwaggerPath": "https://api.mypurecloud.com/api/v2/docs/swagger",
       "previewSwaggerPath": "https://api.mypurecloud.com/api/v2/docs/swaggerpreview",
       "saveNewSwaggerPath": "${SDK_REPO}/swagger.json"
     },
