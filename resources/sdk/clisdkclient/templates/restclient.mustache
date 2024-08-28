@@ -628,6 +628,7 @@ func init() {
         ClientDo = Client.Do
 }
 
+
 func getConfUrl(c config.Configuration, path string, extendedPath string, overridehost string) *url.URL{
         var gateWayConfiguration config.GateWayConfiguration
         err := json.Unmarshal([]byte(c.GateWayConfiguration()), &gateWayConfiguration)
@@ -645,14 +646,18 @@ func getConfUrl(c config.Configuration, path string, extendedPath string, overri
         if len(gateWayConfiguration.PathParams) > 0 {
             params := gateWayConfiguration.PathParams
            if tempValue, exists := params[path]; exists {
-                pathValue = tempValue
+                if !strings.HasPrefix(tempValue, "/") {
+                   pathValue = fmt.Sprintf("/%v", tempValue)
+                } else {
+                    pathValue = fmt.Sprintf("%v", tempValue)
+                }
            }
-         if gateWayConfiguration.Port == "80" || gateWayConfiguration.Port == "443" {
-            uri, _ = url.Parse(fmt.Sprintf("https://%s/%s%s", gateWayConfiguration.Host,pathValue, extendedPath))
-         } else {
-           uri, _ = url.Parse(fmt.Sprintf("https://%s:%s/%s%s", gateWayConfiguration.Host,gateWayConfiguration.Port, pathValue, extendedPath))
          }
-        }
+         if gateWayConfiguration.Port == "80" || gateWayConfiguration.Port == "443" {
+            uri, _ = url.Parse(fmt.Sprintf("%s://%s%s%s", gateWayConfiguration.Protocol, gateWayConfiguration.Host,pathValue, extendedPath))
+         } else {
+          uri, _ = url.Parse(fmt.Sprintf("%s://%s:%s%s%s", gateWayConfiguration.Protocol, gateWayConfiguration.Host,gateWayConfiguration.Port, pathValue, extendedPath))
+         }
         }  else {
           if path == "login" {
              uri, _ = url.Parse(fmt.Sprintf("https://login.%s/oauth/token", c.Environment()))
