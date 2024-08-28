@@ -394,7 +394,7 @@ func deleteUserDirectly(api *UserApi, userId string) (*APIResponse, error) {
 
 	// create path and map variables
 	path := api.Configuration.BasePath + "/api/v2/users/{userId}"
-	path = strings.Replace(path, "{queueId}", userId, -1)
+	path = strings.Replace(path, "{userId}", userId, -1)
 
 	headerParams := make(map[string]string)
 	queryParams := make(map[string]string)
@@ -416,7 +416,7 @@ func deleteUserDirectly(api *UserApi, userId string) (*APIResponse, error) {
 	headerParams["Accept"] = "application/json"
 
 	var successPayload *Queuememberentitylisting
-	response, err := apiClient.CallAPI(path, http.MethodGet, postBody, headerParams, queryParams, formParams, postFileName, fileBytes)
+	response, err := apiClient.CallAPI(path, http.MethodDelete, postBody, headerParams, queryParams, formParams, postFileName, fileBytes)
 	if err != nil {
 		// Nothing special to do here, but do avoid processing the response
 	} else if response.Error != nil {
