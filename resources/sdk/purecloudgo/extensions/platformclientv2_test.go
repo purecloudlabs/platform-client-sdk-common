@@ -388,7 +388,7 @@ func TestDeleteUser(t *testing.T) {
 	}
 }
 
-func deleteUserDirectly(api *UserApi, userId string) (*APIResponse, error) {
+func deleteUserDirectly(api *UsersApi, userId string) (*APIResponse, error) {
 	// SDK does not support nil values for boolean query params yet, so we must manually construct this HTTP request for now
 	apiClient := &api.Configuration.APIClient
 
