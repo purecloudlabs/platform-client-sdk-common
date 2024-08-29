@@ -415,16 +415,14 @@ func deleteUserDirectly(api *UsersApi, userId string) (*APIResponse, error) {
 	headerParams["Content-Type"] = "application/json"
 	headerParams["Accept"] = "application/json"
 
-	var successPayload *Queuememberentitylisting
-	response, err := apiClient.CallAPI(path, http.MethodDelete, postBody, headerParams, queryParams, formParams, postFileName, fileBytes)
+	response, err := apiClient.CallAPI(path, http.MethodDelete, postBody, headerParams, queryParams, formParams, postFileName, fileBytes, "")
 	if err != nil {
 		// Nothing special to do here, but do avoid processing the response
 	} else if response.Error != nil {
 		err = fmt.Errorf(response.ErrorMessage)
-	} else {
-		err = json.Unmarshal([]byte(response.RawBody), &successPayload)
-	}
-	return successPayload, response, err
+	} 
+	
+	return response, err
 }
 
 func Example_authorizeDefaultConfiguration() {
