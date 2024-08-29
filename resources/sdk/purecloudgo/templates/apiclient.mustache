@@ -16,6 +16,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/logger"
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/utils"
 	"github.com/hashicorp/go-retryablehttp"
 )
 
@@ -96,6 +99,43 @@ func getPathValue(pc *ProxyConfiguration, key string) (string, bool) {
 	return "", false
 }
 
+func getConfUrl(c config.Configuration, path string, extendedPath string, overridehost string) *url.URL{
+        var gateWayConfiguration config.GateWayConfiguration
+        err := json.Unmarshal([]byte(c.GateWayConfiguration()), &gateWayConfiguration)
+        if err !=nil {
+             logger.Warnf("Error parsing GateWay URL: %v , %v", err, c.GateWayConfiguration())
+        }
+
+        uri, _ := url.Parse(fmt.Sprintf("https://api.%s%s", c.Environment(), extendedPath))
+        if overridehost != "" {
+            uri, _ = url.Parse(fmt.Sprintf("https://api.%s%s", overridehost, extendedPath))
+        }
+
+        if gateWayConfiguration.Host != "" {
+        pathValue := ""
+        if len(gateWayConfiguration.PathParams) > 0 {
+            params := gateWayConfiguration.PathParams
+           if tempValue, exists := params[path]; exists {
+                if !strings.HasPrefix(tempValue, "/") {
+                   pathValue = fmt.Sprintf("/%v", tempValue)
+                } else {
+                    pathValue = fmt.Sprintf("%v", tempValue)
+                }
+           }
+         }
+         if gateWayConfiguration.Port == "80" || gateWayConfiguration.Port == "443" {
+            uri, _ = url.Parse(fmt.Sprintf("%s://%s%s%s", gateWayConfiguration.Protocol, gateWayConfiguration.Host,pathValue, extendedPath))
+         } else {
+          uri, _ = url.Parse(fmt.Sprintf("%s://%s:%s%s%s", gateWayConfiguration.Protocol, gateWayConfiguration.Host,gateWayConfiguration.Port, pathValue, extendedPath))
+         }
+        }  else {
+          if path == "login" {
+             uri, _ = url.Parse(fmt.Sprintf("https://login.%s/oauth/token", c.Environment()))
+          }
+        }
+     return uri
+}
+
 // CallAPI invokes an API endpoint
 func (c *APIClient) CallAPI(path string, method string,
 	postBody interface{},
@@ -107,20 +147,9 @@ func (c *APIClient) CallAPI(path string, method string,
 	pathName string) (*APIResponse, error) {
 
 	// Build request URL w/query params
-	urlString := path + "?"
-	if queryParams != nil {
-		for k, v := range queryParams {
-			if v != "" {
-				urlString += fmt.Sprintf("%v=%v&", url.QueryEscape(strings.TrimSpace(k)), url.QueryEscape(strings.TrimSpace(v)))
-			}
-		}
-	}
-	urlString = urlString[:len(urlString)-1]
-	u, err := url.Parse(urlString)
-	if err != nil {
-		return nil, err
-	}
+	u := getConfUrl(c.configuration, "api", path, c.environment)
 
+	
 	request := retryablehttp.Request{
 		Request: &http.Request{
 			URL:    u,

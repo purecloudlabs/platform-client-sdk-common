@@ -50,6 +50,7 @@ type Configuration struct {
 	ConfigFilePath           string                `json:"configFilePath,omitempty"`
 	AutoReloadConfig         bool                  `json:"autoReloadConfig,omitempty"`
 	ProxyConfiguration       *ProxyConfiguration   `json:"proxyConfiguration,omitempty"`
+	GateWayConfiguration	 *GateWayConfiguration `json:"gateWayConfiguration,omitempty"`
 }
 
 const (
@@ -81,6 +82,14 @@ type RetryConfiguration struct {
 
 // ProxyConfiguration has settings to configure the SDK Proxy logic
 type ProxyConfiguration struct {
+	Protocol    string   `json:"protocol,omitempty"`
+	Host        string   `json:"host,omitempty"`
+	Port        string   `json:"port,omitempty"`
+	Auth  		*Auth     `json:"auth,omitempty"`
+	PathParams  []*PathParams `json:"pathParams,omitempty"`
+}
+
+type GateWayConfiguration struct {
 	Protocol    string   `json:"protocol,omitempty"`
 	Host        string   `json:"host,omitempty"`
 	Port        string   `json:"port,omitempty"`
