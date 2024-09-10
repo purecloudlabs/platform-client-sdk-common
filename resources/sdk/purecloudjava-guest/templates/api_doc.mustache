@@ -13,7 +13,10 @@ All URIs are relative to *{{basePath}}*
 {{#operation}}
 ## {{operationId}}
 
-{{#isDeprecated}}<span style="background-color: #f0ad4e;display: inline-block;padding: 7px;font-weight: bold;line-height: 1;color: #ffffff;text-align: center;white-space: nowrap;vertical-align: baseline;border-radius: .25em;margin: 10px 0;">DEPRECATED</span>{{/isDeprecated}}
+{{#isDeprecated}}:::{"alert":"warning","title":"Deprecated","collapsible":false,"autoCollapse":false}
+This resource has been deprecated
+:::
+{{/isDeprecated}}
 
 > {{#returnType}}{{#returnTypeIsPrimitive}}{{returnType}}{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}[{{returnType}}]({{returnBaseType}}){{/returnTypeIsPrimitive}}{{/returnType}}{{^returnType}}Void{{/returnType}} {{operationId}}({{#allParams}}{{{paramName}}}{{#hasMore}}, {{/hasMore}}{{/allParams}})
 

@@ -17,8 +17,9 @@ All URIs are relative to *{{basePath}}*
 
 > {{#returnType}}{{#returnTypeIsPrimitive}}**{{returnType}}**{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}{{returnType}}{{/returnTypeIsPrimitive}}{{/returnType}}{{^returnType}}void{{/returnType}} {{operationId}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/hasOptionalParams}})
 
-{{#isDeprecated}}
-<span style="background-color: #f0ad4e;display: inline-block;padding: 7px;font-weight: bold;line-height: 1;color: #ffffff;text-align: center;white-space: nowrap;vertical-align: baseline;border-radius: .25em;margin: 10px 0;">DEPRECATED</span>
+{{#isDeprecated}}:::{"alert":"warning","title":"Deprecated","collapsible":false,"autoCollapse":false}
+This resource has been deprecated
+:::
 {{/isDeprecated}}
 
 {{httpMethod}} {{path}}
