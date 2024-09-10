@@ -10,6 +10,8 @@ This CLI focuses mainly on exposing the following operations:
 
 **Note:** Most operations exposed by the `list` command and some operations exposed by the `get` command support the `pageSize` parameter. It's important to set this to an appropriate value if a large number of resources are being listed to reduce the load on the API and reduce wait times.
 
+Documentation: https://mypurecloud.github.io/platform-client-sdk-cli/
+
 # Installation
 
 The [Developer Center](https://developer.mypurecloud.com/api/rest/command-line-interface/) contains installation instructions for supported operating systems.
