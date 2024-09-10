@@ -70,14 +70,6 @@
               "$ref": "#/settings/packageName"
             }
           ]
-        },
-        {
-          "type": "shell",
-          "path": "${COMMON_ROOT}/resources/scripts/docindex.sh",
-          "args": ["${SDK_REPO}/build/docs"],
-          "appendIsNewReleaseArg": false,
-          "appendVersionArg": false,
-          "failOnError": true
         }
       ],
       "postRunScripts": [
