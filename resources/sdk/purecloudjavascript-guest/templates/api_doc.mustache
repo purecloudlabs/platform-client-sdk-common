@@ -1,22 +1,19 @@
----
-title: {{classname}}
-ispreview: true
----
 # {{moduleName}}.{{classname}}{{#description}}
+
 {{description}}{{/description}}
 
 All URIs are relative to *{{basePath}}*
 
 | Method | HTTP request | Description |
 | ------------- | ------------- | ------------- |
-{{#operations}}{{#operation}}[**{{operationId}}**]({{classname}}.html#{{operationId}}) | **{{httpMethod}}** {{path}} | {{#summary}}{{summary}}{{/summary}}
-{{/operation}}{{/operations}}{: class="table table-striped"}
+{{#operations}}{{#operation}}[**{{operationId}}**](#{{operationId}}) | **{{httpMethod}}** {{path}} | {{#summary}}{{summary}}{{/summary}}
+{{/operation}}{{/operations}}
 
 {{#operations}}
 {{#operation}}
-<a name="{{operationId}}"></a>
+## {{operationId}}
 
-# {{#returnType}}{{#returnTypeIsPrimitive}}**{{returnType}}**{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}{{returnType}}{{/returnTypeIsPrimitive}}{{/returnType}}{{^returnType}}void{{/returnType}} {{operationId}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/hasOptionalParams}})
+> {{#returnType}}{{#returnTypeIsPrimitive}}**{{returnType}}**{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}{{returnType}}{{/returnTypeIsPrimitive}}{{/returnType}}{{^returnType}}void{{/returnType}} {{operationId}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/hasOptionalParams}})
 
 {{#deprecated}}<span style="background-color: #f0ad4e;display: inline-block;padding: 7px;font-weight: bold;line-height: 1;color: #ffffff;text-align: center;white-space: nowrap;vertical-align: baseline;border-radius: .25em;margin: 10px 0;">DEPRECATED</span>{{/deprecated}}
 
@@ -128,7 +125,7 @@ apiInstance.{{{operationId}}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendo
 | Name | Type | Description  | Notes |
 | ------------- | ------------- | ------------- | ------------- |{{/-last}}{{/allParams}}
 {{#allParams}} **{{paramName}}** | **{{dataType}}** | {{description}} | {{^required}}[optional] {{/required}}{{#defaultValue}}[default to {{defaultValue}}]{{/defaultValue}}{{#allowableValues}}<br />**Values**: {{#values}}{{.}}{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}} |
-{{#-last}}{: class="table table-striped"}{{/-last}}{{/allParams}}
+{{/allParams}}
 
 ### Return type
 
@@ -136,3 +133,5 @@ apiInstance.{{{operationId}}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendo
 
 {{/operation}}
 {{/operations}}
+
+_{{projectName}}@{{projectVersion}}_
