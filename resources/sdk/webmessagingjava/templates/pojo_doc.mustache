@@ -2,11 +2,9 @@
 
 | Name | Type | Description | Notes |
 | ------------ | ------------- | ------------- | ------------- |
-{{#vars}}| **{{name}}** | {{#isEnum}}[**{{{datatypeWithEnum}}}**](#{{datatypeWithEnum}}){{/isEnum}}{{^isEnum}}<!---->{{#items.isEnum}}[**{{datatypeWithEnum}}**](#{{{items.datatypeWithEnum}}}){{/items.isEnum}}{{^items.isEnum}}<!---->{{#isPrimitiveType}}**{{datatype}}**{{/isPrimitiveType}}{{^isPrimitiveType}}[**{{datatype}}**]({{complexType}}){{/isPrimitiveType}}{{/items.isEnum}}{{/isEnum}}<!----> | {{{description}}} | {{^required}} [optional]{{/required}}{{#readOnly}} [readonly]{{/readOnly}} |
+{{#vars}}| **{{name}}** | {{#isEnum}}[**{{{datatypeWithEnum}}}**](#Enum--{{datatypeWithEnum}}){{/isEnum}}{{^isEnum}}{{#items.isEnum}}[**{{{datatypeWithEnum}}}**](#Enum--{{{items.datatypeWithEnum}}}){{/items.isEnum}}{{^items.isEnum}}{{#isPrimitiveType}}**{{datatype}}**{{/isPrimitiveType}}{{^isPrimitiveType}}[**{{datatype}}**]({{complexType}}){{/isPrimitiveType}}{{/items.isEnum}}{{/isEnum}} | {{{description}}} | {{^required}} [optional]{{/required}}{{#readOnly}} [readonly]{{/readOnly}} |
 {{/vars}}
 {{#vars}}{{#isEnum}}
-
-<a name="{{{datatypeWithEnum}}}"></a>
 
 ## Enum: {{datatypeWithEnum}}
 
@@ -16,8 +14,6 @@
 | {{/-last}}{{#-last}}{{/-last}}{{/values}}{{/isString}}{{^isString}}{{#values}}{{#lambda.replace}}{{#lambda.prefixNumberWithWord}}{{#lambda.uppercase}}{{.}}{{/lambda.uppercase}}{{/lambda.prefixNumberWithWord}}{{/lambda.replace}} | {{.}} | {{^-last}}
 | {{/-last}}{{#-last}}{{/-last}}{{/values}}{{/isString}}{{/enumVars.0}}{{/allowableValues}}
 {{/isEnum}}{{#items.isEnum}}
-
-<a name="{{{items.datatypeWithEnum}}}"></a>
 
 ## Enum: {{items.datatypeWithEnum}}
 
