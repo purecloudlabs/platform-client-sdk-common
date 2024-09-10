@@ -3,7 +3,7 @@
 | Name | Type | Description | Notes |
 | ------------ | ------------- | ------------- | ------------- |
 {{#vars}}| **{{name}}** | {{#isEnum}}[**{{{datatypeWithEnum}}}**](#Enum--{{datatypeWithEnum}}){{/isEnum}}{{^isEnum}}{{#items.isEnum}}[**{{{datatypeWithEnum}}}**](#Enum--{{{items.datatypeWithEnum}}}){{/items.isEnum}}{{^items.isEnum}}{{#isPrimitiveType}}**{{datatype}}**{{/isPrimitiveType}}{{^isPrimitiveType}}[**{{datatype}}**]({{complexType}}){{/isPrimitiveType}}{{/items.isEnum}}{{/isEnum}} | {{{description}}} | {{^required}} [optional]{{/required}}{{#readOnly}} [readonly]{{/readOnly}} |
-{{/vars}}{: class="table table-striped"}
+{{/vars}}
 {{#vars}}{{#isEnum}}
 
 ## Enum: {{datatypeWithEnum}}
@@ -13,7 +13,6 @@
 | {{#isString}}{{#values}}{{#lambda.prefixNumberWithUnderscore}}{{#lambda.replace}}{{#lambda.uppercase}}{{.}}{{/lambda.uppercase}}{{/lambda.replace}}{{/lambda.prefixNumberWithUnderscore}} | &quot;{{.}}&quot; | {{^-last}}
 | {{/-last}}{{#-last}}{{/-last}}{{/values}}{{/isString}}{{^isString}}{{#values}}{{#lambda.replace}}{{#lambda.prefixNumberWithWord}}{{#lambda.uppercase}}{{.}}{{/lambda.uppercase}}{{/lambda.prefixNumberWithWord}}{{/lambda.replace}} | {{.}} | {{^-last}}
 | {{/-last}}{{#-last}}{{/-last}}{{/values}}{{/isString}}{{/enumVars.0}}{{/allowableValues}}
-{: class="table table-striped"}
 {{/isEnum}}{{#items.isEnum}}
 
 ## Enum: {{items.datatypeWithEnum}}
@@ -21,5 +20,4 @@
 | Name | Value |
 | ---- | ----- |{{#items.allowableValues}}{{#enumVars}}
 | {{name}} | {{value}} |{{/enumVars}}{{/items.allowableValues}}
-{: class="table table-striped"}
 {{/items.isEnum}}{{/vars}}

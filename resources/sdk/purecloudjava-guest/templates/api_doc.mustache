@@ -89,7 +89,7 @@ try {
 | Name | Type | Description  | Notes |
 | ------------- | ------------- | ------------- | ------------- |{{/-last}}{{/allParams}}
 {{#allParams}}| **{{paramName}}** | {{#isPrimitiveType}}**{{dataType}}**{{/isPrimitiveType}}{{^isPrimitiveType}}{{#isFile}}**{{dataType}}**{{/isFile}}{{^isFile}}[**{{dataType}}**]({{baseType}}){{/isFile}}{{/isPrimitiveType}}| {{description}} |{{^required}} [optional]{{/required}}{{#defaultValue}} [default to {{defaultValue}}]{{/defaultValue}}{{#allowableValues}}<br />**Values**: {{#values}}{{.}}{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}} |
-{{/allParams}}{{#allParams}}{{#-last}}{: class="table table-striped"}{{/-last}}{{/allParams}}
+{{/allParams}}{{#allParams}}{{/allParams}}
 
 
 ### Return type

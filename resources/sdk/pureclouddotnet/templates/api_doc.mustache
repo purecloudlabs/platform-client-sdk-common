@@ -8,7 +8,7 @@ All URIs are relative to *{{basePath}}*
 | Method | HTTP request | Description |
 | ------------- | ------------- | ------------- |
 {{#operations}}{{#operation}}| [**{{operationId}}**](#{{operationId}}) | **{{httpMethod}}** {{path}} | {{#summary}}{{summary}}{{/summary}} |
-{{/operation}}{{/operations}}{: class="table table-striped"}
+{{/operation}}{{/operations}}
 
 {{#operations}}
 {{#operation}}
@@ -90,7 +90,7 @@ namespace Example
 |Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|{{/-last}}{{/allParams}}
 {{#allParams}}| **{{paramName}}** | {{#isFile}}**{{{dataType}}}**{{/isFile}}{{#isPrimitiveType}}**{{{dataType}}}**{{/isPrimitiveType}}{{^isPrimitiveType}}{{^isFile}}[**{{{dataType}}}**]({{baseType}}){{/isFile}}{{/isPrimitiveType}}| {{description}} | {{^required}}[optional] {{/required}}{{#defaultValue}}[default to {{{defaultValue}}}]{{/defaultValue}}{{#allowableValues}}<br />**Values**: {{#values}}{{.}}{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}} |
-{{#-last}}{: class="table table-striped"}{{/-last}}{{/allParams}}
+{{/allParams}}
 
 ### Return type
 
