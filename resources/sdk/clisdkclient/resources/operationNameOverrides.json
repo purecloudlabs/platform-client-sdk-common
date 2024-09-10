@@ -485,5 +485,18 @@
 		"patch": {
 			"name": "patch"
 		}
+	},
+	"/api/v2/assistants/{assistantId}/queues/{queueId}": {
+		"delete": {
+			"name": "removeQueueFromAssistant"
+		},
+		"put": {
+			"name": "createAssistantQueue"
+		}
+	},
+	"/api/v2/assistants/{assistantId}/queues": {
+		"get": {
+			"name": "getAssistantQueues"
+		}
 	}
 }
