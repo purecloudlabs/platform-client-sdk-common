@@ -1,6 +1,5 @@
----
-title: {{classname}}
----
+# {{classname}}
+
 {{#models}}{{#model}}{{#isEnum}}# {{moduleName}}.{{classname}}
 
 ## Enum
@@ -14,11 +13,9 @@ title: {{classname}}
 
 | Name | Type | Description | Notes |
 | ------------ | ------------- | ------------- | ------------- |
-{{#vars}}**{{name}}** | {{#isPrimitiveType}}**{{datatype}}**{{/isPrimitiveType}}{{^isPrimitiveType}}[**{{datatype}}**]({{complexType}}.html){{/isPrimitiveType}} | {{description}} | {{^required}}[optional] {{/required}}{{#readOnly}}[readonly] {{/readOnly}}{{#defaultValue}}[default to {{defaultValue}}]{{/defaultValue}}
+{{#vars}}**{{name}}** | {{#isPrimitiveType}}**{{datatype}}**{{/isPrimitiveType}}{{^isPrimitiveType}}[**{{datatype}}**]({{complexType}}){{/isPrimitiveType}} | {{description}} | {{^required}}[optional] {{/required}}{{#readOnly}}[readonly] {{/readOnly}}{{#defaultValue}}[default to {{defaultValue}}]{{/defaultValue}}
 {{/vars}}
 {{#vars}}{{#isEnum}}
-
-<a name="{{{datatypeWithEnum}}}"></a>
 
 ## Enum: {{datatypeWithEnum}}
 
@@ -28,3 +25,5 @@ title: {{classname}}
 
 {{/isEnum}}{{/vars}}
 {{/isEnum}}{{/model}}{{/models}}
+
+_{{projectName}}@{{projectVersion}}_

@@ -1,6 +1,5 @@
----
-title: {{classname}}
----
+# {{classname}}
+
 ## {{packageName}}.Api.{{classname}}{{#description}}
 {{description}}{{/description}}
 
@@ -8,16 +7,20 @@ All URIs are relative to *{{basePath}}*
 
 | Method | HTTP request | Description |
 | ------------- | ------------- | ------------- |
-{{#operations}}{{#operation}}| [**{{operationId}}**]({{classname}}.html#{{operationIdLowerCase}}) | **{{httpMethod}}** {{path}} | {{#summary}}{{summary}}{{/summary}} |
-{{/operation}}{{/operations}}{: class="table table-striped"}
+{{#operations}}{{#operation}}| [**{{operationId}}**](#{{operationId}}) | **{{httpMethod}}** {{path}} | {{#summary}}{{summary}}{{/summary}} |
+{{/operation}}{{/operations}}
 
 {{#operations}}
 {{#operation}}
-<a name="{{operationIdLowerCase}}"></a>
 
-## {{#returnType}}{{#returnTypeIsPrimitive}}**{{returnType}}**{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}[**{{returnType}}**]({{returnBaseType}}.html){{/returnTypeIsPrimitive}}{{/returnType}}{{^returnType}}void{{/returnType}} {{operationId}} ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{^-last}}, {{/-last}}{{/allParams}})
+## {{operationId}}
 
-{{#isDeprecated}}<span style="background-color: #f0ad4e;display: inline-block;padding: 7px;font-weight: bold;line-height: 1;color: #ffffff;text-align: center;white-space: nowrap;vertical-align: baseline;border-radius: .25em;margin: 10px 0;">DEPRECATED</span>{{/isDeprecated}}
+> {{#returnType}}{{#returnTypeIsPrimitive}}**{{returnType}}**{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}[**{{returnType}}**]({{returnBaseType}}){{/returnTypeIsPrimitive}}{{/returnType}}{{^returnType}}void{{/returnType}} {{operationId}} ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{^-last}}, {{/-last}}{{/allParams}})
+
+{{#isDeprecated}}:::{"alert":"warning","title":"Deprecated","collapsible":false,"autoCollapse":false}
+This resource has been deprecated
+:::
+{{/isDeprecated}}
 
 {{{summary}}}{{#notes}}
 
@@ -89,12 +92,14 @@ namespace Example
 
 |Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|{{/-last}}{{/allParams}}
-{{#allParams}}| **{{paramName}}** | {{#isFile}}**{{{dataType}}}**{{/isFile}}{{#isPrimitiveType}}**{{{dataType}}}**{{/isPrimitiveType}}{{^isPrimitiveType}}{{^isFile}}[**{{{dataType}}}**]({{baseType}}.html){{/isFile}}{{/isPrimitiveType}}| {{description}} | {{^required}}[optional] {{/required}}{{#defaultValue}}[default to {{{defaultValue}}}]{{/defaultValue}}{{#allowableValues}}<br />**Values**: {{#values}}{{.}}{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}} |
-{{#-last}}{: class="table table-striped"}{{/-last}}{{/allParams}}
+{{#allParams}}| **{{paramName}}** | {{#isFile}}**{{{dataType}}}**{{/isFile}}{{#isPrimitiveType}}**{{{dataType}}}**{{/isPrimitiveType}}{{^isPrimitiveType}}{{^isFile}}[**{{{dataType}}}**]({{baseType}}){{/isFile}}{{/isPrimitiveType}}| {{description}} | {{^required}}[optional] {{/required}}{{#defaultValue}}[default to {{{defaultValue}}}]{{/defaultValue}}{{#allowableValues}}<br />**Values**: {{#values}}{{.}}{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}} |
+{{/allParams}}
 
 ### Return type
 
-{{#returnType}}{{#returnTypeIsPrimitive}}**{{{returnType}}}**{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}[**{{{returnType}}}**]({{returnBaseType}}.html){{/returnTypeIsPrimitive}}{{/returnType}}{{^returnType}}void (empty response body){{/returnType}}
+{{#returnType}}{{#returnTypeIsPrimitive}}**{{{returnType}}}**{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}[**{{{returnType}}}**]({{returnBaseType}}){{/returnTypeIsPrimitive}}{{/returnType}}{{^returnType}}void (empty response body){{/returnType}}
 
 {{/operation}}
 {{/operations}}
+
+_{{packageName}} {{packageVersion}}_
