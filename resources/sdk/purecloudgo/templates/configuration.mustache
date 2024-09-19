@@ -16,7 +16,6 @@ import (
 	"os"
 	"log"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -41,7 +40,7 @@ type Configuration struct {
 	RefreshInProgress        int64                 `json:"refreshInProgress,omitempty"`
 	RefreshTokenWaitTime     int                   `json:"refreshTokenWaitTime,omitempty"`
 	AccessTokenExpiresIn     int                   `json:"accessTokenExpiresIn,omitempty"`
-    	AutomaticTokenRefresh    bool                  `json:"automaticTokenRefresh,omitempty"`
+	AutomaticTokenRefresh    bool                  `json:"automaticTokenRefresh,omitempty"`
 	DefaultHeader            map[string]string     `json:"defaultHeader,omitempty"`
 	UserAgent                string                `json:"userAgent,omitempty"`
 	APIClient                APIClient             `json:"APIClient,omitempty"`
@@ -463,13 +462,13 @@ func (c *Configuration) setAutomaticTokenRefresh(value bool) {
 // AuthorizeClientCredentials authorizes this Configuration instance using client credentials.
 // The access token will be set automatically and API instances using this configuration object can now make authorized requests.
 func (c *Configuration) AuthorizeClientCredentials(clientID string, clientSecret string) error {
-	authHostRegex := regexp.MustCompile(`(?i)\/\/api\.`)
-	authHost := authHostRegex.ReplaceAllString(c.BasePath, "//login.")
+	loginURI := getConfUrl(c, "login", "/oauth/token", "")
+
 	headerParams := make(map[string]string)
 	headerParams["Authorization"] = "Basic " + base64.StdEncoding.EncodeToString([]byte(clientID+":"+clientSecret))
 	formParams := url.Values{}
 	formParams["grant_type"] = []string{"client_credentials"}
-	response, err := c.APIClient.CallAPI(authHost+"/oauth/token", "POST", nil, headerParams, nil, formParams, "", nil, "login")
+	response, err := c.APIClient.CallAPI(loginURI.String(), "POST", nil, headerParams, nil, formParams, "", nil, "login")
 	if err != nil && response == nil {
 		return err
 	}
@@ -515,8 +514,9 @@ func (c *Configuration) AuthorizeClientCredentials(clientID string, clientSecret
 func (c *Configuration) AuthorizeCodeGrant(clientID string, clientSecret string, authCode string, redirectUri string) (*AuthResponse, error) {
 	c.ClientID = clientID
 	c.ClientSecret = clientSecret
-	authHostRegex := regexp.MustCompile(`(?i)\/\/api\.`)
-	authHost := authHostRegex.ReplaceAllString(c.BasePath, "//login.")
+	
+	loginURI := getConfUrl(c, "login", "/oauth/token", "")
+
 	headerParams := make(map[string]string)
 	headerParams["Authorization"] = "Basic " + base64.StdEncoding.EncodeToString([]byte(clientID+":"+clientSecret))
 	headerParams["Content-Type"] = "application/x-www-form-urlencoded"
@@ -524,7 +524,7 @@ func (c *Configuration) AuthorizeCodeGrant(clientID string, clientSecret string,
 	formParams["grant_type"] = []string{"authorization_code"}
 	formParams["code"] = []string{authCode}
 	formParams["redirect_uri"] = []string{redirectUri}
-	response, err := c.APIClient.CallAPI(authHost+"/oauth/token", "POST", nil, headerParams, nil, formParams, "", nil, "login")
+	response, err := c.APIClient.CallAPI(loginURI.String(), "POST", nil, headerParams, nil, formParams, "", nil, "login")
 	if err != nil && response == nil {
 		return nil, err
 	}
@@ -558,15 +558,15 @@ func (c *Configuration) AuthorizeCodeGrant(clientID string, clientSecret string,
 // RefreshAuthorizationCodeGrant requests a new access token for the authorization code grant.
 // The access and refresh tokens will be set automatically and API instances using this configuration object can continue to make authorized requests.
 func (c *Configuration) RefreshAuthorizationCodeGrant(clientID string, clientSecret string, refreshToken string) (*AuthResponse, error) {
-	authHostRegex := regexp.MustCompile(`(?i)\/\/api\.`)
-	authHost := authHostRegex.ReplaceAllString(c.BasePath, "//login.")
+	loginURI := getConfUrl(c, "login", "/oauth/token", "")
+
 	headerParams := make(map[string]string)
 	headerParams["Authorization"] = "Basic " + base64.StdEncoding.EncodeToString([]byte(clientID+":"+clientSecret))
 	headerParams["Content-Type"] = "application/x-www-form-urlencoded"
 	formParams := url.Values{}
 	formParams["grant_type"] = []string{"refresh_token"}
 	formParams["refresh_token"] = []string{refreshToken}
-	response, err := c.APIClient.CallAPI(authHost+"/oauth/token", "POST", nil, headerParams, nil, formParams, "", nil, "login")
+	response, err := c.APIClient.CallAPI(loginURI.String(), "POST", nil, headerParams, nil, formParams, "", nil, "login")
 	if err != nil && response == nil {
 		return nil, err
 	}
@@ -634,8 +634,8 @@ func (c *Configuration) ComputePKCECodeChallenge(codeVerifier string) (string, e
 // The access and refresh tokens will be set automatically and API instances using this configuration object can now make authorized requests.
 func (c *Configuration) AuthorizePKCEGrant(clientID string, codeVerifier string, authCode string, redirectUri string) (*AuthResponse, error) {
 	c.ClientID = clientID
-	authHostRegex := regexp.MustCompile(`(?i)\/\/api\.`)
-	authHost := authHostRegex.ReplaceAllString(c.BasePath, "//login.")
+	loginURI := getConfUrl(c, "login", "/oauth/token", "")
+
 	headerParams := make(map[string]string)
 	headerParams["Content-Type"] = "application/x-www-form-urlencoded"
 	formParams := url.Values{}
@@ -644,7 +644,7 @@ func (c *Configuration) AuthorizePKCEGrant(clientID string, codeVerifier string,
 	formParams["code_verifier"] = []string{codeVerifier}
 	formParams["client_id"] = []string{clientID}
 	formParams["redirect_uri"] = []string{redirectUri}
-	response, err := c.APIClient.CallAPI(authHost+"/oauth/token", "POST", nil, headerParams, nil, formParams, "", nil, "login")
+	response, err := c.APIClient.CallAPI(loginURI.String(), "POST", nil, headerParams, nil, formParams, "", nil, "login")
 	if err != nil && response == nil {
 		return nil, err
 	}

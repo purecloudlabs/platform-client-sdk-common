@@ -147,7 +147,6 @@ func (c *APIClient) CallAPI(path string, method string,
 	fileBytes []byte,
 	pathName string) (*APIResponse, error) {
 
-	// Build request URL w/query params
 	urlString := path + "?"
 	u := getConfUrl(c.configuration, pathName, "", c.configuration.Host)
 
