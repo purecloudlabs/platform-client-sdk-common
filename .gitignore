@@ -77,3 +77,4 @@ typings/
 
 # User/project-specific configurations
 .idea/
+.vscode/

@@ -123,7 +123,7 @@ namespace {{packageName}}.Tests
             Console.WriteLine($"CorrelationId for PutUserProfileskillsWithHttpInfo {skills.CorrelationId}");
         }
 
-        {{! [Test, Order(5)]
+        [Test, Order(5)]
         public void TestNotifications()
         {
             var handler = new NotificationHandler();
@@ -175,7 +175,7 @@ namespace {{packageName}}.Tests
             // Assert that both worked
             Assert.AreEqual(busyReceived, true);
             Assert.AreEqual(availableReceived, true);
-        } }}
+        } 
 
 
         [Test, Retry(2), Order(6)]
