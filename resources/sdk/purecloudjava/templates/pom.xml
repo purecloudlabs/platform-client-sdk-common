@@ -366,7 +366,7 @@
     <guava-version>33.3.0-jre</guava-version>
     <mockito.version>5.13.0</mockito.version>
     <ini4j-version>0.5.4</ini4j-version>
-    <io-netty-version>4.1.112.Final</io-netty-version>
+    <io-netty-version>4.1.113.Final</io-netty-version>
     <name>${props.name}</name>
     <version>${props.version}</version>
     <description>${props.description}</description>
