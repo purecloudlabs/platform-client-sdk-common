@@ -26,7 +26,7 @@ mono $COMMON_DIR/resources/sdk/pureclouddotnet-guest/bin/nuget.exe install $BUIL
 mkdir -p $BUILD_DIR/bin;
 
 cp $BUILD_DIR/packages/Newtonsoft.Json.13.0.3/lib/net45/Newtonsoft.Json.dll $BUILD_DIR/bin/Newtonsoft.Json.dll;
-cp $BUILD_DIR/packages/RestSharp.110.2.0/lib/net471/RestSharp.dll $BUILD_DIR/bin/RestSharp.dll;
+cp $BUILD_DIR/packages/RestSharp.112.0.0/lib/net471/RestSharp.dll $BUILD_DIR/bin/RestSharp.dll;
 cp $BUILD_DIR/packages/System.Text.Json.7.0.2/lib/net462/System.Text.Json.dll $BUILD_DIR/bin/System.Text.Json.dll;
 cp $BUILD_DIR/packages/System.Text.Encodings.Web.7.0.0/lib/net462/System.Text.Encodings.Web.dll $BUILD_DIR/bin/System.Text.Encodings.Web.dll;
 cp $BUILD_DIR/packages/System.Threading.Tasks.Extensions.4.5.4/lib/net461/System.Threading.Tasks.Extensions.dll $BUILD_DIR/bin/System.Threading.Tasks.Extensions.dll;

@@ -28,7 +28,7 @@ mono $COMMON_DIR/resources/sdk/pureclouddotnet/bin/nuget.exe install $BUILD_DIR/
 mkdir -p $BUILD_DIR/bin/netstandard2.0;
 
 cp $BUILD_DIR/packages/Newtonsoft.Json.13.0.3/lib/net45/Newtonsoft.Json.dll $BUILD_DIR/bin/Newtonsoft.Json.dll;
-cp $BUILD_DIR/packages/RestSharp.110.2.0/lib/net471/RestSharp.dll $BUILD_DIR/bin/RestSharp.dll;
+cp $BUILD_DIR/packages/RestSharp.112.0.0/lib/net471/RestSharp.dll $BUILD_DIR/bin/RestSharp.dll;
 cp $BUILD_DIR/packages/WebSocketSharp.1.0.3-rc11/lib/websocket-sharp.dll $BUILD_DIR/bin/websocket-sharp.dll;
 cp $BUILD_DIR/packages/NUnit.3.10.1/lib/net45/nunit.framework.dll $BUILD_DIR/bin/nunit.framework.dll;
 cp $BUILD_DIR/packages/Moq.4.5.3/lib/net45/Moq.dll $BUILD_DIR/bin/Moq.dll;

@@ -41,7 +41,7 @@ echo '<?xml version="1.0" encoding="utf-8"?>'\
 '		<description>A .NET library to interface with the PureCloud Platform API Guest Chat API</description>'\
 '		<dependencies>'\
 '			<dependency id="Newtonsoft.Json" version="11.0.2" />'\
-'			<dependency id="RestSharp" version="110.2.0" />'\
+'			<dependency id="RestSharp" version="112.0.0" />'\
 '			<dependency id="ini-parser" version="2.5.2" />'\
 '			<dependency id="System.Text.Json" version="7.0.2" />'\
 '			<dependency id="System.Text.Encodings.Web" version="7.0.2" />'\
