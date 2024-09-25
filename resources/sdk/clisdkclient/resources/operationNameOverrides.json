@@ -498,5 +498,10 @@
 		"get": {
 			"name": "getAssistantQueues"
 		}
+	},
+	"/api/v2/conversations/messaging/integrations/twitter/oauth/settings": {
+		"get": {
+			"name": "getAllTwitterOauthSettings"
+		}
 	}
 }
