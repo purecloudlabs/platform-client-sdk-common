@@ -8,6 +8,7 @@ using {{=it.packageName}}.Client;
 using {{=it.packageName}}.Extensions;
 using RestSharp;
 using System.Security.Cryptography;
+using System.Reflection;
 
 namespace {{=it.packageName}}.Extensions
 {
