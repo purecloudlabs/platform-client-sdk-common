@@ -844,8 +844,8 @@ namespace {{packageName}}.Client
                    var retryAfterHeader = response.Headers
     .Select(header => new 
     { 
-        Name = header.GetType().GetProperties().First(p => p.Name == "Name").GetValue(header), 
-        Value = header.GetType().GetProperties().First(p => p.Name == "Value").GetValue(header) 
+        Name = header?.Name, 
+        Value = header?.Value, 
     })
     .FirstOrDefault(header => header.Name.ToString().Equals("Retry-After"));
 
