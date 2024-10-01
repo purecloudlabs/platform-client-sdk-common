@@ -503,5 +503,10 @@
 		"get": {
 			"name": "getAllTwitterOauthSettings"
 		}
+	},
+	"/api/v2/externalcontacts/settings": {
+		"patch": {
+			"name": "patch"
+		}
 	}
 }
