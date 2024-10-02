@@ -42,19 +42,21 @@ echo '<?xml version="1.0" encoding="utf-8"?>'\
 '		<dependencies>'\
 '		<group targetFramework=".NETStandard2.0">'\
 '			<dependency id="Newtonsoft.Json" version="13.0.3" />'\
-'			<dependency id="RestSharp" version="110.2.0" />'\
+'			<dependency id="RestSharp" version="112.0.0" />'\
 '			<dependency id="ini-parser" version="2.5.2" />'\
-'			<dependency id="System.Text.Json" version="7.0.2" />'\
+'			<dependency id="System.Text.Json" version="8.0.4" />'\
 '			<dependency id="System.Text.Encodings.Web" version="7.0.0" />'\
 '			<dependency id="System.Threading.Tasks.Extensions" version="4.5.4" />'\
+'			<dependency id="System.Runtime.CompilerServices.Unsafe" version="4.5.3" />'\
 '		</group>'\
 '		<group targetFramework=".NETFramework4.7.1">'\
 '			<dependency id="Newtonsoft.Json" version="13.0.3" />'\
-'			<dependency id="RestSharp" version="110.2.0" />'\
+'			<dependency id="RestSharp" version="112.0.0" />'\
 '			<dependency id="ini-parser" version="2.5.2" />'\
-'			<dependency id="System.Text.Json" version="7.0.2" />'\
+'			<dependency id="System.Text.Json" version="8.0.4" />'\
 '			<dependency id="System.Text.Encodings.Web" version="7.0.0" />'\
 '			<dependency id="System.Threading.Tasks.Extensions" version="4.5.4" />'\
+'			<dependency id="System.Runtime.CompilerServices.Unsafe" version="4.5.3" />'\
 '		</group>'\
 '		</dependencies>'\
 '	</metadata>'\
