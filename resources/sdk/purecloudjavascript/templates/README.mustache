@@ -257,6 +257,8 @@ client.setAccessToken(yourAccessToken);
 
 When authenticating in a browser using `loginClientCredentialsGrant(...)`, if the user completes the authentication process but their session is unable to be authorized, they will still be redirected back to the redirect URI. When `loginClientCredentialsGrant(...)` is invoked after the failure redirect, the promise returned will be rejected with an error message built from the `error` and `error_description`. The error information, as well as the state, can be accessed via `platformClient.ApiClient.instance.authData`. The application is expected to identify these login failures and interact with the user in a manner appropriate for the application.
 
+**Note:** If using webpack v5 or greater, either custom polyfills or vite are needed to use the javascript sdk in the browser.
+
 ## SDK Logging
 
 Logging of API requests and responses can be controlled by a number of parameters on the `Configuration`'s `Logger` instance.
