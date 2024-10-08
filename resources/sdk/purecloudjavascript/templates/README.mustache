@@ -75,6 +75,8 @@ Want your app to always use the most recent version of the SDK? To do this, simp
 
 # Usage
 
+**Note:** The JavaScript SDK is a Node.js project transpiled for web use. When using it in the browser, ensure you provide custom polyfills or a suitable setup for modern JavaScript features.
+
 ## Authentication
 
 After authentication has completed, the access token is stored on the `ApiClient` instance and the access token will be sent with all API requests.
@@ -256,8 +258,6 @@ client.setAccessToken(yourAccessToken);
 ### Authorization Failure
 
 When authenticating in a browser using `loginClientCredentialsGrant(...)`, if the user completes the authentication process but their session is unable to be authorized, they will still be redirected back to the redirect URI. When `loginClientCredentialsGrant(...)` is invoked after the failure redirect, the promise returned will be rejected with an error message built from the `error` and `error_description`. The error information, as well as the state, can be accessed via `platformClient.ApiClient.instance.authData`. The application is expected to identify these login failures and interact with the user in a manner appropriate for the application.
-
-**Note:** If using webpack v5 or greater, either custom polyfills or vite are needed to use the javascript sdk in the browser.
 
 ## SDK Logging
 
