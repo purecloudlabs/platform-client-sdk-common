@@ -96,6 +96,47 @@ func getPathValue(pc *ProxyConfiguration, key string) (string, bool) {
 	return "", false
 }
 
+func getConfUrl(c *Configuration, path string, extendedPath string, overrideHost string) *url.URL {
+	// var gateWayConfiguration *GateWayConfiguration
+	gateWayConfiguration := c.GateWayConfiguration
+
+	uri, _ := url.Parse(fmt.Sprintf("https://api.%s%s", "mypurecloud.com", extendedPath))
+	if overrideHost != "" {
+		uri, _ = url.Parse(fmt.Sprintf("https://api.%s%s", overrideHost, extendedPath))
+	}
+
+	if gateWayConfiguration != nil {
+		if gateWayConfiguration.Host != "" {
+			pathValue := ""
+			if len(gateWayConfiguration.PathParams) > 0 {
+				params := gateWayConfiguration.PathParams
+				// Iterate through PathParams to find the matching PathName
+				for _, param := range params {
+					if param.PathName == path {
+						tempValue := param.PathValue
+						if !strings.HasPrefix(tempValue, "/") {
+							pathValue = fmt.Sprintf("/%v", tempValue)
+						} else {
+							pathValue = fmt.Sprintf("%v", tempValue)
+						}
+						break
+					}
+				}
+			}
+			if gateWayConfiguration.Port == "80" || gateWayConfiguration.Port == "443" {
+				uri, _ = url.Parse(fmt.Sprintf("%s://%s%s%s", gateWayConfiguration.Protocol, gateWayConfiguration.Host, pathValue, extendedPath))
+			} else {
+				uri, _ = url.Parse(fmt.Sprintf("%s://%s:%s%s%s", gateWayConfiguration.Protocol, gateWayConfiguration.Host, gateWayConfiguration.Port, pathValue, extendedPath))
+			}
+		} else {
+			if path == "login" {
+				uri, _ = url.Parse(fmt.Sprintf("https://login.%s/oauth/token", "mypurecloud.com"))
+			}
+		}
+	}
+	return uri
+}
+
 // CallAPI invokes an API endpoint
 func (c *APIClient) CallAPI(path string, method string,
 	postBody interface{},
@@ -106,20 +147,8 @@ func (c *APIClient) CallAPI(path string, method string,
 	fileBytes []byte,
 	pathName string) (*APIResponse, error) {
 
-	// Build request URL w/query params
 	urlString := path + "?"
-	if queryParams != nil {
-		for k, v := range queryParams {
-			if v != "" {
-				urlString += fmt.Sprintf("%v=%v&", url.QueryEscape(strings.TrimSpace(k)), url.QueryEscape(strings.TrimSpace(v)))
-			}
-		}
-	}
-	urlString = urlString[:len(urlString)-1]
-	u, err := url.Parse(urlString)
-	if err != nil {
-		return nil, err
-	}
+	u := getConfUrl(c.configuration, pathName, "", c.configuration.Host)
 
 	request := retryablehttp.Request{
 		Request: &http.Request{
