@@ -97,43 +97,42 @@ func getPathValue(pc *ProxyConfiguration, key string) (string, bool) {
 }
 
 func getConfUrl(c *Configuration, path string, extendedPath string, overrideHost string) *url.URL {
-	// var gateWayConfiguration *GateWayConfiguration
+	var uri *url.URL
 	gateWayConfiguration := c.GateWayConfiguration
 
-	uri, _ := url.Parse(fmt.Sprintf("https://api.%s%s", "mypurecloud.com", extendedPath))
+	uri, _ = url.Parse(fmt.Sprintf("https://api.%s%s", c.BasePath, extendedPath))
 	if overrideHost != "" {
-		uri, _ = url.Parse(fmt.Sprintf("https://api.%s%s", overrideHost, extendedPath))
+		uri, _ = url.Parse(fmt.Sprintf("%s%s", overrideHost, extendedPath))
 	}
 
-	if gateWayConfiguration != nil {
-		if gateWayConfiguration.Host != "" {
-			pathValue := ""
-			if len(gateWayConfiguration.PathParams) > 0 {
-				params := gateWayConfiguration.PathParams
-				// Iterate through PathParams to find the matching PathName
-				for _, param := range params {
-					if param.PathName == path {
-						tempValue := param.PathValue
-						if !strings.HasPrefix(tempValue, "/") {
-							pathValue = fmt.Sprintf("/%v", tempValue)
-						} else {
-							pathValue = fmt.Sprintf("%v", tempValue)
-						}
-						break
+	if gateWayConfiguration != nil && gateWayConfiguration.Host != "" {
+		pathValue := ""
+
+		if len(gateWayConfiguration.PathParams) > 0 {
+			for _, param := range gateWayConfiguration.PathParams {
+				if param.PathName == path {
+					tempValue := param.PathValue
+
+					if !strings.HasPrefix(tempValue, "/") {
+						pathValue = fmt.Sprintf("/%v", tempValue)
+					} else {
+						pathValue = fmt.Sprintf("%v", tempValue)
 					}
+					break
 				}
 			}
-			if gateWayConfiguration.Port == "80" || gateWayConfiguration.Port == "443" {
-				uri, _ = url.Parse(fmt.Sprintf("%s://%s%s%s", gateWayConfiguration.Protocol, gateWayConfiguration.Host, pathValue, extendedPath))
-			} else {
-				uri, _ = url.Parse(fmt.Sprintf("%s://%s:%s%s%s", gateWayConfiguration.Protocol, gateWayConfiguration.Host, gateWayConfiguration.Port, pathValue, extendedPath))
-			}
+		}
+		if gateWayConfiguration.Port == "80" || gateWayConfiguration.Port == "443" {
+			uri, _ = url.Parse(fmt.Sprintf("%s://%s%s%s", gateWayConfiguration.Protocol, gateWayConfiguration.Host, pathValue, extendedPath))
 		} else {
-			if path == "login" {
-				uri, _ = url.Parse(fmt.Sprintf("https://login.%s/oauth/token", "mypurecloud.com"))
-			}
+			uri, _ = url.Parse(fmt.Sprintf("%s://%s:%s/%s/%s", gateWayConfiguration.Protocol, gateWayConfiguration.Host, gateWayConfiguration.Port, pathValue, extendedPath))
 		}
 	}
+	return uri
+}
+
+func getLoginUrl(c *Configuration, path string, extendedPath string) *url.URL {
+	uri, _ := url.Parse(fmt.Sprintf("https://login.%s/oauth/token", c.BasePath[len("https://api."):]))
 	return uri
 }
 
@@ -146,9 +145,31 @@ func (c *APIClient) CallAPI(path string, method string,
 	fileName string,
 	fileBytes []byte,
 	pathName string) (*APIResponse, error) {
+	var u *url.URL
 
 	urlString := path + "?"
-	u := getConfUrl(c.configuration, pathName, "", c.configuration.Host)
+	if queryParams != nil {
+		for k, v := range queryParams {
+			if v != "" {
+				urlString += fmt.Sprintf("%s=%s&", url.QueryEscape(strings.TrimSpace(k)), url.QueryEscape(strings.TrimSpace(v)))
+			}
+		}
+	}
+
+	urlString = urlString[:len(urlString)-1] // Remove the trailing '&'
+	if !strings.Contains(c.configuration.BasePath, "localhost") {
+		if index := strings.Index(urlString, "/api/v2"); index != -1 {
+			urlString = urlString[index:] // Get substring from /api onward
+		}
+		if pathName == "login" {
+			u = getLoginUrl(c.configuration, pathName, urlString)
+		} else {
+			u = getConfUrl(c.configuration, pathName, urlString, c.configuration.BasePath)
+		}
+	} else {
+		u, _ = url.Parse(urlString)
+	}
+
 
 	request := retryablehttp.Request{
 		Request: &http.Request{
