@@ -508,5 +508,10 @@
 		"patch": {
 			"name": "patch"
 		}
+	},
+	"/api/v2/socialmedia/topics/{topicId}/dataingestionrules/open/{openId}/versions/{dataIngestionRuleVersion}": {
+		"get": {
+			"name": "getVersion"
+		}
 	}
 }
