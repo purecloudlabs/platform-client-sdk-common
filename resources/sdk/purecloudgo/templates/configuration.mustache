@@ -560,7 +560,8 @@ func (c *Configuration) AuthorizeCodeGrant(clientID string, clientSecret string,
 // RefreshAuthorizationCodeGrant requests a new access token for the authorization code grant.
 // The access and refresh tokens will be set automatically and API instances using this configuration object can continue to make authorized requests.
 func (c *Configuration) RefreshAuthorizationCodeGrant(clientID string, clientSecret string, refreshToken string) (*AuthResponse, error) {
-	loginURI := getConfUrl(c, "login", "/oauth/token", "")
+	authHostRegex := regexp.MustCompile(`(?i)\/\/api\.`)
+	authHost := authHostRegex.ReplaceAllString(c.BasePath, "//login.")
 
 	headerParams := make(map[string]string)
 	headerParams["Authorization"] = "Basic " + base64.StdEncoding.EncodeToString([]byte(clientID+":"+clientSecret))
@@ -568,7 +569,7 @@ func (c *Configuration) RefreshAuthorizationCodeGrant(clientID string, clientSec
 	formParams := url.Values{}
 	formParams["grant_type"] = []string{"refresh_token"}
 	formParams["refresh_token"] = []string{refreshToken}
-	response, err := c.APIClient.CallAPI(loginURI.String(), "POST", nil, headerParams, nil, formParams, "", nil, "login")
+	response, err := c.APIClient.CallAPI(authHost+"/oauth/token", "POST", nil, headerParams, nil, formParams, "", nil, "login")
 	if err != nil && response == nil {
 		return nil, err
 	}
