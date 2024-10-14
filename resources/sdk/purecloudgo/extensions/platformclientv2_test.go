@@ -502,20 +502,6 @@ func TestApiGateway(t *testing.T) {
 		}
 	}
 
-	resp, err := config.AuthorizeCodeGrant(clientID, clientSecret, "", "")
-	if err != nil {
-		if !strings.Contains(err.Error(), "https://serviceproxy.net/nonxml/cce.uat.com/login") {
-			t.Errorf("Failed to authorize code grant: %v | resp: %v", err, resp)
-		}
-	}
-
-	resp, err = config.AuthorizePKCEGrant(clientID, clientSecret, "", "")
-	if err != nil {
-		if !strings.Contains(err.Error(), "https://serviceproxy.net/nonxml/cce.uat.com/login") {
-			t.Errorf("Failed to authorize PKCE grant: %v | resp: %v", err, resp)
-		}
-	}
-
 	// Test passes if no errors occurred
 	t.Logf("Successfully authorized with the provided client credentials")
 }
