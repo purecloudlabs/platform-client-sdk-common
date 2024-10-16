@@ -31,6 +31,7 @@ class Configuration {
 		this.refresh_token_wait_max = 10;
 		this.live_reload_config = true;
 		this.host;
+		this.login_host;
 		this.environment;
 		this.basePath;
 		this.authUrl;
@@ -131,8 +132,10 @@ class Configuration {
 				? this.getConfigBoolean('general', 'live_reload_config')
 				: this.live_reload_config;
 		this.host = this.getConfigString('general', 'host') !== undefined ? this.getConfigString('general', 'host') : this.host;
+		this.login_host = this.getConfigString('general', 'login_host') !== undefined ? this.getConfigString('general', 'login_host') : this.login_host;
 
-		this.setEnvironment();
+		if (!this.login_host) this.setEnvironment();
+		else this.setCustomEnvironment()
 
 		// Update logging configs
 		this.logger.setLogger();
@@ -153,6 +156,22 @@ class Configuration {
 
 		this.basePath = `https://api.${this.environment}`;
 		this.authUrl = `https://login.${this.environment}`;
+	}
+
+	setCustomEnvironment(apiHost, loginHost) {
+		if (apiHost) this.basePath = apiHost;
+		else {
+			this.basePath = this.host ? this.host : 'https://api.mypurecloud.com';
+		}
+		// Strip trailing slash
+		this.basePath = this.basePath.replace(/\/+$/, '');
+
+		if (loginHost) this.authUrl = loginHost;
+		else {
+			this.authUrl = this.login_host ? this.login_host : 'https://login.mypurecloud.com';
+		}
+		// Strip trailing slash
+		this.authUrl = this.authUrl.replace(/\/+$/, '');
 	}
 
 	getConfigString(section, key) {

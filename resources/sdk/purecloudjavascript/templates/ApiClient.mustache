@@ -205,6 +205,15 @@ class ApiClient {
 	}
 
 	/**
+	 * @description Sets the api host and the login host used by the session (Genesys Cloud or Gateway)
+	 * @param {string} apiHost - (Optional, default "https://api.mypurecloud.com") The API host the session use (Genesys Cloud or Gateway), e.g. https://api.mypurecloud.ie, https://api.mypurecloud.com.au, etc.
+	 * @param {string} loginHost - (Optional, default "https://login.mypurecloud.com") The Login host the session use (Genesys Cloud or Gateway), e.g. https://login.mypurecloud.ie, https://login.mypurecloud.com.au, etc.
+	 */
+	setCustomEnvironment(apiHost, loginHost) {
+		this.config.setCustomEnvironment(apiHost, loginHost);
+	}
+
+	/**
 	 * @description Initiates the implicit grant login flow. Will attempt to load the token from local storage, if enabled.
 	 * @param {string} clientId - The client ID of an OAuth Implicit Grant client
 	 * @param {string} redirectUri - The redirect URI of the OAuth Implicit Grant client
@@ -280,7 +289,7 @@ class ApiClient {
 			}
 			axios({
 				method: `POST`,
-				url: `https://login.${this.config.environment}/oauth/token`,
+				url: `${this.config.authUrl}/oauth/token`,
 				headers: headers,
 				data: 'grant_type=client_credentials',
 				httpsAgent: this.proxyAgent
@@ -291,7 +300,7 @@ class ApiClient {
 						'trace',
 						response.status,
 						'POST',
-						`https://login.${this.config.environment}/oauth/token`,
+						`${this.config.authUrl}/oauth/token`,
 						headers,
 						response.headers,
 						{ grant_type: 'client_credentials' },
@@ -301,7 +310,7 @@ class ApiClient {
 						'debug',
 						response.status,
 						'POST',
-						`https://login.${this.config.environment}/oauth/token`,
+						`${this.config.authUrl}/oauth/token`,
 						headers,
 						undefined,
 						{ grant_type: 'client_credentials' },
@@ -325,7 +334,7 @@ class ApiClient {
 							'error',
 							error.response.status,
 							'POST',
-							`https://login.${this.config.environment}/oauth/token`,
+							`${this.config.authUrl}/oauth/token`,
 							headers,
 							error.response.headers,
 							{ grant_type: 'client_credentials' },
@@ -371,7 +380,7 @@ class ApiClient {
 						'trace',
 						response.status,
 						'POST',
-						`https://login.${this.config.environment}/oauth/token`,
+						`${this.config.authUrl}/oauth/token`,
 						request.headers,
 						response.headers,
 						bodyParam,
@@ -381,7 +390,7 @@ class ApiClient {
 						'debug',
 						response.status,
 						'POST',
-						`https://login.${this.config.environment}/oauth/token`,
+						`${this.config.authUrl}/oauth/token`,
 						request.headers,
 						undefined,
 						bodyParam,
@@ -405,7 +414,7 @@ class ApiClient {
 							'error',
 							error.response.status,
 							'POST',
-							`https://login.${this.config.environment}/oauth/token`,
+							`${this.config.authUrl}/oauth/token`,
 							request.headers,
 							error.response.headers,
 							bodyParam,
@@ -429,7 +438,7 @@ class ApiClient {
 		return new Promise((resolve, reject) => {
 			var request = axios({
 				method: `POST`,
-				url: `https://login.${this.config.environment}/oauth/token`,
+				url: `${this.config.authUrl}/oauth/token`,
 				headers: {
 					'Content-Type': 'application/x-www-form-urlencoded'
 				},
@@ -456,7 +465,7 @@ class ApiClient {
 					'trace',
 					response.status,
 					'POST',
-					`https://login.${this.config.environment}/oauth/token`,
+					`${this.config.authUrl}/oauth/token`,
 					request.headers,
 					response.headers,
 					bodyParam,
@@ -466,7 +475,7 @@ class ApiClient {
 					'debug',
 					response.status,
 					'POST',
-					`https://login.${this.config.environment}/oauth/token`,
+					`${this.config.authUrl}/oauth/token`,
 					request.headers,
 					undefined,
 					bodyParam,
@@ -490,7 +499,7 @@ class ApiClient {
 						'error',
 						error.response.status,
 						'POST',
-						`https://login.${this.config.environment}/oauth/token`,
+						`${this.config.authUrl}/oauth/token`,
 						request.headers,
 						error.response.headers,
 						bodyParam,
@@ -821,7 +830,7 @@ class ApiClient {
 					'trace',
 					response.status,
 					'POST',
-					`https://login.${this.config.environment}/oauth/token`,
+					`${this.config.authUrl}/oauth/token`,
 					request.headers,
 					response.headers,
 					bodyParam,
@@ -831,7 +840,7 @@ class ApiClient {
 					'debug',
 					response.status,
 					'POST',
-					`https://login.${this.config.environment}/oauth/token`,
+					`${this.config.authUrl}/oauth/token`,
 					request.headers,
 					undefined,
 					bodyParam,
@@ -857,7 +866,7 @@ class ApiClient {
 						'error',
 						error.response.status,
 						'POST',
-						`https://login.${this.config.environment}/oauth/token`,
+						`${this.config.authUrl}/oauth/token`,
 						request.headers,
 						error.response.headers,
 						bodyParam,
@@ -877,7 +886,7 @@ class ApiClient {
 	_formAuthRequest(encodedData, data) {
 		var request = axios({
 			method: `POST`,
-			url: `https://login.${this.config.environment}/oauth/token`,
+			url: `${this.config.authUrl}/oauth/token`,
 			headers: {
 				'Authorization': 'Basic ' + encodedData,
 				'Content-Type': 'application/x-www-form-urlencoded'

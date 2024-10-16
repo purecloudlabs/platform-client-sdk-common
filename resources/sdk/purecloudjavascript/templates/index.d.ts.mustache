@@ -21,6 +21,7 @@ declare class ApiClientClass {
 	logout(logoutRedirectUri: string): void;
 	setAccessToken(token: string): void;
 	setEnvironment(environment: string): void;
+	setCustomEnvironment(apiHost: string, loginHost: string): void;
 	setPersistSettings(doPersist: boolean, prefix?: string): void;
 	setReturnExtendedResponses(returnExtended: boolean): void;
 	setStorageKey(storageKey: string): void;
@@ -57,12 +58,14 @@ declare class Configuration {
 	refresh_token_wait_max: number;
 	live_reload_config: boolean;
 	host: string;
+	login_host: string;
 	environment: string;
 	basePath: string;
 	authUrl: string;
 	logger: Logger;
 	config: any;
 	setEnvironment(environment: string): void;
+	setCustomEnvironment(apiHost: string, loginHost: string): void;
 }
 
 declare class Logger {
