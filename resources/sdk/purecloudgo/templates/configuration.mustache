@@ -16,8 +16,8 @@ import (
 	"os"
 	"log"
 	"path/filepath"
-	"regexp"
 	"strings"
+	"regexp"
 	"sync"
 	"time"
 )
@@ -41,7 +41,7 @@ type Configuration struct {
 	RefreshInProgress        int64                 `json:"refreshInProgress,omitempty"`
 	RefreshTokenWaitTime     int                   `json:"refreshTokenWaitTime,omitempty"`
 	AccessTokenExpiresIn     int                   `json:"accessTokenExpiresIn,omitempty"`
-    	AutomaticTokenRefresh    bool                  `json:"automaticTokenRefresh,omitempty"`
+	AutomaticTokenRefresh    bool                  `json:"automaticTokenRefresh,omitempty"`
 	DefaultHeader            map[string]string     `json:"defaultHeader,omitempty"`
 	UserAgent                string                `json:"userAgent,omitempty"`
 	APIClient                APIClient             `json:"APIClient,omitempty"`
@@ -50,6 +50,7 @@ type Configuration struct {
 	ConfigFilePath           string                `json:"configFilePath,omitempty"`
 	AutoReloadConfig         bool                  `json:"autoReloadConfig,omitempty"`
 	ProxyConfiguration       *ProxyConfiguration   `json:"proxyConfiguration,omitempty"`
+	GateWayConfiguration	 *GateWayConfiguration `json:"gateWayConfiguration,omitempty"`
 }
 
 const (
@@ -81,6 +82,14 @@ type RetryConfiguration struct {
 
 // ProxyConfiguration has settings to configure the SDK Proxy logic
 type ProxyConfiguration struct {
+	Protocol    string   `json:"protocol,omitempty"`
+	Host        string   `json:"host,omitempty"`
+	Port        string   `json:"port,omitempty"`
+	Auth  		*Auth     `json:"auth,omitempty"`
+	PathParams  []*PathParams `json:"pathParams,omitempty"`
+}
+
+type GateWayConfiguration struct {
 	Protocol    string   `json:"protocol,omitempty"`
 	Host        string   `json:"host,omitempty"`
 	Port        string   `json:"port,omitempty"`
@@ -456,6 +465,7 @@ func (c *Configuration) setAutomaticTokenRefresh(value bool) {
 func (c *Configuration) AuthorizeClientCredentials(clientID string, clientSecret string) error {
 	authHostRegex := regexp.MustCompile(`(?i)\/\/api\.`)
 	authHost := authHostRegex.ReplaceAllString(c.BasePath, "//login.")
+
 	headerParams := make(map[string]string)
 	headerParams["Authorization"] = "Basic " + base64.StdEncoding.EncodeToString([]byte(clientID+":"+clientSecret))
 	formParams := url.Values{}
@@ -508,6 +518,7 @@ func (c *Configuration) AuthorizeCodeGrant(clientID string, clientSecret string,
 	c.ClientSecret = clientSecret
 	authHostRegex := regexp.MustCompile(`(?i)\/\/api\.`)
 	authHost := authHostRegex.ReplaceAllString(c.BasePath, "//login.")
+
 	headerParams := make(map[string]string)
 	headerParams["Authorization"] = "Basic " + base64.StdEncoding.EncodeToString([]byte(clientID+":"+clientSecret))
 	headerParams["Content-Type"] = "application/x-www-form-urlencoded"
@@ -551,6 +562,7 @@ func (c *Configuration) AuthorizeCodeGrant(clientID string, clientSecret string,
 func (c *Configuration) RefreshAuthorizationCodeGrant(clientID string, clientSecret string, refreshToken string) (*AuthResponse, error) {
 	authHostRegex := regexp.MustCompile(`(?i)\/\/api\.`)
 	authHost := authHostRegex.ReplaceAllString(c.BasePath, "//login.")
+
 	headerParams := make(map[string]string)
 	headerParams["Authorization"] = "Basic " + base64.StdEncoding.EncodeToString([]byte(clientID+":"+clientSecret))
 	headerParams["Content-Type"] = "application/x-www-form-urlencoded"
@@ -627,6 +639,7 @@ func (c *Configuration) AuthorizePKCEGrant(clientID string, codeVerifier string,
 	c.ClientID = clientID
 	authHostRegex := regexp.MustCompile(`(?i)\/\/api\.`)
 	authHost := authHostRegex.ReplaceAllString(c.BasePath, "//login.")
+
 	headerParams := make(map[string]string)
 	headerParams["Content-Type"] = "application/x-www-form-urlencoded"
 	formParams := url.Values{}
@@ -701,4 +714,67 @@ func (c *LoggingConfiguration) SetLogToConsole(logToConsole bool) {
 
 func (c *LoggingConfiguration) GetLogToConsole() bool {
 	return c.logToConsole
+}
+
+func (c *Configuration) GetGateWayConfiguration() string {
+	return getGateWayConfig(c.UserName)
+}
+
+func getGateWayConfig(profileName string) string {
+	// proxy
+	protocol := viper.Get(fmt.Sprintf("%s.gateway_protocol", profileName))
+
+	if protocol != nil {
+		gconf := GateWayConfiguration{}
+		gconf.Port = viper.GetString(fmt.Sprintf("%s.gateway_port", profileName))
+		gconf.Protocol = viper.GetString(fmt.Sprintf("%s.gateway_protocol", profileName))
+		gconf.Host = viper.GetString(fmt.Sprintf("%s.gateway_host", profileName))
+		userName := viper.Get(fmt.Sprintf("%s.gateway_username", profileName))
+
+		pathParams := viper.Get(fmt.Sprintf("%s.gateway_pathparams", profileName))
+
+		if pathParams != nil {
+			pathParamsMap := parsePathParams(pathParams.(string))
+
+			// Convert map[string]string to []*PathParams
+			var pathParamsSlice []*PathParams
+			for key, value := range pathParamsMap {
+				pathParamsSlice = append(pathParamsSlice, &PathParams{
+					PathName:  key,
+					PathValue: value,
+				})
+			}
+
+			gconf.PathParams = pathParamsSlice
+		}
+
+		if userName != nil {
+			gconf.Auth.UserName = viper.GetString(fmt.Sprintf("%s.gateway_username", profileName))
+			gconf.Auth.Password = viper.GetString(fmt.Sprintf("%s.gateway_password", profileName))
+		}
+
+		jsonData, _ := json.MarshalIndent(gconf, "", "")
+		return string(jsonData)
+	} else {
+		return ""
+	}
+}
+
+func parsePathParams(pathParamsStr string) map[string]string {
+	pathParamsStr = strings.Trim(pathParamsStr, "{}")
+
+	pathParams := make(map[string]string)
+
+	pairs := strings.Split(pathParamsStr, ", ")
+
+	for _, pair := range pairs {
+		kv := strings.SplitN(pair, ": ", 2)
+		if len(kv) == 2 {
+			key := strings.TrimSpace(kv[0])
+			value := strings.TrimSpace(kv[1])
+			pathParams[key] = value
+		}
+	}
+
+	return pathParams
 }
