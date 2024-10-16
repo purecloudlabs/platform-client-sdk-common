@@ -96,43 +96,31 @@ func getPathValue(pc *ProxyConfiguration, key string) (string, bool) {
 	return "", false
 }
 
-func getConfUrl(c *Configuration, path string, extendedPath string, overrideHost string) *url.URL {
+func getConfUrl(c *Configuration, path string, extendedPath string) *url.URL {
 	var uri *url.URL
 	gateWayConfiguration := c.GateWayConfiguration
 
-	uri, _ = url.Parse(fmt.Sprintf("https://api.%s%s", c.BasePath, extendedPath))
-	if overrideHost != "" {
-		uri, _ = url.Parse(fmt.Sprintf("%s%s", overrideHost, extendedPath))
-	}
+	pathValue := ""
+	if len(gateWayConfiguration.PathParams) > 0 {
+		for _, param := range gateWayConfiguration.PathParams {
+			if param.PathName == path {
+				tempValue := param.PathValue
 
-	if gateWayConfiguration != nil && gateWayConfiguration.Host != "" {
-		pathValue := ""
-
-		if len(gateWayConfiguration.PathParams) > 0 {
-			for _, param := range gateWayConfiguration.PathParams {
-				if param.PathName == path {
-					tempValue := param.PathValue
-
-					if !strings.HasPrefix(tempValue, "/") {
-						pathValue = fmt.Sprintf("/%v", tempValue)
-					} else {
-						pathValue = fmt.Sprintf("%v", tempValue)
-					}
-					break
+				if !strings.HasPrefix(tempValue, "/") {
+					pathValue = fmt.Sprintf("/%v", tempValue)
+				} else {
+					pathValue = fmt.Sprintf("%v", tempValue)
 				}
+				break
 			}
 		}
-		if gateWayConfiguration.Port == "80" || gateWayConfiguration.Port == "443" {
-			uri, _ = url.Parse(fmt.Sprintf("%s://%s%s%s", gateWayConfiguration.Protocol, gateWayConfiguration.Host, pathValue, extendedPath))
-		} else {
-			uri, _ = url.Parse(fmt.Sprintf("%s://%s:%s/%s/%s", gateWayConfiguration.Protocol, gateWayConfiguration.Host, gateWayConfiguration.Port, pathValue, extendedPath))
-		}
 	}
-	return uri
-}
-
-func getLoginUrl(c *Configuration, path string, extendedPath string) *url.URL {
-	uri, _ := url.Parse(fmt.Sprintf("https://login.%s/oauth/token", c.BasePath[len("https://api."):]))
+	if gateWayConfiguration.Port == "80" || gateWayConfiguration.Port == "443" {
+		uri, _ = url.Parse(fmt.Sprintf("%s://%s%s%s", gateWayConfiguration.Protocol, gateWayConfiguration.Host, pathValue, extendedPath))
+	} else {
+		uri, _ = url.Parse(fmt.Sprintf("%s://%s:%s/%s%s", gateWayConfiguration.Protocol, gateWayConfiguration.Host, gateWayConfiguration.Port, pathValue, extendedPath))
+	}
+	
 	return uri
 }
 
@@ -155,21 +143,20 @@ func (c *APIClient) CallAPI(path string, method string,
 			}
 		}
 	}
-
 	urlString = urlString[:len(urlString)-1] // Remove the trailing '&'
-	if !strings.Contains(c.configuration.BasePath, "localhost") {
+
+	if c.configuration.GateWayConfiguration != nil && c.configuration.GateWayConfiguration.Host != "" {
 		if index := strings.Index(urlString, "/api/v2"); index != -1 {
 			urlString = urlString[index:] // Get substring from /api onward
 		}
 		if pathName == "login" {
-			u = getLoginUrl(c.configuration, pathName, urlString)
+			u = getConfUrl(c.configuration, pathName, "/oauth/token")
 		} else {
-			u = getConfUrl(c.configuration, pathName, urlString, c.configuration.BasePath)
+			u = getConfUrl(c.configuration, "api", urlString)
 		}
 	} else {
 		u, _ = url.Parse(urlString)
 	}
-
 
 	request := retryablehttp.Request{
 		Request: &http.Request{
