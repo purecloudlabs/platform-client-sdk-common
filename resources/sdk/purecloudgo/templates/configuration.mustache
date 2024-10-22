@@ -318,6 +318,59 @@ func (c *Configuration) updateConfigFromFile() error {
                 }
         }
 
+	// Gateway
+	if getConfigString("gateway", "host") != "" {
+		if isJson {
+			gatewayI := getObject("gateway")
+			jsonbody, err := json.Marshal(gatewayI)
+			if err != nil {
+				return err
+			}
+			gatewayConf := GateWayConfiguration{}
+			if err := json.Unmarshal(jsonbody, &gatewayConf); err != nil {
+				return err
+			}
+			c.GateWayConfiguration = &gatewayConf
+		} else {
+			gatewayConf := GateWayConfiguration{}
+			c.GateWayConfiguration = &gatewayConf
+
+			gatewayHost := getConfigString("gateway", "host")
+			if gatewayHost != "" {
+				c.GateWayConfiguration.Host = gatewayHost
+			}
+
+			port := getConfigString("gateway", "port")
+			if port != "" {
+				c.GateWayConfiguration.Port = port
+			}
+
+			protocol := getConfigString("gateway", "protocol")
+			if protocol != "" {
+				c.GateWayConfiguration.Protocol = protocol
+			}
+
+			userName := getConfigString("gateway", "auth-username")
+			password := getConfigString("gateway", "auth-password")
+
+			pathParamString := getConfigString("gateway", "path-params")
+
+			if pathParamString != "" {
+				pathParam, err := ConvertStringToPathParams(pathParamString)
+				if err == nil {
+					c.GateWayConfiguration.PathParams = pathParam
+				}
+			}
+
+			if userName != "" && password != "" {
+				auth := Auth{}
+				c.GateWayConfiguration.Auth = &auth
+				c.GateWayConfiguration.Auth.UserName = userName
+				c.GateWayConfiguration.Auth.Password = password
+			}
+
+		}
+	}
 
 	// logging
 	logLevel := getConfigString("logging", "log_level")
@@ -714,67 +767,4 @@ func (c *LoggingConfiguration) SetLogToConsole(logToConsole bool) {
 
 func (c *LoggingConfiguration) GetLogToConsole() bool {
 	return c.logToConsole
-}
-
-func (c *Configuration) GetGateWayConfiguration() string {
-	return getGateWayConfig(c.UserName)
-}
-
-func getGateWayConfig(profileName string) string {
-	// proxy
-	protocol := viper.Get(fmt.Sprintf("%s.gateway_protocol", profileName))
-
-	if protocol != nil {
-		gconf := GateWayConfiguration{}
-		gconf.Port = viper.GetString(fmt.Sprintf("%s.gateway_port", profileName))
-		gconf.Protocol = viper.GetString(fmt.Sprintf("%s.gateway_protocol", profileName))
-		gconf.Host = viper.GetString(fmt.Sprintf("%s.gateway_host", profileName))
-		userName := viper.Get(fmt.Sprintf("%s.gateway_username", profileName))
-
-		pathParams := viper.Get(fmt.Sprintf("%s.gateway_pathparams", profileName))
-
-		if pathParams != nil {
-			pathParamsMap := parsePathParams(pathParams.(string))
-
-			// Convert map[string]string to []*PathParams
-			var pathParamsSlice []*PathParams
-			for key, value := range pathParamsMap {
-				pathParamsSlice = append(pathParamsSlice, &PathParams{
-					PathName:  key,
-					PathValue: value,
-				})
-			}
-
-			gconf.PathParams = pathParamsSlice
-		}
-
-		if userName != nil {
-			gconf.Auth.UserName = viper.GetString(fmt.Sprintf("%s.gateway_username", profileName))
-			gconf.Auth.Password = viper.GetString(fmt.Sprintf("%s.gateway_password", profileName))
-		}
-
-		jsonData, _ := json.MarshalIndent(gconf, "", "")
-		return string(jsonData)
-	} else {
-		return ""
-	}
-}
-
-func parsePathParams(pathParamsStr string) map[string]string {
-	pathParamsStr = strings.Trim(pathParamsStr, "{}")
-
-	pathParams := make(map[string]string)
-
-	pairs := strings.Split(pathParamsStr, ", ")
-
-	for _, pair := range pairs {
-		kv := strings.SplitN(pair, ": ", 2)
-		if len(kv) == 2 {
-			key := strings.TrimSpace(kv[0])
-			value := strings.TrimSpace(kv[1])
-			pathParams[key] = value
-		}
-	}
-
-	return pathParams
 }

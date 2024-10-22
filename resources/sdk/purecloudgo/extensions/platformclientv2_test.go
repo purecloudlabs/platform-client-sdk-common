@@ -502,6 +502,11 @@ func TestApiGateway(t *testing.T) {
 		}
 	}
 
-	// Test passes if no errors occurred
-	t.Logf("Successfully authorized with the provided client credentials")
+	outboundApi := NewOutboundApiWithConfig(config)
+	_, _, err = outboundApi.GetOutboundCallabletimesets(1, 1, true, "", "", "", "")
+	if err != nil {
+		if !strings.Contains(err.Error(), "https://serviceproxy.net/nonxml/cce.uat.com/apis/api/v2/outbound/callabletimesets") {
+			t.Errorf("Failed to Retrieve Timesets: %v", err)
+		}
+	}
 }
