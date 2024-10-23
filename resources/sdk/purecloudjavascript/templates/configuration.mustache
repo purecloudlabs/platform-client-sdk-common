@@ -136,7 +136,6 @@ class Configuration {
 		if (this.getConfigString('gateway', 'host') !== undefined) {
 			let gateway = {
 				host: this.getConfigString('gateway', 'host')
-
 			};
 			if (this.getConfigString('gateway', 'protocol') !== undefined) gateway.protocol = this.getConfigString('gateway', 'protocol');
 			if (this.getConfigInt('gateway', 'port') !== undefined) gateway.port = this.getConfigInt('gateway', 'port');
@@ -181,11 +180,17 @@ class Configuration {
 			if (gateway.port && gateway.port > -1) this.gateway.port = gateway.port;
 			else this.gateway.port = -1;
 
-			if (gateway.path_params_login) this.gateway.path_params_login = gateway.path_params_login;
-			else this.gateway.path_params_login = '';
+			if (gateway.path_params_login) {
+				this.gateway.path_params_login = gateway.path_params_login;
+				// Strip trailing slash
+				this.gateway.path_params_login = this.gateway.path_params_login.replace(/\/+$/, '');
+			} else this.gateway.path_params_login = '';
 
-			if (gateway.path_params_api) this.gateway.path_params_api = gateway.path_params_api;
-			else this.gateway.path_params_api = '';
+			if (gateway.path_params_api) {
+				this.gateway.path_params_api = gateway.path_params_api;
+				// Strip trailing slash
+				this.gateway.path_params_api = this.gateway.path_params_api.replace(/\/+$/, '');
+			} else this.gateway.path_params_api = '';
 
 			if (gateway.username) this.gateway.username = gateway.username;
 			if (gateway.password) this.gateway.password = gateway.password;
@@ -213,26 +218,22 @@ class Configuration {
 
 	getConfUrl(pathType, regionUrl) {
 		if (!this.gateway) return regionUrl;
-		if (this.gateway.host) {
-			var url = this.gateway.protocol + '://' + this.gateway.host;
-			if (this.gateway.port > -1) url = url + ':' + this.gateway.port.toString();
-			if (pathType === 'login') {
-				if (this.gateway.path_params_login) {
-					if (this.gateway.path_params_login.startsWith('/')) url = url + this.gateway.path_params_login;
-					else url = url + '/' + this.gateway.path_params_login;
-				}
-			} else {
-				if (this.gateway.path_params_api) {
-					if (this.gateway.path_params_api.startsWith('/')) url = url + this.gateway.path_params_api;
-					else url = url + '/' + this.gateway.path_params_api;
-				}
+		if (!this.gateway.host) return regionUrl;
+		
+		var url = this.gateway.protocol + '://' + this.gateway.host;
+		if (this.gateway.port > -1) url = url + ':' + this.gateway.port.toString();
+		if (pathType === 'login') {
+			if (this.gateway.path_params_login) {
+				if (this.gateway.path_params_login.startsWith('/')) url = url + this.gateway.path_params_login;
+				else url = url + '/' + this.gateway.path_params_login;
 			}
-			// Strip trailing slash
-			url = url.replace(/\/+$/, '');
-			return url;
 		} else {
-			return regionUrl;
+			if (this.gateway.path_params_api) {
+				if (this.gateway.path_params_api.startsWith('/')) url = url + this.gateway.path_params_api;
+				else url = url + '/' + this.gateway.path_params_api;
+			}
 		}
+		return url;
 	}
 
 	getConfigString(section, key) {

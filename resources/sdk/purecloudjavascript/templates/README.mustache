@@ -428,13 +428,17 @@ const client = {{moduleName}}.ApiClient.instance;
 client.setEnvironment({{moduleName}}.PureCloudRegionHosts.eu_west_1);
 ```
 
+### Setting an intermediate Gateway
+
 The Genesys Cloud Login and API URL path can be overridden if necessary (i.e. if the Genesys Cloud requests must be sent through to an intermediate API gateway or equivalent).
 
-This can be achieved setting the gateway on the `ApiClient` instance.
+This can be achieved setting the gateway configuration on the `ApiClient` instance.
 
 ```javascript
 const client = {{moduleName}}.ApiClient.instance;
-client.setGateway({host: 'mygateway.mydomain.myextension', protocol: 'https', port: 1443, path_params_login: 'myadditionalpathforlogin', path_params_login: 'myadditionalpathforapi'});
+client.setGateway({host: 'mygateway.mydomain.myextension', protocol: 'https', port: 1443, path_params_login: 'myadditionalpathforlogin', path_params_api: 'myadditionalpathforapi'});
+
+// If you need, you can later remove the Gateway Configuration and fallback to the Enviroment setting using: client.setGateway();
 ```
 
 * "host" is the address of your gateway.
