@@ -158,7 +158,7 @@ public class Configuration {
     // Gateway Configuration
     String gatewayHost = parser.getString("gateway", "host");
     if (gatewayHost != null && !gatewayHost.isEmpty()) {
-        GatewayConfiguration gatewayConfiguration = defaultApiClient.getGatewayConfiguration();
+        GatewayConfiguration gatewayConfiguration = new GatewayConfiguration();
         gatewayConfiguration.setHost(gatewayHost);
 
         String gatewayProtocol = parser.getString("gateway", "protocol");

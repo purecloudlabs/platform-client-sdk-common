@@ -254,7 +254,6 @@ public class ApiClient implements AutoCloseable {
     }
 
     public GatewayConfiguration getGatewayConfiguration() {
-        if (this.gatewayConfiguration == null) this.gatewayConfiguration = new GatewayConfiguration();
         return this.gatewayConfiguration;
     }
 
@@ -656,7 +655,6 @@ public class ApiClient implements AutoCloseable {
             } else {
                 String confUrl = this.gatewayConfiguration.getProtocol() + "://" + this.gatewayConfiguration.getHost();
                 if (this.gatewayConfiguration.getPort() > 0) confUrl = confUrl + ":" + String.valueOf(this.gatewayConfiguration.getPort());
-
                 if (this.gatewayConfiguration.getPathParamsLogin() != null && !this.gatewayConfiguration.getPathParamsLogin().isEmpty()) {
                     if (this.gatewayConfiguration.getPathParamsLogin().startsWith("/")) {
                         confUrl = confUrl + "/" + this.gatewayConfiguration.getPathParamsLogin();
@@ -664,10 +662,6 @@ public class ApiClient implements AutoCloseable {
                         confUrl = confUrl + "/" + this.gatewayConfiguration.getPathParamsLogin();
                     }
                 }
-                if (confUrl.endsWith("/")) {
-                    confUrl = confUrl.substring(0, confUrl.length() - 1);
-                }
-
                 return confUrl;
             }
         } else {
@@ -676,7 +670,6 @@ public class ApiClient implements AutoCloseable {
             } else {
                 String confUrl = this.gatewayConfiguration.getProtocol() + "://" + this.gatewayConfiguration.getHost();
                 if (this.gatewayConfiguration.getPort() > 0) confUrl = confUrl + ":" + String.valueOf(this.gatewayConfiguration.getPort());
-
                 if (this.gatewayConfiguration.getPathParamsApi() != null && !this.gatewayConfiguration.getPathParamsApi().isEmpty()) {
                     if (this.gatewayConfiguration.getPathParamsApi().startsWith("/")) {
                         confUrl = confUrl + "/" + this.gatewayConfiguration.getPathParamsApi();
@@ -684,10 +677,6 @@ public class ApiClient implements AutoCloseable {
                         confUrl = confUrl + "/" + this.gatewayConfiguration.getPathParamsApi();
                     }
                 }
-                if (confUrl.endsWith("/")) {
-                    confUrl = confUrl.substring(0, confUrl.length() - 1);
-                }
-
                 return confUrl;
             }
         }

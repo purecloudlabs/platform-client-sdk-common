@@ -26,31 +26,13 @@ public class GatewayConfiguration {
         String password
     ) {
         super();
-        if (host != null && !host.isEmpty()) {
-            this.host = host;
-        }
-        if (protocol != null && !protocol.isEmpty()) {
-            this.protocol = protocol;
-        }
-        if (port > -1) {
-            this.port = port;
-        }
-        if (pathParamsLogin != null && !pathParamsLogin.isEmpty()) {
-            this.pathParamsLogin = pathParamsLogin;
-        } else {
-            this.pathParamsLogin = "";
-        }
-        if (pathParamsApi != null && !pathParamsApi.isEmpty()) {
-            this.pathParamsApi = pathParamsApi;
-        } else {
-            this.pathParamsApi = "";
-        }
-        if (username != null && !username.isEmpty()) {
-            this.username = username;
-        }
-        if (password != null && !password.isEmpty()) {
-            this.password = password;
-        }
+        this.setHost(host);
+        this.setProtocol(protocol);
+        this.setPort(port);
+        this.setPathParamsLogin(pathParamsLogin);
+        this.setPathParamsApi(pathParamsApi);
+        this.setUsername(username);
+        this.setPassword(password);
     }
 
     GatewayConfiguration(
@@ -61,25 +43,11 @@ public class GatewayConfiguration {
         String pathParamsApi
     ) {
         super();
-        if (host != null && !host.isEmpty()) {
-            this.host = host;
-        }
-        if (protocol != null && !protocol.isEmpty()) {
-            this.protocol = protocol;
-        }
-        if (port > -1) {
-            this.port = port;
-        }
-        if (pathParamsLogin != null && !pathParamsLogin.isEmpty()) {
-            this.pathParamsLogin = pathParamsLogin;
-        } else {
-            this.pathParamsLogin = "";
-        }
-        if (pathParamsApi != null && !pathParamsApi.isEmpty()) {
-            this.pathParamsApi = pathParamsApi;
-        } else {
-            this.pathParamsApi = "";
-        }
+        this.setHost(host);
+        this.setProtocol(protocol);
+        this.setPort(port);
+        this.setPathParamsLogin(pathParamsLogin);
+        this.setPathParamsApi(pathParamsApi);
     }
 
     String getHost() {
@@ -123,6 +91,9 @@ public class GatewayConfiguration {
     void setPathParamsLogin(String pathParams) {
         if (pathParams != null && !pathParams.isEmpty()) {
             this.pathParamsLogin = pathParams;
+            if (this.pathParamsLogin.endsWith("/")) {
+                this.pathParamsLogin = this.pathParamsLogin.substring(0, this.pathParamsLogin.length() - 1);
+            }
         } else {
             this.pathParamsLogin = "";
         }
@@ -135,6 +106,9 @@ public class GatewayConfiguration {
     void setPathParamsApi(String pathParams) {
         if (pathParams != null && !pathParams.isEmpty()) {
             this.pathParamsApi = pathParams;
+            if (this.pathParamsApi.endsWith("/")) {
+                this.pathParamsApi = this.pathParamsApi.substring(0, this.pathParamsApi.length() - 1);
+            }
         } else {
             this.pathParamsApi = "";
         }
@@ -156,7 +130,7 @@ public class GatewayConfiguration {
 
     void setPassword(String password) {
         if (password != null && !password.isEmpty()) {
-            this.host = password;
+            this.password = password;
         }
     }
 }
