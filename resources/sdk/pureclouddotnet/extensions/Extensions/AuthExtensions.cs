@@ -325,13 +325,12 @@ namespace {{=it.packageName}}.Extensions
             Dictionary<String, FileParameter> fileParams, Dictionary<String, String> pathParams,
             String contentType)
         {
-            var regex = new Regex(@"://(api)\.");
-            var authUrl = regex.Replace(apiClient.ClientOptions.BaseUrl.ToString(), "://login.");
-            var options = new RestClientOptions(new Uri(authUrl));
+            var authUri = apiClient.GetConfUri("login", apiClient.ClientOptions.BaseUrl);
+            var options = new RestClientOptions(authUri);
             
             if (apiClient.ClientOptions != null && apiClient.ClientOptions.Proxy != null)
             {
-                options = new RestClientOptions(new Uri(authUrl))
+                options = new RestClientOptions(authUri)
                 {
                     Proxy = apiClient.ClientOptions.Proxy
                 };
