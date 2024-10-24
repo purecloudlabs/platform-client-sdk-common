@@ -21,6 +21,7 @@ declare class ApiClientClass {
 	logout(logoutRedirectUri: string): void;
 	setAccessToken(token: string): void;
 	setEnvironment(environment: string): void;
+	setGateway(gateway: GatewayConfiguration): void;
 	setPersistSettings(doPersist: boolean, prefix?: string): void;
 	setReturnExtendedResponses(returnExtended: boolean): void;
 	setStorageKey(storageKey: string): void;
@@ -50,6 +51,16 @@ declare class ProxyConfig {
 	protocol: string;
 }
 
+declare interface GatewayConfiguration {
+	host: string;
+	protocol?: string;
+	port?: number;
+	path_params_login?: string;
+	path_params_api?: string;
+	username?: string;
+	password?: string;
+}
+
 declare class Configuration {
 	instance: Configuration;
 	configPath: string;
@@ -62,7 +73,10 @@ declare class Configuration {
 	authUrl: string;
 	logger: Logger;
 	config: any;
+	gateway?: GatewayConfiguration;
 	setEnvironment(environment: string): void;
+	setGateway(gateway: GatewayConfiguration): void;
+	getConfUrl(pathType: string, regionUrl: string): string;
 }
 
 declare class Logger {
