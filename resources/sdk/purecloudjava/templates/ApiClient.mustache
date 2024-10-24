@@ -261,10 +261,6 @@ public class ApiClient implements AutoCloseable {
         this.gatewayConfiguration = gatewayConfig;
     }
 
-    public void resetGatewayConfiguration() {
-        this.gatewayConfiguration = null;
-    }
-
     public void setGateway(String host,
             String protocol,
             int port,
@@ -273,6 +269,14 @@ public class ApiClient implements AutoCloseable {
             String username,
             String password) {
         this.gatewayConfiguration = new GatewayConfiguration(host, protocol, port, pathParamsLogin, pathParamsApi, username, password);
+    }
+
+    public void setGateway(String host,
+            String protocol,
+            int port,
+            String pathParamsLogin,
+            String pathParamsApi) {
+        this.gatewayConfiguration = new GatewayConfiguration(host, protocol, port, pathParamsLogin, pathParamsApi);
     }
 
     /**

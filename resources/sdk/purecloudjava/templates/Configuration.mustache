@@ -169,11 +169,11 @@ public class Configuration {
         if (gatewayPort != null && !gatewayPort.isEmpty()) {
             gatewayConfiguration.setPort(parser.getInt("gateway", "port"));
         }
-        String gatewayPathParamsLogin = parser.getString("gateway", "pathParamsLogin");
+        String gatewayPathParamsLogin = parser.getString("gateway", "path_params_login");
         if (gatewayPathParamsLogin != null && !gatewayPathParamsLogin.isEmpty()) {
             gatewayConfiguration.setPathParamsLogin(gatewayPathParamsLogin);
         }
-        String gatewayPathParamsApi = parser.getString("gateway", "pathParamsApi");
+        String gatewayPathParamsApi = parser.getString("gateway", "path_params_api");
         if (gatewayPathParamsApi != null && !gatewayPathParamsApi.isEmpty()) {
             gatewayConfiguration.setPathParamsApi(gatewayPathParamsApi);
         }
@@ -188,7 +188,7 @@ public class Configuration {
 
         defaultApiClient.setGatewayConfiguration(gatewayConfiguration);
     } else {
-      defaultApiClient.resetGatewayConfiguration();
+      defaultApiClient.setGatewayConfiguration(null);
     }
   }
   
