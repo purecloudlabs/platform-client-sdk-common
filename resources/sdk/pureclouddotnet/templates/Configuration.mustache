@@ -177,11 +177,11 @@ namespace {{packageName}}.Client
                 if (!String.IsNullOrEmpty(gatewayPort)) {
                     gatewayConfiguration.Port = parser.GetInt("gateway", "port");
                 }
-                String gatewayPathParamsLogin = parser.GetString("gateway", "pathParamsLogin");
+                String gatewayPathParamsLogin = parser.GetString("gateway", "path_params_login");
                 if (!String.IsNullOrEmpty(gatewayPathParamsLogin)) {
                     gatewayConfiguration.PathParamsLogin = gatewayPathParamsLogin;
                 }
-                String gatewayPathParamsApi = parser.GetString("gateway", "pathParamsApi");
+                String gatewayPathParamsApi = parser.GetString("gateway", "path_params_api");
                 if (!String.IsNullOrEmpty(gatewayPathParamsApi)) {
                     gatewayConfiguration.PathParamsApi = gatewayPathParamsApi;
                 }

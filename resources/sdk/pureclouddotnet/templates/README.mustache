@@ -217,7 +217,7 @@ Configuration.Default.ApiClient.GatewayConfig = gatewayConfiguration;
 
 * "Host" is the address of your gateway.
 * "Protocol" is not mandatory. It will default to "https" if the parameter is not defined or empty.
-* "Port" is not mandatory. This parameter can be defined if a non default port is used and needs to be specified in the url (value must be greater or equal to 0).
+* "Port" is not mandatory. This parameter can be defined if a non default port is used and needs to be specified in the url (value must be greater or equal to 0). Set to -1 to use default port (default unspecified port).
 * "PathParamsLogin" and "PathParamsApi" are not mandatory. They will be appended to the gateway url path if these parameters are defined and non empty (for Login requests and for API requests).
 * "Username" and "Password" are not used at this stage. This is for a possible future use.
 
@@ -354,7 +354,7 @@ This can be achieved defining a "gateway" configuration, in the INI or the JSON 
 
 * "host" is the address of your gateway.
 * "protocol" is not mandatory. It will default to "https" if the parameter is not defined or empty.
-* "port" is not mandatory. This parameter can be defined if a non default port is used and needs to be specified in the url (value must be greater or equal to 0).
+* "port" is not mandatory. This parameter can be defined if a non default port is used and needs to be specified in the url (value must be greater or equal to 0). Set to -1 to use default port (default unspecified port).
 * "path_params_login" and "path_params_api" are not mandatory. They will be appended to the gateway url path if these parameters are defined and non empty (for Login requests and for API requests).
 * "username" and "password" are not used at this stage. This is for a possible future use.
 
