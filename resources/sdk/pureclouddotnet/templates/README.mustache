@@ -196,16 +196,16 @@ Configuration.Default.ApiClient.setBasePath(region);
 
 The Genesys Cloud Login and API URL path can be overridden if necessary (i.e. if the Genesys Cloud requests must be sent through to an intermediate API gateway or equivalent).
 
-This can be achieved setting the gateway on the `ApiClient` instance with *setGateway*.
+This can be achieved setting the gateway on the `ApiClient` instance with *SetGateway*.
 
 ```csharp
-Configuration.Default.ApiClient.setGateway("mygateway.mydomain.myextension", "https", 1443, "myadditionalpathforlogin", "myadditionalpathforapi");
+Configuration.Default.ApiClient.SetGateway("mygateway.mydomain.myextension", "https", 1443, "myadditionalpathforlogin", "myadditionalpathforapi");
 ```
 
 or
 
 ```csharp
-GatewayConfiguration gatewayConfiguration = new ApiClient.GatewayConfiguration();
+ApiClient.GatewayConfiguration gatewayConfiguration = new ApiClient.GatewayConfiguration();
 gatewayConfiguration.Host = "mygateway.mydomain.myextension";
 gatewayConfiguration.Protocol = "https";
 gatewayConfiguration.Port = 1443;

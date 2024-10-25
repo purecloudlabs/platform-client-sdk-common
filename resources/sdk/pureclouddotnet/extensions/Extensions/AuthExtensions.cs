@@ -31,7 +31,7 @@ namespace {{=it.packageName}}.Extensions
         public static ApiResponse<AuthTokenInfo> PostTokenWithHttpInfo(this ApiClient apiClient, string clientId,
             string clientSecret, string redirectUri = "", string authorizationCode = "", bool isRefreshRequest = false)
         {
-            var path_ = "/token";
+            var path_ = "/oauth/token";
 
             // This may be uninitialized if no API classes have been constructed yet
             if (apiClient.Configuration == null)
@@ -129,7 +129,7 @@ namespace {{=it.packageName}}.Extensions
         public static ApiResponse<AuthTokenInfo> PostTokenWithHttpInfoSaml2Bearer(this ApiClient apiClient, string clientId,
             string clientSecret, string orgName, string assertion)
         {
-            var path_ = "/token";
+            var path_ = "/oauth/token";
 
             // This may be uninitialized if no API classes have been constructed yet
             if (apiClient.Configuration == null)
@@ -257,7 +257,7 @@ namespace {{=it.packageName}}.Extensions
 
         public static ApiResponse<AuthTokenInfo> PostTokenWithHttpInfoPKCE(this ApiClient apiClient, string clientId, string redirectUri, string codeVerifier, string authorizationCode)
         {
-            var path_ = "/token";
+            var path_ = "/oauth/token";
 
             // This may be uninitialized if no API classes have been constructed yet
             if (apiClient.Configuration == null)

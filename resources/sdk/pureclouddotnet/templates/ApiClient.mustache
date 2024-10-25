@@ -849,12 +849,26 @@ namespace {{packageName}}.Client
 
         public class GatewayConfiguration
         {
+
+            // Gateway Host
             private String host = null;
+
+            // Gateway Protocol
             private String protocol = "https";
+
+            // Gateway Port
             private int port = -1;
+
+            // Gateway Path Param for Login
             private String pathParamsLogin = "";
+
+            // Gateway Path Param for API
             private String pathParamsApi = "";
+
+            // Gateway Username (future)
             private String username = null;
+
+            // Gateway Password (future)
             private String password = null;
 
             public GatewayConfiguration()
