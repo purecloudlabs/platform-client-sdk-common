@@ -1,19 +1,22 @@
 package com.mypurecloud.sdk.v2;
 
 public class GatewayConfiguration {
-    private String host = null;
-    private String protocol = null;
-    private int port = -1;
-    private String pathParamsLogin = null;
-    private String pathParamsApi = null;
-    private String username = null;
-    private String password = null;
+    private String host;
+    private String protocol;
+    private int port;
+    private String pathParamsLogin;
+    private String pathParamsApi;
+    private String username;
+    private String password;
 
     GatewayConfiguration() {
+        this.host = null;
         this.protocol = "https";
         this.port = -1;
         this.pathParamsLogin = "";
         this.pathParamsApi = "";
+        this.username = null;
+        this.password = null;
     }
 
     GatewayConfiguration(
@@ -92,7 +95,9 @@ public class GatewayConfiguration {
         if (pathParams != null && !pathParams.isEmpty()) {
             this.pathParamsLogin = pathParams;
             if (this.pathParamsLogin.endsWith("/")) {
-                this.pathParamsLogin = this.pathParamsLogin.substring(0, this.pathParamsLogin.length() - 1);
+                this.pathParamsLogin = this.pathParamsLogin.substring(
+                                            0,
+                                            this.pathParamsLogin.length() - 1);
             }
         } else {
             this.pathParamsLogin = "";
@@ -107,7 +112,9 @@ public class GatewayConfiguration {
         if (pathParams != null && !pathParams.isEmpty()) {
             this.pathParamsApi = pathParams;
             if (this.pathParamsApi.endsWith("/")) {
-                this.pathParamsApi = this.pathParamsApi.substring(0, this.pathParamsApi.length() - 1);
+                this.pathParamsApi = this.pathParamsApi.substring(
+                                            0,
+                                            this.pathParamsApi.length() - 1);
             }
         } else {
             this.pathParamsApi = "";
