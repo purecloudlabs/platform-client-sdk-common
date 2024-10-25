@@ -1,18 +1,25 @@
 package com.mypurecloud.sdk.v2;
 
 public class GatewayConfiguration {
+    
     // Gateway Host
     private String host = null;
+
     // Gateway Protocol
     private String protocol = null;
+    
     // Gateway Port
     private int port = -1;
+
     // Gateway Path Param for Login
     private String pathParamsLogin = null;
+    
     // Gateway Path Param for API
     private String pathParamsApi = null;
+    
     // Gateway Username (future)
     private String username = null;
+    
     // Gateway Password (future)
     private String password = null;
 
