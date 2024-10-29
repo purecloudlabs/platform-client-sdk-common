@@ -147,7 +147,7 @@ namespace {{packageName}}.Client
                     if (this.GatewayConfig.Port > 0) confUrl = confUrl + ":" + this.GatewayConfig.Port.ToString();
                     if (!String.IsNullOrEmpty(this.GatewayConfig.PathParamsLogin)) {
                         if (this.GatewayConfig.PathParamsLogin.StartsWith("/")) {
-                            confUrl = confUrl + "/" + this.GatewayConfig.PathParamsLogin;
+                            confUrl = confUrl + this.GatewayConfig.PathParamsLogin;
                         } else {
                             confUrl = confUrl + "/" + this.GatewayConfig.PathParamsLogin;
                         }
@@ -162,7 +162,7 @@ namespace {{packageName}}.Client
                     if (this.GatewayConfig.Port > 0) confUrl = confUrl + ":" + this.GatewayConfig.Port.ToString();
                     if (!String.IsNullOrEmpty(this.GatewayConfig.PathParamsApi)) {
                         if (this.GatewayConfig.PathParamsApi.StartsWith("/")) {
-                            confUrl = confUrl + "/" + this.GatewayConfig.PathParamsApi;
+                            confUrl = confUrl + this.GatewayConfig.PathParamsApi;
                         } else {
                             confUrl = confUrl + "/" + this.GatewayConfig.PathParamsApi;
                         }
