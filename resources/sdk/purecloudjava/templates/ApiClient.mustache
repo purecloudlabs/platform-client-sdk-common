@@ -661,7 +661,7 @@ public class ApiClient implements AutoCloseable {
                 if (this.gatewayConfiguration.getPort() > 0) confUrl = confUrl + ":" + String.valueOf(this.gatewayConfiguration.getPort());
                 if (this.gatewayConfiguration.getPathParamsLogin() != null && !this.gatewayConfiguration.getPathParamsLogin().isEmpty()) {
                     if (this.gatewayConfiguration.getPathParamsLogin().startsWith("/")) {
-                        confUrl = confUrl + "/" + this.gatewayConfiguration.getPathParamsLogin();
+                        confUrl = confUrl + this.gatewayConfiguration.getPathParamsLogin();
                     } else {
                         confUrl = confUrl + "/" + this.gatewayConfiguration.getPathParamsLogin();
                     }
@@ -676,7 +676,7 @@ public class ApiClient implements AutoCloseable {
                 if (this.gatewayConfiguration.getPort() > 0) confUrl = confUrl + ":" + String.valueOf(this.gatewayConfiguration.getPort());
                 if (this.gatewayConfiguration.getPathParamsApi() != null && !this.gatewayConfiguration.getPathParamsApi().isEmpty()) {
                     if (this.gatewayConfiguration.getPathParamsApi().startsWith("/")) {
-                        confUrl = confUrl + "/" + this.gatewayConfiguration.getPathParamsApi();
+                        confUrl = confUrl + this.gatewayConfiguration.getPathParamsApi();
                     } else {
                         confUrl = confUrl + "/" + this.gatewayConfiguration.getPathParamsApi();
                     }
