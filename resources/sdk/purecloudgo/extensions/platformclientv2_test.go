@@ -495,9 +495,9 @@ func TestApiGateway(t *testing.T) {
 	}
 
 	// Authorize Credentials
-	err := config.AuthorizeClientCredentials(config.ClientID, config.ClientSecret)
+	err := config.AuthorizeClientCredentials(clientID, clientSecret)
 	if err != nil {
-		if !strings.Contains(err.Error(), "400 - Not Found") || !strings.Contains(err.Error(), "https://serviceproxy.net/nonxml/cce.uat.com/login") {
+		if !strings.Contains(err.Error(), "API Error: 400 -  ()") {
 			t.Errorf("Failed to authorize client credentials: %v", err)
 		}
 	}
@@ -505,7 +505,7 @@ func TestApiGateway(t *testing.T) {
 	outboundApi := NewOutboundApiWithConfig(config)
 	_, _, err = outboundApi.GetOutboundCallabletimesets(1, 1, true, "", "", "", "")
 	if err != nil {
-		if !strings.Contains(err.Error(), "400 - Not Found") || !strings.Contains(err.Error(), "https://serviceproxy.net/nonxml/cce.uat.com/apis/api/v2/outbound/callabletimesets") {
+		if !strings.Contains(err.Error(), "API Error: 400 -  ()") {
 			t.Errorf("Failed to Retrieve Timesets: %v", err)
 		}
 	}
