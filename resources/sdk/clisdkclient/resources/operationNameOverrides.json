@@ -513,5 +513,10 @@
 		"get": {
 			"name": "getVersion"
 		}
+	},
+	"/api/v2/conversations/customattributes/schemas/{schemaId}/versions": {
+		"get": {
+			"name": "getAllConversationsCustomattributesSchemaVersions"
+		}
 	}
 }
