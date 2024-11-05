@@ -497,7 +497,7 @@ func TestApiGateway(t *testing.T) {
 	// Authorize Credentials
 	err := config.AuthorizeClientCredentials(clientID, clientSecret)
 	if err != nil {
-		if !strings.Contains(err.Error(), "API Error: 400 -  ()") {
+		if !strings.Contains(err.Error(), "Auth Error: 400 - Not found ()") {
 			t.Errorf("Failed to authorize client credentials: %v", err)
 		}
 	}

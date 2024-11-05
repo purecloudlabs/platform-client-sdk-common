@@ -158,7 +158,6 @@ func (c *APIClient) CallAPI(path string, method string,
 		u, _ = url.Parse(urlString)
 	}
 
-	fmt.Printf("Url: %s", u)
 	request := retryablehttp.Request{
 		Request: &http.Request{
 			URL:    u,
