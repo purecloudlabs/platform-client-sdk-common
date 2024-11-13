@@ -293,7 +293,7 @@
     <nv-websocket-client-version>2.14</nv-websocket-client-version>
     <guava-version>33.3.1-jre</guava-version>
     <ini4j-version>0.5.4</ini4j-version>
-    <io-netty-version>4.1.113.Final</io-netty-version>
+    <io-netty-version>4.1.115.Final</io-netty-version>
     <name>${props.name}</name>
     <version>${props.version}</version>
     <description>${props.description}</description>
