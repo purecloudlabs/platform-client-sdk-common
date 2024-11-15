@@ -2,6 +2,7 @@
 
 const assert = require('assert');
 const { HttpsProxyAgent } = require('hpagent');
+const { axios } = require('axios');
 
 // purecloud-platform-client-v2
 const platformClient = require('../../../../../output/purecloudjavascript/build');
@@ -126,6 +127,39 @@ describe('JS SDK for Node', function () {
 		}, 8000);
 	}
 
+	it('should get the user with custom client', (done) => {
+
+		// mutual tls
+		const clientCert = fs.readFileSync('client-cert.pem');
+		const clientKey = fs.readFileSync('client-key.pem');
+		const caCert = fs.readFileSync('ca-cert.pem');
+
+
+
+		const axiosClient = axios.create({
+			httpsAgent: new https.Agent({
+				ca: caCert,
+				cert: clientCert,
+				key: clientKey,
+				rejectUnauthorized: true
+			}),
+			timeout :5000
+		})
+
+		client.setClient(axiosClient)
+
+		usersApi
+			.getUser(USER_ID, { expand: ['profileSkills'] })
+			.then((data) => {
+				assert.strictEqual(data.body.id, USER_ID);
+				assert.strictEqual(data.body.name, USER_NAME);
+				assert.strictEqual(data.body.email, USER_EMAIL);
+				assert.strictEqual(data.body.department, USER_DEPARTMENT);
+				done();
+			})
+			.catch((err) => handleError(err, done));
+	});
+
 	it('should get the user through a proxy', (done) => {
 		httpsAgent = new HttpsProxyAgent({
 			proxy: 'http://localhost:4001',
@@ -142,6 +176,8 @@ describe('JS SDK for Node', function () {
 			})
 			.catch((err) => handleError(err, done));
 	});
+
+
 
 	it('should delete the user', (done) => {
 		usersApi

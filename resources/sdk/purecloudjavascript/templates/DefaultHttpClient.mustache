@@ -1,0 +1,15 @@
+import { default as axios } from 'axios';
+import HttpClient from './abstractHttpClient.js';
+
+class DefaultHttpClient extends HttpClient{
+
+    constructor(options) {
+        super();
+        this._axiosInstance = axios.create(options);
+    }
+    request(options) {
+        return this._axiosInstance.request(options);
+    }
+}
+
+export default DefaultHttpClient;

@@ -1,5 +1,6 @@
 import { default as axios } from 'axios';
 import Configuration from './configuration.js';
+import DefaultHttpClient from './DefaultHttpClient.js';
 import { default as qs } from 'qs';
 
 /**
@@ -204,6 +205,31 @@ class ApiClient {
 		this.config.setEnvironment(environment);
 	}
 
+    setHttpClient(httpClient) {
+        if (!(httpClient instanceof HttpClient)) {
+            throw new Error("httpclient must be an instance of Abstract HttpClient. See DefualtHttpInstance for a prototype");
+        }
+        this.httpClient = httpClient;
+    }
+
+
+	setHttpAgentPaths(certPath, keyPath, caPath) {
+           const agentOptions = {}
+            if (certPath) {
+                agentOptions.cert = require('fs').readFileSync(certPath);
+            }
+
+            if (keyPath) {
+                agentOptions.key = require('fs').readFileSync(keyPath);
+            }
+
+            if (caPath) {
+                agentOptions.ca = require('fs').readFileSync(caPath);
+            }
+
+            this.agentOptions(agentOptions);
+        }
+
 	/**
 	 * @description Sets the gateway used by the session
 	 * @param {object} gateway - Gateway Configuration interface
@@ -294,14 +320,18 @@ class ApiClient {
 			const headers = {
 				'Authorization': `Basic ${authHeader}`
 			}
-			axios({
-				method: `POST`,
-				url: `${loginBasePath}/oauth/token`,
-				headers: headers,
-				data: 'grant_type=client_credentials',
-				httpsAgent: this.proxyAgent
-			})
-				.then((response) => {
+
+			const httpClient = this.buildHttpClient()
+
+			var request = {
+            	method: `POST`,
+            	url: `${loginBasePath}/oauth/token`,
+            	data: 'grant_type=client_credentials',
+            	headers: headers
+            };
+
+			httpClient.request(request)
+			       .then((response) => {
 					// Logging
 					this.config.logger.log(
 						'trace',
@@ -896,7 +926,10 @@ class ApiClient {
 	 */
 	_formAuthRequest(encodedData, data) {
 		var loginBasePath = this.config.getConfUrl('login', `https://login.${this.config.environment}`);
-		var request = axios({
+
+		const httpClient = this.buildHttpClient()
+
+		var request = httpClient.request({
 			method: `POST`,
 			url: `${loginBasePath}/oauth/token`,
 			headers: {
@@ -1163,6 +1196,41 @@ class ApiClient {
 		return url;
 	}
 
+    /**
+    	 * Builds http client.
+    	 * @returns {String} The http client default or the one that is injected.
+    	 */
+    	buildHttpClient() {
+    		if (this.httpClient) {
+    		    return this.httpClient;
+    		} else {
+    		    return this.defaultClient();
+    		}
+    	}
+
+
+         defaultClient() {
+                // Initialize proxyAgent as null
+                let proxyAgent = null;
+
+                // If agentOptions are provided, create a new https.Agent with those options
+                if (this.agentOptions) {
+                    proxyAgent = new https.Agent(this.agentOptions);
+                }
+
+                // If that.proxyAgent is available, use it (prioritize this over agentOptions)
+                if (this.proxyAgent) {
+                    proxyAgent = this.proxyAgent;
+                }
+
+                const options = {
+                    httpsAgent: proxyAgent,
+                    timeout: this.timeout,
+                };
+
+                return new DefaultHttpClient(options);
+            }
+
 	/**
 	 * Checks whether the given content type represents JSON.<br>
 	 * JSON content type examples:<br>
@@ -1346,11 +1414,12 @@ class ApiClient {
 			sendRequest(this);
 			function sendRequest(that) {
 				var url = that.buildUrl(path, pathParams);
+
+				const httpClient = that.buildHttpClient()
+
 				var request = {
 					method: httpMethod,
-					url: url,	
-					httpsAgent: that.proxyAgent,
-					timeout: that.timeout,
+					url: url,
 					params: that.serialize(queryParams)
 				};
 
@@ -1389,7 +1458,7 @@ class ApiClient {
 				if (accept) {
 					request.headers['Accept'] = accept;
 				}
-				axios.request(request)
+				httpClient.request(request)
 					.then((response) => {
 						// Build response object
 						var data = (that.returnExtended === true) ? {
