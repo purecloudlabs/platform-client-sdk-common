@@ -128,7 +128,7 @@ describe('JS SDK for Node', function () {
 
 	it('should get the user through a proxy', (done) => {
 		httpsAgent = new HttpsProxyAgent({
-			proxy: 'http://localhost:4001',
+			proxy: 'http://localhost:4002',
 		});
 		client.proxyAgent = httpsAgent
 		usersApi
