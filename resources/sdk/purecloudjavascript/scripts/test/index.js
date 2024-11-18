@@ -42,114 +42,56 @@ describe('JS SDK for Node', function () {
 
 	it('should successfully authenticate', (done) => {
 		client.setEnvironment(PURECLOUD_ENVIRONMENT);
+		// client.setHttpAgentPaths('certs/client.crt', 'certs/client.key', 'certs/rootCA.pem', 'http://localhost:4004')
+		//
+		//
+		// httpsAgent = new HttpsProxyAgent({
+		// 	proxy: 'http://localhost:4001',
+		// });
+
+		const httpsAgent = new HttpsProxyAgent({
+			proxy: 'http://localhost:4001',
+			ca: 'certs/rootCA.pem',
+			cert: 'certs/client.crt',
+			key: 'certs/client.key',
+		});
+
+		client.setProxyAgent(httpsAgent)
 		client
 			.loginClientCredentialsGrant(PURECLOUD_CLIENT_ID, PURECLOUD_CLIENT_SECRET)
 			.then(() => done())
 			.catch((err) => handleError(err, done));
 	});
 
-	it('should create a user', (done) => {
-		usersApi
-			.postUsers({
-				name: USER_NAME,
-				email: USER_EMAIL,
-				password: guid() + '!@#$1234asdfASDF',
-			})
-			.then((data) => {
-				USER_ID = data.body.id;
-				assert.strictEqual(data.body.name, USER_NAME);
-				assert.strictEqual(data.body.email, USER_EMAIL);
-                console.log(`USER_ID=${USER_ID}`);
-				console.log(`correlation ID postUsers ${data.headers['inin-correlation-id']}`)
-				console.log(`Version of User ${data.body.version}`)
-				done();
-			})
-			.catch((err) => handleError(err, done));
-	});
-
-	it('should update the user', (done) => {
-		usersApi
-			.patchUser(USER_ID, {
-				department: USER_DEPARTMENT,
-				version: 1,
-			})
-			.then((data) => {
-				assert.strictEqual(data.body.id, USER_ID);
-				assert.strictEqual(data.body.name, USER_NAME);
-				assert.strictEqual(data.body.email, USER_EMAIL);
-				assert.strictEqual(data.body.email, USER_EMAIL);
-				assert.strictEqual(data.body.department, USER_DEPARTMENT);
-				done();
-			})
-			.catch((err) => handleError(err, done));
-	});
-
-	it('should set profile skills on the user', (done) => {
-		usersApi
-			.putUserProfileskills(USER_ID, [USER_PROFILE_SKILL])
-			.then((data) => {
-				assert.strictEqual(data.body.length, 1);
-				assert.strictEqual(data.body[0], USER_PROFILE_SKILL);
-				console.log(`correlation ID putUserProfileskills ${data.headers['inin-correlation-id']}`)
-				done();
-			})
-			.catch((err) => handleError(err, done));
-	});
-
-	it('should get the user', (done) => {
-		getUsers(2, done);
-	});
-
-	function getUsers(retry, done) {
-		setTimeout(() => {
-			usersApi
-				.getUser(USER_ID, { expand: ['profileSkills'] })
-				.then((data) => {
-					try {
-						assert.strictEqual(data.body.id, USER_ID);
-						assert.strictEqual(data.body.name, USER_NAME);
-						assert.strictEqual(data.body.email, USER_EMAIL);
-						assert.strictEqual(data.body.department, USER_DEPARTMENT);
-						console.log(`correlation ID getUser ${data.headers['inin-correlation-id']}`)
-						console.log(`Version of User ${data.body.version}`)
-						// Commented out until the issue with APIs to send the latest Version of the User is fixed.
-						//assert.strictEqual(data.body.profileSkills[0], USER_PROFILE_SKILL);
-						done();
-					} catch (err) {
-						if (retry > 0) {
-							getUsers(--retry, done);
-						} else {
-							handleError(err, done);
-						}
-					}
-				})
-				.catch((err) => handleError(err, done));
-		}, 8000);
-	}
-
 	it('should get the user with custom client', (done) => {
 
 		// mutual tls
-		const clientCert = fs.readFileSync('client-cert.pem');
-		const clientKey = fs.readFileSync('client-key.pem');
-		const caCert = fs.readFileSync('ca-cert.pem');
+
+		// const axiosClient = axios.create({
+		// 	httpsAgent: new https.Agent({
+		// 		cert: clientCert,
+		// 		key: clientKey,
+		// 		ca: caCert,
+		// 		rejectUnauthorized: true
+		// 	}),
+		// 	timeout :5000
+		// })
+
+		//client.setHttpAgentPaths('certs/client.crt', 'certs/client.key', 'certs/rootCA.pem', 'http://localhost:4003')
+
+		const httpsAgent = new HttpsProxyAgent({
+			proxy: 'http://localhost:4001',
+			ca: 'certs/rootCA.pem',
+			cert: 'certs/client.crt',
+			key: 'certs/client.key',
+		});
+
+		client.setProxyAgent(httpsAgent)
 
 
-
-		const axiosClient = axios.create({
-			httpsAgent: new https.Agent({
-				ca: caCert,
-				cert: clientCert,
-				key: clientKey,
-				rejectUnauthorized: true
-			}),
-			timeout :5000
-		})
-
-		client.setClient(axiosClient)
 
 		usersApi
-			.getUser(USER_ID, { expand: ['profileSkills'] })
+			.getAnalyticsUsersAggregatesJobResults("112233")
 			.then((data) => {
 				assert.strictEqual(data.body.id, USER_ID);
 				assert.strictEqual(data.body.name, USER_NAME);

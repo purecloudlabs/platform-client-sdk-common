@@ -17,9 +17,9 @@ export default class GatewayServer {
     this.gateway = createProxyServer();
 
     const options = {
-      key: fs.readFileSync('certs/server.key'),
-      cert :fs.readFileSync('certs/server.crt'),
-      ca: fs.readFileSync('certs/ca.pem'),
+      key: fs.readFileSync('./resources/scripts/certs/server.key'),
+      cert :fs.readFileSync('./resources/scripts/certs/server-chain.pem'),
+      ca: fs.readFileSync('./resources/scripts/certs/rootCA.pem'),
       requestCert: true,
       rejectUnauthorized: true
     }
@@ -76,7 +76,7 @@ export default class GatewayServer {
 
 const gatewayServer = new GatewayServer();
 console.log('HTTP gateway server trying to start on port 4002');
-gatewayServer.server.listen(4002, () => {
+gatewayServer.server.listen(4003, () => {
   console.log('HTTP gateway server listening on port 4002');
 });
 

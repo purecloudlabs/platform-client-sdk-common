@@ -1,10 +1,10 @@
 module.exports = {
   apps: [
     {
-      name: 'proxy-server',
-      script: './resources/scripts/proxy.ts',
+      name: 'gateway-server',
+      script: './resources/scripts/gateway.ts',
       interpreter: 'node',
       interpreterArgs: '--loader tsx',
-    },
+    }
   ],
 };

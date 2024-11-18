@@ -1,7 +1,9 @@
 import { default as axios } from 'axios';
 import Configuration from './configuration.js';
+import https from 'https';
 import DefaultHttpClient from './DefaultHttpClient.js';
 import { default as qs } from 'qs';
+const { HttpsProxyAgent } = require('hpagent');
 
 /**
  * @module {{#invokerPackage}}{{invokerPackage}}/{{/invokerPackage}}ApiClient
@@ -213,7 +215,7 @@ class ApiClient {
     }
 
 
-	setHttpAgentPaths(certPath, keyPath, caPath) {
+	setHttpAgentPaths(certPath, keyPath, caPath, proxy) {
            const agentOptions = {}
             if (certPath) {
                 agentOptions.cert = require('fs').readFileSync(certPath);
@@ -227,7 +229,11 @@ class ApiClient {
                 agentOptions.ca = require('fs').readFileSync(caPath);
             }
 
-            this.agentOptions(agentOptions);
+            if (proxy) {
+                            agentOptions.proxy = proxy;
+                        }
+
+            this.agentOptions = agentOptions;
         }
 
 	/**
@@ -1216,6 +1222,8 @@ class ApiClient {
                 // If agentOptions are provided, create a new https.Agent with those options
                 if (this.agentOptions) {
                     proxyAgent = new https.Agent(this.agentOptions);
+                    console.log("proxyAgent");
+                    console.log(proxyAgent);
                 }
 
                 // If that.proxyAgent is available, use it (prioritize this over agentOptions)
@@ -1228,7 +1236,16 @@ class ApiClient {
                     timeout: this.timeout,
                 };
 
-                return new DefaultHttpClient(options);
+               /* const httpsAgent = new HttpsProxyAgent({
+                			url: this.agentOptions.proxy,
+                			ca: this.agentOptions.ca,
+                			cert: this.agentOptions.cert,
+                			key: this.agentOptions.key,
+                	});
+               */
+
+                return  new DefaultHttpClient(proxyAgent);
+                //client.httpsAgent
             }
 
 	/**
@@ -1420,7 +1437,8 @@ class ApiClient {
 				var request = {
 					method: httpMethod,
 					url: url,
-					params: that.serialize(queryParams)
+					params: that.serialize(queryParams),
+					httpsAgent: that.proxyAgent
 				};
 
 				// apply authentications
