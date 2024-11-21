@@ -518,5 +518,10 @@
 		"get": {
 			"name": "getAllConversationsCustomattributesSchemaVersions"
 		}
+	},
+	"/api/v2/routing/sms/phonenumbers/{phoneNumberId}": {
+		"patch": {
+			"name": "patch"
+		}
 	}
 }
