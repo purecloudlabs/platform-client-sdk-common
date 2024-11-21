@@ -360,6 +360,7 @@ class Logger {
                 ObjectMapper objectMapper = new ObjectMapper();
                 objectMapper.setDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
                 objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+                objectMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
                 try {
                     return objectMapper.writeValueAsString(this);
                 } catch (Exception e) {
