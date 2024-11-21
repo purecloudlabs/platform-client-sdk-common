@@ -2,23 +2,7 @@ import {{moduleName}} = require('{{projectName}}');
 
 declare module '{{projectName}}' {
 	export const ApiClient: ApiClientClass;
-	export const PureCloudRegionHosts {
-		us_east_1: string,
-		eu_west_1: string,
-		ap_southeast_2: string,
-		ap_northeast_1: string,
-		eu_central_1: string,
-		us_west_2: string,
-		ca_central_1: string,
-		ap_northeast_2: string,
-		eu_west_2: string,
-		ap_south_1: string,
-		us_east_2: string,
-		sa_east_1: string,
-		me_central_1: string,
-		ap_northeast_3: string,
-		eu_central_2: string,
-	};
+	export const PureCloudRegionHosts: Record<string, string>;
 }
 
 declare class ApiClientClass {
