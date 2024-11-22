@@ -1,82 +1,153 @@
-
 import http from 'http';
 import net from 'net';
 import url from 'url';
 import fs from 'fs';
+import https from 'https';
 import pkg from 'http-proxy';
-import https from "https";
 import * as tls from "tls";
 const { createProxyServer } = pkg;
 
 export default class GatewayServer {
-
   public gateway: pkg.httpProxy;
-  public server: http.Server;
+  public server: https.Server;
 
   constructor() {
     this.gateway = createProxyServer();
 
-    const options = {
-      key: fs.readFileSync('./resources/scripts/certs/server.key'),
-      cert :fs.readFileSync('./resources/scripts/certs/server-chain.pem'),
-      ca: fs.readFileSync('./resources/scripts/certs/rootCA.pem'),
-      requestCert: true,
-      rejectUnauthorized: true
-    }
+    const domain = 'localhost';
 
-    this.server = https.createServer(options,(req, res) => {
-      const { hostname, port } = url.parse(req.url);
-      const socket = req.socket;
-      if (socket instanceof tls.TLSSocket)
-        if (socket.authorized) {
-          if (hostname && port) {
-            this.gateway.web(req, res, { target: `http://${hostname}:${port}` });
-          } else {
-            res.writeHead(400, { 'Content-Type': 'text/plain' });
-            res.end('Invalid request');
-          }
-        } else {
-          const clientCert = socket.getPeerCertificate();
-          if (clientCert && clientCert.subject) {
-            res.writeHead(403);
-            res.end(`Unauthorized: Certificate from ${clientCert.subject.CN} is not authorized.\n`);
-          } else {
-            res.writeHead(401);
-            res.end('Unauthorized: No valid client certificate provided\n');
-          }
-        }
+    // SSL/TLS options for the proxy server
+    const serverOptions: https.ServerOptions = {
+      key: fs.readFileSync(`./resources/scripts/certs/certs1/3_application/private/${domain}.key.pem`),
+      cert: fs.readFileSync(`./resources/scripts/certs/certs1/3_application/certs/${domain}.cert.pem`),
+      ca: fs.readFileSync('./resources/scripts/certs/certs1/2_intermediate/certs/ca-chain.cert.pem'),
+      requestCert: true,
+      rejectUnauthorized: true, // Verify client certificates
+    };
+
+    // HTTPS server to listen for incoming requests
+    this.server = https.createServer(serverOptions, (req, res) => {
+      // Parse incoming request URL
+      const targetHost = url.parse(req.url || '');
+      console.log(req)
+      console.log(`https://api.mypurecloud.com`+targetHost.path)
+      const httpsAgent = new https.Agent({
+        rejectUnauthorized : false,
+        requestCert: false
+      })
+
+      res.writeHead(200, { 'Content-Type': 'text/plain' });
+      res.end('Hello World');
+
+
+      const options: https.RequestOptions = {
+        hostname: `api.inindca.com`,
+        port: 443, // HTTPS port
+        path: targetHost.path,
+        method: req.method,
+        headers: {
+          ...req.headers, // Forward all headers from the original request
+         // Authorization: req.headers['Authorization'],
+          //Accept: req.headers['Accept'],
+         // host: `api.mypurecloud.com`, // Override the `host` header
+        },
+        rejectUnauthorized: false, // Disable SSL certificate validation for the target
+      };
+
+      // if (req.headers['Authorization']) {
+      //   options.headers['Authorization'] = req.headers['Authorization'];
+      // } else {
+      //   options.headers['Authorization'] = req.headers['authorization'];
+      // }
+      //
+      // if (req.headers['Content-Type']) {
+      //   options.headers['Content-Type'] = req.headers['Content-Type'];
+      // } else {
+      //   options.headers['Content-Type'] = req.headers['content-type'];
+      // }
+      //
+      // if (req.headers['Accept']) {
+      //   options.headers['Accept'] = req.headers['Accept'];
+      // } else {
+      //   options.headers['Accept'] = req.headers['accept'];
+      // }
+      //
+      //
+      // console.log(options)
+
+      const proxyReq = https.request(options, (proxyRes) => {
+
+        console.log(res)
+        // Forward the status and headers from the target response
+        res.writeHead(proxyRes.statusCode || 502, proxyRes.headers);
+
+        // Pipe the target response back to the client
+        proxyRes.pipe(res);
+      });
+
+      proxyReq.on('error', (err) => {
+        console.error('Error during proxy request:', err.message);
+        res.writeHead(502, { 'Content-Type': 'text/plain' });
+        res.end('Bad Gateway');
+      });
+
+      // Pipe the original client request to the target server
+      req.pipe(proxyReq);
+
+
     });
 
+    // Handle CONNECT method for tunneling
     this.server.on('connect', this.handleConnectRequest.bind(this));
   }
 
-
-
   private handleConnectRequest(req: http.IncomingMessage, clientSocket: net.Socket, head: Buffer) {
-    const { port, hostname } = url.parse(`//${req.url}`, false, true);
-    if (hostname && port) {
-      const serverSocket = net.connect(parseInt(port, 10), hostname, () => {
-        clientSocket.write('HTTP/1.1 200 Connection Established\r\n' +
-          'Proxy-agent: Node.js-Proxy\r\n' +
-          '\r\n');
-        serverSocket.write(head);
-        serverSocket.pipe(clientSocket);
-        clientSocket.pipe(serverSocket);
-      });
-    } else {
-      clientSocket.write('HTTP/1.1 400 Bad Request\r\n' +
-        'Content-Type: text/plain\r\n' +
-        '\r\n' +
-        'Invalid request');
-      clientSocket.end();
-    }
-  }
+    const targetUrl = url.parse(`//${req.url}`, false, true);
+    console.log(targetUrl)
 
+    //target: `https://api.mypurecloud.com`+targetUrl.path,
+      const serverSocket = tls.connect(
+          {
+            host: 'api.inindca.com',
+            port: 443,
+            rejectUnauthorized: false
+          }, () => {
+            console.log("connection extablishes")
+            clientSocket.write(
+                'HTTP/1.1 200 Connection Established\r\n' +
+                'Proxy-agent: Node.js-Proxy\r\n' +
+                '\r\n'
+            );
+            serverSocket.write(head);
+            serverSocket.pipe(clientSocket);
+            clientSocket.pipe(serverSocket);
+          }
+
+      );
+
+    serverSocket.on('error', (err) => {
+      console.error('error with server socket:', err.message)
+      clientSocket.end();
+    } );
+
+      // Establish a connection to the target host
+      // const serverSocket = net.connect(parseInt("443", 10), `https://api.mypurecloud.com`, () => {
+      //   console.log("connection extablishes")
+      //   clientSocket.write(
+      //       'HTTP/1.1 200 Connection Established\r\n' +
+      //       'Proxy-agent: Node.js-Proxy\r\n' +
+      //       '\r\n'
+      //   );
+      //   serverSocket.write(head);
+      //   serverSocket.pipe(clientSocket);
+      //   clientSocket.pipe(serverSocket);
+      // });
+
+  }
 }
 
 const gatewayServer = new GatewayServer();
-console.log('HTTP gateway server trying to start on port 4002');
-gatewayServer.server.listen(4003, () => {
-  console.log('HTTP gateway server listening on port 4002');
+console.log('HTTPS Gateway server trying to start on port 4006');
+gatewayServer.server.listen(4022, () => {
+  console.log('HTTPS Gateway server listening on port 4006');
 });
-

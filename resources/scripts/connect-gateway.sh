@@ -27,6 +27,13 @@ stop_proxy() {
     else
         echo "process proxy-server is not running."
     fi
+
+    if pm2 list | grep -q "gateway-server"; then
+            pm2 delete proxy-server
+            echo "Process proxy-server is stopped."
+        else
+            echo "process proxy-server is not running."
+        fi
     set -e
 }
 

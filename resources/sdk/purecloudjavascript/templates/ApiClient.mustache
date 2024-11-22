@@ -229,9 +229,11 @@ class ApiClient {
                 agentOptions.ca = require('fs').readFileSync(caPath);
             }
 
-            if (proxy) {
-                            agentOptions.proxy = proxy;
-                        }
+          //  if (proxy) {
+            //                agentOptions.proxy = proxy;
+              //          }
+
+             agentOptions.rejectUnauthorized = true
 
             this.agentOptions = agentOptions;
         }
@@ -1224,10 +1226,13 @@ class ApiClient {
                     proxyAgent = new https.Agent(this.agentOptions);
                     console.log("proxyAgent");
                     console.log(proxyAgent);
+
+
                 }
 
                 // If that.proxyAgent is available, use it (prioritize this over agentOptions)
                 if (this.proxyAgent) {
+                    console.log(this.proxyAgent);
                     proxyAgent = this.proxyAgent;
                 }
 
@@ -1236,15 +1241,21 @@ class ApiClient {
                     timeout: this.timeout,
                 };
 
-               /* const httpsAgent = new HttpsProxyAgent({
-                			url: this.agentOptions.proxy,
-                			ca: this.agentOptions.ca,
-                			cert: this.agentOptions.cert,
-                			key: this.agentOptions.key,
-                	});
-               */
 
-                return  new DefaultHttpClient(proxyAgent);
+/*
+const httpsAgent = new HttpsProxyAgent({
+                                    			url: this.agentOptions.proxy,
+                                    			ca: this.agentOptions.ca,
+                                    			cert: this.agentOptions.cert,
+                                    			key: this.agentOptions.key,
+                                    	});
+                                    	*/
+
+                                    	 this.proxyAgent = proxyAgent
+
+                                    	return  new DefaultHttpClient(proxyAgent);
+
+                //return  new DefaultHttpClient(null);
                 //client.httpsAgent
             }
 
@@ -1497,7 +1508,11 @@ class ApiClient {
 					})
 					.catch((error) => {
 						var data = error
+						console.log("failed out")
+                        console.log(error)
 						if (error.response && error.response.status == 401 && that.config.refresh_access_token && that.authData.refreshToken !== "") {
+						    console.log("failed first")
+						    console.log(error)
 							that._handleExpiredAccessToken()
 								.then(() => {
 									sendRequest(that);

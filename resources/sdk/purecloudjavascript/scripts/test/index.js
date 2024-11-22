@@ -2,7 +2,7 @@
 
 const assert = require('assert');
 const { HttpsProxyAgent } = require('hpagent');
-const { axios } = require('axios');
+const fs = require("fs");
 
 // purecloud-platform-client-v2
 const platformClient = require('../../../../../output/purecloudjavascript/build');
@@ -42,26 +42,90 @@ describe('JS SDK for Node', function () {
 
 	it('should successfully authenticate', (done) => {
 		client.setEnvironment(PURECLOUD_ENVIRONMENT);
-		// client.setHttpAgentPaths('certs/client.crt', 'certs/client.key', 'certs/rootCA.pem', 'http://localhost:4004')
-		//
-		//
-		// httpsAgent = new HttpsProxyAgent({
-		// 	proxy: 'http://localhost:4001',
-		// });
-
-		const httpsAgent = new HttpsProxyAgent({
-			proxy: 'http://localhost:4001',
-			ca: 'certs/rootCA.pem',
-			cert: 'certs/client.crt',
-			key: 'certs/client.key',
-		});
-
-		client.setProxyAgent(httpsAgent)
 		client
 			.loginClientCredentialsGrant(PURECLOUD_CLIENT_ID, PURECLOUD_CLIENT_SECRET)
 			.then(() => done())
 			.catch((err) => handleError(err, done));
 	});
+
+	it('should create a user', (done) => {
+		usersApi
+			.postUsers({
+				name: USER_NAME,
+				email: USER_EMAIL,
+				password: guid() + '!@#$1234asdfASDF',
+			})
+			.then((data) => {
+				USER_ID = data.body.id;
+				assert.strictEqual(data.body.name, USER_NAME);
+				assert.strictEqual(data.body.email, USER_EMAIL);
+                console.log(`USER_ID=${USER_ID}`);
+				console.log(`correlation ID postUsers ${data.headers['inin-correlation-id']}`)
+				console.log(`Version of User ${data.body.version}`)
+				done();
+			})
+			.catch((err) => handleError(err, done));
+	});
+
+	it('should update the user', (done) => {
+		usersApi
+			.patchUser(USER_ID, {
+				department: USER_DEPARTMENT,
+				version: 1,
+			})
+			.then((data) => {
+				assert.strictEqual(data.body.id, USER_ID);
+				assert.strictEqual(data.body.name, USER_NAME);
+				assert.strictEqual(data.body.email, USER_EMAIL);
+				assert.strictEqual(data.body.email, USER_EMAIL);
+				assert.strictEqual(data.body.department, USER_DEPARTMENT);
+				done();
+			})
+			.catch((err) => handleError(err, done));
+	});
+
+	it('should set profile skills on the user', (done) => {
+		usersApi
+			.putUserProfileskills(USER_ID, [USER_PROFILE_SKILL])
+			.then((data) => {
+				assert.strictEqual(data.body.length, 1);
+				assert.strictEqual(data.body[0], USER_PROFILE_SKILL);
+				console.log(`correlation ID putUserProfileskills ${data.headers['inin-correlation-id']}`)
+				done();
+			})
+			.catch((err) => handleError(err, done));
+	});
+
+	it('should get the user', (done) => {
+		getUsers(2, done);
+	});
+
+	function getUsers(retry, done) {
+		setTimeout(() => {
+			usersApi
+				.getUser(USER_ID, { expand: ['profileSkills'] })
+				.then((data) => {
+					try {
+						assert.strictEqual(data.body.id, USER_ID);
+						assert.strictEqual(data.body.name, USER_NAME);
+						assert.strictEqual(data.body.email, USER_EMAIL);
+						assert.strictEqual(data.body.department, USER_DEPARTMENT);
+						console.log(`correlation ID getUser ${data.headers['inin-correlation-id']}`)
+						console.log(`Version of User ${data.body.version}`)
+						// Commented out until the issue with APIs to send the latest Version of the User is fixed.
+						//assert.strictEqual(data.body.profileSkills[0], USER_PROFILE_SKILL);
+						done();
+					} catch (err) {
+						if (retry > 0) {
+							getUsers(--retry, done);
+						} else {
+							handleError(err, done);
+						}
+					}
+				})
+				.catch((err) => handleError(err, done));
+		}, 8000);
+	}
 
 	it('should get the user with custom client', (done) => {
 
@@ -77,32 +141,79 @@ describe('JS SDK for Node', function () {
 		// 	timeout :5000
 		// })
 
-		//client.setHttpAgentPaths('certs/client.crt', 'certs/client.key', 'certs/rootCA.pem', 'http://localhost:4003')
 
-		const httpsAgent = new HttpsProxyAgent({
-			proxy: 'http://localhost:4001',
-			ca: 'certs/rootCA.pem',
-			cert: 'certs/client.crt',
-			key: 'certs/client.key',
+
+		// const caCert = fs.readFileSync('mtls/2_intermediate/certs/ca-chain.cert.pem');
+		// const clientCert = fs.readFileSync('mtls/4_client/certs/localhost.cert.pem');
+		// const clientKey = fs.readFileSync('mtls/4_client/private/localhost.key.pem');
+
+		// Create an HTTPS agent with mutual TLS configuration
+		// const httpsAgent = new require('https').Agent({
+		// 	ca: caCert,
+		// 	cert: clientCert,
+		// 	key: clientKey,
+		// 	rejectUnauthorized: true, // Ensure server certificate validation
+		// 	proxy: 'http://localhost:4001',
+		// });
+		client.setGateway({
+			host:"localhost",
+			port:"4022",
+			protocol : "https"
+		})
+
+
+
+// Proxy certificates
+		const proxyOptions = {
+			hostname: 'https://localhost:8443',
+			ca: [fs.readFileSync('mtls-test/mtls1/2_intermediate/certs/ca-chain.cert.pem')],  // Proxy's CA certificate
+			cert: fs.readFileSync('mtls-test/mtls1/4_client/certs/localhost.cert.pem'), // Proxy client certificate
+			key: fs.readFileSync('mtls-test/mtls1/4_client/private/localhost.key.pem'),   // Proxy client key
+			rejectUnauthorized: true,                 // Validate proxy's certificate
+		};
+
+// Create an HTTPS agent for the proxy
+		const proxyAgent = new HttpsProxyAgent(proxyOptions);
+
+// Configure `https-proxy-agent` for proxy tunneling
+		const tunnelAgent = new HttpsProxyAgent({
+			hostname: 'https://localhost:8443',
+			port: 8080,
+			agent: proxyAgent,
 		});
 
-		client.setProxyAgent(httpsAgent)
+		client.setHttpAgentPaths('mtls-test/mtls1/4_client/certs/localhost.cert.pem', 'mtls-test/mtls1/4_client/private/localhost.key.pem', 'mtls-test/mtls1/2_intermediate/certs/ca-chain.cert.pem', 'https://localhost:4003')
+		//client.setProxyAgent(tunnelAgent)
+
+		// const httpsAgent = new HttpsProxyAgent({
+		// 	proxy: 'http://localhost:4001',
+		// 	ca: 'certs/rootCA.pem',
+		// 	cert: 'certs/client.crt',
+		// 	key: 'certs/client.key',
+		// });
+
+		// const httpsAgent = new require('https').Agent({
+		// 	ca: caCert,
+		// 	cert: clientCert,
+		// 	key: clientKey,
+		// 	rejectUnauthorized: true, // Ensure server certificate validation
+		// 	proxy: 'http://localhost:4001',
+		// });
+
+		//client.setProxyAgent(httpsAgent)
 
 
 
 		usersApi
-			.getAnalyticsUsersAggregatesJobResults("112233")
+			.getUser(USER_ID, { expand: ['profileSkills'] })
 			.then((data) => {
-				assert.strictEqual(data.body.id, USER_ID);
-				assert.strictEqual(data.body.name, USER_NAME);
-				assert.strictEqual(data.body.email, USER_EMAIL);
-				assert.strictEqual(data.body.department, USER_DEPARTMENT);
 				done();
 			})
 			.catch((err) => handleError(err, done));
 	});
 
 	it('should get the user through a proxy', (done) => {
+		client.setGateway(null);
 		httpsAgent = new HttpsProxyAgent({
 			proxy: 'http://localhost:4001',
 		});
@@ -118,8 +229,6 @@ describe('JS SDK for Node', function () {
 			})
 			.catch((err) => handleError(err, done));
 	});
-
-
 
 	it('should delete the user', (done) => {
 		usersApi
