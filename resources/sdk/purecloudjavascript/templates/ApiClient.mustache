@@ -215,7 +215,7 @@ class ApiClient {
     }
 
 
-	setHttpAgentPaths(certPath, keyPath, caPath, proxy) {
+	setHttpAgentPaths(certPath, keyPath, caPath) {
            const agentOptions = {}
             if (certPath) {
                 agentOptions.cert = require('fs').readFileSync(certPath);
@@ -229,11 +229,7 @@ class ApiClient {
                 agentOptions.ca = require('fs').readFileSync(caPath);
             }
 
-          //  if (proxy) {
-            //                agentOptions.proxy = proxy;
-              //          }
-
-             agentOptions.rejectUnauthorized = true
+            agentOptions.rejectUnauthorized = true
 
             this.agentOptions = agentOptions;
         }
@@ -1242,21 +1238,8 @@ class ApiClient {
                 };
 
 
-/*
-const httpsAgent = new HttpsProxyAgent({
-                                    			url: this.agentOptions.proxy,
-                                    			ca: this.agentOptions.ca,
-                                    			cert: this.agentOptions.cert,
-                                    			key: this.agentOptions.key,
-                                    	});
-                                    	*/
-
-                                    	 this.proxyAgent = proxyAgent
-
-                                    	return  new DefaultHttpClient(proxyAgent);
-
-                //return  new DefaultHttpClient(null);
-                //client.httpsAgent
+                this.proxyAgent = proxyAgent
+                return  new DefaultHttpClient(options);
             }
 
 	/**
@@ -1448,8 +1431,7 @@ const httpsAgent = new HttpsProxyAgent({
 				var request = {
 					method: httpMethod,
 					url: url,
-					params: that.serialize(queryParams),
-					httpsAgent: that.proxyAgent
+					params: that.serialize(queryParams)
 				};
 
 				// apply authentications

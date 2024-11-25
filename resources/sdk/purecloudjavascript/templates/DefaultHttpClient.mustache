@@ -6,25 +6,14 @@ class DefaultHttpClient extends HttpClient{
 
     constructor(options) {
         super();
-        console.log("options");
-        console.log(options);
+        this._axiosInstance = axios.create(options);
 
-
-
-        this._axiosInstance = axios.create();
-        this._axiosInstance.httpsAgent = options
-         console.log("this._axiosInstance during construct");
-                console.log(this._axiosInstance);
-
-                this._axiosInstance.interceptors.request.use((config) => {
-                console.log("configddd");
-                console.log(config);
-                return config;
-                });
+        this._axiosInstance.interceptors.request.use((config) => {
+            return config;
+        });
     }
     request(options) {
-        console.log("this._axiosInstance during request");
-        console.log(this._axiosInstance);
+        options.httpsAgent = this._axiosInstance.httpsAgent
         return this._axiosInstance.request(options);
     }
 }

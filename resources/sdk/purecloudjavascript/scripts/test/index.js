@@ -129,87 +129,16 @@ describe('JS SDK for Node', function () {
 
 	it('should get the user with custom client', (done) => {
 
-		// mutual tls
-
-		// const axiosClient = axios.create({
-		// 	httpsAgent: new https.Agent({
-		// 		cert: clientCert,
-		// 		key: clientKey,
-		// 		ca: caCert,
-		// 		rejectUnauthorized: true
-		// 	}),
-		// 	timeout :5000
-		// })
-
-
-
-		// const caCert = fs.readFileSync('mtls/2_intermediate/certs/ca-chain.cert.pem');
-		// const clientCert = fs.readFileSync('mtls/4_client/certs/localhost.cert.pem');
-		// const clientKey = fs.readFileSync('mtls/4_client/private/localhost.key.pem');
-
-		// Create an HTTPS agent with mutual TLS configuration
-		// const httpsAgent = new require('https').Agent({
-		// 	ca: caCert,
-		// 	cert: clientCert,
-		// 	key: clientKey,
-		// 	rejectUnauthorized: true, // Ensure server certificate validation
-		// 	proxy: 'http://localhost:4001',
-		// });
 		client.setGateway({
 			host:"localhost",
-			port:"4022",
+			port:"4027",
 			protocol : "https"
 		})
 
+		client.setHttpAgentPaths('mtls-test/localhost.cert.pem', 'mtls-test/localhost.key.pem', 'mtls-test/ca-chain.cert.pem', 'https://localhost:4003')
 
+		getUsers(2, done);
 
-// Proxy certificates
-		const proxyOptions = {
-			hostname: 'https://localhost:8443',
-			ca: [fs.readFileSync('mtls-test/mtls1/2_intermediate/certs/ca-chain.cert.pem')],  // Proxy's CA certificate
-			cert: fs.readFileSync('mtls-test/mtls1/4_client/certs/localhost.cert.pem'), // Proxy client certificate
-			key: fs.readFileSync('mtls-test/mtls1/4_client/private/localhost.key.pem'),   // Proxy client key
-			rejectUnauthorized: true,                 // Validate proxy's certificate
-		};
-
-// Create an HTTPS agent for the proxy
-		const proxyAgent = new HttpsProxyAgent(proxyOptions);
-
-// Configure `https-proxy-agent` for proxy tunneling
-		const tunnelAgent = new HttpsProxyAgent({
-			hostname: 'https://localhost:8443',
-			port: 8080,
-			agent: proxyAgent,
-		});
-
-		client.setHttpAgentPaths('mtls-test/mtls1/4_client/certs/localhost.cert.pem', 'mtls-test/mtls1/4_client/private/localhost.key.pem', 'mtls-test/mtls1/2_intermediate/certs/ca-chain.cert.pem', 'https://localhost:4003')
-		//client.setProxyAgent(tunnelAgent)
-
-		// const httpsAgent = new HttpsProxyAgent({
-		// 	proxy: 'http://localhost:4001',
-		// 	ca: 'certs/rootCA.pem',
-		// 	cert: 'certs/client.crt',
-		// 	key: 'certs/client.key',
-		// });
-
-		// const httpsAgent = new require('https').Agent({
-		// 	ca: caCert,
-		// 	cert: clientCert,
-		// 	key: clientKey,
-		// 	rejectUnauthorized: true, // Ensure server certificate validation
-		// 	proxy: 'http://localhost:4001',
-		// });
-
-		//client.setProxyAgent(httpsAgent)
-
-
-
-		usersApi
-			.getUser(USER_ID, { expand: ['profileSkills'] })
-			.then((data) => {
-				done();
-			})
-			.catch((err) => handleError(err, done));
 	});
 
 	it('should get the user through a proxy', (done) => {
