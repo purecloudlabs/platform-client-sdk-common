@@ -1490,12 +1490,8 @@ class ApiClient {
 					})
 					.catch((error) => {
 						var data = error
-						console.log("failed out")
-                        console.log(error)
 						if (error.response && error.response.status == 401 && that.config.refresh_access_token && that.authData.refreshToken !== "") {
-						    console.log("failed first")
-						    console.log(error)
-							that._handleExpiredAccessToken()
+						    that._handleExpiredAccessToken()
 								.then(() => {
 									sendRequest(that);
 								})
