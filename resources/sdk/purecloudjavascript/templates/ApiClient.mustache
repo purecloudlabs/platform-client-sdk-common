@@ -1,7 +1,7 @@
-import { default as axios } from 'axios';
 import Configuration from './configuration.js';
 import https from 'https';
 import DefaultHttpClient from './DefaultHttpClient.js';
+import RequestOptions from './HttpRequestOptions.js';
 import { default as qs } from 'qs';
 const { HttpsProxyAgent } = require('hpagent');
 
@@ -325,14 +325,9 @@ class ApiClient {
 				'Authorization': `Basic ${authHeader}`
 			}
 
-			const httpClient = this.buildHttpClient()
+            var request = this.buildRequestOptions(`${loginBasePath}/oauth/token`, `POST`, headers, 'grant_type=client_credentials', null);
 
-			var request = {
-            	method: `POST`,
-            	url: `${loginBasePath}/oauth/token`,
-            	data: 'grant_type=client_credentials',
-            	headers: headers
-            };
+            const httpClient = this.buildHttpClient()
 
 			httpClient.request(request)
 			       .then((response) => {
@@ -479,20 +474,21 @@ class ApiClient {
 		this.clientId = clientId;
 		var loginBasePath = this.config.getConfUrl('login', `https://login.${this.config.environment}`);
 		return new Promise((resolve, reject) => {
-			var request = axios({
-				method: `POST`,
-				url: `${loginBasePath}/oauth/token`,
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded'
-				},
-				data: qs.stringify({ grant_type: 'authorization_code',
-									            code: authCode,
-												code_verifier: codeVerifier,
-												client_id: clientId,
-												redirect_uri: redirectUri })
-			});
 
-			request.proxy = this.proxy;
+
+            var headers =   {
+                               'Content-Type': 'application/x-www-form-urlencoded'
+                               };
+            var data = qs.stringify({ grant_type: 'authorization_code',
+                                          code: authCode,
+                                          code_verifier: codeVerifier,
+                                          client_id: clientId,
+                                          redirect_uri: redirectUri });
+
+            var request = this.buildRequestOptions(`${loginBasePath}/oauth/token`, `POST`, headers, data, null);
+
+            var request = httpClient.request(request);
+
 			var bodyParam = {
 				grant_type: 'authorization_code',
                 code: authCode,
@@ -933,17 +929,16 @@ class ApiClient {
 
 		const httpClient = this.buildHttpClient()
 
-		var request = httpClient.request({
-			method: `POST`,
-			url: `${loginBasePath}/oauth/token`,
-			headers: {
-				'Authorization': 'Basic ' + encodedData,
-				'Content-Type': 'application/x-www-form-urlencoded'
-			},
-			data: qs.stringify(data)
-		});
 
-		return request;
+        var headers =   {
+        				'Authorization': 'Basic ' + encodedData,
+        				'Content-Type': 'application/x-www-form-urlencoded'
+        			    };
+
+        var requestOption = this.buildRequestOptions(`${loginBasePath}/oauth/token`, `POST`, headers, qs.stringify(data), null);
+
+        var request = httpClient.request(requestOption);
+        return request;
 	}
 
 	/**
@@ -1212,6 +1207,21 @@ class ApiClient {
     		}
     	}
 
+        buildRequestOptions(url, method, headers, data, params) {
+             var request = new RequestOptions();
+             request.setMethod(method);
+             request.setUrl(url);
+             if (data) {
+                 request.setData(data);
+             }
+
+             if (params) {
+               request.setParams(params);
+             }
+
+             request.headers =  headers;
+             return request;
+        }
 
          defaultClient() {
                 // Initialize proxyAgent as null
@@ -1220,26 +1230,24 @@ class ApiClient {
                 // If agentOptions are provided, create a new https.Agent with those options
                 if (this.agentOptions) {
                     proxyAgent = new https.Agent(this.agentOptions);
-                    console.log("proxyAgent");
-                    console.log(proxyAgent);
-
-
                 }
 
                 // If that.proxyAgent is available, use it (prioritize this over agentOptions)
                 if (this.proxyAgent) {
-                    console.log(this.proxyAgent);
                     proxyAgent = this.proxyAgent;
                 }
 
-                const options = {
-                    httpsAgent: proxyAgent,
-                    timeout: this.timeout,
-                };
+                var httpClient =  new DefaultHttpClient();
 
+                if (proxyAgent) {
+                    httpClient.proxy_agent = proxyAgent;
+                }
 
-                this.proxyAgent = proxyAgent
-                return  new DefaultHttpClient(options);
+                if(this.timeout) {
+                    httpClient.timeout = this.timeout;
+                }
+
+                return httpClient;
             }
 
 	/**
@@ -1380,15 +1388,15 @@ class ApiClient {
 							data[auth.name] = auth.apiKey;
 						}
 						if (auth['in'] === 'header') {
-							request.headers = this.addHeaders(request.headers, data);
+							request.headers =  this.addHeaders(request.headers, data);
 						} else {
-							request.params = this.serialize(data);
+							request.setParams(this.serialize(data));
 						}
 					}
 					break;
 				case 'oauth2':
 					if (auth.accessToken) {
-						request.headers = this.addHeaders(request.headers, {'Authorization': `Bearer ${auth.accessToken}`});
+						request.headers =  this.addHeaders(request.headers, {'Authorization': `Bearer ${auth.accessToken}`});
 					}
 					break;
 				default:
@@ -1404,6 +1412,9 @@ class ApiClient {
 	setProxyAgent(agent) {
 		this.proxyAgent = agent
 	}
+	
+
+                
 
 	/**
 	 * Invokes the REST service using the supplied settings and parameters.
@@ -1426,13 +1437,7 @@ class ApiClient {
 			function sendRequest(that) {
 				var url = that.buildUrl(path, pathParams);
 
-				const httpClient = that.buildHttpClient()
-
-				var request = {
-					method: httpMethod,
-					url: url,
-					params: that.serialize(queryParams)
-				};
+			    var request = that.buildRequestOptions(url, httpMethod, null, null, that.serialize(queryParams));
 
 				// apply authentications
 				that.applyAuthToRequest(request, authNames);
@@ -1450,7 +1455,7 @@ class ApiClient {
 				}
 
 				if (contentType === 'application/x-www-form-urlencoded') {
-					request.data = that.normalizeParams(formParams);
+					request.setData(that.normalizeParams(formParams));
 				} else if (contentType == 'multipart/form-data') {
 					var _formParams = that.normalizeParams(formParams);
 					for (var key in _formParams) {
@@ -1458,17 +1463,20 @@ class ApiClient {
 							// Looks like axios handles files and forms the same way
 							var formData = new FormData();
 							formData.set(key, _formParams[key]);
-							request.data = formData;
+							request.setData(formData);
 						}
 					}
 				} else if (bodyParam) {
-					request.data = bodyParam;
+					request.setData(bodyParam);
 				}
 
 				var accept = that.jsonPreferredMime(accepts);
 				if (accept) {
 					request.headers['Accept'] = accept;
 				}
+
+				const httpClient = that.buildHttpClient()
+
 				httpClient.request(request)
 					.then((response) => {
 						// Build response object

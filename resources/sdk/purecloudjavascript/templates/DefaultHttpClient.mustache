@@ -1,20 +1,50 @@
 import { default as axios } from 'axios';
 import HttpClient from './abstractHttpClient.js';
+import RequestOptions from './HttpRequestOptions.js';
 
-
+// Default client is Axios
 class DefaultHttpClient extends HttpClient{
 
-    constructor(options) {
+    constructor() {
         super();
-        this._axiosInstance = axios.create(options);
-
+        this.proxy_agent;
+        this.timeout;
+        this._axiosInstance = axios.create({});
         this._axiosInstance.interceptors.request.use((config) => {
             return config;
         });
     }
+
     request(options) {
-        options.httpsAgent = this._axiosInstance.httpsAgent
-        return this._axiosInstance.request(options);
+        if(!(options instanceof RequestOptions)) {
+            throw new Error(`options must be instance of RequestOptions `);
+        }
+        const config = this.toAxiosConfig(options)
+        return this._axiosInstance.request(config);
+    }
+
+
+
+ // Method to generate Axios-compatible config
+    toAxiosConfig(options) {
+        if (!options.url || !options.method || !options.headers) {
+            throw new Error(
+                "Mandatory fields 'url', 'method', 'headers', and 'data' must be set before making a request"
+            );
+        }
+
+        var config = {
+            url: options.url,
+            method: options.method,
+            headers: options.headers,
+        };
+
+        if(options.data) config.data = options.data;
+        if (options.params) config.params = options.params;
+        if (this.timeout) config.timeout = this.timeout;
+        if (this.proxy_agent) config.httpsAgent = this.proxy_agent
+
+        return config;
     }
 }
 
