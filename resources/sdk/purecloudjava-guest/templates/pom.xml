@@ -289,7 +289,7 @@
     <testng-version>6.14.3</testng-version>
     <apache-httpclient-version>4.5.14</apache-httpclient-version>
     <okhttpclient-version>4.12.0</okhttpclient-version>
-    <ning-asynchttpclient-version>2.12.3</ning-asynchttpclient-version>
+    <ning-asynchttpclient-version>3.0.1</ning-asynchttpclient-version>
     <nv-websocket-client-version>2.14</nv-websocket-client-version>
     <guava-version>33.3.1-jre</guava-version>
     <ini4j-version>0.5.4</ini4j-version>
