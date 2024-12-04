@@ -2,6 +2,7 @@
 
 const assert = require('assert');
 const { HttpsProxyAgent } = require('hpagent');
+const fs = require("fs");
 
 // purecloud-platform-client-v2
 const platformClient = require('../../../../../output/purecloudjavascript/build');
@@ -126,7 +127,22 @@ describe('JS SDK for Node', function () {
 		}, 8000);
 	}
 
+	it('should get the user with custom client', (done) => {
+
+		client.setGateway({
+			host:"localhost",
+			port:"4027",
+			protocol : "https"
+		})
+
+		client.setHttpAgentPaths('mtls-test/localhost.cert.pem', 'mtls-test/localhost.key.pem', 'mtls-test/ca-chain.cert.pem', 'https://localhost:4003')
+
+		getUsers(2, done);
+
+	});
+
 	it('should get the user through a proxy', (done) => {
+		client.setGateway(null);
 		httpsAgent = new HttpsProxyAgent({
 			proxy: 'http://localhost:4001',
 		});

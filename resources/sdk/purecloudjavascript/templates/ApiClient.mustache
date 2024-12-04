@@ -1,5 +1,7 @@
-import { default as axios } from 'axios';
 import Configuration from './configuration.js';
+import https from 'https';
+import DefaultHttpClient from './DefaultHttpClient.js';
+import RequestOptions from './HttpRequestOptions.js';
 import { default as qs } from 'qs';
 
 /**
@@ -204,6 +206,33 @@ class ApiClient {
 		this.config.setEnvironment(environment);
 	}
 
+    setHttpClient(httpClient) {
+        if (!(httpClient instanceof HttpClient)) {
+            throw new Error("httpclient must be an instance of Abstract HttpClient. See DefualtHttpInstance for a prototype");
+        }
+        this.httpClient = httpClient;
+    }
+
+
+	setHttpAgentPaths(certPath, keyPath, caPath) {
+           const agentOptions = {}
+            if (certPath) {
+                agentOptions.cert = require('fs').readFileSync(certPath);
+            }
+
+            if (keyPath) {
+                agentOptions.key = require('fs').readFileSync(keyPath);
+            }
+
+            if (caPath) {
+                agentOptions.ca = require('fs').readFileSync(caPath);
+            }
+
+            agentOptions.rejectUnauthorized = true
+
+            this.agentOptions = agentOptions;
+        }
+
 	/**
 	 * @description Sets the gateway used by the session
 	 * @param {object} gateway - Gateway Configuration interface
@@ -294,14 +323,13 @@ class ApiClient {
 			const headers = {
 				'Authorization': `Basic ${authHeader}`
 			}
-			axios({
-				method: `POST`,
-				url: `${loginBasePath}/oauth/token`,
-				headers: headers,
-				data: 'grant_type=client_credentials',
-				httpsAgent: this.proxyAgent
-			})
-				.then((response) => {
+
+            var request = this.buildRequestOptions(`${loginBasePath}/oauth/token`, `POST`, headers, 'grant_type=client_credentials', null);
+
+            const httpClient = this.buildHttpClient()
+
+			httpClient.request(request)
+			       .then((response) => {
 					// Logging
 					this.config.logger.log(
 						'trace',
@@ -445,20 +473,21 @@ class ApiClient {
 		this.clientId = clientId;
 		var loginBasePath = this.config.getConfUrl('login', `https://login.${this.config.environment}`);
 		return new Promise((resolve, reject) => {
-			var request = axios({
-				method: `POST`,
-				url: `${loginBasePath}/oauth/token`,
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded'
-				},
-				data: qs.stringify({ grant_type: 'authorization_code',
-									            code: authCode,
-												code_verifier: codeVerifier,
-												client_id: clientId,
-												redirect_uri: redirectUri })
-			});
 
-			request.proxy = this.proxy;
+
+            var headers =   {
+                               'Content-Type': 'application/x-www-form-urlencoded'
+                               };
+            var data = qs.stringify({ grant_type: 'authorization_code',
+                                          code: authCode,
+                                          code_verifier: codeVerifier,
+                                          client_id: clientId,
+                                          redirect_uri: redirectUri });
+
+            var request = this.buildRequestOptions(`${loginBasePath}/oauth/token`, `POST`, headers, data, null);
+
+            var request = httpClient.request(request);
+
 			var bodyParam = {
 				grant_type: 'authorization_code',
                 code: authCode,
@@ -896,17 +925,19 @@ class ApiClient {
 	 */
 	_formAuthRequest(encodedData, data) {
 		var loginBasePath = this.config.getConfUrl('login', `https://login.${this.config.environment}`);
-		var request = axios({
-			method: `POST`,
-			url: `${loginBasePath}/oauth/token`,
-			headers: {
-				'Authorization': 'Basic ' + encodedData,
-				'Content-Type': 'application/x-www-form-urlencoded'
-			},
-			data: qs.stringify(data)
-		});
 
-		return request;
+		const httpClient = this.buildHttpClient()
+
+
+        var headers =   {
+        				'Authorization': 'Basic ' + encodedData,
+        				'Content-Type': 'application/x-www-form-urlencoded'
+        			    };
+
+        var requestOption = this.buildRequestOptions(`${loginBasePath}/oauth/token`, `POST`, headers, qs.stringify(data), null);
+
+        var request = httpClient.request(requestOption);
+        return request;
 	}
 
 	/**
@@ -1163,6 +1194,61 @@ class ApiClient {
 		return url;
 	}
 
+    /**
+    	 * Builds http client.
+    	 * @returns {String} The http client default or the one that is injected.
+    	 */
+    	buildHttpClient() {
+    		if (this.httpClient) {
+    		    return this.httpClient;
+    		} else {
+    		    return this.defaultClient();
+    		}
+    	}
+
+        buildRequestOptions(url, method, headers, data, params) {
+             var request = new RequestOptions();
+             request.setMethod(method);
+             request.setUrl(url);
+             if (data) {
+                 request.setData(data);
+             }
+
+             if (params) {
+               request.setParams(params);
+             }
+
+             request.headers =  headers;
+             return request;
+        }
+
+         defaultClient() {
+                // Initialize proxyAgent as null
+                let proxyAgent = null;
+
+                // If agentOptions are provided, create a new https.Agent with those options
+                if (this.agentOptions) {
+                    proxyAgent = new https.Agent(this.agentOptions);
+                }
+
+                // If that.proxyAgent is available, use it (prioritize this over agentOptions)
+                if (this.proxyAgent) {
+                    proxyAgent = this.proxyAgent;
+                }
+
+                var httpClient =  new DefaultHttpClient();
+
+                if (proxyAgent) {
+                    httpClient.proxy_agent = proxyAgent;
+                }
+
+                if(this.timeout) {
+                    httpClient.timeout = this.timeout;
+                }
+
+                return httpClient;
+            }
+
 	/**
 	 * Checks whether the given content type represents JSON.<br>
 	 * JSON content type examples:<br>
@@ -1301,15 +1387,15 @@ class ApiClient {
 							data[auth.name] = auth.apiKey;
 						}
 						if (auth['in'] === 'header') {
-							request.headers = this.addHeaders(request.headers, data);
+							request.headers =  this.addHeaders(request.headers, data);
 						} else {
-							request.params = this.serialize(data);
+							request.setParams(this.serialize(data));
 						}
 					}
 					break;
 				case 'oauth2':
 					if (auth.accessToken) {
-						request.headers = this.addHeaders(request.headers, {'Authorization': `Bearer ${auth.accessToken}`});
+						request.headers =  this.addHeaders(request.headers, {'Authorization': `Bearer ${auth.accessToken}`});
 					}
 					break;
 				default:
@@ -1325,6 +1411,9 @@ class ApiClient {
 	setProxyAgent(agent) {
 		this.proxyAgent = agent
 	}
+	
+
+                
 
 	/**
 	 * Invokes the REST service using the supplied settings and parameters.
@@ -1346,13 +1435,8 @@ class ApiClient {
 			sendRequest(this);
 			function sendRequest(that) {
 				var url = that.buildUrl(path, pathParams);
-				var request = {
-					method: httpMethod,
-					url: url,	
-					httpsAgent: that.proxyAgent,
-					timeout: that.timeout,
-					params: that.serialize(queryParams)
-				};
+
+			    var request = that.buildRequestOptions(url, httpMethod, null, null, that.serialize(queryParams));
 
 				// apply authentications
 				that.applyAuthToRequest(request, authNames);
@@ -1370,7 +1454,7 @@ class ApiClient {
 				}
 
 				if (contentType === 'application/x-www-form-urlencoded') {
-					request.data = that.normalizeParams(formParams);
+					request.setData(that.normalizeParams(formParams));
 				} else if (contentType == 'multipart/form-data') {
 					var _formParams = that.normalizeParams(formParams);
 					for (var key in _formParams) {
@@ -1378,18 +1462,21 @@ class ApiClient {
 							// Looks like axios handles files and forms the same way
 							var formData = new FormData();
 							formData.set(key, _formParams[key]);
-							request.data = formData;
+							request.setData(formData);
 						}
 					}
 				} else if (bodyParam) {
-					request.data = bodyParam;
+					request.setData(bodyParam);
 				}
 
 				var accept = that.jsonPreferredMime(accepts);
 				if (accept) {
 					request.headers['Accept'] = accept;
 				}
-				axios.request(request)
+
+				const httpClient = that.buildHttpClient()
+
+				httpClient.request(request)
 					.then((response) => {
 						// Build response object
 						var data = (that.returnExtended === true) ? {
@@ -1411,7 +1498,7 @@ class ApiClient {
 					.catch((error) => {
 						var data = error
 						if (error.response && error.response.status == 401 && that.config.refresh_access_token && that.authData.refreshToken !== "") {
-							that._handleExpiredAccessToken()
+						    that._handleExpiredAccessToken()
 								.then(() => {
 									sendRequest(that);
 								})
