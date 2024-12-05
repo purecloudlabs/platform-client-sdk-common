@@ -523,5 +523,10 @@
 		"patch": {
 			"name": "patch"
 		}
+	},
+	"/api/v2/gamification/contests/{contestId}": {
+		"patch": {
+			"name": "patch"
+		}
 	}
 }
