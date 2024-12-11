@@ -560,6 +560,56 @@ agent = new HttpsProxyAgent({
 client.setProxyAgent(agent)
 ```
 
+### Using MTLS authentication via a Gateway
+
+If there is MTLS authentication that need to be set for gateway server (i.e. if the Genesys Cloud requests must be sent through to an intermediate API gateway or equivalent and with MTLS enabled), you can use agentOptions to set the httpsAgent.
+
+An example using `agentOptions` to setup MTLS for gateway is shown below
+
+```javascript
+const client = {{moduleName}}.ApiClient.instance;
+client.setGateway({host: 'mygateway.mydomain.myextension', protocol: 'https', port: 1443, path_params_login: 'myadditionalpathforlogin', path_params_api: 'myadditionalpathforapi'});
+
+client.setHttpAgentPaths('mtls-test/localhost.cert.pem', 'mtls-test/localhost.key.pem', 'mtls-test/ca-chain.cert.pem', 'https://localhost:4003')
+```
+
+Please do note, the agent options are used for setting a new proxy agent for the gateway server configuration.
+
+If you want a custom proxy agent with MTLS , you can still use setProxyAgent method on client instance and inject your own httpsAgent.
+The responsibility of setting the agent options inside the custom proxy agent will be with the caller.
+
+If a proxy agent is set, the agentoptions will be ignored and the proxyagent instance will be prioritised and used when making the http client call.
+
+
+### Inject custom Http Client
+
+By default SDK will use axios implementation for dealing with API calls.
+If you want to inject a new third party/custom implementation of client , you set the httpclient instance
+
+The CustomHttpClient should be an instance of abstractHttpClient defined in the SDK. which will implement the request method.
+Please find an example for the same.
+
+```javascript
+
+class CustomHttpClient extends HttpClient{
+
+    constructor() {
+        super();
+        this._axiosInstance = axios.create({});
+    }
+
+    request(options) {
+        return this._axiosInstance.request(options);
+    }
+}
+
+
+const client = {{moduleName}}.ApiClient.instance;
+
+httpClient = new CustomHttpClient();
+client.setHttpClient(httpClient)
+```
+
 ## Versioning
 
 The SDK's version is incremented according to the [Semantic Versioning Specification](https://semver.org/). The decision to increment version numbers is determined by [diffing the Platform API's swagger](https://github.com/purecloudlabs/platform-client-sdk-common/blob/master/modules/swaggerDiff.js) for automated builds, and optionally forcing a version bump when a build is triggered manually (e.g. releasing a bugfix).

@@ -1,5 +1,5 @@
 import { default as axios } from 'axios';
-import HttpClient from './abstractHttpClient.js';
+import HttpClient from './AbstractHttpClient.js';
 import RequestOptions from './HttpRequestOptions.js';
 
 // Default client is Axios
@@ -10,9 +10,6 @@ class DefaultHttpClient extends HttpClient{
         this.proxy_agent;
         this.timeout;
         this._axiosInstance = axios.create({});
-        this._axiosInstance.interceptors.request.use((config) => {
-            return config;
-        });
     }
 
     request(options) {

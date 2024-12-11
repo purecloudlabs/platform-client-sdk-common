@@ -34,6 +34,14 @@ export class RequestOptions {
     }
 
 
+    // Optional fields
+    setHeaders(value) {
+       if (value && typeof value !== 'object') {
+          throw new Error("The 'params' property must be an object");
+       }
+       this.headers = value;
+    }
+
      setTimeout(value) {
         if (value && typeof value !== 'number') {
             throw new Error("The 'timeout' property must be a number");

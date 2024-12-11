@@ -26,6 +26,10 @@ declare class ApiClientClass {
 	setReturnExtendedResponses(returnExtended: boolean): void;
 	setStorageKey(storageKey: string): void;
 	setProxyAgent(agent: any): void;
+
+	setHttpClient(httpClient: HttpClient): void;
+	setHttpAgentPaths(certPath: string, keyPath:string, caPath:string): void;
+	setHttpAgentContents(certContent: string, keyContent: string, caContent: string): void;
 }
 
 declare class LoginImplicitGrantOptions {
@@ -77,6 +81,28 @@ declare class Configuration {
 	setEnvironment(environment: string): void;
 	setGateway(gateway: GatewayConfiguration): void;
 	getConfUrl(pathType: string, regionUrl: string): string;
+}
+
+declare class RequestOptions {
+	url: string;
+	method: string;
+	data?: any;
+	params?:Record<string, any>;
+	timeout ?: number;
+	httpsAgent ?: Object;
+	headers?:Record<string, any>;
+
+	setUrl(value: string): void;
+	setMethod(value: string): void;
+	setData(value: any): void;
+
+	setParams(value: Record<string, any>): void;
+	setTimeout(value: number): void;
+	setHttpsAgent(value: object):void;
+}
+
+declare class HttpClient {
+    request(options: RequestOptions);
 }
 
 declare class Logger {

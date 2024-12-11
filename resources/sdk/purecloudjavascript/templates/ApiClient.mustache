@@ -206,6 +206,10 @@ class ApiClient {
 		this.config.setEnvironment(environment);
 	}
 
+    /**
+     * @description Sets the dynamic HttpClient used by the client
+     * @param {object} httpClient - HttpClient to be injected
+     */
     setHttpClient(httpClient) {
         if (!(httpClient instanceof HttpClient)) {
             throw new Error("httpclient must be an instance of Abstract HttpClient. See DefualtHttpInstance for a prototype");
@@ -213,25 +217,59 @@ class ApiClient {
         this.httpClient = httpClient;
     }
 
-
+    /**
+      * @description Sets the certificate paths if MTLS authentication is needed
+      * @param {object} certPath - path for certs
+      * @param {object} keyPath - path for key
+      * @param {object} caPath - path for public certs
+      */
 	setHttpAgentPaths(certPath, keyPath, caPath) {
-           const agentOptions = {}
-            if (certPath) {
-                agentOptions.cert = require('fs').readFileSync(certPath);
-            }
+	    if (typeof window === 'undefined') {
+	      const agentOptions = {}
+          if (certPath) {
+              agentOptions.cert = require('fs').readFileSync(certPath);
+          }
 
-            if (keyPath) {
-                agentOptions.key = require('fs').readFileSync(keyPath);
-            }
+          if (keyPath) {
+             agentOptions.key = require('fs').readFileSync(keyPath);
+          }
 
-            if (caPath) {
-                agentOptions.ca = require('fs').readFileSync(caPath);
-            }
+          if (caPath) {
+             agentOptions.ca = require('fs').readFileSync(caPath);
+          }
 
-            agentOptions.rejectUnauthorized = true
+          agentOptions.rejectUnauthorized = true
 
-            this.agentOptions = agentOptions;
-        }
+          this.agentOptions = agentOptions;
+	    } else {
+	         throw new Error("Custom Agent Paths/ File System Access are not supported on Browser. Use setHttpAgentContents instead");
+	    }
+    }
+
+    /**
+     * @description Sets the certificate content if MTLS authentication is needed
+     * @param {object} certContent - content for certs
+     * @param {object} keyContent - content for key
+     * @param {object} caContent - content for public certs
+     */
+    setHttpAgentContents(certContent, keyContent, caContent) {
+    	    const agentOptions = {}
+              if (certContent) {
+                  agentOptions.cert = certContent;
+              }
+
+              if (keyContent) {
+                 agentOptions.key = keyContent;
+              }
+
+              if (caContent) {
+                 agentOptions.ca = caContent;
+              }
+
+              agentOptions.rejectUnauthorized = true
+
+              this.agentOptions = agentOptions;
+    }
 
 	/**
 	 * @description Sets the gateway used by the session
@@ -1218,7 +1256,10 @@ class ApiClient {
                request.setParams(params);
              }
 
-             request.headers =  headers;
+             if (headers) {
+                request.setHeaders(headers);
+             }
+
              return request;
         }
 
@@ -1235,8 +1276,12 @@ class ApiClient {
                 if (this.proxyAgent) {
                     proxyAgent = this.proxyAgent;
                 }
-
-                var httpClient =  new DefaultHttpClient();
+                console.log("this.defaultClientHttp")
+                console.log(this.defaultClientHttp)
+                if (!this.defaultClientHttp) {
+                    this.defaultClientHttp =  new DefaultHttpClient();
+                }
+               var httpClient =  this.defaultClientHttp;
 
                 if (proxyAgent) {
                     httpClient.proxy_agent = proxyAgent;
@@ -1245,7 +1290,8 @@ class ApiClient {
                 if(this.timeout) {
                     httpClient.timeout = this.timeout;
                 }
-
+                console.log("this.defaultClient after")
+                console.log(httpClient)
                 return httpClient;
             }
 
