@@ -570,7 +570,7 @@ An example using `agentOptions` to setup MTLS for gateway is shown below
 const client = {{moduleName}}.ApiClient.instance;
 client.setGateway({host: 'mygateway.mydomain.myextension', protocol: 'https', port: 1443, path_params_login: 'myadditionalpathforlogin', path_params_api: 'myadditionalpathforapi'});
 
-client.setHttpAgentPaths('mtls-test/localhost.cert.pem', 'mtls-test/localhost.key.pem', 'mtls-test/ca-chain.cert.pem', 'https://localhost:4003')
+client.setMTLSCertificates('mtls-test/localhost.cert.pem', 'mtls-test/localhost.key.pem', 'mtls-test/ca-chain.cert.pem', 'https://localhost:4003')
 ```
 
 Please do note, the agent options are used for setting a new proxy agent for the gateway server configuration.

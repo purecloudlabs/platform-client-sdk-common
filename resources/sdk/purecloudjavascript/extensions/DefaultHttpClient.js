@@ -1,9 +1,9 @@
 import { default as axios } from 'axios';
-import HttpClient from './AbstractHttpClient.js';
+import AbstractHttpClient from './AbstractHttpClient.js';
 import RequestOptions from './HttpRequestOptions.js';
 
 // Default client is Axios
-class DefaultHttpClient extends HttpClient{
+class DefaultHttpClient extends AbstractHttpClient{
 
     constructor() {
         super();

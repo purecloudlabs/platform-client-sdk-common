@@ -1,6 +1,7 @@
 import Configuration from './configuration.js';
 import https from 'https';
 import DefaultHttpClient from './DefaultHttpClient.js';
+import AbstractHttpClient from './AbstractHttpClient.js';
 import RequestOptions from './HttpRequestOptions.js';
 import { default as qs } from 'qs';
 
@@ -211,7 +212,7 @@ class ApiClient {
      * @param {object} httpClient - HttpClient to be injected
      */
     setHttpClient(httpClient) {
-        if (!(httpClient instanceof HttpClient)) {
+        if (!(httpClient instanceof AbstractHttpClient)) {
             throw new Error("httpclient must be an instance of Abstract HttpClient. See DefualtHttpInstance for a prototype");
         }
         this.httpClient = httpClient;
@@ -223,7 +224,7 @@ class ApiClient {
       * @param {object} keyPath - path for key
       * @param {object} caPath - path for public certs
       */
-	setHttpAgentPaths(certPath, keyPath, caPath) {
+	setMTLSCertificates(certPath, keyPath, caPath) {
 	    if (typeof window === 'undefined') {
 	      const agentOptions = {}
           if (certPath) {
@@ -242,7 +243,7 @@ class ApiClient {
 
           this.agentOptions = agentOptions;
 	    } else {
-	         throw new Error("Custom Agent Paths/ File System Access are not supported on Browser. Use setHttpAgentContents instead");
+	         throw new Error("Custom Agent Paths/ File System Access are not supported on Browser. Use setMTLSContents instead");
 	    }
     }
 
@@ -252,7 +253,7 @@ class ApiClient {
      * @param {object} keyContent - content for key
      * @param {object} caContent - content for public certs
      */
-    setHttpAgentContents(certContent, keyContent, caContent) {
+    setMTLSContents(certContent, keyContent, caContent) {
     	    const agentOptions = {}
               if (certContent) {
                   agentOptions.cert = certContent;
@@ -1276,8 +1277,6 @@ class ApiClient {
                 if (this.proxyAgent) {
                     proxyAgent = this.proxyAgent;
                 }
-                console.log("this.defaultClientHttp")
-                console.log(this.defaultClientHttp)
                 if (!this.defaultClientHttp) {
                     this.defaultClientHttp =  new DefaultHttpClient();
                 }
@@ -1290,8 +1289,6 @@ class ApiClient {
                 if(this.timeout) {
                     httpClient.timeout = this.timeout;
                 }
-                console.log("this.defaultClient after")
-                console.log(httpClient)
                 return httpClient;
             }
 

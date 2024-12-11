@@ -135,7 +135,7 @@ describe('JS SDK for Node', function () {
 			protocol : "https"
 		})
 
-		client.setHttpAgentPaths('mtls-test/localhost.cert.pem', 'mtls-test/localhost.key.pem', 'mtls-test/ca-chain.cert.pem', 'https://localhost:4003')
+		client.setMTLSCertificates('mtls-test/localhost.cert.pem', 'mtls-test/localhost.key.pem', 'mtls-test/ca-chain.cert.pem', 'https://localhost:4003')
 
 		getUsers(2, done);
 
