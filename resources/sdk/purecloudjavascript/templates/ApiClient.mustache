@@ -2,7 +2,7 @@ import Configuration from './configuration.js';
 import https from 'https';
 import DefaultHttpClient from './DefaultHttpClient.js';
 import AbstractHttpClient from './AbstractHttpClient.js';
-import RequestOptions from './HttpRequestOptions.js';
+import HttpRequestOptions from './HttpRequestOptions.js';
 import { default as qs } from 'qs';
 
 /**
@@ -114,6 +114,9 @@ class ApiClient {
 		// Transparently request a new access token when it expires (Code Authorization only)
 		this.refreshInProgress = false;
 
+		this.httpClient;
+		this.proxyAgent;
+
 		this.config = new Configuration();
 
 		if (typeof(window) !== 'undefined') window.ApiClient = this;
@@ -213,35 +216,49 @@ class ApiClient {
      */
     setHttpClient(httpClient) {
         if (!(httpClient instanceof AbstractHttpClient)) {
-            throw new Error("httpclient must be an instance of Abstract HttpClient. See DefualtHttpInstance for a prototype");
+            throw new Error("httpclient must be an instance of AbstractHttpClient. See DefaultltHttpClient for a prototype");
         }
         this.httpClient = httpClient;
     }
 
+	/**
+     * @description Gets the HttpClient used by the client
+     */
+	getHttpClient() {
+		if (this.httpClient) {
+			return this.httpClient;
+		} else {
+			this.httpClient =  new DefaultHttpClient(this.timeout, this.proxyAgent);
+			return this.httpClient;
+		}
+    }
+
     /**
       * @description Sets the certificate paths if MTLS authentication is needed
-      * @param {object} certPath - path for certs
-      * @param {object} keyPath - path for key
-      * @param {object} caPath - path for public certs
+      * @param {string} certPath - path for certs
+      * @param {string} keyPath - path for key
+      * @param {string} caPath - path for public certs
       */
 	setMTLSCertificates(certPath, keyPath, caPath) {
 	    if (typeof window === 'undefined') {
-	      const agentOptions = {}
-          if (certPath) {
-              agentOptions.cert = require('fs').readFileSync(certPath);
-          }
+	    	const agentOptions = {}
+			if (certPath) {
+				agentOptions.cert = require('fs').readFileSync(certPath);
+			}
 
-          if (keyPath) {
-             agentOptions.key = require('fs').readFileSync(keyPath);
-          }
+			if (keyPath) {
+				agentOptions.key = require('fs').readFileSync(keyPath);
+			}
 
-          if (caPath) {
-             agentOptions.ca = require('fs').readFileSync(caPath);
-          }
+			if (caPath) {
+				agentOptions.ca = require('fs').readFileSync(caPath);
+			}
 
-          agentOptions.rejectUnauthorized = true
+			agentOptions.rejectUnauthorized = true
 
-          this.agentOptions = agentOptions;
+			this.proxyAgent = new https.Agent(agentOptions);
+			const httpClient = this.getHttpClient();
+			httpClient.setHttpsAgent(this.proxyAgent);
 	    } else {
 	         throw new Error("Custom Agent Paths/ File System Access are not supported on Browser. Use setMTLSContents instead");
 	    }
@@ -249,27 +266,29 @@ class ApiClient {
 
     /**
      * @description Sets the certificate content if MTLS authentication is needed
-     * @param {object} certContent - content for certs
-     * @param {object} keyContent - content for key
-     * @param {object} caContent - content for public certs
+     * @param {string} certContent - content for certs
+     * @param {string} keyContent - content for key
+     * @param {string} caContent - content for public certs
      */
     setMTLSContents(certContent, keyContent, caContent) {
-    	    const agentOptions = {}
-              if (certContent) {
-                  agentOptions.cert = certContent;
-              }
+		const agentOptions = {}
+		if (certContent) {
+			agentOptions.cert = certContent;
+		}
 
-              if (keyContent) {
-                 agentOptions.key = keyContent;
-              }
+		if (keyContent) {
+			agentOptions.key = keyContent;
+		}
 
-              if (caContent) {
-                 agentOptions.ca = caContent;
-              }
+		if (caContent) {
+			agentOptions.ca = caContent;
+		}
 
-              agentOptions.rejectUnauthorized = true
+		agentOptions.rejectUnauthorized = true
 
-              this.agentOptions = agentOptions;
+		this.proxyAgent = new https.Agent(agentOptions);
+		const httpClient = this.getHttpClient();
+		httpClient.setHttpsAgent(this.proxyAgent);
     }
 
 	/**
@@ -363,11 +382,9 @@ class ApiClient {
 				'Authorization': `Basic ${authHeader}`
 			}
 
-            var request = this.buildRequestOptions(`${loginBasePath}/oauth/token`, `POST`, headers, 'grant_type=client_credentials', null);
-
-            const httpClient = this.buildHttpClient()
-
-			httpClient.request(request)
+            var requestOptions = new HttpRequestOptions(`${loginBasePath}/oauth/token`, `POST`, headers, null, 'grant_type=client_credentials', this.timeout);
+            const httpClient = this.getHttpClient();
+			httpClient.request(requestOptions)
 			       .then((response) => {
 					// Logging
 					this.config.logger.log(
@@ -512,20 +529,17 @@ class ApiClient {
 		this.clientId = clientId;
 		var loginBasePath = this.config.getConfUrl('login', `https://login.${this.config.environment}`);
 		return new Promise((resolve, reject) => {
-
-
-            var headers =   {
-                               'Content-Type': 'application/x-www-form-urlencoded'
-                               };
+            var headers = {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            };
             var data = qs.stringify({ grant_type: 'authorization_code',
-                                          code: authCode,
-                                          code_verifier: codeVerifier,
-                                          client_id: clientId,
-                                          redirect_uri: redirectUri });
+                code: authCode,
+                code_verifier: codeVerifier,
+                client_id: clientId,
+                redirect_uri: redirectUri });
 
-            var request = this.buildRequestOptions(`${loginBasePath}/oauth/token`, `POST`, headers, data, null);
-
-            var request = httpClient.request(request);
+			var requestOptions = new HttpRequestOptions(`${loginBasePath}/oauth/token`, `POST`, headers, null, data, this.timeout);
+            const httpClient = this.getHttpClient();
 
 			var bodyParam = {
 				grant_type: 'authorization_code',
@@ -535,7 +549,7 @@ class ApiClient {
                 redirect_uri: redirectUri,
 			};
 			// Handle response
-			request
+			httpClient.request(requestOptions)
 			.then((response) => {
 				// Logging
 				this.config.logger.log(
@@ -543,7 +557,7 @@ class ApiClient {
 					response.status,
 					'POST',
 					`${loginBasePath}/oauth/token`,
-					request.headers,
+					requestOptions.headers,
 					response.headers,
 					bodyParam,
 					undefined
@@ -553,7 +567,7 @@ class ApiClient {
 					response.status,
 					'POST',
 					`${loginBasePath}/oauth/token`,
-					request.headers,
+					requestOptions.headers,
 					undefined,
 					bodyParam,
 					undefined
@@ -577,7 +591,7 @@ class ApiClient {
 						error.response.status,
 						'POST',
 						`${loginBasePath}/oauth/token`,
-						request.headers,
+						requestOptions.headers,
 						error.response.headers,
 						bodyParam,
 						error.response.data
@@ -717,7 +731,7 @@ class ApiClient {
                       this._testTokenAccess()
                       .then(() => {
                         if (!this.authData.state && query.state)
-                          this.authData.state = query.state;	
+                          this.authData.state = query.state;
 						// remove codeVerifier from session storage
 						if (this.hasLocalStorage) {
 							sessionStorage.removeItem(`genesys_cloud_sdk_pkce_code_verifier`);
@@ -964,19 +978,13 @@ class ApiClient {
 	 */
 	_formAuthRequest(encodedData, data) {
 		var loginBasePath = this.config.getConfUrl('login', `https://login.${this.config.environment}`);
-
-		const httpClient = this.buildHttpClient()
-
-
-        var headers =   {
-        				'Authorization': 'Basic ' + encodedData,
-        				'Content-Type': 'application/x-www-form-urlencoded'
-        			    };
-
-        var requestOption = this.buildRequestOptions(`${loginBasePath}/oauth/token`, `POST`, headers, qs.stringify(data), null);
-
-        var request = httpClient.request(requestOption);
-        return request;
+		var headers = {
+			'Authorization': 'Basic ' + encodedData,
+			'Content-Type': 'application/x-www-form-urlencoded'
+		};
+		var requestOptions = new HttpRequestOptions(loginBasePath, `POST`, headers, null, qs.stringify(data), this.timeout);
+		const httpClient = this.getHttpClient();
+		return httpClient.request(requestOptions);
 	}
 
 	/**
@@ -1233,65 +1241,6 @@ class ApiClient {
 		return url;
 	}
 
-    /**
-    	 * Builds http client.
-    	 * @returns {String} The http client default or the one that is injected.
-    	 */
-    	buildHttpClient() {
-    		if (this.httpClient) {
-    		    return this.httpClient;
-    		} else {
-    		    return this.defaultClient();
-    		}
-    	}
-
-        buildRequestOptions(url, method, headers, data, params) {
-             var request = new RequestOptions();
-             request.setMethod(method);
-             request.setUrl(url);
-             if (data) {
-                 request.setData(data);
-             }
-
-             if (params) {
-               request.setParams(params);
-             }
-
-             if (headers) {
-                request.setHeaders(headers);
-             }
-
-             return request;
-        }
-
-         defaultClient() {
-                // Initialize proxyAgent as null
-                let proxyAgent = null;
-
-                // If agentOptions are provided, create a new https.Agent with those options
-                if (this.agentOptions) {
-                    proxyAgent = new https.Agent(this.agentOptions);
-                }
-
-                // If that.proxyAgent is available, use it (prioritize this over agentOptions)
-                if (this.proxyAgent) {
-                    proxyAgent = this.proxyAgent;
-                }
-                if (!this.defaultClientHttp) {
-                    this.defaultClientHttp =  new DefaultHttpClient();
-                }
-               var httpClient =  this.defaultClientHttp;
-
-                if (proxyAgent) {
-                    httpClient.proxy_agent = proxyAgent;
-                }
-
-                if(this.timeout) {
-                    httpClient.timeout = this.timeout;
-                }
-                return httpClient;
-            }
-
 	/**
 	 * Checks whether the given content type represents JSON.<br>
 	 * JSON content type examples:<br>
@@ -1448,15 +1397,17 @@ class ApiClient {
 	}
 
 	/**
-	 * @description Sets the proxy agent axios will use for requests 
+	 * @description Sets the proxy agent axios will use for requests
 	 * @param {any} agent - The proxy agent
 	 */
 	setProxyAgent(agent) {
-		this.proxyAgent = agent
+		this.proxyAgent = agent;
+		const httpClient = this.getHttpClient();
+		httpClient.setHttpsAgent(this.proxyAgent);
 	}
-	
 
-                
+
+
 
 	/**
 	 * Invokes the REST service using the supplied settings and parameters.
@@ -1478,8 +1429,7 @@ class ApiClient {
 			sendRequest(this);
 			function sendRequest(that) {
 				var url = that.buildUrl(path, pathParams);
-
-			    var request = that.buildRequestOptions(url, httpMethod, null, null, that.serialize(queryParams));
+			    var request = new HttpRequestOptions(url, httpMethod, null, that.serialize(queryParams), null, that.timeout);
 
 				// apply authentications
 				that.applyAuthToRequest(request, authNames);
@@ -1517,8 +1467,7 @@ class ApiClient {
 					request.headers['Accept'] = accept;
 				}
 
-				const httpClient = that.buildHttpClient()
-
+				const httpClient = that.getHttpClient();
 				httpClient.request(request)
 					.then((response) => {
 						// Build response object
@@ -1540,7 +1489,7 @@ class ApiClient {
 					})
 					.catch((error) => {
 						var data = error
-						if (error.response && error.response.status == 401 && that.config.refresh_access_token && that.authData.refreshToken !== "") {
+						if (error.response && error.response.status == 401 && that.config.refresh_access_token && that.authData.refreshToken && that.authData.refreshToken !== "") {
 						    that._handleExpiredAccessToken()
 								.then(() => {
 									sendRequest(that);

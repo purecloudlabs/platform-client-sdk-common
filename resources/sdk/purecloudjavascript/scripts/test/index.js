@@ -135,7 +135,7 @@ describe('JS SDK for Node', function () {
 			protocol : "https"
 		})
 
-		client.setMTLSCertificates('mtls-test/localhost.cert.pem', 'mtls-test/localhost.key.pem', 'mtls-test/ca-chain.cert.pem', 'https://localhost:4003')
+		client.setMTLSCertificates('mtls-test/localhost.cert.pem', 'mtls-test/localhost.key.pem', 'mtls-test/ca-chain.cert.pem')
 
 		getUsers(2, done);
 
@@ -146,7 +146,7 @@ describe('JS SDK for Node', function () {
 		httpsAgent = new HttpsProxyAgent({
 			proxy: 'http://localhost:4001',
 		});
-		client.proxyAgent = httpsAgent
+		client.setProxyAgent(httpsAgent)
 		usersApi
 			.getUser(USER_ID, { expand: ['profileSkills'] })
 			.then((data) => {

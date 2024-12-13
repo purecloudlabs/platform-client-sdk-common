@@ -2,6 +2,7 @@ import {{moduleName}} = require('{{projectName}}');
 
 declare module '{{projectName}}' {
 	export const ApiClient: ApiClientClass;
+	export const PureCloudRegionHosts: Record<string, string>;
 }
 
 declare class ApiClientClass {
@@ -28,9 +29,10 @@ declare class ApiClientClass {
 	setStorageKey(storageKey: string): void;
 	setProxyAgent(agent: any): void;
 
-	setHttpClient(httpClient: HttpClient): void;
+	setHttpClient(httpClient: AbstractHttpClient): void;
+	getHttpClient(): AbstractHttpClient;
 	setMTLSCertificates(certPath: string, keyPath:string, caPath:string): void;
-	setHttpAgentContents(certContent: string, keyContent: string, caContent: string): void;
+	setMTLSContents(certContent: string, keyContent: string, caContent: string): void;
 }
 
 declare class LoginImplicitGrantOptions {
@@ -84,35 +86,43 @@ declare class Configuration {
 	getConfUrl(pathType: string, regionUrl: string): string;
 }
 
-declare class RequestOptions {
+declare class HttpRequestOptions {
 	url: string;
 	method: string;
-	data?: any;
-	params?:Record<string, any>;
-	timeout ?: number;
-	httpsAgent ?: Object;
 	headers?:Record<string, any>;
+	params?:Record<string, any>;
+	data?: any;
+	timeout: number;
 
-	setUrl(value: string): void;
-	setMethod(value: string): void;
-	setData(value: any): void;
-
-	setParams(value: Record<string, any>): void;
-	setTimeout(value: number): void;
-	setHttpsAgent(value: object):void;
+	constructor(url: string, method: string, headers: Record<string, any>, params: Record<string, any>, data: any, timeout?: number);
+	setUrl(url: string): void;
+	setMethod(method: string): void;
+	setData(data: any): void;
+	setParams(params: Record<string, any>): void;
+	setHeaders(headers: Record<string, any>): void;
+	setTimeout(timeout: number): void;
 }
 
-declare class HttpClient {
-    request(options: RequestOptions);
+declare abstract class AbstractHttpClient {
+    httpsAgent: any;
+	timeout: number;
+
+	constructor();
+	setTimeout(timeout: number): void;
+	setHttpsAgent(httpsAgent: any): void;
+	abstract request(httpRequestOptions: HttpRequestOptions): Promise<any>;
 }
 
 declare class DefaultHttpClient {
-    proxy_agent: Object;
-    timeout: number;
-    _axiosInstance: Object;
+    httpsAgent: any;
+	timeout: number;
+    _axiosInstance: any;
 
-    request(options: RequestOptions);
-    toAxiosConfig(options: RequestOptions);
+    constructor(timeout?: number, httpsAgent?: any);
+	setTimeout(timeout: number): void;
+	setHttpsAgent(httpsAgent: any): void;
+	request(httpRequestOptions: HttpRequestOptions): Promise<any>;
+    toAxiosConfig(httpRequestOptions: RequestOptions): any;
 }
 
 declare class Logger {
@@ -129,7 +139,8 @@ declare class Logger {
 }
 {{#apiInfo}}
 {{#apis}}{{#operations}}
-declare class {{classname}} { {{#operation}} {{!-- class: CodegenOperation --}}
+declare class {{classname}} {
+	constructor(apiClient?: ApiClientClass);{{#operation}}{{!-- class: CodegenOperation --}}
   	{{operationId}}({{#allParams}}{{#required}}{{{paramName}}}: {{{typeScriptType}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts?: {{classname}}.{{operationId}}Options{{/hasOptionalParams}}): Promise<{{{typeScriptResponseType}}}>;{{/operation}}
 }
 
