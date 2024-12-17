@@ -2,10 +2,9 @@ import { exec } from 'child_process';
 
 export default class Proxy {
 
-  public setupProxy() {
+  public setupProxy(env) {
     console.log("called pm2")
-
-    exec('./resources/scripts/connect-proxy.sh start_proxy', (error, stdout, stderr) => {
+    exec('./resources/scripts/connect-proxy.sh start_proxy'+' '+ env, (error, stdout, stderr) => {
       if (error) {
         console.error(`Error Starting Proxy: ${error.message}`);
         return;
@@ -35,9 +34,9 @@ export default class Proxy {
 
 const proxy = new Proxy();
 const proxyInstsruction: String = process.argv[2];
-
+const env: String = process.argv[3];
 if (proxyInstsruction === "start") {
-  proxy.setupProxy();
+  proxy.setupProxy(env);
 }
 else {
   proxy.stopProxy();

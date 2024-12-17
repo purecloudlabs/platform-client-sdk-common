@@ -1,5 +1,6 @@
 
 start_proxy() {
+env=$1
 set +e
 if ! command -v pm2 &> /dev/null
 then
@@ -8,7 +9,7 @@ then
 fi
 # Check if the app is already running
 # Start the app
-pm2 start ./resources/scripts/pm2.config.cjs
+PURECLOUD_ENV=$env pm2 start ./resources/scripts/pm2.config.cjs
 echo "App started."
 
 set -e

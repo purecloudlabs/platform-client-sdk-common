@@ -70,7 +70,8 @@
           "type": "tsx",
           "path": "${COMMON_ROOT}/resources/scripts/proxy-npm.ts",
           "args": [
-            "start"
+            "start",
+            "${PURECLOUD_ENVIRONMENT}"
           ],
           "failOnError": true
         }
