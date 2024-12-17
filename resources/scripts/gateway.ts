@@ -63,7 +63,7 @@ export default class GatewayServer {
   }
 
   private fetchEnvironment():string{
-    return "api."+process.env.PURECLOUD_ENVIRONMENT
+    return "api."+process.env.PURECLOUD_ENV
   }
 
   private handleConnectRequest(req: http.IncomingMessage, clientSocket: net.Socket, head: Buffer) {

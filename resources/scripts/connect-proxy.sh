@@ -9,7 +9,7 @@ then
 fi
 # Check if the app is already running
 # Start the app
-PURECLOUD_ENVIRONMENT=$env pm2 start ./resources/scripts/pm2.config.cjs
+PURECLOUD_ENV=$env pm2 start ./resources/scripts/pm2.config.cjs
 echo "App started."
 
 set -e
