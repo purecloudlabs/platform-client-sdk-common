@@ -13,7 +13,7 @@ export default class GatewayServer {
 
   constructor() {
     this.gateway = createProxyServer();
-
+    const environment = this.fetchEnvironment();
     const domain = 'localhost';
 
     // SSL/TLS options for the proxy server
@@ -31,13 +31,13 @@ export default class GatewayServer {
       const targetHost = url.parse(req.url || '');
 
       const options: https.RequestOptions = {
-        hostname: `api.inindca.com`,
+        hostname: environment,
         port: 443, // HTTPS port
         path: targetHost.path,
         method: req.method,
         headers: {
           ...req.headers,
-          host: `api.inindca.com`,
+          host: environment,
         },
         rejectUnauthorized: false,
       };
@@ -62,12 +62,16 @@ export default class GatewayServer {
     this.server.on('connect', this.handleConnectRequest.bind(this));
   }
 
+  private fetchEnvironment():string{
+    return "api."+process.env.PURECLOUD_ENVIRONMENT
+  }
+
   private handleConnectRequest(req: http.IncomingMessage, clientSocket: net.Socket, head: Buffer) {
     const targetUrl = url.parse(`//${req.url}`, false, true);
-
+    const environment = this.fetchEnvironment();
       const serverSocket = tls.connect(
           {
-            host: 'api.inindca.com',
+            host: environment,
             port: 443,
             rejectUnauthorized: false
           }, () => {
