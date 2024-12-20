@@ -982,7 +982,7 @@ class ApiClient {
 			'Authorization': 'Basic ' + encodedData,
 			'Content-Type': 'application/x-www-form-urlencoded'
 		};
-		var requestOptions = new HttpRequestOptions(loginBasePath, `POST`, headers, null, qs.stringify(data), this.timeout);
+		var requestOptions = new HttpRequestOptions(`${loginBasePath}/oauth/token`, `POST`, headers, null, qs.stringify(data), this.timeout);
 		const httpClient = this.getHttpClient();
 		return httpClient.request(requestOptions);
 	}
