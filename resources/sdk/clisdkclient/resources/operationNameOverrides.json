@@ -528,5 +528,10 @@
 		"patch": {
 			"name": "patch"
 		}
+	},
+	"/api/v2/socialmedia/topics/{topicId}/dataingestionrules/instagram/{instagramIngestionRuleId}": {
+		"patch": {
+			"name": "patch"
+		}
 	}
 }
