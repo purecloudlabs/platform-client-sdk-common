@@ -1,5 +1,8 @@
 
 import PureCloudRegionHosts from './PureCloudRegionHosts.js';
+import DefaultHttpClient from './DefaultHttpClient.js';
+import AbstractHttpClient from './AbstractHttpClient.js';
+import HttpRequestOptions from './HttpRequestOptions.js';
 import ApiClient from './ApiClient.js';
 {{#apiInfo}}{{#apis}}import {{importPath}} from './{{#apiPackage}}{{apiPackage}}/{{/apiPackage}}{{importPath}}.js';
 {{/apis}}{{/apiInfo}}
@@ -58,8 +61,10 @@ import ApiClient from './ApiClient.js';
 		 * @property {module:<#invokerPackage><invokerPackage>/</invokerPackage>MyPureCloudRegionHost}
 		 */</emitJSDoc>
 		this.PureCloudRegionHosts = PureCloudRegionHosts;
-		
-		
+
+		this.AbstractHttpClient = AbstractHttpClient;
+		this.DefaultHttpClient = DefaultHttpClient;
+		this.HttpRequestOptions = HttpRequestOptions;
 	}
 }<={{ }}=>
 
