@@ -573,6 +573,18 @@ client.setGateway({host: 'mygateway.mydomain.myextension', protocol: 'https', po
 client.setMTLSCertificates('mtls-test/localhost.cert.pem', 'mtls-test/localhost.key.pem', 'mtls-test/ca-chain.cert.pem')
 ```
 
+If you have content of the private keys and cert information instead of the the filepaths , you can directly set this information using setMTLSContents
+
+An example using `setMTLSContents` to setup MTLS for gateway is shown below
+
+```javascript
+const client = {{moduleName}}.ApiClient.instance;
+client.setGateway({host: 'mygateway.mydomain.myextension', protocol: 'https', port: 1443, path_params_login: 'myadditionalpathforlogin', path_params_api: 'myadditionalpathforapi'});
+
+client.setMTLSContents(cert.pem, key, caChainCert) // cert.pem, key, caChainCert are contents of the respective keys here. If you have a passphrase encoded data, please decode it and then pass the information to this method.
+```
+
+
 Please do note, these are used for setting a new proxy agent for the gateway server configuration.
 
 If you want a custom proxy agent with MTLS , you can still use setProxyAgent method on client instance and inject your own httpsAgent.
