@@ -314,6 +314,16 @@ function prebuildImpl(): Promise<string> {
 					return processAnyTypes();
 				})
 				.then(() => {
+					let forceCSVCollectionFormatInTags: string[] = [];
+					if (_this.config.settings.swagger) {
+						let allSwaggerSettings: any = _this.config.settings.swagger;
+						if (allSwaggerSettings.forceCSVCollectionFormatOnTags) {
+							forceCSVCollectionFormatInTags = allSwaggerSettings.forceCSVCollectionFormatOnTags;
+						}
+					}
+					return forceCSVCollectionFormat(forceCSVCollectionFormatInTags);
+				})
+				.then(() => {
 					// Save new swagger to temp file for build
 					log.info(`Writing new swagger file to temp storage path: ${newSwaggerTempFile}`);
 					fs.writeFileSync(newSwaggerTempFile, JSON.stringify(swaggerDiff.newSwagger));
@@ -703,6 +713,36 @@ function processAnyTypes() {
 			});
 		}
 	});
+}
+
+function forceCSVCollectionFormat(forceCSVCollectionFormatInTags: string[]) {
+	if (forceCSVCollectionFormatInTags && forceCSVCollectionFormatInTags.length > 0) {
+		log.info(`Updating CollectionFormat from multi to csv for operations with tags: ${forceCSVCollectionFormatInTags.toString()}`);
+		const paths = Object.keys(swaggerDiff.newSwagger.paths);
+		for (const path of paths) {
+			const methods = Object.keys(swaggerDiff.newSwagger.paths[path]);
+			for (const method of methods) {
+				let operation = swaggerDiff.newSwagger.paths[path][method];
+				let overrideOperation = false;
+				for (let overrideTag of forceCSVCollectionFormatInTags) {
+					if (operation && operation.tags && operation.tags.includes(overrideTag)) {
+						overrideOperation = true;
+						break;
+					}
+				}
+				if (overrideOperation === true) {
+					if (operation.parameters && operation.parameters.length > 0) {
+						for (let opParameter of operation.parameters) {
+							if (opParameter.in && opParameter.in === "query" && opParameter.type && opParameter.type === "array" && opParameter.collectionFormat && opParameter.collectionFormat === "multi") {
+								opParameter.collectionFormat = "csv";
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return;
 }
 
 function processPaths() {
