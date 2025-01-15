@@ -533,5 +533,25 @@
 		"patch": {
 			"name": "patch"
 		}
+	},
+	"/api/v2/externalcontacts/contacts/schemas/coretypes": {
+		"get": {
+			"name": "list"
+		}
+	},
+	"/api/v2/externalcontacts/organizations/schemas/coretypes": {
+		"get": {
+			"name": "list"
+		}
+	},
+	"/api/v2/journey/openactions/schemas/coretypes": {
+		"get": {
+			"name": "list"
+		}
+	},
+	"/api/v2/taskmanagement/workitems/schemas/coretypes": {
+		"get": {
+			"name": "list"
+		}
 	}
 }
