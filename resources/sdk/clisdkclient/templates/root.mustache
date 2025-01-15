@@ -135,9 +135,24 @@ func init() {
 	initViperConfig()
 
 	rootCmd.PersistentFlags().StringVarP(&profileName, "profile", "p", "DEFAULT", "Name of the profile to use for configuring the cli")
+	rootCmd.RegisterFlagCompletionFunc("profile", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return profiles.ListProfileNames(), cobra.ShellCompDirectiveDefault
+	})
 	rootCmd.PersistentFlags().BoolP("indicateprogress", "i", false, "Trace progress indicators to stderr")
 
 	rootCmd.PersistentFlags().StringVar(&config.Environment, "environment", "", "environment override. E.g. mypurecloud.com.au or ap-southeast-2")
+	rootCmd.RegisterFlagCompletionFunc("environment", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		regionMappings := &config.RegionMappings
+		possibleEnvs := make([]string, 0)
+		if regionMappings == nil {
+			logger.Fatal("No regions found! Something is terribly wrong!")
+		}
+		for region, domain := range *regionMappings {
+			possibleEnvs = append(possibleEnvs, region)
+			possibleEnvs = append(possibleEnvs, domain)
+		}
+		return possibleEnvs, cobra.ShellCompDirectiveDefault
+	})
 	rootCmd.PersistentFlags().StringVar(&config.ClientId, "clientid", "", "clientId override")
 	rootCmd.PersistentFlags().StringVar(&config.ClientSecret, "clientsecret", "", "clientSecret override")
 	rootCmd.PersistentFlags().StringVar(&config.AccessToken, "accesstoken", "", "accessToken override")
@@ -146,7 +161,13 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&transform_data.TemplateStr, "transformstr", "", "Provide a Go template string for transforming output data")
 
 	rootCmd.PersistentFlags().StringVar(&data_format.InputFormat, "inputformat", "", "Data input format. Supported formats: YAML, JSON")
+	rootCmd.RegisterFlagCompletionFunc("inputformat", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return []string{"yaml", "json"}, cobra.ShellCompDirectiveDefault
+	})
 	rootCmd.PersistentFlags().StringVar(&data_format.OutputFormat, "outputformat", "", "Data output format. Supported formats: YAML, JSON")
+	rootCmd.RegisterFlagCompletionFunc("outputformat", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return []string{"yaml", "json"}, cobra.ShellCompDirectiveDefault
+	})
 
 	if data_format.OutputFormat == "" {
 		data_format.OutputFormat, _ = config.GetOutputFormat(getProfileName(os.Args))
