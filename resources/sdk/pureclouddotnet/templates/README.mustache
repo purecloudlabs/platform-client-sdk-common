@@ -446,6 +446,25 @@ var me = usersApi.GetMe();
 Console.WriteLine($"Hello, {me.DisplayName}");
 ```
 
+#### Using multiple ApiClients
+
+Applications which need to create and to maintain distinct Configuration and ApiClient instances (i.e. distinct instances to different Genesys Cloud regions or to the same region, with distinct access tokens), can use the optional `useDefaultApiClient` parameter (set to: false - default: true), of the `Configuration` constructor.
+
+When the `useDefaultApiClient` optional parameter is not specified or is set to true (`useDefaultApiClient` default value is true), the SDK sets or uses the ApiClient of the Default Configuration (static single instance).
+
+**To create and to use distinct Configuration.ApiClient instances, set the `useDefaultApiClient` optional parameter to false.**
+
+```csharp
+        Configuration configuration = new Configuration(useDefaultApiClient: false);
+        ApiClient client =  configuration.ApiClient;
+        PureCloudRegionHosts region = PureCloudRegionHosts.eu_west_1;
+        client.setBasePath(region);
+
+        var apiInstance = new UsersApi(configuration);
+        var userId = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";  // string | User ID
+        User resultUser = apiInstance.GetUser(userId, null, null, null);
+```
+
 ## NotificationHandler Helper Class
 
 The .NET SDK includes a helper class `NotificationHandler` to assist in managing GenesysCloud notifications. The class will create a single notification channel, or use an existing one, and provides methods to add and remove subscriptions and raises an event with a deserialized notification object whenever one is received.
