@@ -12,14 +12,15 @@ import org.asynchttpclient.proxy.ProxyServerSelector;
 import org.asynchttpclient.util.ProxyUtils;
 
 import java.util.Properties;
+import java.time.Duration;
 
 public class AsyncHttpClientConnectorProvider implements ApiClientConnectorProvider {
     @Override
     public ApiClientConnector create(ApiClientConnectorProperties properties) {
         DefaultAsyncHttpClientConfig.Builder builder = new DefaultAsyncHttpClientConfig.Builder();
 
-        Integer connectionTimeout = properties.getProperty(ApiClientConnectorProperty.CONNECTION_TIMEOUT, Integer.class, null);
-        if (connectionTimeout != null && connectionTimeout > 0) {
+        Duration connectionTimeout = properties.getProperty(ApiClientConnectorProperty.CONNECTION_TIMEOUT, Duration.class, null);
+        if (connectionTimeout != null && !connectionTimeout.isNegative() && !connectionTimeout.isZero()) {
             builder.setConnectTimeout(connectionTimeout);
             builder.setReadTimeout(connectionTimeout);
             builder.setRequestTimeout(connectionTimeout);
