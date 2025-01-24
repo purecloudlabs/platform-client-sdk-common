@@ -1,6 +1,6 @@
 module github.com/mypurecloud/platform-client-sdk-cli/build/gc
 
-go 1.15
+go 1.23
 
 require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
