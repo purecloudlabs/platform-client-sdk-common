@@ -553,5 +553,10 @@
 		"get": {
 			"name": "list"
 		}
+	},
+	"/api/v2/socialmedia/topics/{topicId}/dataingestionrules/googlebusinessprofile/{googleBusinessProfileIngestionRuleId}": {
+		"patch": {
+			"name": "patch"
+		}
 	}
 }
