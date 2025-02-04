@@ -3,6 +3,10 @@
 const assert = require('assert');
 const { HttpsProxyAgent } = require('hpagent');
 const fs = require("fs");
+const { X509Certificate } = require("@peculiar/x509");
+const forge = require("node-forge");
+const axios = require("axios");
+const path = require("path")
 
 // purecloud-platform-client-v2
 const platformClient = require('../../../../../output/purecloudjavascript/build');
@@ -127,19 +131,6 @@ describe('JS SDK for Node', function () {
 		}, 8000);
 	}
 
-	it('should get the user with custom client', (done) => {
-
-		client.setGateway({
-			host:"localhost",
-			port:"4027",
-			protocol : "https"
-		})
-
-		client.setMTLSCertificates('mtls-test/localhost.cert.pem', 'mtls-test/localhost.key.pem', 'mtls-test/ca-chain.cert.pem')
-
-		getUsers(2, done);
-
-	});
 
 	it('should get the user through a proxy', (done) => {
 		client.setGateway(null);
@@ -158,6 +149,21 @@ describe('JS SDK for Node', function () {
 			})
 			.catch((err) => handleError(err, done));
 	});
+
+	it('should get the user with custom client', (done) => {
+
+		client.setGateway({
+			host:"localhost",
+			port:"4027",
+			protocol : "https"
+		})
+		client.setProxyAgent(null)
+		client.setMTLSCertificates('mtls-test/localhost.cert.pem', 'mtls-test/localhost.key.pem', 'mtls-test/ca-chain.cert.pem')
+		client.setPreHook(PreHook)
+		getUsers(2, done);
+
+	});
+
 
 	it('should delete the user', (done) => {
 		usersApi
@@ -218,3 +224,132 @@ function setEnvironment() {
 			return PURECLOUD_ENVIRONMENT;
 	}
 }
+
+function PreHook(config) {
+	try {
+		console.log("Running Pre-Hook: Certificate Revocation Checks");
+
+		// Step 1: Extract certificate from request
+		const certificate = getCertificateFromConfig(config);
+		const issuerCertificate =  getIssuerCertificate(); // Get issuer CA certificate
+
+		// Step 2: Perform OCSP validation
+		const isOCSPValid =  checkOCSP(certificate, issuerCertificate);
+
+		// Step 3: Perform CRL validation
+		const crlUrl = getCRLDistributionUrl(certificate); // Extract CRL URL
+		const isCRLValid =  checkCRL(certificate, crlUrl);
+
+		// Step 4: Check final result
+		if (!isOCSPValid || !isCRLValid) {
+			handleError(new Error("Certificate is revoked."))
+		}
+
+		console.log("Certificate validated successfully.");
+		return config;
+	} catch (error) {x
+		console.error("Pre-Hook Validation Failed:", error.message);
+		return Promise.reject(error); // Reject request if validation fails
+	}
+}
+
+function getCertificateFromConfig(config) {
+	if (!config.httpsAgent || !config.httpsAgent.options) {
+		throw new Error("HTTPS agent is required for certificate extraction.");
+	}
+	const peerCert = config.httpsAgent.options.cert;
+	if (!peerCert) {
+		throw new Error("No certificate found in HTTPS agent.");
+	}
+
+	return forge.pki.certificateFromPem(peerCert);
+}
+
+
+function getIssuerCertificate() {
+	try {
+		const caCertPath = path.resolve('mtls-test/ca-chain.cert.pem');
+		const caCertPem = fs.readFileSync(caCertPath, "utf8");
+		return forge.pki.certificateFromPem(caCertPem);
+	} catch (error) {
+		console.error("Failed to load issuer certificate:", error.message);
+		throw new Error("Failed to load CA certificate.");
+	}
+}
+
+function getCRLDistributionUrl(cert) {
+	const extensions = cert.extensions || [];
+	for (const ext of extensions) {
+		if (ext.name === "cRLDistributionPoints" && ext.value) {
+			return ext.value; // URL of the CRL
+		}
+	}
+	console.log("CRL distribution point not found in certificate.");
+	return ""
+}
+
+
+function	checkOCSP(cert, issuerCert) {
+	try {
+		const ocspUrl = extractOCSPUrl(cert);
+		if (!ocspUrl) {
+			console.warn("OCSP URL not found. Skipping OCSP check.");
+			return true; // Assume valid if OCSP is missing
+		}
+
+		const ocspRequest = generateOCSPRequest(cert, issuerCert);
+		const response =  axios.post(ocspUrl, ocspRequest, { headers: { "Content-Type": "application/ocsp-request" } });
+
+		return parseOCSPResponse(response.data);
+	} catch (error) {
+		console.error("OCSP check failed:", error.message);
+		return false;
+	}
+}
+
+function extractOCSPUrl(cert) {
+	const extensions = cert.extensions || [];
+	for (const ext of extensions) {
+		if (ext.name === "authorityInfoAccess" && ext.ocsp) {
+			return ext.ocsp[0]; // First OCSP responder URL
+		}
+	}
+	return null;
+}
+
+
+function generateOCSPRequest(cert, issuerCert) {
+	const request = forge.ocsp.createRequest();
+	const serialNumber = cert.serialNumber;
+
+	request.addRequest({
+		serialNumber,
+		issuerNameHash: forge.md.sha1.create().update(forge.asn1.toDer(forge.pki.certificateToAsn1(issuerCert)).getBytes()).digest().getBytes(),
+		issuerKeyHash: forge.md.sha1.create().update(forge.pki.getPublicKey(issuerCert).n.toByteArray()).digest().getBytes(),
+	});
+
+	return new Uint8Array(request.toDer());
+}
+
+function parseOCSPResponse(responseData) {
+	const response = forge.ocsp.parseResponse(responseData);
+	return response.certStatus === "good";
+}
+
+function checkCRL(cert, crlUrl) {
+	try {
+		if (crlUrl !== "") {
+			const response =  axios.get(crlUrl, { responseType: "arraybuffer" });
+			const crlPem = forge.util.encode64(response.data);
+			const crl = forge.pki.crlFromPem(crlPem);
+			return !crl.revokedCertificate.some((revoked) => revoked.serialNumber === cert.serialNumber);
+		}
+		else {
+			return true
+		}
+	} catch (error) {
+		console.error("CRL check failed:", error.message);
+		return false;
+	}
+}
+
