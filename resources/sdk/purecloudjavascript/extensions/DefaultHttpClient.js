@@ -14,45 +14,45 @@ class DefaultHttpClient extends AbstractHttpClient{
         this._axiosInstance = axios.create({});
 
         // Attach interceptors for pre and post hooks
-        this._attachInterceptors();
+        this.executeHooks();
     }
 
-    _attachInterceptors() {
-        // Request interceptor (for pre-hooks)
-        this._axiosInstance.interceptors.request.use(
-            async (config) => {
-                if (this.preHook && typeof this.preHook === 'function') {
-                    console.log('Running Pre-Hook: Request');
-                    await this.preHook(config); // Call the custom pre-hook
-                }
-                return config;
-            },
-            (error) => {
-                // Handle errors before the request is sent
-                console.error('Request Pre-Hook Error:', error.message);
-                return Promise.reject(error);
-            }
-        );
 
-        // Response interceptor (for post-hooks)
-        this._axiosInstance.interceptors.response.use(
-            async (response) => {
-                if (this.postHook && typeof this.postHook === 'function') {
-                    console.log('Running Post-Hook: Response');
-                    await this.postHook(response, null); // Call the custom post-hook
+    executeHooks() {
+            this._axiosInstance.interceptors.request.use(
+                async (config) => {
+                    if (this.preHook && typeof this.preHook === 'function') {
+                        console.log('Running Pre-Hook: Request');
+                        await this.preHook(config); // Call the custom pre-hook
+                    }
+                    return config;
+                },
+                (error) => {
+                    // Handle errors before the request is sent
+                    console.error('Request Pre-Hook Error:', error.message);
+                    return Promise.reject(error);
                 }
-                return response;
-            },
-            async (error) => {
-                console.error('Post-Hook: Response Error', error.message);
-                // Optionally call post-hook in case of errors
-                if (this.postHook && typeof this.postHook === 'function') {
-                    await this.postHook(null, error); // Pass the error to post-hook
+            );
+
+            // Response interceptor (for post-hooks)
+            this._axiosInstance.interceptors.response.use(
+                async (response) => {
+                    if (this.postHook && typeof this.postHook === 'function') {
+                        console.log('Running Post-Hook: Response');
+                        await this.postHook(response, null); // Call the custom post-hook
+                    }
+                    return response;
+                },
+                async (error) => {
+                    console.error('Post-Hook: Response Error', error.message);
+                    // Optionally call post-hook in case of errors
+                    if (this.postHook && typeof this.postHook === 'function') {
+                        await this.postHook(null, error); // Pass the error to post-hook
+                    }
+                    return Promise.reject(error);
                 }
-                return Promise.reject(error);
-            }
-        );
-    }
+            );
+        }
 
     request(httpRequestOptions) {
         if(!(httpRequestOptions instanceof HttpRequestOptions)) {

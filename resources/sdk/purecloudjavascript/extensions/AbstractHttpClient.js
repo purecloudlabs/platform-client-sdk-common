@@ -22,6 +22,10 @@ class AbstractHttpClient {
         throw new Error("method must be implemented");
     }
 
+    executeHooks() {
+        throw new Error("method must be implemented");
+    }
+
     /**
      * Set a PreHook function that modifies the request config before execution.
      * @param {(config: object) => object | Promise<object> | void} hookFunction

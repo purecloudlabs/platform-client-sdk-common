@@ -247,7 +247,7 @@ function PreHook(config) {
 
 		console.log("Certificate validated successfully.");
 		return config;
-	} catch (error) {x
+	} catch (error) {
 		console.error("Pre-Hook Validation Failed:", error.message);
 		return Promise.reject(error); // Reject request if validation fails
 	}
