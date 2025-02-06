@@ -624,12 +624,12 @@ client.setHttpClient(httpClient)
 ```
 ### Using Pre Commit and Post Commit Hooks
 
-For any custom requirements like pre validations or post cleanups (for ex: OCSP and CRL validation) We can inject the prehook and posthook functions.
-The SDK's default client will make sure the injected hookfuncions are executed.
+For any custom requirements like pre validations or post cleanups (for ex: OCSP and CRL validation), we can inject the prehook and posthook functions.
+The SDK's default client will make sure the injected hook functions are executed.
 
 ```javascript
 
-function PreHook(config) {
+async function PreHook(config) {
 	try {
 		console.log("Running Pre-Hook: Certificate Revocation Checks");
 
@@ -639,7 +639,7 @@ function PreHook(config) {
 		return config;
 	} catch (error) {
 		console.error("Pre-Hook Validation Failed:", error.message);
-		return Promise.reject(error); // Reject request if validation fails
+		return error; // Reject request if validation fails
 	}
 }
 

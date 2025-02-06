@@ -12,19 +12,15 @@ class DefaultHttpClient extends AbstractHttpClient{
         if (httpsAgent !== null && httpsAgent !== undefined) this.setHttpsAgent(httpsAgent);
         else this.httpsAgent;
         this._axiosInstance = axios.create({});
-
-        // Attach interceptors for pre and post hooks
-        this.executeHooks();
     }
 
 
-    executeHooks() {
+    enableHooks() {
+        if (this.preHook && typeof this.preHook === 'function') {
             this._axiosInstance.interceptors.request.use(
                 async (config) => {
-                    if (this.preHook && typeof this.preHook === 'function') {
                         console.log('Running Pre-Hook: Request');
                         await this.preHook(config); // Call the custom pre-hook
-                    }
                     return config;
                 },
                 (error) => {
@@ -33,26 +29,23 @@ class DefaultHttpClient extends AbstractHttpClient{
                     return Promise.reject(error);
                 }
             );
+        }
 
+        if (this.postHook && typeof this.postHook === 'function') {
             // Response interceptor (for post-hooks)
             this._axiosInstance.interceptors.response.use(
                 async (response) => {
-                    if (this.postHook && typeof this.postHook === 'function') {
                         console.log('Running Post-Hook: Response');
                         await this.postHook(response, null); // Call the custom post-hook
-                    }
-                    return response;
                 },
                 async (error) => {
                     console.error('Post-Hook: Response Error', error.message);
                     // Optionally call post-hook in case of errors
-                    if (this.postHook && typeof this.postHook === 'function') {
-                        await this.postHook(null, error); // Pass the error to post-hook
-                    }
-                    return Promise.reject(error);
+                    await this.postHook(null, error); // Pass the error to post-hook
                 }
             );
         }
+    }
 
     request(httpRequestOptions) {
         if(!(httpRequestOptions instanceof HttpRequestOptions)) {

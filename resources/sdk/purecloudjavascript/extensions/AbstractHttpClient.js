@@ -22,7 +22,7 @@ class AbstractHttpClient {
         throw new Error("method must be implemented");
     }
 
-    executeHooks() {
+    enableHooks() {
         throw new Error("method must be implemented");
     }
 
@@ -35,6 +35,7 @@ class AbstractHttpClient {
             throw new Error("preHook must be a function that accepts (config)");
         }
         this.preHook = hookFunction;
+        this.enableHooks()
     }
 
     /**
@@ -46,6 +47,7 @@ class AbstractHttpClient {
             throw new Error("postHook must be a function that accepts (response, error)");
         }
         this.postHook = hookFunction;
+        this.enableHooks()
     }
 
 }
