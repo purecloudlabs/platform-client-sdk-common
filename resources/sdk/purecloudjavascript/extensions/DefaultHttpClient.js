@@ -19,9 +19,8 @@ class DefaultHttpClient extends AbstractHttpClient{
         if (this.preHook && typeof this.preHook === 'function') {
             this._axiosInstance.interceptors.request.use(
                 async (config) => {
-                        console.log('Running Pre-Hook: Request');
-                        await this.preHook(config); // Call the custom pre-hook
-                    return config;
+                        config = await this.preHook(config); // Call the custom pre-hook
+                        return config
                 },
                 (error) => {
                     // Handle errors before the request is sent
@@ -35,13 +34,13 @@ class DefaultHttpClient extends AbstractHttpClient{
             // Response interceptor (for post-hooks)
             this._axiosInstance.interceptors.response.use(
                 async (response) => {
-                        console.log('Running Post-Hook: Response');
-                        await this.postHook(response, null); // Call the custom post-hook
+                        response = await this.postHook(response); // Call the custom post-hook
+                        return response
                 },
                 async (error) => {
                     console.error('Post-Hook: Response Error', error.message);
                     // Optionally call post-hook in case of errors
-                    await this.postHook(null, error); // Pass the error to post-hook
+                    return Promise.reject(error);
                 }
             );
         }

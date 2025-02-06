@@ -639,7 +639,7 @@ async function PreHook(config) {
 		return config;
 	} catch (error) {
 		console.error("Pre-Hook Validation Failed:", error.message);
-		return error; // Reject request if validation fails
+		throw error; // Reject request if validation fails
 	}
 }
 

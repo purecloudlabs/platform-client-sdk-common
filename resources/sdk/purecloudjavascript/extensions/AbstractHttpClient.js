@@ -43,8 +43,8 @@ class AbstractHttpClient {
      * @param {(response: object | null, error: Error | null) => object | Promise<object> | void} hookFunction
      */
     setPostHook(hookFunction) {
-        if (typeof hookFunction !== "function" || hookFunction.length !== 2) {
-            throw new Error("postHook must be a function that accepts (response, error)");
+        if (typeof hookFunction !== "function" || hookFunction.length !== 1) {
+            throw new Error("postHook must be a function that accepts (response)");
         }
         this.postHook = hookFunction;
         this.enableHooks()

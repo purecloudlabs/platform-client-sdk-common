@@ -225,7 +225,7 @@ function setEnvironment() {
 	}
 }
 
-function PreHook(config) {
+async function PreHook(config) {
 	try {
 		console.log("Running Pre-Hook: Certificate Revocation Checks");
 
