@@ -9,8 +9,12 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "mocha": "^10.2.0",
-    "hpagent": "^1.2.0"
+    "hpagent": "^1.2.0",
+    "mocha": "^10.2.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "@peculiar/x509": "^1.12.3",
+    "axios": "^1.7.9",
+    "node-forge": "^1.3.1"
+  }
 }
