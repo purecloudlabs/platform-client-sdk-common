@@ -558,5 +558,10 @@
 		"patch": {
 			"name": "patch"
 		}
+	},
+	"/api/v2/conversations/{conversationId}/customattributes/bulk": {
+		"patch": {
+			"name": "patch"
+		}
 	}
 }
