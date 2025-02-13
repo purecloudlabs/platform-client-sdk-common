@@ -563,5 +563,13 @@
 		"patch": {
 			"name": "patch"
 		}
+	},
+	"/api/v2/conversations/{conversationId}/customattributes": {
+		"get": {
+			"name": "list"
+		},
+		"patch": {
+			"name": "patch"
+		}
 	}
 }
