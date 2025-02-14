@@ -893,7 +893,7 @@ public class ApiClient implements AutoCloseable {
                 if (e.getStatusCode() == 401 && shouldRefreshAccessToken) {
                     handleExpiredAccessToken();
                     return getAPIResponse(request, returnType, isAuthRequest);
-                } else if (e.getStatusCode() == 429 && retry.maxRetriesExceeded) {
+                } else if (e.getStatusCode() == 429) {
                     Map<String,String> responseHeaderCopy = new HashMap<>(e.getHeaders());
                     logger.error(connectorRequest.getMethod(), connectorRequest.getUrl(), connectorRequest.readBody(), e.getRawBody(), e.getStatusCode(), requestHeaderCopy, responseHeaderCopy);
                     throw e;
@@ -1552,7 +1552,6 @@ public class ApiClient implements AutoCloseable {
         private long retryAfterMs;
         private Stopwatch stopwatch = null;
         private long defaultMaxRetry = 180000L;
-        private boolean maxRetriesExceeded;
 
         private final List<Integer> statusCodes = Arrays.asList(429, 502, 503, 504);
 
@@ -1562,7 +1561,6 @@ public class ApiClient implements AutoCloseable {
             this.maxRetryTimeSec = retryConfiguration.maxRetryTimeSec;
             this.maxRetriesBeforeBackoff = retryConfiguration.maxRetriesBeforeBackoff;
             this.retryMax = retryConfiguration.retryMax;
-            this.maxRetriesExceeded = false;
             stopwatch = Stopwatch.createStarted();
         }
 
@@ -1589,9 +1587,6 @@ public class ApiClient implements AutoCloseable {
                 //If status code is 50x then wait for every 3 Sec and retry until 5 minutes then after wait for every 9 Sec and retry until next 5 minutes afterwards wait for every 27 Sec and retry.
                 return waitBeforeRetry(getWaitTimeExp(Math.min(3, Math.floor(stopwatch.elapsed(TimeUnit.MILLISECONDS) / backoffIntervalMs) + 1)));
 
-            }
-            else if (retryCount > retryMax) {
-                maxRetriesExceeded = true;
             }
             stopwatch.stop();
             return false;
