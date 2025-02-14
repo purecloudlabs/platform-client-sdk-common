@@ -829,12 +829,8 @@ public class ApiClient implements AutoCloseable {
             }
             return new ApiResponseWrapper<>(statusCode, reasonPhrase, headers, body, entity);
         }
-        else if (statusCode == 429) {
-            String message = "Max number of retries exceeded";
-            throw new ApiException(statusCode, message, headers, response.readBody());
-        }
         else {
-            String message = "error";
+            String message = (statusCode == 429) ? "Max number of retries exceeded" : "error";
             String body = response.readBody();
             throw new ApiException(statusCode, message, headers, body);
         }
@@ -893,10 +889,6 @@ public class ApiClient implements AutoCloseable {
                 if (e.getStatusCode() == 401 && shouldRefreshAccessToken) {
                     handleExpiredAccessToken();
                     return getAPIResponse(request, returnType, isAuthRequest);
-                } else if (e.getStatusCode() == 429) {
-                    Map<String,String> responseHeaderCopy = new HashMap<>(e.getHeaders());
-                    logger.error(connectorRequest.getMethod(), connectorRequest.getUrl(), connectorRequest.readBody(), e.getRawBody(), e.getStatusCode(), requestHeaderCopy, responseHeaderCopy);
-                    throw e;
                 } else if (e.getStatusCode() < 200 || e.getStatusCode() >= 300) {
                     Map<String,String> responseHeaderCopy = new HashMap<>(e.getHeaders());
                     logger.error(connectorRequest.getMethod(), connectorRequest.getUrl(), connectorRequest.readBody(), e.getRawBody(), e.getStatusCode(), requestHeaderCopy, responseHeaderCopy);
@@ -1594,6 +1586,7 @@ public class ApiClient implements AutoCloseable {
 
         private boolean waitBeforeRetry(long retryAfterMs){
             try {
+                System.out.printf("Rate limit encountered. Retry the request in [%d] seconds\n", retryAfterMs/1000L);
                 Thread.sleep(retryAfterMs);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
