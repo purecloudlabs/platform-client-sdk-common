@@ -364,7 +364,7 @@ namespace {{packageName}}.Client
                 }
             }
 
-            if ((int)response.StatusCode < 200 || (int)response.StatusCode >= 300)
+            if ((int)response.StatusCode < 200 || (int)response.StatusCode >= 300) {
                 Configuration.Logger.Error(method.ToString(), url, postBody, response.Content, (int)response.StatusCode, headerParams, response.Headers?
                                                              .GroupBy(header => header?.Name)
                                                              .Select(header => new
@@ -373,7 +373,10 @@ namespace {{packageName}}.Client
                                                             Value = header.Select(x => x?.Value)?.ToList()
                                                             }).ToDictionary(header => header?.Name?.ToString(), header => String.Join(", ", header?.Value?.ToArray())) 
                                                         ?? new Dictionary<string, string>());
-
+                if ((int)response.StatusCode == 429) {
+                    Console.WriteLine("Max number of retries exceeded");
+                }
+            }
 
             return (Object) response;
         }
@@ -1118,6 +1121,7 @@ namespace {{packageName}}.Client
 
                     //If status code is 50x then wait for every 3 Sec and retry until 5 minutes then after wait for every 9 Sec and retry until next 5 minutes afterwards wait for every 27 Sec and retry.
                     retryCount++;
+                    Console.WriteLine(retryCount);
                     return waitBeforeRetry(getWaitTimeExp(Math.Min(3, Math.Floor(stopwatch.ElapsedMilliseconds / backoffIntervalMs * 1.0) + 1)));
                 }
                 stopwatch.Stop();
@@ -1128,6 +1132,7 @@ namespace {{packageName}}.Client
             {
                 try
                 {
+                    Console.WriteLine("Rate limit encountered. Retry the request in [{0}] seconds", retryAfterMs/1000);
                     Thread.Sleep((int) retryAfterMs);
                 }
                 catch (ThreadInterruptedException)
