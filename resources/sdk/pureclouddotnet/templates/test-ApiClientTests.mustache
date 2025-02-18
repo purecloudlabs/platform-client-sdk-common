@@ -134,7 +134,7 @@ public class ApiClientTests
         stopwatch = Stopwatch.StartNew();
         RestResponse user = (RestResponse)apiClient.CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
 
-        Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 3000 && stopwatch.ElapsedMilliseconds < 3100, "Since maxRetryTime is not provided it will not retry even if the status code is 429");
+        Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 3000 && stopwatch.ElapsedMilliseconds < 3100, "Since RetryMax is 0, after one retry exception is thrown");
         Assert.AreEqual(429, (int)user.StatusCode);
         stopwatch.Stop();
     }
