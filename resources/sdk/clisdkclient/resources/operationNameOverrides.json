@@ -571,5 +571,20 @@
 		"patch": {
 			"name": "patch"
 		}
+	},
+	"/api/v2/users/{userId}/externalid": {
+		"get": {
+			"name": "getexternalidsforuser"
+		}
+	},
+	"/api/v2/users/{userId}/externalid/{authorityName}": {
+		"get": {
+			"name": "getexternalidforuserauthority"
+		}
+	},
+	"/api/v2/users/externalid/{authorityName}/{externalKey}": {
+		"get": {
+			"name": "getuserbyexternalid"
+		}
 	}
 }
