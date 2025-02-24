@@ -493,7 +493,7 @@ public class ApiClient implements AutoCloseable {
             return new ApiResponseWrapper<>(statusCode, reasonPhrase, headers, body, entity);
         }
         else {
-            String message = "error";
+            String message = (statusCode == 429) ? "Max number of retries exceeded" : "error";
             String body = response.readBody();
             throw new WebMessagingException(statusCode, message, headers, body);
         }
