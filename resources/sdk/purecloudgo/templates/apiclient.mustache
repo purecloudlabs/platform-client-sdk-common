@@ -6,6 +6,7 @@ import (
     "crypto/tls"
 	"encoding/json"
 	"fmt"
+	"log"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -48,6 +49,7 @@ func NewAPIClient(c *Configuration) APIClient {
 	client := retryablehttp.NewClient()
 	client.Logger = nil
 	client.HTTPClient.Timeout = timeout
+	client.Backoff = customBackoff
 
 	return APIClient{
 		client:        *client,
@@ -219,8 +221,13 @@ func (c *APIClient) CallAPI(path string, method string,
 		}
 	}
 
-
-		c.client.CheckRetry = DefaultRetryPolicy
+		c.client.CheckRetry = func(ctx context.Context, resp *http.Response, err error) (bool, error) {
+			retry, err := DefaultRetryPolicy(ctx, resp, err)
+			if !retry && resp.StatusCode == http.StatusTooManyRequests {
+				log.Println("Max Retries Exceeded")
+			}
+			return retry, err
+		}
 
 	if c.configuration.ProxyConfiguration != nil {
                 var proxyUrl *url.URL
@@ -471,4 +478,12 @@ func getFieldName(t reflect.Type, field string) string {
 // toTime is a helper function for models to prevent a static import of the "time" package duplicating dynamic imports determined by the codegen process
 func toTime(o interface{}) *time.Time {
 	return o.(*time.Time)
+}
+
+func customBackoff(min, max time.Duration, attemptNumber int, resp *http.Response) time.Duration {
+	sleep := retryablehttp.DefaultBackoff(min, max, attemptNumber, resp)
+	if resp != nil && resp.StatusCode == http.StatusTooManyRequests {
+		log.Printf("Rate limit encountered. Retry the request in [%.0f] seconds\n", sleep.Seconds())
+	}
+	return sleep
 }
