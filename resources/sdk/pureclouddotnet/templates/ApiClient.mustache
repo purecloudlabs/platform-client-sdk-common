@@ -1121,7 +1121,6 @@ namespace {{packageName}}.Client
 
                     //If status code is 50x then wait for every 3 Sec and retry until 5 minutes then after wait for every 9 Sec and retry until next 5 minutes afterwards wait for every 27 Sec and retry.
                     retryCount++;
-                    Console.WriteLine(retryCount);
                     return waitBeforeRetry(getWaitTimeExp(Math.Min(3, Math.Floor(stopwatch.ElapsedMilliseconds / backoffIntervalMs * 1.0) + 1)));
                 }
                 stopwatch.Stop();
