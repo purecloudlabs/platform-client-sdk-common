@@ -320,7 +320,7 @@ namespace {{packageName}}.Client
 
             if (Configuration.Timeout > 0)
             {
-                options.MaxTimeout = Configuration.Timeout;   
+                options.Timeout = TimeSpan.FromMilliseconds(Configuration.Timeout);
             }
 
             if (ClientOptions.Proxy != null)
@@ -427,7 +427,7 @@ namespace {{packageName}}.Client
 
             if (Configuration.Timeout > 0)
             {
-                options.MaxTimeout = Configuration.Timeout;   
+                options.Timeout = TimeSpan.FromMilliseconds(Configuration.Timeout);
             }
 
             RestClient = new RestClient(options);
