@@ -22,8 +22,8 @@ fi
 echo "Installing packages"
 mono --version
 echo "mono version"
-mono $COMMON_DIR/resources/sdk/pureclouddotnet/bin/nuget.exe install $BUILD_DIR/src/$ROOT_NAMESPACE/packages.config -o $BUILD_DIR/packages -NoCache -Verbosity detailed;
-mono $COMMON_DIR/resources/sdk/pureclouddotnet/bin/nuget.exe install $BUILD_DIR/src/$ROOT_NAMESPACE.Tests/packages.config -o $BUILD_DIR/packages -NoCache -Verbosity detailed;
+mono $COMMON_DIR/resources/sdk/pureclouddotnet/bin/nuget.exe install $BUILD_DIR/src/$ROOT_NAMESPACE/packages.config -o $BUILD_DIR/packages -NoHttpCache -Verbosity detailed;
+mono $COMMON_DIR/resources/sdk/pureclouddotnet/bin/nuget.exe install $BUILD_DIR/src/$ROOT_NAMESPACE.Tests/packages.config -o $BUILD_DIR/packages -NoHttpCache -Verbosity detailed;
 
 mkdir -p $BUILD_DIR/bin/netstandard2.0;
 

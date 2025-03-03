@@ -4,7 +4,7 @@ netfx=${frameworkVersion#net}
 
 wget -nc "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe";
 mozroots --import --sync
-mono nuget.exe install src/{{packageName}}/packages.config -o packages -NoCache -Verbosity detailed;
+mono nuget.exe install src/{{packageName}}/packages.config -o packages -NoHttpCache -Verbosity detailed;
 mkdir -p bin;
 
 cp packages/ini-parser.2.5.2/lib/net20/INIFileParser.dll bin/INIFileParser.dll;
