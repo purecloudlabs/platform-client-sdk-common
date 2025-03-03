@@ -116,10 +116,25 @@ namespace {{packageName}}.Client
         private RestClient RestClient { get; set; }
 
         private RetryConfiguration retryConfig;
-        public RetryConfiguration RetryConfig { get; set; }
+        ///<Summary>
+        /// Gets or Sets the Retry Configuration
+        ///</Summary>
+        public RetryConfiguration RetryConfig {
+            get
+            {
+                return this.retryConfig;
+            }
+            set
+            {
+                this.retryConfig = value;
+            }
+        }
         private static readonly RetryConfiguration DEFAULT_RETRY_CONFIG = new RetryConfiguration();
 
         private GatewayConfiguration gatewayConfig;
+        ///<Summary>
+        /// Gets or Sets the Gateway Configuration
+        ///</Summary>
         public GatewayConfiguration GatewayConfig {
             get
             {
@@ -136,6 +151,9 @@ namespace {{packageName}}.Client
             }
         }
 
+        ///<Summary>
+        /// Gets the Login or the API Uri based on Configuration and Gateway COnfiguration
+        ///</Summary>
         public Uri GetConfUri(String pathType, Uri baseUri) {
             if (pathType.Equals("login")) {
                 if (this.GatewayConfig == null || String.IsNullOrEmpty(this.GatewayConfig.Host)) {
@@ -172,6 +190,9 @@ namespace {{packageName}}.Client
             }
         }
 
+        ///<Summary>
+        /// Set Gateway Configuration and credentials
+        ///</Summary>
         public void SetGateway(String host,
             String protocol,
             int port,
@@ -182,6 +203,9 @@ namespace {{packageName}}.Client
             this.GatewayConfig = new GatewayConfiguration(host, protocol, port, pathParamsLogin, pathParamsApi, username, password);
         }
 
+        ///<Summary>
+        /// Set Gateway Configuration
+        ///</Summary>
         public void SetGateway(String host,
             String protocol,
             int port,
@@ -192,8 +216,17 @@ namespace {{packageName}}.Client
         
 
         // These fields are only applicable to the Code Authorization OAuth flow:
+        ///<Summary>
+        /// Defines if Code Authorization is used
+        ///</Summary>
         public bool UsingCodeAuth { get; set; }
+        ///<Summary>
+        /// OAuth Client Id
+        ///</Summary>
         public string ClientId { get; set; }
+        ///<Summary>
+        /// OUuth Client Secret
+        ///</Summary>
         public string ClientSecret { get; set; }
 
         // Creates and sets up a RestRequest prior to a call.
@@ -320,7 +353,7 @@ namespace {{packageName}}.Client
 
             if (Configuration.Timeout > 0)
             {
-                options.MaxTimeout = Configuration.Timeout;   
+                options.Timeout = TimeSpan.FromMilliseconds(Configuration.Timeout);
             }
 
             if (ClientOptions.Proxy != null)
@@ -427,7 +460,7 @@ namespace {{packageName}}.Client
 
             if (Configuration.Timeout > 0)
             {
-                options.MaxTimeout = Configuration.Timeout;   
+                options.Timeout = TimeSpan.FromMilliseconds(Configuration.Timeout);
             }
 
             RestClient = new RestClient(options);
@@ -774,6 +807,9 @@ namespace {{packageName}}.Client
         }
         {{/supportsUWP}}
 
+        ///<Summary>
+        /// Retry Configuration class
+        ///</Summary>
         public class RetryConfiguration
         {
             private long backoffIntervalMs = 300000L;
@@ -781,6 +817,9 @@ namespace {{packageName}}.Client
             private int maxRetryTimeSec = 0;
             private int retryMax = 5;
 
+            ///<Summary>
+            /// BackOff Interval (Ms)
+            ///</Summary>
             public long BackOffIntervalMs
             {
                 get
@@ -798,6 +837,9 @@ namespace {{packageName}}.Client
                 }
             }
 
+            ///<Summary>
+            /// RetryAfter Default (Ms)
+            ///</Summary>
             public long RetryAfterDefaultMs
             {
                 get
@@ -814,7 +856,10 @@ namespace {{packageName}}.Client
                 }
             }
 
-            public int MaxRetryTimeSec
+            ///<Summary>
+            /// Max RetryTime (Sec)
+            ///</Summary>
+           public int MaxRetryTimeSec
             {
                 get
                 {
@@ -830,6 +875,9 @@ namespace {{packageName}}.Client
                 }
             }
 
+            ///<Summary>
+            /// Retry Max
+            ///</Summary>
             public int RetryMax
             {
                 get
@@ -847,6 +895,9 @@ namespace {{packageName}}.Client
             }
         }
 
+        ///<Summary>
+        /// Gateway Configuration class
+        ///</Summary>
         public class GatewayConfiguration
         {
 
@@ -871,6 +922,9 @@ namespace {{packageName}}.Client
             // Gateway Password (future)
             private String password = null;
 
+            ///<Summary>
+            /// GatewayConfiguration default constructor
+            ///</Summary>
             public GatewayConfiguration()
             {
                 this.protocol = "https";
@@ -879,6 +933,9 @@ namespace {{packageName}}.Client
                 this.pathParamsApi = "";
             }
 
+            ///<Summary>
+            /// GatewayConfiguration constructor with configuration and credentials
+            ///</Summary>
             public GatewayConfiguration(String host,
                 String protocol,
                 int port,
@@ -896,6 +953,9 @@ namespace {{packageName}}.Client
                 this.Password = password;
             }
 
+            ///<Summary>
+            /// GatewayConfiguration constructor with configuration
+            ///</Summary>
             public GatewayConfiguration(String host,
                 String protocol,
                 int port,
@@ -909,6 +969,9 @@ namespace {{packageName}}.Client
                 this.PathParamsApi = pathParamsApi;
             }
 
+            ///<Summary>
+            /// Gateway Host
+            ///</Summary>
             public String Host
             {
                 get
@@ -923,6 +986,9 @@ namespace {{packageName}}.Client
                 }
             }
 
+            ///<Summary>
+            /// Gateway Protocol
+            ///</Summary>
             public String Protocol
             {
                 get
@@ -939,6 +1005,9 @@ namespace {{packageName}}.Client
                 }
             }
 
+            ///<Summary>
+            /// Gateway Port
+            ///</Summary>
             public int Port
             {
                 get
@@ -955,6 +1024,9 @@ namespace {{packageName}}.Client
                 }
             }
 
+            ///<Summary>
+            /// Gateway Path Params for Login
+            ///</Summary>
             public String PathParamsLogin
             {
                 get
@@ -974,6 +1046,9 @@ namespace {{packageName}}.Client
                 }
             }
 
+            ///<Summary>
+            /// Gateway Path Params for Api
+            ///</Summary>
             public String PathParamsApi
             {
                 get
@@ -993,6 +1068,9 @@ namespace {{packageName}}.Client
                 }
             }
 
+            ///<Summary>
+            /// Username
+            ///</Summary>
             public String Username
             {
                 get
@@ -1007,6 +1085,9 @@ namespace {{packageName}}.Client
                 }
             }
 
+            ///<Summary>
+            /// Password
+            ///</Summary>
             public String Password
             {
                 get
@@ -1022,13 +1103,25 @@ namespace {{packageName}}.Client
             }
         }
 
+        ///<Summary>
+        /// ClientOptions
+        ///</Summary>
         public ClientRestOptions ClientOptions { get; set; }
+        ///<Summary>
+        /// ClientRestOptions class
+        ///</Summary>
         public class ClientRestOptions
         {
+            ///<Summary>
+            /// Base Url
+            ///</Summary>
             public Uri BaseUrl { get; set; }
             private System.Net.IWebProxy proxy;
             private HttpMessageHandler httpMessageHandler;
 
+            ///<Summary>
+            /// Gets or Sets the HttpMessageHandler
+            ///</Summary>
             public HttpMessageHandler HttpMessageHandler
             {
                 get
@@ -1041,6 +1134,9 @@ namespace {{packageName}}.Client
                 }
             }
 
+            ///<Summary>
+            /// Gets or Sets the Proxy
+            ///</Summary>
             public System.Net.IWebProxy Proxy
             {
                 get
