@@ -324,6 +324,10 @@ function prebuildImpl(): Promise<string> {
 					return forceCSVCollectionFormat(forceCSVCollectionFormatInTags);
 				})
 				.then(() => {
+					let quarantineOperationIds: string[] = ['postGroupImages', 'postUserImages'];
+					return quarantineOperations(quarantineOperationIds);
+				})
+				.then(() => {
 					// Save new swagger to temp file for build
 					log.info(`Writing new swagger file to temp storage path: ${newSwaggerTempFile}`);
 					fs.writeFileSync(newSwaggerTempFile, JSON.stringify(swaggerDiff.newSwagger));
@@ -739,6 +743,28 @@ function forceCSVCollectionFormat(forceCSVCollectionFormatInTags: string[]) {
 						}
 					}
 				}
+			}
+		}
+	}
+	return;
+}
+
+function quarantineOperations(quarantineOperationIds: string[]) {
+	if (quarantineOperationIds && quarantineOperationIds.length > 0) {
+		log.info(`Quarantine for OperationIds: ${quarantineOperationIds.toString()}`);
+		const paths = Object.keys(swaggerDiff.newSwagger.paths);
+		for (const path of paths) {
+			const methods = Object.keys(swaggerDiff.newSwagger.paths[path]);
+			for (const method of methods) {
+				let operation = swaggerDiff.newSwagger.paths[path][method];
+				if (operation && operation.operationId && quarantineOperationIds.includes(operation.operationId)) {
+					// Remove Operation
+					delete swaggerDiff.newSwagger.paths[path][method];
+				}
+			}
+			const remainingMethods = Object.keys(swaggerDiff.newSwagger.paths[path]);
+			if (remainingMethods.length == 0) {
+				delete swaggerDiff.newSwagger.paths[path];
 			}
 		}
 	}
