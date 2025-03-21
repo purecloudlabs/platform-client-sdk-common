@@ -21,6 +21,8 @@ echo "Running tests"
 cd "$TESTS_DIR"
 echo "Install requests..."
 python3.9 -m pip install --user -U requests
+echo "Install watchdog..."
+python3.9 -m pip install --user -U watchdog
 echo "Install retry..."
 python3.9 -m pip install --user -U retry
 echo "Run unit tests"
