@@ -43,6 +43,9 @@ import hashlib
 from datetime import datetime, timezone
 from datetime import date
 
+# python 2 and python 3 compatibility library
+from six import iteritems
+
 try:
     # for python3
     from urllib.parse import quote
@@ -395,7 +398,7 @@ class ApiClient(object):
         # path parameters
         if path_params:
             path_params = self.sanitize_for_serialization(path_params)
-            for k, v in path_params.items():
+            for k, v in iteritems(path_params):
                 replacement = quote(str(self.to_path_value(v)))
                 resource_path = resource_path.\
                     replace('{' + k + '}', replacement)
@@ -404,7 +407,7 @@ class ApiClient(object):
         if query_params:
             query_params = self.sanitize_for_serialization(query_params)
             query_params = {k: self.to_path_value(v)
-                            for k, v in query_params.items()}
+                            for k, v in iteritems(query_params)}
 
         # post parameters
         if post_params or files:
@@ -517,11 +520,11 @@ class ApiClient(object):
                 # Convert attribute name to json key in
                 # model definition for request.
                 obj_dict = {obj.attribute_map[attr]: getattr(obj, attr)
-                            for attr, _ in obj.swagger_types.items()
+                            for attr, _ in iteritems(obj.swagger_types)
                             if getattr(obj, attr) is not None or isinstance(getattr(obj, attr), type(ApiNullValue()))}
 
             return {key: self.sanitize_for_serialization(val)
-                    for key, val in obj_dict.items()}
+                    for key, val in iteritems(obj_dict)}
 
     def deserialize(self, response, response_type):
         """
@@ -573,7 +576,7 @@ class ApiClient(object):
             if klass.startswith('dict('):
                 sub_kls = re.match('dict\(([^,]*), (.*)\)', klass).group(2)
                 return {k: self.__deserialize(v, sub_kls)
-                        for k, v in data.items()}
+                        for k, v in iteritems(data)}
 
             # convert str to class
             # for native types
@@ -707,7 +710,7 @@ class ApiClient(object):
             params = post_params
 
         if files:
-            for k, v in files.items():
+            for k, v in iteritems(files):
                 if not v:
                     continue
                 file_names = v if type(v) is list else [v]
@@ -905,7 +908,7 @@ class ApiClient(object):
         """
         instance = klass()
 
-        for attr, attr_type in instance.swagger_types.items():
+        for attr, attr_type in iteritems(instance.swagger_types):
             if data is not None \
                and instance.attribute_map[attr] in data\
                and isinstance(data, (list, dict)):
