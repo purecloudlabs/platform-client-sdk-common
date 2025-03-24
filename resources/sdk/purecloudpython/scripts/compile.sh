@@ -29,3 +29,4 @@ echo "Install retry..."
 python3.6 -m pip install --user -U retry
 echo "Run unit tests"
 python3.6 -m unittest SdkTests
+python3.6 -m unittest SdkTests_mtls
