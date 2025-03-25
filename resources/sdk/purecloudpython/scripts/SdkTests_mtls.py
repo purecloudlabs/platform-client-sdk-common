@@ -74,7 +74,7 @@ class SdkTestsMTLS(unittest.TestCase):
 		# Authenticate with client credentials and pass the apiclient instance into the usersapi
 		print("Authenticating with client credentials...")
 		SdkTestsMTLS.apiclient_mtls = PureCloudPlatformClientV2.api_client.ApiClient()
-		SdkTestsMTLS.apiclient_mtls.set_gateway("locahlost","https",4027)
+		SdkTestsMTLS.apiclient_mtls.set_gateway("locahlost","https",4027,"login","api")
 		SdkTestsMTLS.apiclient_mtls.get_client_credentials_token(os.environ.get('PURECLOUD_CLIENT_ID'), os.environ.get('PURECLOUD_CLIENT_SECRET'))
 		SdkTestsMTLS.users_api_mtls = PureCloudPlatformClientV2.UsersApi(SdkTestsMTLS.apiclient_mtls)
 		print(f"Authentication successful access_token: {SdkTestsMTLS.apiclient_mtls}")
