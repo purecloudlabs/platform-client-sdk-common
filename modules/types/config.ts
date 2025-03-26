@@ -30,6 +30,7 @@ export interface Settings {
     enableLoggerColor: boolean;
     namespace: string;
     apiHealthCheckUrl: string;
+    readmeDevelopmentEpiloguePath: string;
 }
 
 export interface ResourcePaths {
