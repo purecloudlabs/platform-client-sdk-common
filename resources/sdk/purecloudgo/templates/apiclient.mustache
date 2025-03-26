@@ -1,10 +1,8 @@
 package {{packageName}}
 
 import (
-	"bytes"
 	"context"
     "crypto/tls"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -21,7 +19,7 @@ import (
 
 // APIClient provides functions for making API requests
 type APIClient struct {
-	client        retryablehttp.Client
+	client        AbstractHttpClient
 	configuration *Configuration
 }
 
@@ -45,12 +43,12 @@ func NewAPIClient(c *Configuration) APIClient {
 		panic(err)
 	}
 
-	client := retryablehttp.NewClient()
-	client.Logger = nil
-	client.HTTPClient.Timeout = timeout
+	defaultClient := NewDefaultHttpClient()
+	defaultClient.client.Logger = nil
+	defaultClient.client.HTTPClient.Timeout = timeout
 
 	return APIClient{
-		client:        *client,
+		client:        defaultClient,
 		configuration: c,
 	}
 }
@@ -135,6 +133,7 @@ func (c *APIClient) CallAPI(path string, method string,
 	pathName string) (*APIResponse, error) {
 	var u *url.URL
 
+	// Build initial URL with query parameters
 	urlString := path + "?"
 	if queryParams != nil {
 		for k, v := range queryParams {
@@ -145,6 +144,7 @@ func (c *APIClient) CallAPI(path string, method string,
 	}
 	urlString = urlString[:len(urlString)-1] // Remove the trailing '&'
 
+	// Handle gateway configuration if present
 	if c.configuration.GateWayConfiguration != nil && c.configuration.GateWayConfiguration.Host != "" {
 		if index := strings.Index(urlString, "/api/v2"); index != -1 {
 			urlString = urlString[index:] // Get substring from /api onward
@@ -158,74 +158,68 @@ func (c *APIClient) CallAPI(path string, method string,
 		u, _ = url.Parse(urlString)
 	}
 
-	request := retryablehttp.Request{
-		Request: &http.Request{
-			URL:    u,
-			Close:  true,
-			Method: strings.ToUpper(method),
-			Header: make(map[string][]string),
-		},
-	}
+	// Initialize HTTP request options
+	httpRequestOptions := &HTTPRequestOptions{}
+	httpRequestOptions.SetUrl(u)
+	httpRequestOptions.SetMethod(method)
 
-	// Set default headers
+	// Set default headers from configuration
 	if c.configuration.DefaultHeader != nil {
 		for k, v := range c.configuration.DefaultHeader {
-			request.Header.Set(k, v)
+			httpRequestOptions.SetHeaders(k, v)
 		}
 	}
 
-	// Set form data
+	// Set form parameters if present
 	if len(formParams) > 0 {
-		request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		request.SetBody(ioutil.NopCloser(strings.NewReader(formParams.Encode())))
+		httpRequestOptions.SetHeaders("Content-Type", "application/x-www-form-urlencoded")
+		httpRequestOptions.SetFormParams(formParams)
 	}
 
-	// Set post body
+	// Set JSON body if present
 	if postBody != nil {
-		request.Header.Set("Content-Type", "application/json")
-		// Check if postBody is of type *string
-		if body, ok := postBody.(*string); ok {
-			j := []byte(*body)
-			request.SetBody(ioutil.NopCloser(bytes.NewReader(j)))
-		} else {
-			j, _ := json.Marshal(postBody)
-			request.SetBody(ioutil.NopCloser(bytes.NewReader(j)))
-		}
+		httpRequestOptions.SetHeaders("Content-Type", "application/json")
 	}
 
-	// Set provided headers
+	// Set additional headers from parameters
 	if len(headerParams) > 0 {
 		for k, v := range headerParams {
-			request.Header.Set(k, v)
+			httpRequestOptions.SetHeaders(k, v)
 		}
 	}
 
+	httpRequestOptions.SetBody(postBody)
+
+	// Configure retry behavior
 	if c.configuration.RetryConfiguration == nil {
-		c.client.RetryMax = 0
-		c.client.RetryWaitMax = 0
+		c.client.SetRetryMax(0)
+		c.client.SetRetryWaitMax(0)
 	} else {
-		c.client.RetryWaitMax = c.configuration.RetryConfiguration.RetryWaitMax
-		c.client.RetryWaitMin = c.configuration.RetryConfiguration.RetryWaitMin
-		c.client.RetryMax = c.configuration.RetryConfiguration.RetryMax
+		c.client.SetRetryWaitMax(c.configuration.RetryConfiguration.RetryWaitMax)
+		c.client.SetRetryWaitMin(c.configuration.RetryConfiguration.RetryWaitMin)
+		c.client.SetRetryMax(c.configuration.RetryConfiguration.RetryMax)
 		if c.configuration.RetryConfiguration.RequestLogHook != nil {
-			c.client.RequestLogHook = func(_ retryablehttp.Logger, req *http.Request, retryNumber int) {
+			c.client.SetRequestLogHook(func(_ retryablehttp.Logger, req *http.Request, retryNumber int) {
 				c.configuration.RetryConfiguration.RequestLogHook(req, retryNumber)
-			}
+			})
 		}
 		if c.configuration.RetryConfiguration.ResponseLogHook != nil {
-			c.client.ResponseLogHook = func(_ retryablehttp.Logger, res *http.Response) {
+			c.client.SetResponseLogHook(func(_ retryablehttp.Logger, res *http.Response) {
 				c.configuration.RetryConfiguration.ResponseLogHook(res)
-			}
+			})
 		}
 	}
 
 
-		c.client.CheckRetry = DefaultRetryPolicy
+	// Set retry policy
+	c.client.SetCheckRetry(DefaultRetryPolicy)
 
+	// Configure proxy if specified
 	if c.configuration.ProxyConfiguration != nil {
                 var proxyUrl *url.URL
                 pathValue, exists :=  getPathValue(c.configuration.ProxyConfiguration, pathName)
 
+                // Set up proxy URL with authentication if provided
                 if c.configuration.ProxyConfiguration.Auth != nil && c.configuration.ProxyConfiguration.Auth.UserName != "" && c.configuration.ProxyConfiguration.Auth.Password != "" {
                         proxyUrl = &url.URL{
                                 Scheme: c.configuration.ProxyConfiguration.Protocol,
@@ -235,37 +229,47 @@ func (c *APIClient) CallAPI(path string, method string,
                         }
                 } else {
 
+                        // Set up proxy URL without authentication
                         urlString := c.configuration.ProxyConfiguration.Protocol + "://" +
                                 c.configuration.ProxyConfiguration.Host + ":" +
                                 c.configuration.ProxyConfiguration.Port
                         proxyUrl, _ = url.Parse(urlString)
                 }
 
+                // Add path value if it exists
                 if exists {
                    proxyUrl.Path = pathValue
                 }
 
 
+                // Create transport with proxy configuration
                 tr := &http.Transport{
                         Proxy: http.ProxyURL(proxyUrl),
                 }
 
-                c.client.HTTPClient.Transport = tr
+                c.client.SetTransport(tr)
         }
 
-	requestBody, _ := request.BodyBytes()
+	// Build the request
+	buildReq, err := httpRequestOptions.ToRetryableRequest()
+	if err != nil {
+		return nil, err
+	}
+	//For logging
+	requestBody, _ := buildReq.BodyBytes()
 
 	// Execute request
-	res, err := c.client.Do(&request)
+	res, err := c.client.Do(httpRequestOptions)
 	if err != nil {
 		return nil, err
 	}
 
-	// Read body
+	// Read response body and log request/response details
 	body, _ := ioutil.ReadAll(res.Body)
-	c.configuration.LoggingConfiguration.trace(method, urlString, requestBody, res.StatusCode, request.Header, res.Header)
-	c.configuration.LoggingConfiguration.debug(method, urlString, requestBody, res.StatusCode, request.Header)
+	c.configuration.LoggingConfiguration.trace(method, urlString, requestBody, res.StatusCode, httpRequestOptions.GetHeaders(), res.Header)
+	c.configuration.LoggingConfiguration.debug(method, urlString, requestBody, res.StatusCode, httpRequestOptions.GetHeaders())
 
+	// Handle unauthorized response by refreshing access token if configured
 	if res.StatusCode == http.StatusUnauthorized && c.configuration.ShouldRefreshAccessToken && c.configuration.RefreshToken != "" {
 		err := c.handleExpiredAccessToken()
 		if err != nil {
@@ -278,8 +282,9 @@ func (c *APIClient) CallAPI(path string, method string,
 		return c.CallAPI(path, method, postBody, headerParams, queryParams, formParams, fileName, fileBytes, pathName)
 	}
 
+	// Log errors for non-successful status codes
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusMultipleChoices {
-		c.configuration.LoggingConfiguration.error(method, urlString, requestBody, body, res.StatusCode, request.Header, res.Header)
+		c.configuration.LoggingConfiguration.error(method, urlString, requestBody, body, res.StatusCode, httpRequestOptions.GetHeaders(), res.Header)
 	}
 
 	return NewAPIResponse(res, body)
