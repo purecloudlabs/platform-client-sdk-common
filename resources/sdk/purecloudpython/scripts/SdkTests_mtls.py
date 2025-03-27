@@ -7,7 +7,7 @@ sys.path.append('../../../../output/purecloudpython/build/build/lib')
 import PureCloudPlatformClientV2
 
 
-class SdkTestsMTLS(unittest.TestCase):
+class SdkTests_mtls(unittest.TestCase):
 	lastResult = None
 
 	userId = None
@@ -20,13 +20,13 @@ class SdkTestsMTLS(unittest.TestCase):
 
 	def setUp(self):
 		# Skip if there has been a failure
-		if SdkTestsMTLS.lastResult != None and (len(SdkTestsMTLS.lastResult.failures) > 0 or len(SdkTestsMTLS.lastResult.errors) > 0):
+		if SdkTests_mtls.lastResult != None and (len(SdkTests_mtls.lastResult.failures) > 0 or len(SdkTests_mtls.lastResult.errors) > 0):
 			print("=== WARNING: Previous test failed, skipping current test ===", flush=True)
 			self.skipTest('Previous test failed')
 
 	def run(self, result=None):
 		# Store this execution's result as the last one
-		SdkTestsMTLS.lastResult = result
+		SdkTests_mtls.lastResult = result
 
 		# Run the test
 		unittest.TestCase.run(self, result)
@@ -41,8 +41,8 @@ class SdkTestsMTLS(unittest.TestCase):
 
 		self.assertIsNotNone(os.environ.get('PURECLOUD_CLIENT_SECRET'))
 
-		SdkTestsMTLS.userEmail = '%s@%s' % (uuid.uuid4(), os.environ.get('PURECLOUD_ENVIRONMENT'))
-		print(SdkTestsMTLS.userEmail)
+		SdkTests_mtls.userEmail = '%s@%s' % (uuid.uuid4(), os.environ.get('PURECLOUD_ENVIRONMENT'))
+		print(SdkTests_mtls.userEmail)
 
 		print(PureCloudPlatformClientV2)
 		print("=== EXITING test_1_trace_basic_information() ===\n")
@@ -73,13 +73,13 @@ class SdkTestsMTLS(unittest.TestCase):
                 
 		# Authenticate with client credentials and pass the apiclient instance into the usersapi
 		print("Authenticating with client credentials...")
-		SdkTestsMTLS.apiclient_mtls = PureCloudPlatformClientV2.api_client.ApiClient()
-		SdkTestsMTLS.apiclient_mtls.set_gateway("locahlost","https",4027,"login","api")
-		SdkTestsMTLS.apiclient_mtls.get_client_credentials_token(os.environ.get('PURECLOUD_CLIENT_ID'), os.environ.get('PURECLOUD_CLIENT_SECRET'))
-		SdkTestsMTLS.users_api_mtls = PureCloudPlatformClientV2.UsersApi(SdkTestsMTLS.apiclient_mtls)
-		print(f"Authentication successful access_token: {SdkTestsMTLS.apiclient_mtls}")
-		self.create_user(SdkTestsMTLS.users_api_mtls)
-		self.delete_user(SdkTestsMTLS.users_api_mtls)
+		SdkTests_mtls.apiclient_mtls = PureCloudPlatformClientV2.api_client.ApiClient()
+		SdkTests_mtls.apiclient_mtls.set_gateway("locahlost","https",4027,"login","api")
+		SdkTests_mtls.apiclient_mtls.get_client_credentials_token(os.environ.get('PURECLOUD_CLIENT_ID'), os.environ.get('PURECLOUD_CLIENT_SECRET'))
+		SdkTests_mtls.users_api_mtls = PureCloudPlatformClientV2.UsersApi(SdkTests_mtls.apiclient_mtls)
+		print(f"Authentication successful access_token: {SdkTests_mtls.apiclient_mtls}")
+		self.create_user(SdkTests_mtls.users_api_mtls)
+		self.delete_user(SdkTests_mtls.users_api_mtls)
 		print("=== EXITING test_mtls_authenticate() ===\n")
 
 	def test_3_proxy_authenticate(self):
@@ -100,37 +100,37 @@ class SdkTestsMTLS(unittest.TestCase):
                 
 		# Authenticate with client credentials and pass the apiclient instance into the usersapi
 		print("Authenticating with client credentials...")
-		SdkTestsMTLS.apiclient_proxy = PureCloudPlatformClientV2.api_client.ApiClient()
-		SdkTestsMTLS.apiclient_proxy.get_client_credentials_token(os.environ.get('PURECLOUD_CLIENT_ID'), os.environ.get('PURECLOUD_CLIENT_SECRET'))
-		SdkTestsMTLS.users_api_proxy = PureCloudPlatformClientV2.UsersApi(SdkTestsMTLS.apiclient_proxy)
-		print(f"Authentication successful access_token: {SdkTestsMTLS.apiclient_proxy}")
-		self.create_user(SdkTestsMTLS.users_api_proxy)
-		self.delete_user(SdkTestsMTLS.users_api_proxy)
+		SdkTests_mtls.apiclient_proxy = PureCloudPlatformClientV2.api_client.ApiClient()
+		SdkTests_mtls.apiclient_proxy.get_client_credentials_token(os.environ.get('PURECLOUD_CLIENT_ID'), os.environ.get('PURECLOUD_CLIENT_SECRET'))
+		SdkTests_mtls.users_api_proxy = PureCloudPlatformClientV2.UsersApi(SdkTests_mtls.apiclient_proxy)
+		print(f"Authentication successful access_token: {SdkTests_mtls.apiclient_proxy}")
+		self.create_user(SdkTests_mtls.users_api_proxy)
+		self.delete_user(SdkTests_mtls.users_api_proxy)
 		print("=== EXITING test_proxy_authenticate() ===\n")
 
 	def create_user(self, users_api):
 		print("=== ENTERING create_user() ===")
 		body = PureCloudPlatformClientV2.CreateUser()
-		body.name = SdkTestsMTLS.userName
-		body.email = SdkTestsMTLS.userEmail
+		body.name = SdkTests_mtls.userName
+		body.email = SdkTests_mtls.userEmail
 		body.password = '%s!@#$1234asdfASDF' % (uuid.uuid4())
 		print(f"Creating user with name: {body.name}, email: {body.email}")
 		  		
 		user = users_api.post_users(body)
 		print(f"User created successfully")
 
-		SdkTestsMTLS.userId = user.id
-		print(f"User ID: {SdkTestsMTLS.userId}")
-		self.assertEqual(user.name, SdkTestsMTLS.userName)
-		self.assertEqual(user.email, SdkTestsMTLS.userEmail)
-		print(SdkTestsMTLS.userId)
+		SdkTests_mtls.userId = user.id
+		print(f"User ID: {SdkTests_mtls.userId}")
+		self.assertEqual(user.name, SdkTests_mtls.userName)
+		self.assertEqual(user.email, SdkTests_mtls.userEmail)
+		print(SdkTests_mtls.userId)
 		print("=== EXITING create_user() ===\n")
 
 	def delete_user(self, users_api):
 		print("=== ENTERING delete_user() ===")
-		print(f"Deleting user {SdkTestsMTLS.userId}")
-		users_api.delete_user(SdkTestsMTLS.userId)
-		print(f"User {SdkTestsMTLS.userId} deleted successfully")
+		print(f"Deleting user {SdkTests_mtls.userId}")
+		users_api.delete_user(SdkTests_mtls.userId)
+		print(f"User {SdkTests_mtls.userId} deleted successfully")
 		print("=== EXITING delete_user() ===\n")
 
 	def purecloudregiontest(self,x):
@@ -154,7 +154,7 @@ class SdkTestsMTLS(unittest.TestCase):
 
 if __name__ == '__main__':
 	unittest.sortTestMethodsUsing(None)
-	print("Running SdkTestsMTLS Tests")
+	print("Running SdkTests_mtls Tests")
 	unittest.main()
-	print("SdkTestsMTLS Tests Complete")	
+	print("SdkTests_mtls Tests Complete")	
  
