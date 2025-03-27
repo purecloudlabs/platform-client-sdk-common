@@ -45,7 +45,7 @@ import {{invokerPackage}}.auth.OAuth;
 import {{invokerPackage}}.connector.*;
 import {{invokerPackage}}.extensions.AuthResponse;
 import {{invokerPackage}}.Logger;
-import {{invokerPackage}}.LocalDateSerializer;
+import {{invokerPackage}}.extensions.LocalDateSerializer;
 
 public class ApiClient implements AutoCloseable {
     private static final String DEFAULT_BASE_PATH = "{{basePath}}";
@@ -194,6 +194,9 @@ public class ApiClient implements AutoCloseable {
     }
 
     private ApiClientConnector buildHttpConnector(Builder builder) {
+        if (builder.connectorProvider != null) {
+            return builder.connectorProvider.create(properties);
+        }
         return ApiClientConnectorLoader.load(properties);
     }
 
@@ -1091,6 +1094,11 @@ public class ApiClient implements AutoCloseable {
         private Logger logger = null;
         private String configFilePath = null;
         private Boolean autoReloadConfig = true;
+        private ApiClientConnectorProvider connectorProvider;
+        public Builder withClientProvider(ApiClientConnectorProvider provider) {
+            this.connectorProvider = provider;
+            return this;
+        }
 
         private Builder(ConnectorProperties properties) {
             this.gatewayConfiguration = new GatewayConfiguration();
