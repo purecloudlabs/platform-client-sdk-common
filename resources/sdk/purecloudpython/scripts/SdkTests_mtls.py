@@ -154,5 +154,7 @@ class SdkTestsMTLS(unittest.TestCase):
 
 if __name__ == '__main__':
 	unittest.sortTestMethodsUsing(None)
+	print("Running SdkTestsMTLS Tests")
 	unittest.main()
+	print("SdkTestsMTLS Tests Complete")	
  

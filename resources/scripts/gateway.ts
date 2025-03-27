@@ -43,10 +43,14 @@ export default class GatewayServer {
       };
 
       const proxyReq = https.request(options, (proxyRes) => {
+        console.log(`Proxy Response Status: ${proxyRes.statusCode}`, {
+          headers: proxyRes.headers,
+          statusCode: proxyRes.statusCode
+        });
         res.writeHead(proxyRes.statusCode || 502, proxyRes.headers);
         proxyRes.pipe(res);
       });
-
+      
       proxyReq.on('error', (err) => {
         console.error('Error during proxy request:', err.message);
         res.writeHead(502, { 'Content-Type': 'text/plain' });
@@ -63,19 +67,22 @@ export default class GatewayServer {
   }
 
   private fetchEnvironment():string{
-    return "api."+process.env.PURECLOUD_ENV
+    const envUrl = "api."+process.env.PURECLOUD_ENV;
+    console.log('Environment URL:', envUrl);
+    return envUrl
   }
 
   private handleConnectRequest(req: http.IncomingMessage, clientSocket: net.Socket, head: Buffer) {
     const targetUrl = url.parse(`//${req.url}`, false, true);
     const environment = this.fetchEnvironment();
+    console.log({ targetUrl, environment });
       const serverSocket = tls.connect(
           {
             host: environment,
             port: 443,
             rejectUnauthorized: false
           }, () => {
-            console.log("connection extablishes")
+            console.log("Connection established to:", environment)
             clientSocket.write(
                 'HTTP/1.1 200 Connection Established\r\n' +
                 'Proxy-agent: Node.js-Proxy\r\n' +
@@ -89,7 +96,7 @@ export default class GatewayServer {
       );
 
     serverSocket.on('error', (err) => {
-      console.error('error with server socket:', err.message)
+      console.error('Server socket error:', { message: err.message, environment: environment })
       clientSocket.end();
     } );
   }
