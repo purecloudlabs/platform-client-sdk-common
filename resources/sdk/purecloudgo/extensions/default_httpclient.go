@@ -3,6 +3,7 @@ package platformclientv2
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
@@ -10,7 +11,8 @@ import (
 
 // DefaultHttpClient wraps retryablehttp.Client to provide HTTP functionality with automatic retries
 type DefaultHttpClient struct {
-	client retryablehttp.Client
+	client     retryablehttp.Client
+	proxyAgent *ProxyAgent
 }
 
 // SetRetryMax sets the maximum number of retries for failed requests
@@ -48,11 +50,31 @@ func (c *DefaultHttpClient) SetTransport(transport *http.Transport) {
 	c.client.HTTPClient.Transport = transport
 }
 
+func (c *DefaultHttpClient) SetHttpsAgent(agent *ProxyAgent) {
+	c.proxyAgent = agent
+}
+
 // NewDefaultHttpClient creates and returns a new DefaultHttpClient instance with default settings
-func NewDefaultHttpClient() *DefaultHttpClient {
+func NewDefaultHttpClient(proxyAgent *ProxyAgent) *DefaultHttpClient {
+	_, err := time.ParseDuration("16s")
+	if err != nil {
+		panic(err)
+	}
+
 	client := retryablehttp.NewClient()
+	if proxyAgent != nil && proxyAgent.ProxyURL != "" {
+		proxyURL, err := url.Parse(proxyAgent.ProxyURL)
+		if err == nil {
+			transport := &http.Transport{
+				Proxy: http.ProxyURL(proxyURL),
+			}
+			client.HTTPClient.Transport = transport
+		}
+	}
+
 	return &DefaultHttpClient{
-		client: *client,
+		client:     *client,
+		proxyAgent: proxyAgent,
 	}
 }
 

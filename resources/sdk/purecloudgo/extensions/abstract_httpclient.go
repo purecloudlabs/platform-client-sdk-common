@@ -33,4 +33,12 @@ type AbstractHttpClient interface {
 
 	// SetTransport sets the underlying HTTP transport for the client
 	SetTransport(transport *http.Transport)
+
+	// SetHttpsAgent
+	SetHttpsAgent(proxy *ProxyAgent)
+}
+
+// ProxyAgent holds proxy configuration
+type ProxyAgent struct {
+	ProxyURL string
 }

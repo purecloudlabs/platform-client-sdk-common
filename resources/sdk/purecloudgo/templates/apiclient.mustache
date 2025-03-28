@@ -21,6 +21,7 @@ import (
 type APIClient struct {
 	client        AbstractHttpClient
 	configuration *Configuration
+	proxyAgent    *ProxyAgent
 }
 
 var (
@@ -36,16 +37,39 @@ invalidHeaderErrorRe = regexp.MustCompile(`invalid header`)
 
 notTrustedErrorRe = regexp.MustCompile(`certificate is not trusted`)
 )
+
+
+// SetHttpClient sets the HTTP client
+func (c *APIClient) SetHttpClient(client interface{}) error {
+    // check if client implements AbstractHttpClient
+    httpClient, ok := client.(AbstractHttpClient)
+    if !ok {
+        return fmt.Errorf("httpClient must implement AbstractHttpClient interface. See DefaultHttpClient for an example")
+    }
+    c.client = httpClient
+    return nil
+}
+
+// GetHttpClient gets or creates the HTTP client
+func (c *APIClient) GetHttpClient() AbstractHttpClient {
+    if c.client != nil {
+        return c.client
+    }
+    
+    // Create new default client if none exists
+    c.client = NewDefaultHttpClient(c.proxyAgent)
+    return c.client
+}
+
+func (c *APIClient) SetProxyAgent(proxyAgent *ProxyAgent) {
+    c.proxyAgent = proxyAgent
+	client := c.GetHttpClient()
+	client.SetHttpsAgent(proxyAgent)
+}
+
 // NewAPIClient creates a new API client
 func NewAPIClient(c *Configuration) APIClient {
-	timeout, err := time.ParseDuration("16s")
-	if err != nil {
-		panic(err)
-	}
-
-	defaultClient := NewDefaultHttpClient()
-	defaultClient.client.Logger = nil
-	defaultClient.client.HTTPClient.Timeout = timeout
+	defaultClient := c.APIClient.GetHttpClient()
 
 	return APIClient{
 		client:        defaultClient,
