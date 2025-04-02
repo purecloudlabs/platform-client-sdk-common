@@ -15,7 +15,16 @@ namespace {{=it.packageName }}.Client
     /// </summary>
     public abstract class AbstractHttpClient
     {
+        /// <summary>
+        /// Gets or sets the timeout value in milliseconds for HTTP requests
+        /// </summary>
+        /// <value>The timeout in milliseconds. Default value is 100000.</value>
         protected int Timeout { get; set; } = 100000;
+
+        /// <summary>
+        /// Gets or sets the User-Agent header value for HTTP requests
+        /// </summary>
+        /// <value>The User-Agent string</value>
         protected string UserAgent { get; set; } = "null";
 
         ///<Summary>

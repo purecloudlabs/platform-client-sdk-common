@@ -15,8 +15,6 @@ namespace {{=it.packageName }}.Client
     public class DefaultHttpClient : AbstractHttpClient
     {
         private RestClient restClient;
-        private ClientRestOptions clientOptions;
-        private Configuration configuration;
 
         ///<Summary>
         /// Create an instane of the DefaultHttpClient with config and client options
@@ -24,9 +22,6 @@ namespace {{=it.packageName }}.Client
         ////// <summary>
         public DefaultHttpClient(Configuration config, ClientRestOptions clientOptions) : base()
         {
-            this.clientOptions = clientOptions;
-            this.configuration = config;
-
             config.Timeout = (config.Timeout > 0) ? config.Timeout : 100000;
 
             SetTimeout(config.Timeout);
