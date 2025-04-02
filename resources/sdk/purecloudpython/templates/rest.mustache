@@ -55,15 +55,42 @@ class RESTResponse(io.IOBase):
     def getheaders(self):
         """
         Returns a dictionary of the response headers.
+
+        Note: Modified to handle urllib3 v2.1.0 deprecation of getheaders() while maintaining
+        backward compatibility. New versions should directly access headers property, while
+        older versions fall back to getheaders() method.
+
+        Returns:
+            dict: Dictionary of response headers
         """
-        return self.urllib3_response.getheaders()
+        try:
+            # New approach for urllib3 v2.1.0 and later - direct headers access
+            return self.urllib3_response.headers
+        except AttributeError:
+            # Backward compatibility for older urllib3 versions
+            return self.urllib3_response.getheaders()
 
     def getheader(self, name, default=None):
         """
         Returns a given response header.
-        """
-        return self.urllib3_response.getheader(name, default)
 
+        Note: Modified to handle urllib3 v2.1.0 deprecation of getheader() while maintaining
+        backward compatibility. New versions use headers.get(), while older versions
+        fall back to getheader() method.
+
+        Args:
+            name: Header name to retrieve
+            default: Default value if header is not found
+
+        Returns:
+            str: Value of the requested header
+        """
+        try:
+            # New approach for urllib3 v2.1.0 and later - using headers.get()
+            return self.urllib3_response.headers.get(name, default)
+        except AttributeError:
+            # Backward compatibility for older urllib3 versions
+            return self.urllib3_response.getheader(name, default)
 
 class RESTClientObject(object):
 

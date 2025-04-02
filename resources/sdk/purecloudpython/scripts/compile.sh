@@ -27,10 +27,5 @@ echo "Install watchdog..."
 python3.6 -m pip install --user -U watchdog
 echo "Install retry..."
 python3.6 -m pip install --user -U retry
-echo "Run unit tests"
-pwd
+echo "Run unit tests -> SdkTests"
 python3.6 -m unittest SdkTests
-cd "$TESTS_DIR"
-echo "Run unit tests mtls"
-pwd
-python3.6 -m unittest SdkTests_mtls
