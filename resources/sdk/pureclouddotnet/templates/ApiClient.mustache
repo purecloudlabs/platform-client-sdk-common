@@ -13,7 +13,6 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using Newtonsoft.Json;
-using RestSharp;
 using {{packageName}}.Extensions;
 using System.Net.Http;
 
@@ -292,7 +291,7 @@ namespace {{packageName}}.Client
         public Object CallApi(
             String path, String method, List<Tuple<String, String>> queryParams, Object postBody,
             Dictionary<String, String> headerParams, Dictionary<String, String> formParams,
-            Dictionary<String, FileParameter> fileParams, Dictionary<String, String> pathParams,
+            Dictionary<String, IFileParameter> fileParams, Dictionary<String, String> pathParams,
             String contentType)
         {
             var requestOptions = new HttpRequestOptions(
@@ -363,7 +362,7 @@ namespace {{packageName}}.Client
         public async System.Threading.Tasks.Task<Object> CallApiAsync(
             String path, String method, List<Tuple<String, String>> queryParams, Object postBody,
             Dictionary<String, String> headerParams, Dictionary<String, String> formParams,
-            Dictionary<String, FileParameter> fileParams, Dictionary<String, String> pathParams,
+            Dictionary<String, IFileParameter> fileParams, Dictionary<String, String> pathParams,
             String contentType)
         {
             var requestOptions = new HttpRequestOptions(
@@ -414,20 +413,6 @@ namespace {{packageName}}.Client
         public string EscapeString(string str)
         {
             return UrlEncode(str);
-        }
-
-        /// <summary>
-        /// Create FileParameter based on Stream.
-        /// </summary>
-        /// <param name="name">Parameter name.</param>
-        /// <param name="stream">Input stream.</param>
-        /// <returns>FileParameter.</returns>
-        public FileParameter ParameterToFile(string name, Stream stream)
-        {
-            if (stream is FileStream)
-                return FileParameter.Create(name, ReadAsBytes(stream), Path.GetFileName(((FileStream)stream).Name));
-            else
-                return FileParameter.Create(name, ReadAsBytes(stream), "no_file_name_provided");
         }
 
         /// <summary>

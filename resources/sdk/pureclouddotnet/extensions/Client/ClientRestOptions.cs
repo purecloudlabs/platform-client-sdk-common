@@ -4,6 +4,9 @@ using System.Net.Http;
 
 namespace {{=it.packageName }}.Client
 {
+    /// <summary>
+    /// Class containing api client REST options
+    /// </summary>
     public class ClientRestOptions
     {
         ///<Summary>
@@ -11,7 +14,7 @@ namespace {{=it.packageName }}.Client
         ///</Summary>
         public Uri BaseUrl { get; set; }
         /// <summary>
-        /// API prefix
+        /// Prefix of path url, default is "api"
         /// </summary>
         public string Prefix { get; set; } = "api";
         private System.Net.IWebProxy proxy;

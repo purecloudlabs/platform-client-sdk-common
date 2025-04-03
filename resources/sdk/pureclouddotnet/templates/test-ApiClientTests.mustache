@@ -9,7 +9,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using RestSharp;
 using System.Linq;
 using Parameter = RestSharp.Parameter;
 using System.Net;
@@ -37,7 +36,7 @@ public class ApiClientTests
     private static List<Tuple<String, String>> queryParams = new List<Tuple<String, String>>();
     private static Dictionary<String, String> headerParams = new Dictionary<String, String>();
     private static Dictionary<String, String> formParams = new Dictionary<String, String>();
-    private static Dictionary<String, FileParameter> fileParams = new Dictionary<String, FileParameter>();
+    private static Dictionary<String, IFileParameter> fileParams = new Dictionary<String, IFileParameter>();
     private static Object postBody = null;
     private static String contentType = null;
 

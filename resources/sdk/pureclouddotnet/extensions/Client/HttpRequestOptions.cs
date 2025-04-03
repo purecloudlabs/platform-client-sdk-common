@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using RestSharp;
 using System.IO;
 using System.Linq;
 using {{=it.packageName}}.Extensions;
@@ -29,7 +28,7 @@ namespace {{=it.packageName }}.Client
         public Dictionary<string, string> FormParams { get; private set; }
 
         /// <summary>Gets the file parameters</summary>
-        public Dictionary<string, FileParameter> FileParams { get; private set; }
+        public Dictionary<string, IFileParameter> FileParams { get; private set; }
 
         /// <summary>Gets the path parameters</summary>
         public Dictionary<string, string> PathParams { get; private set; }
@@ -60,7 +59,7 @@ namespace {{=it.packageName }}.Client
             List<Tuple<string, string>> queryParams = null,
             Dictionary<string, string> headerParams = null,
             Dictionary<string, string> formParams = null,
-            Dictionary<string, FileParameter> fileParams = null,
+            Dictionary<string, IFileParameter> fileParams = null,
             Dictionary<string, string> pathParams = null,
             object postBody = null,
             string contentType = null)
@@ -105,6 +104,7 @@ namespace {{=it.packageName }}.Client
         }
 
         // Mandatory fields with validation
+        /// <summary>
         /// Sets the request URL
         /// </summary>
         /// <param name="url">The URL to set</param>
@@ -167,7 +167,7 @@ namespace {{=it.packageName }}.Client
         /// </summary>
         /// <param name="fileParams">The file parameters to set</param>
         /// <exception cref="ArgumentException">Thrown when fileParams is null</exception>
-        public void SetFileParams(Dictionary<string, FileParameter> fileParams)
+        public void SetFileParams(Dictionary<string, IFileParameter> fileParams)
         {
             FileParams = fileParams ?? throw new ArgumentException("FileParams cannot be null");
         }

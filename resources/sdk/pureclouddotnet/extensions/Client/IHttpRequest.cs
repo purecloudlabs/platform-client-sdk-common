@@ -35,6 +35,11 @@ namespace {{=it.packageName }}.Client
         Dictionary<string, string> FormParams { get; }
 
         /// <summary>
+        /// Dictionary of file parameters
+        /// </summary>
+        Dictionary<string, IFileParameter> FileParams { get; }
+
+        /// <summary>
         /// Dictionary of path parameters used in URL templating
         /// </summary>
         Dictionary<string, string> PathParams { get; }

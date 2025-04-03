@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -61,6 +62,9 @@ namespace {{=it.packageName }}.Client
             return options;
         }
 
+        /// <summary>
+        /// Asynchronously executes an HTTP request
+        /// </summary>
         public override async Task<IHttpResponse> ExecuteAsync(IHttpRequest httpRequest, CancellationToken cancellationToken = default(CancellationToken))
         {
             var request = PrepareRestRequest((HttpRequestOptions)httpRequest);
@@ -70,6 +74,9 @@ namespace {{=it.packageName }}.Client
             return ConvertToHttpResponse(restResp);
         }
 
+        /// <summary>
+        /// Executes an HTTP request.
+        /// </summary>
         public override IHttpResponse Execute(IHttpRequest httpRequest)
         {
             var request = PrepareRestRequest((HttpRequestOptions)httpRequest);
@@ -122,7 +129,13 @@ namespace {{=it.packageName }}.Client
             // add file parameter, if any
             foreach (var param in options.FileParams)
             {
-                request.AddFile(param.Value.Name, param.Value.GetFile, param.Value.FileName, param.Value.ContentType);
+                var file = param.Value;
+                request.AddFile(
+                    file.Name,
+                    file.GetFile,
+                    file.FileName,
+                    file.ContentType
+                );
             }
 
             if (options.PostBody != null) // http body (model or byte[]) parameter
@@ -167,6 +180,20 @@ namespace {{=it.packageName }}.Client
                 default:
                     throw new ArgumentException($"Unsupported HTTP method: {method}");
             }
+        }
+
+        /// <summary>
+        /// Create FileParameter based on Stream.
+        /// </summary>
+        /// <param name="name">Parameter name.</param>
+        /// <param name="stream">Input stream.</param>
+        /// <returns>FileParameter.</returns>
+        public FileParameter ParameterToFile(string name, Stream stream)
+        {
+            if (stream is FileStream)
+                return FileParameter.Create(name, ApiClient.ReadAsBytes(stream), Path.GetFileName(((FileStream)stream).Name));
+            else
+                return FileParameter.Create(name, ApiClient.ReadAsBytes(stream), "no_file_name_provided");
         }
     }
 }

@@ -6,7 +6,6 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using {{=it.packageName}}.Client;
 using {{=it.packageName}}.Extensions;
-using RestSharp;
 using System.Security.Cryptography;
 
 namespace {{=it.packageName}}.Extensions
@@ -63,7 +62,7 @@ namespace {{=it.packageName}}.Extensions
             var queryParams = new List<Tuple<String, String>>();
             var headerParams = new Dictionary<String, String>(apiClient.Configuration.DefaultHeader);
             var formParams = new Dictionary<String, String>();
-            var fileParams = new Dictionary<String, FileParameter>();
+            var fileParams = new Dictionary<String, IFileParameter>();
             Object postBody = null;
 
             // to determine the Content-Type header
@@ -161,7 +160,7 @@ namespace {{=it.packageName}}.Extensions
             var queryParams = new List<Tuple<String, String>>();
             var headerParams = new Dictionary<String, String>(apiClient.Configuration.DefaultHeader);
             var formParams = new Dictionary<String, String>();
-            var fileParams = new Dictionary<String, FileParameter>();
+            var fileParams = new Dictionary<String, IFileParameter>();
             Object postBody = null;
 
             // to determine the Content-Type header
@@ -296,7 +295,7 @@ namespace {{=it.packageName}}.Extensions
             var queryParams = new List<Tuple<String, String>>();
             var headerParams = new Dictionary<String, String>(apiClient.Configuration.DefaultHeader);
             var formParams = new Dictionary<String, String>();
-            var fileParams = new Dictionary<String, FileParameter>();
+            var fileParams = new Dictionary<String, IFileParameter>();
             Object postBody = null;
 
             // to determine the Content-Type header
@@ -348,7 +347,7 @@ namespace {{=it.packageName}}.Extensions
         private static Object CallTokenApi(ApiClient apiClient,
             String path, String method, List<Tuple<String, String>> queryParams, Object postBody,
             Dictionary<String, String> headerParams, Dictionary<String, String> formParams,
-            Dictionary<String, FileParameter> fileParams, Dictionary<String, String> pathParams,
+            Dictionary<String, IFileParameter> fileParams, Dictionary<String, String> pathParams,
             String contentType)
         {
             apiClient.ClientOptions.Prefix = "login";
