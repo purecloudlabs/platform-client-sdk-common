@@ -13,6 +13,8 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+	"crypto/x509"
+	"os"
 
 	"github.com/hashicorp/go-retryablehttp"
 )
@@ -146,6 +148,115 @@ func getConfUrl(c *Configuration, path string, extendedPath string) *url.URL {
 	return uri
 }
 
+// Handles the Proxy Configuration
+func (c *APIClient) configureProxy(pathName string) (*http.Transport, error) {
+	if c.configuration.ProxyConfiguration == nil {
+		return nil, nil
+	}
+
+	var proxyUrl *url.URL
+    pathValue, exists :=  getPathValue(c.configuration.ProxyConfiguration, pathName)
+
+    if c.configuration.ProxyConfiguration.Auth != nil && c.configuration.ProxyConfiguration.Auth.UserName != "" && c.configuration.ProxyConfiguration.Auth.Password != "" {
+        proxyUrl = &url.URL{
+            Scheme: c.configuration.ProxyConfiguration.Protocol,
+            User: url.UserPassword(
+				c.configuration.ProxyConfiguration.Auth.UserName,
+            	c.configuration.ProxyConfiguration.Auth.Password,
+			),
+            Host: c.configuration.ProxyConfiguration.Host + ":" + c.configuration.ProxyConfiguration.Port,
+        }
+    } else {
+        urlString := c.configuration.ProxyConfiguration.Protocol + "://" +
+                    c.configuration.ProxyConfiguration.Host + ":" +
+                    c.configuration.ProxyConfiguration.Port
+        proxyUrl, _ = url.Parse(urlString)
+    }
+
+    if exists {
+        proxyUrl.Path = pathValue
+    }
+
+	return &http.Transport{
+        Proxy: http.ProxyURL(proxyUrl),
+    }, nil
+}
+
+// Handles the MTLS Gateway Configuration
+func (c *APIClient) configureMTLS() (*tls.Config, error) {
+	if c.configuration.MTLSConfiguration == nil {
+		return nil, nil
+	}
+
+	cert, err := tls.LoadX509KeyPair(
+		c.configuration.MTLSConfiguration.CertFile,
+		c.configuration.MTLSConfiguration.KeyFile,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to load client certificate: %v", err)
+	}
+
+	caCert, err := os.ReadFile(c.configuration.MTLSConfiguration.CAFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load CA certificate: %v", err)
+	}
+
+	caCertPool := x509.NewCertPool()
+	if !caCertPool.AppendCertsFromPEM(caCert) {
+		return nil, fmt.Errorf("failed to append CA certificate")
+	}
+
+	 // Create TLS config with custom verification
+    tlsConfig := &tls.Config{
+        Certificates: []tls.Certificate{cert},
+        RootCAs:     caCertPool,
+        MinVersion:  tls.VersionTLS12,
+		InsecureSkipVerify: true,  // Required for custom verification
+
+    }
+
+    return tlsConfig, nil
+}
+
+// Handles the transport configurations (Proxy, Gateway)
+func (c *APIClient) configureTransport(pathName string) (*http.Transport, error) {
+	// Proxy Configuration
+	proxyTr, err := c.configureProxy(pathName)
+	if err != nil {
+		return nil, err
+	}
+
+	// MTLS Configuration
+	mtlsConfig, err := c.configureMTLS()
+	if err != nil {
+		return nil, err
+	}
+
+	transport := &http.Transport{}
+
+	if proxyTr != nil {
+		transport.Proxy = proxyTr.Proxy
+	}
+
+	if mtlsConfig != nil {
+		transport.TLSClientConfig = mtlsConfig
+	}
+
+	return transport, nil
+}
+
+// Sets the MTLS Certificates
+func (c *APIClient) SetMTLSCertificates(certFile, keyFile, caFile string) error {
+	c.configuration.MTLSConfiguration = &MTLSConfiguration {
+		CertFile: certFile,
+		KeyFile: keyFile,
+		CAFile: caFile,
+	}
+	return nil
+}
+
+
 // CallAPI invokes an API endpoint
 func (c *APIClient) CallAPI(path string, method string,
 	postBody interface{},
@@ -239,40 +350,14 @@ func (c *APIClient) CallAPI(path string, method string,
 	c.client.SetCheckRetry(DefaultRetryPolicy)
 
 	// Configure proxy if specified
-	if c.configuration.ProxyConfiguration != nil {
-                var proxyUrl *url.URL
-                pathValue, exists :=  getPathValue(c.configuration.ProxyConfiguration, pathName)
+	transport, err := c.configureTransport(pathName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to configure transport: %v", err)
+	}
 
-                // Set up proxy URL with authentication if provided
-                if c.configuration.ProxyConfiguration.Auth != nil && c.configuration.ProxyConfiguration.Auth.UserName != "" && c.configuration.ProxyConfiguration.Auth.Password != "" {
-                        proxyUrl = &url.URL{
-                                Scheme: c.configuration.ProxyConfiguration.Protocol,
-                                User: url.UserPassword(c.configuration.ProxyConfiguration.Auth.UserName,
-                                        c.configuration.ProxyConfiguration.Auth.Password),
-                                Host: c.configuration.ProxyConfiguration.Host + ":" + c.configuration.ProxyConfiguration.Port,
-                        }
-                } else {
-
-                        // Set up proxy URL without authentication
-                        urlString := c.configuration.ProxyConfiguration.Protocol + "://" +
-                                c.configuration.ProxyConfiguration.Host + ":" +
-                                c.configuration.ProxyConfiguration.Port
-                        proxyUrl, _ = url.Parse(urlString)
-                }
-
-                // Add path value if it exists
-                if exists {
-                   proxyUrl.Path = pathValue
-                }
-
-
-                // Create transport with proxy configuration
-                tr := &http.Transport{
-                        Proxy: http.ProxyURL(proxyUrl),
-                }
-
-                c.client.SetTransport(tr)
-        }
+	if transport.TLSClientConfig != nil || transport.Proxy != nil {
+		c.client.SetTransport(transport)
+	}
 
 	// Build the request
 	buildReq, err := httpRequestOptions.ToRetryableRequest()
