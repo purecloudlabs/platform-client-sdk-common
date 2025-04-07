@@ -1095,6 +1095,19 @@ public class ApiClient implements AutoCloseable {
         private String configFilePath = null;
         private Boolean autoReloadConfig = true;
         private ApiClientConnectorProvider connectorProvider;
+
+        public Builder withMTLSKeyStore(String keyStorePath, String keyStorePassword){
+            properties.setProperty(ApiClientConnectorProperty.KEYSTORE_PATH, keyStorePath);
+            properties.setProperty(ApiClientConnectorProperty.KEYSTORE_PASSWORD, keyStorePassword);
+            return this;
+        }
+        
+        public Builder withMTLSTrustStore(String trustStorePath, String trustStorePassword){
+            properties.setProperty(ApiClientConnectorProperty.TRUSTSTORE_PATH, trustStorePath);
+            properties.setProperty(ApiClientConnectorProperty.TRUSTSTORE_PASSWORD, trustStorePassword);
+            return this;
+        }
+
         public Builder withClientProvider(ApiClientConnectorProvider provider) {
             this.connectorProvider = provider;
             return this;
