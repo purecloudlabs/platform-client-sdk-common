@@ -7,7 +7,7 @@ sys.path.append('../../../../output/purecloudpython/build/build/lib')
 import PureCloudPlatformClientV2
 
 
-class SdkTests_mtls(unittest.TestCase):
+class SdkTests_proxy(unittest.TestCase):
 	lastResult = None
 
 	userId = None
@@ -20,13 +20,13 @@ class SdkTests_mtls(unittest.TestCase):
 
 	def setUp(self):
 		# Skip if there has been a failure
-		if SdkTests_mtls.lastResult != None and (len(SdkTests_mtls.lastResult.failures) > 0 or len(SdkTests_mtls.lastResult.errors) > 0):
+		if SdkTests_proxy.lastResult != None and (len(SdkTests_proxy.lastResult.failures) > 0 or len(SdkTests_proxy.lastResult.errors) > 0):
 			print("=== WARNING: Previous test failed, skipping current test ===", flush=True)
 			self.skipTest('Previous test failed')
 
 	def run(self, result=None):
 		# Store this execution's result as the last one
-		SdkTests_mtls.lastResult = result
+		SdkTests_proxy.lastResult = result
 
 		# Run the test
 		unittest.TestCase.run(self, result)
@@ -41,15 +41,15 @@ class SdkTests_mtls(unittest.TestCase):
 
 		self.assertIsNotNone(os.environ.get('PURECLOUD_CLIENT_SECRET'))
 
-		SdkTests_mtls.userEmail = '%s@%s' % (uuid.uuid4(), os.environ.get('PURECLOUD_ENVIRONMENT'))
-		print(SdkTests_mtls.userEmail)
+		SdkTests_proxy.userEmail = '%s@%s' % (uuid.uuid4(), os.environ.get('PURECLOUD_ENVIRONMENT'))
+		print(SdkTests_proxy.userEmail)
 
 		print(PureCloudPlatformClientV2)
 		print("=== EXITING test_1_trace_basic_information() ===\n")
 
-	def test_2_mtls_gw_authenticate(self):
-		print("=== ENTERING test_mtls_authenticate() ===")
-		environment = os.environ.get('PURECLOUD_ENVIRONMENT');
+	def test_2_proxy_authenticate(self):
+		print("=== ENTERING test_2_proxy_authenticate() ===")
+		environment = os.environ.get('PURECLOUD_ENVIRONMENT')
 		region = self.purecloudregiontest(environment)
 		print(f"Using region: {region}")
 		if isinstance(region,PureCloudPlatformClientV2.PureCloudRegionHosts):
@@ -59,52 +59,44 @@ class SdkTests_mtls(unittest.TestCase):
 			PureCloudPlatformClientV2.configuration.host = 'https://api.%s' % (environment)
 			print("Environment not found in PureCloudRegionHosts defaulting to string value")
 			print(f"API host set to: https://api.{environment}")
-
-        #Set the client certificate and key files here. For CA verification, the default Mozilla store is used. 
-        #To use a custom CA, provide its certificate as the third parameter.
-		cacert = "mtls-certs/ca-chain.cert.pem"
-		cert = "mtls-certs/localhost.cert.pem"
-		key = "mtls-certs/localhost.key.pem"
-		#Join the script full path with the certificate and key files
-		cacert = os.path.join(os.path.dirname(__file__), cacert)
-		cert = os.path.join(os.path.dirname(__file__), cert)
-		key = os.path.join(os.path.dirname(__file__), key)		
-		PureCloudPlatformClientV2.configuration.set_mtls_certificates(cert, key, cacert)
+		
+		#Proxy setting and the request should go via proxy.
+		PureCloudPlatformClientV2.configuration.verify_ssl=False
+		PureCloudPlatformClientV2.configuration.proxy="http://localhost:4001"
                 
 		# Authenticate with client credentials and pass the apiclient instance into the usersapi
 		print("Authenticating with client credentials...")
-		SdkTests_mtls.apiclient_mtls = PureCloudPlatformClientV2.api_client.ApiClient()
-		SdkTests_mtls.apiclient_mtls.set_gateway("localhost","https",4027,"login","api")
-		SdkTests_mtls.apiclient_mtls.get_client_credentials_token(os.environ.get('PURECLOUD_CLIENT_ID'), os.environ.get('PURECLOUD_CLIENT_SECRET'))
-		SdkTests_mtls.users_api_mtls = PureCloudPlatformClientV2.UsersApi(SdkTests_mtls.apiclient_mtls)
-		print(f"Authentication successful access_token: {SdkTests_mtls.apiclient_mtls}")
-		self.create_user(SdkTests_mtls.users_api_mtls)
-		self.delete_user(SdkTests_mtls.users_api_mtls)
-		print("=== EXITING test_mtls_authenticate() ===\n")
+		SdkTests_proxy.apiclient_proxy = PureCloudPlatformClientV2.api_client.ApiClient()
+		SdkTests_proxy.apiclient_proxy.get_client_credentials_token(os.environ.get('PURECLOUD_CLIENT_ID'), os.environ.get('PURECLOUD_CLIENT_SECRET'))
+		SdkTests_proxy.users_api_proxy = PureCloudPlatformClientV2.UsersApi(SdkTests_proxy.apiclient_proxy)
+		print(f"Authentication successful access_token: {SdkTests_proxy.apiclient_proxy}")
+		self.create_user(SdkTests_proxy.users_api_proxy)
+		self.delete_user(SdkTests_proxy.users_api_proxy)
+		print("=== EXITING test_2_proxy_authenticate() ===\n")
 
 	def create_user(self, users_api):
 		print("=== ENTERING create_user() ===")
 		body = PureCloudPlatformClientV2.CreateUser()
-		body.name = SdkTests_mtls.userName
-		body.email = SdkTests_mtls.userEmail
+		body.name = SdkTests_proxy.userName
+		body.email = SdkTests_proxy.userEmail
 		body.password = '%s!@#$1234asdfASDF' % (uuid.uuid4())
 		print(f"Creating user with name: {body.name}, email: {body.email}")
 		  		
 		user = users_api.post_users(body)
 		print(f"User created successfully")
 
-		SdkTests_mtls.userId = user.id
-		print(f"User ID: {SdkTests_mtls.userId}")
-		self.assertEqual(user.name, SdkTests_mtls.userName)
-		self.assertEqual(user.email, SdkTests_mtls.userEmail)
-		print(SdkTests_mtls.userId)
+		SdkTests_proxy.userId = user.id
+		print(f"User ID: {SdkTests_proxy.userId}")
+		self.assertEqual(user.name, SdkTests_proxy.userName)
+		self.assertEqual(user.email, SdkTests_proxy.userEmail)
+		print(SdkTests_proxy.userId)
 		print("=== EXITING create_user() ===\n")
 
 	def delete_user(self, users_api):
 		print("=== ENTERING delete_user() ===")
-		print(f"Deleting user {SdkTests_mtls.userId}")
-		users_api.delete_user(SdkTests_mtls.userId)
-		print(f"User {SdkTests_mtls.userId} deleted successfully")
+		print(f"Deleting user {SdkTests_proxy.userId}")
+		users_api.delete_user(SdkTests_proxy.userId)
+		print(f"User {SdkTests_proxy.userId} deleted successfully")
 		print("=== EXITING delete_user() ===\n")
 
 	def purecloudregiontest(self,x):
@@ -128,7 +120,7 @@ class SdkTests_mtls(unittest.TestCase):
 
 if __name__ == '__main__':
 	unittest.sortTestMethodsUsing(None)
-	print("Running SdkTests_mtls Tests")
+	print("Running SdkTests_proxy Tests")
 	unittest.main()
-	print("SdkTests_mtls Tests Complete")	
+	print("SdkTests_proxy Tests Complete")	
  
