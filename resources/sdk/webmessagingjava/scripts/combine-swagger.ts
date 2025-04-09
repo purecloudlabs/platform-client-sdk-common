@@ -41,7 +41,7 @@ export class CombineSwagger {
                 console.log('Downloading new swagger');
                 // Special treatment for Web Messaging specification (downgrade from OpenAPI v3 to Swagger v2)
 				// Verify specification version and downgrade only if openapi=="3..." (starts with 3)
-                let newSwaggerRaw: any = JSON.parse(fs.readFileSync(newSwaggerPath, 'utf8'));
+                let newSwaggerRaw: any = JSON.parse(this.downloadFile(newSwaggerPath));
                 if (newSwaggerRaw && newSwaggerRaw.openapi && newSwaggerRaw.openapi.startsWith("3")) {
                     this.newSwagger = this.convertToV2(newSwaggerRaw);
                 } else {
