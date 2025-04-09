@@ -300,6 +300,10 @@ function prebuildImpl(): Promise<string> {
 					// Diff swagger
 					log.info('Diffing swagger files...');
 					swaggerDiff.useSdkVersioning = true;
+					// Special treatment for Web Messaging specification (downgrade from OpenAPI v3 to Swagger v2)
+					if (_this.config.settings.swaggerCodegen.codegenLanguage == "webmessagingjava") {
+						swaggerDiff.downgradeToSwaggerV2 = true;
+					}
 					swaggerDiff.getAndDiff(
 						_this.config.settings.swagger.oldSwaggerPath,
 						_this.config.settings.swagger.newSwaggerPath,
