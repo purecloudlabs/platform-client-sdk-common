@@ -2,7 +2,7 @@ import childProcess from 'child_process';
 import fs from 'fs';
 import swaggerDiffImpl from './swaggerDiffImpl';
 import Logger from '../log/logger';
-import { Swagger, Info, Changes } from '../types/swagger';
+import { Swagger, Info, Changes, ProduceElement, ItemsType } from '../types/swagger';
 import { Data, Version } from '../types/builderTypes';
 
 const log = new Logger();
@@ -16,6 +16,8 @@ export default class SwaggerDiff {
 	newSwagger: Swagger;
 
 	useSdkVersioning: boolean = false;
+	// Special treatment for Web Messaging specification (downgrade from OpenAPI v3 to Swagger v2)
+	downgradeToSwaggerV2: boolean = false;
 
 	public getAndDiff(oldSwaggerPath: string, newSwaggerPath: string, previewSwaggerPath: string,
 		saveOldSwaggerPath: string, saveNewSwaggerPath: string) {
@@ -37,10 +39,32 @@ export default class SwaggerDiff {
 		// Retrieve new swagger
 		if (fs.existsSync(newSwaggerPath)) {
 			log.info(`Loading new swagger from disk: ${newSwaggerPath}`);
-			newSwagger = JSON.parse(fs.readFileSync(newSwaggerPath, 'utf8'));
+			if (this.downgradeToSwaggerV2 == false) {
+				newSwagger = JSON.parse(fs.readFileSync(newSwaggerPath, 'utf8'));
+			} else {
+				// Special treatment for Web Messaging specification (downgrade from OpenAPI v3 to Swagger v2)
+				// Verify specification version and downgrade only if openapi=="3..." (starts with 3)
+				let newSwaggerRaw: any = JSON.parse(fs.readFileSync(newSwaggerPath, 'utf8'));
+				if (newSwaggerRaw && newSwaggerRaw.openapi && newSwaggerRaw.openapi.startsWith("3")) {
+					newSwagger = this.convertToV2(newSwaggerRaw);
+				} else {
+					newSwagger = newSwaggerRaw;
+				}
+			}
 		} else if (newSwaggerPath.toLowerCase().startsWith('http')) {
 			log.info(`Downloading new swagger from: ${newSwaggerPath}`);
-			newSwagger = JSON.parse(downloadFile(newSwaggerPath));
+			if (this.downgradeToSwaggerV2 == false) {
+				newSwagger = JSON.parse(downloadFile(newSwaggerPath));
+			} else {
+				// Special treatment for Web Messaging specification (downgrade from OpenAPI v3 to Swagger v2)
+				// Verify specification version and downgrade only if openapi=="3..." (starts with 3)
+				let newSwaggerRaw: any = JSON.parse(downloadFile(newSwaggerPath));
+				if (newSwaggerRaw && newSwaggerRaw.openapi && newSwaggerRaw.openapi.startsWith("3")) {
+					newSwagger = this.convertToV2(newSwaggerRaw);
+				} else {
+					newSwagger = newSwaggerRaw;
+				}
+			}
 		} else {
 			log.warn(`Invalid newSwaggerPath: ${newSwaggerPath}`);
 		}
@@ -132,6 +156,110 @@ export default class SwaggerDiff {
 		swaggerDiffImpl.useSdkVersioning = this.useSdkVersioning;
 		swaggerDiffImpl.oldSwagger = this.oldSwagger;
 		swaggerDiffImpl.newSwagger = this.newSwagger;
+	}
+
+	private convertToV2(swaggerV3 : any) {
+		let swaggerV2: Swagger = {
+			swagger: '2.0',
+			host: '',
+			info: {
+				description: '',
+					version: '',
+					title: '',
+					contact: {
+						name: '',
+						url: '',
+						email: ''
+					}
+			},
+			externalDocs: {
+				description: '',
+				url: ''
+			},
+			consumes: [ProduceElement.ApplicationJSON],
+			produces: [ProduceElement.ApplicationJSON],
+			tags: [],
+			definitions: {},
+			paths: {},
+			responses: {},
+			schemes: [],
+			securityDefinitions: {}
+		};
+		swaggerV2["basePath"] = '/';
+		swaggerV2["info"] = swaggerV3["info"];
+
+		// At this time, web messaging specification only includes definitions/schemas (no API operation)
+		// We only take care of the schemas (v3) to definitions migration (v2)
+		if (swaggerV3 && swaggerV3.components && swaggerV3.components.schemas) {
+			// Change #/components/schemas/ to #/definitions/ using string replace
+			let allSwaggerV3SchemasAsStr = JSON.stringify(swaggerV3.components.schemas);
+			const regexConvertSchemas = /#\/components\/schemas\//g;
+			allSwaggerV3SchemasAsStr = allSwaggerV3SchemasAsStr.replace(regexConvertSchemas, '#/definitions/');
+			swaggerV2["definitions"] = JSON.parse(allSwaggerV3SchemasAsStr);
+
+			// Clean unwanted attributes from the migrated schemas
+			const keys = Object.keys(swaggerV2.definitions);
+			keys.forEach((key, index) => {
+				let obj: any = swaggerV2.definitions[key];
+				if (obj) {
+					// Update "additionalProperties: { additionalProperties: true }"" and "additionalProperties: {}"" to "additionalProperties: true"
+					if (obj && obj.additionalProperties && (typeof obj.additionalProperties == 'object') && obj.additionalProperties.additionalProperties && obj.additionalProperties.additionalProperties == true) {
+						obj.additionalProperties = true;
+					} else if (obj && obj.additionalProperties && (typeof obj.additionalProperties == 'object') && Object.keys(obj.additionalProperties).length == 0) {
+						obj.additionalProperties = true;
+					}
+					// anyOf not supported at definition level - update to generic { type: object }
+					if (obj.hasOwnProperty("anyOf")) {
+						obj["type"] = ItemsType.Object;
+						delete obj["anyOf"];
+					}
+
+					if (obj && obj.properties) {
+						const keys = Object.keys(swaggerV2.definitions[key].properties);
+						keys.forEach((key2, index) => {
+							let obj2 = swaggerV2.definitions[key].properties[key2];
+							if (obj2) {
+								// Remove nullable attribute (not supported in v2)
+								if (obj2.hasOwnProperty("nullable")) {
+									delete obj2["nullable"];
+								}
+								// Remove anyOf attribute (not supported in v2)
+								// Interpret as string (date, time) - [{"type": "string"},{"type": "number","format": "double"}]
+								// Interpret as generic object otherwise
+								if (obj2.hasOwnProperty("anyOf")) {
+									if (obj2["anyOf"].length == 2) {
+										if (obj2["anyOf"][0] && obj2["anyOf"][0].type && obj2["anyOf"][0].type == "string" &&
+											obj2["anyOf"][1] && obj2["anyOf"][1].type && obj2["anyOf"][1].type == "number") {
+											obj2["type"] = ItemsType.String;
+										} else if (obj2["anyOf"][0] && obj2["anyOf"][0].type && obj2["anyOf"][0].type == "number" &&
+											obj2["anyOf"][1] && obj2["anyOf"][1].type && obj2["anyOf"][1].type == "string") {
+											obj2["type"] = ItemsType.String;
+										} else {
+											obj2["type"] = ItemsType.Object;
+										}
+									} else {
+										obj2["type"] = ItemsType.Object;
+									}
+									delete obj2["anyOf"];
+								}
+								// Remove allOf with single element and replace with $ref
+								// This is to facilitate swagger diff comparison
+								if (obj2.hasOwnProperty("allOf")) {
+									if (obj2["allOf"].length == 1) {
+										if (obj2["allOf"][0]["$ref"]) {
+											obj2["$ref"] = obj2["allOf"][0]["$ref"];
+											delete obj2["allOf"];
+										}
+									}
+								}
+							}
+						});
+					}
+				}
+			});
+		}
+
+		return swaggerV2;
 	}
 
 }
