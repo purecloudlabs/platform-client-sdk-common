@@ -16,19 +16,19 @@ export class CombineSwagger {
 
             // Retrieve internal swagger
             if (fs.existsSync(internalSwaggerPath)) {
-                console.log(`Loading internal swagger from disk: ${internalSwaggerPath}`);
+                console.log('Loading internal swagger from disk');
                 this.internalSwagger = JSON.parse(fs.readFileSync(internalSwaggerPath, 'utf8'));
             } else if (internalSwaggerPath.toLowerCase().startsWith('http')) {
-                console.log(`Downloading internal swagger from: ${internalSwaggerPath}`);
+                console.log('Downloading internal swagger');
                 let file = this.downloadFile(internalSwaggerPath);
                 this.internalSwagger = JSON.parse(file);
             } else {
-                console.log(`Invalid internalSwaggerPath: ${internalSwaggerPath}`);
+                console.log('Invalid internalSwaggerPath');
             }
 
             // Retrieve new swagger
             if (fs.existsSync(newSwaggerPath)) {
-                console.log(`Loading new swagger from disk: ${newSwaggerPath}`);
+                console.log('Loading new swagger');
                 // Special treatment for Web Messaging specification (downgrade from OpenAPI v3 to Swagger v2)
 				// Verify specification version and downgrade only if openapi=="3..." (starts with 3)
                 let newSwaggerRaw: any = JSON.parse(fs.readFileSync(newSwaggerPath, 'utf8'));
@@ -38,7 +38,7 @@ export class CombineSwagger {
                     this.newSwagger = newSwaggerRaw;
                 }
             } else if (newSwaggerPath.toLowerCase().startsWith('http')) {
-                console.log(`Downloading new swagger from: ${newSwaggerPath}`);
+                console.log('Downloading new swagger');
                 // Special treatment for Web Messaging specification (downgrade from OpenAPI v3 to Swagger v2)
 				// Verify specification version and downgrade only if openapi=="3..." (starts with 3)
                 let newSwaggerRaw: any = JSON.parse(fs.readFileSync(newSwaggerPath, 'utf8'));
@@ -48,7 +48,7 @@ export class CombineSwagger {
                     this.newSwagger = newSwaggerRaw;
                 }
             } else {
-                console.log(`Invalid newSwaggerPath: ${newSwaggerPath}`);
+                console.log('Invalid newSwaggerPath');
             }
 
             this.internalSwagger = this.processRefs(this.internalSwagger);
@@ -74,7 +74,7 @@ export class CombineSwagger {
             }
 
             if (saveNewSwaggerPath) {
-                console.log(`Writing new swagger to ${saveNewSwaggerPath}`);
+                console.log('Writing new swagger');
                 fs.writeFileSync(saveNewSwaggerPath, JSON.stringify(this.newSwagger));
             }
 
