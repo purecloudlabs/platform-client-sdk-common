@@ -43,6 +43,8 @@ const overrideOperationIds: any = {
 		"post": "postDivisionBasedPresenceDefinitions"
 	}
 };
+// Override available topics schema properties from type: "integer" to type: "integer", format: "int64"
+let forceInt64Integers = true;
 
 export class Builder {
 
@@ -864,6 +866,15 @@ function extractDefinitons(entity: { [key: string]: any }) {
 			// Rewrite URN refs to JSON refs
 			if (key == '$ref' && !property.startsWith('#')) {
 				entity[key] = '#/definitions/' + getNotificationClassName(property);
+			}
+
+			// Force int64 integers
+			if (forceInt64Integers == true) {
+				if (key == 'type' && property == 'integer') {
+					if (!entity['format']) {
+						entity['format'] = 'int64';
+					}
+				}
 			}
 
 			// Recurse on objects
