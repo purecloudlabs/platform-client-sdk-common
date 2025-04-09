@@ -32,7 +32,8 @@ let newSwaggerTempFile = '';
 // Quarantine Operations
 const quarantineOperationIds: string[] = ['postGroupImages', 'postUserImages'];
 // Override OperationId due to name conflict ("operationId", "x-purecloud-method-name")
-const overrideOperationIds: any = {
+const overrideOperationIds: any = {};
+const aliasOperationIds: any = {
 	"/api/v2/presence/definitions/{definitionId}": {
 		"get": "getDivisionBasedPresenceDefinition",
 		"put": "putDivisionBasedPresenceDefinition",
