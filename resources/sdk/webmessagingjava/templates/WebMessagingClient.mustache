@@ -743,8 +743,14 @@ public class WebMessagingClient {
             return;
         }
 
-        Object response = objectMapper.convertValue(baseMessage.getBody(), messageClass);
-        switch (className) {
+						String tracingId = baseMessage.getTracingId();
+						Object response = objectMapper.convertValue(baseMessage.getBody(), messageClass);
+						try {
+								((BaseResponse)(response)).setTracingId(tracingId);
+						} catch (ClassCastException e) {
+
+						}
+						switch (className) {
             case "SessionResponse":
                 //set the configured allowed media for Supported Content Profile
                 setAllowedMediaInbound(((SessionResponse)response).getAllowedMedia());
