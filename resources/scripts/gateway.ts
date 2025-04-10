@@ -13,7 +13,6 @@ export default class GatewayServer {
 
   constructor() {
     this.gateway = createProxyServer();
-    const environment = this.fetchEnvironment();
     const domain = 'localhost';
 
     // SSL/TLS options for the proxy server
@@ -29,6 +28,7 @@ export default class GatewayServer {
     this.server = https.createServer(serverOptions, (req, res) => {
       // Parse incoming request URL
       const targetHost = url.parse(req.url || '');
+      const environment = this.fetchEnvironment(targetHost.path);
 
       const options: https.RequestOptions = {
         hostname: environment,
@@ -62,13 +62,16 @@ export default class GatewayServer {
     this.server.on('connect', this.handleConnectRequest.bind(this));
   }
 
-  private fetchEnvironment():string{
-    return "api."+process.env.PURECLOUD_ENV
+  private fetchEnvironment(path: string):string{
+    const isOAuthPath = path.includes('oauth/token');
+    return isOAuthPath 
+        ? `login.`+process.env.PURECLOUD_ENV
+        : `api.`+process.env.PURECLOUD_ENV;
   }
 
   private handleConnectRequest(req: http.IncomingMessage, clientSocket: net.Socket, head: Buffer) {
     const targetUrl = url.parse(`//${req.url}`, false, true);
-    const environment = this.fetchEnvironment();
+    const environment = this.fetchEnvironment(targetUrl.path);
       const serverSocket = tls.connect(
           {
             host: environment,
