@@ -28,4 +28,9 @@ python3.6 -m pip install --user -U watchdog
 echo "Install retry..."
 python3.6 -m pip install --user -U retry
 echo "Run unit tests"
+pwd
 python3.6 -m unittest SdkTests
+echo "Run unit tests mtls"
+python3.6 -m unittest SdkTests_mtls
+echo "Run unit tests proxy"
+python3.6 -m unittest SdkTests_proxy
