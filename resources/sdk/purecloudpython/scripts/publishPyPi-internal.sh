@@ -21,7 +21,7 @@ echo "Installing Twine and Wheel"
 python3.9 -m pip install twine wheel setuptools --user --upgrade
 
 echo "Creating the distribution package"
-python3.9 setup.py sdist bdist_wheel
+python3.9 setup.py sdist
 
 echo "Running twine check"
 python3.9 -m twine check dist/*
