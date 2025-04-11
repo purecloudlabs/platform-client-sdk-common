@@ -569,7 +569,40 @@ _Note that the deserializer does not use this mapping; it uses the type provided
 
 ### REST Requests
 
-The SDK library uses [RestSharp](http://restsharp.org/) to make the REST requests. The majority of this work is done in [ApiClient.cs](https://github.com/MyPureCloud/platform-client-sdk-dotnet/blob/master/build/src/{{packageName}}/Client/ApiClient.cs)
+The SDK library uses [RestSharp](http://restsharp.org/) by default to make the REST requests. The majority of this work is done in [DefaultHttpClient.cs](https://github.com/MyPureCloud/platform-client-sdk-dotnet/blob/master/build/src/{{packageName}}/Client/ApiClient.cs)
+
+### Inject a custom Http Client
+
+By default the SDK will use RestSharp's RestClient as the default http client.
+If you want to inject a new third party/custom implementation of client , you set the httpclient instance
+
+The CustomHttpClient should be an instance of AbstractHttpClient defined in the SDK. Which will implement the 'Execute' and 'ExecuteAsync' methods.
+Please find an example here.
+
+```csharp
+
+public class CustomHttpClient : AbstractHttpClient
+{
+    private HttpClient httpClient;
+
+    public DefaultHttpClient() : base()
+    {
+        httpClient = new HttpClient();
+    }
+
+    public override IHttpRequest Execute(IHttpRequest request)
+    {
+        return httpClient.SendAsync(request).GetAwaiter().GetResult();
+    }
+
+    public override async Task<IHttpRequest> ExecuteAync(IHttpRequest request, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return await httpClient.SendAsync(request, cancellationToken);
+    }
+}
+
+Configuration.Default.ApiClient.HttpClient = new CustomHttpClient
+```
 
 ### Building from Source
 
