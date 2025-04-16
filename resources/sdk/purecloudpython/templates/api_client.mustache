@@ -261,6 +261,7 @@ class ApiClient(object):
         http_client  = self.get_http_client()
         response = http_client.request(request_options)
 
+        data = json.loads('[' + response.data + ']')
         self.access_token = data[0]["access_token"]
         self.refresh_token = data[0]["refresh_token"]
 
