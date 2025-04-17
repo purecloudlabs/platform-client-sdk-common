@@ -406,6 +406,21 @@ if err != nil {
 }
 ```
 
+If you have the certificate contents in memory (for example, from a secrets manager or environment variables), you can use SetMTLSContents:
+
+```go
+client := platformclient.GetDefaultConfiguration()
+client.SetGateway("mygateway.mydomain.myextension", "https", 1443, "myadditionalpathforlogin", "myadditionalpathforapi")
+
+// certPEM, keyPEM, and caChainPEM are []byte containing the PEM-encoded certificates
+err := client.SetMTLSContents(certPEM, keyPEM, caChainPEM)
+if err != nil {
+    log.Fatal(err)
+}
+
+// If your private key is passphrase-protected, make sure to decrypt it before passing to SetMTLSContents
+```
+
 ## Versioning
 
 The SDK's version is incremented according to the [Semantic Versioning Specification](https://semver.org/). The decision to increment version numbers is determined by [diffing the Platform API's swagger](https://github.com/purecloudlabs/platform-client-sdk-common/blob/master/modules/swaggerDiff.js) for automated builds, and optionally forcing a version bump when a build is triggered manually (e.g. releasing a bugfix).
