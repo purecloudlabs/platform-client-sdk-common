@@ -125,6 +125,36 @@ public class ApiClientTests
     /// InvokeTestWith_502
     ///</Summary>
     [Test]
+    public void InvokeTestWith_429_And_Max_Retries_Exceeded()
+    {
+        var retryConfig = new ApiClient.RetryConfiguration
+        {
+            MaxRetryTimeSec = 6,
+            RetryAfterDefaultMs = 100,
+            RetryMax = 0
+        };
+
+        var mockHttp = new MockHttpMessageHandler();
+        mockHttp.When("*").Respond((req) =>
+        {
+            var response = new HttpResponseMessage((System.Net.HttpStatusCode)429);
+            response.Headers.Add("Retry-After", "3");
+            return Task.FromResult(response);
+        });
+        
+        var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
+        apiClient.RetryConfig = retryConfig;
+        apiClient.ClientOptions.HttpMessageHandler = mockHttp;
+
+        stopwatch = Stopwatch.StartNew();
+        RestResponse user = (RestResponse)apiClient.CallApi(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
+
+        Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 3000 && stopwatch.ElapsedMilliseconds < 3100, "Since RetryMax is 0, after one retry exception is thrown");
+        Assert.AreEqual(429, (int)user.StatusCode);
+        stopwatch.Stop();
+    }
+
+    [Test]
     public void InvokeTestWith_502()
     {
         var retryConfig = new ApiClient.RetryConfiguration

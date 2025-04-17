@@ -95,7 +95,7 @@ class RESTClientObject(object):
         proxy_username = Configuration().proxy_username
         proxy_password = Configuration().proxy_password
 
-        retries = urllib3.util.Retry()
+        retries = CustomRetry()
         retries.allowed_methods = {'DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'TRACE'}
         # https pool manager
         if proxy:
@@ -267,3 +267,19 @@ class ApiException(Exception):
             error_message += "HTTP response body: {0}\n".format(self.body)
 
         return error_message
+
+class CustomRetry(urllib3.util.Retry):
+    def __init__(self, total=0, connect=None, read=None, redirect=None, status=None, other=None, backoff_factor=0):
+        super().__init__(total=total, connect=connect, read=read, redirect=redirect, status=status, other=other, backoff_factor=backoff_factor)
+
+    def sleep(self, response=None):
+        sleep_duration = self.get_backoff_time()
+        print(f"Rate limit encountered. Retry the request in [{sleep_duration}] seconds")
+        super().sleep(response)
+
+    def increment(self, method=None, url=None, repsonse=None, error=None, _pool=None, _stacktrace=None):
+        retry = super.increment(method, url, repsonse, error, _pool, _stacktrace)
+        if retry.is_exhausted():
+            print(f"Max number of retries exceeded: {e}")
+
+        return retry
