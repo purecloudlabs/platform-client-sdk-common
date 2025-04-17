@@ -139,9 +139,9 @@ type AuthErrorResponse struct {
 
 // MTLS configuration
 type MTLSConfiguration struct {
-    CertFile string
-    KeyFile  string
-    CAFile   string
+    CertFile []byte
+    KeyFile  []byte
+    CAFile   []byte
 }
 
 var (

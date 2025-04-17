@@ -182,38 +182,66 @@ func (c *APIClient) configureProxy(pathName string) (*http.Transport, error) {
     }, nil
 }
 
+// SetMTLSContents sets the MTLS certificate contents directly rather than loading from files.
+func (c *APIClient) SetMTLSContents(certContent, keyContent, caContent string) error {
+    if certContent == "" {
+        return fmt.Errorf("certificate content cannot be empty")
+    }
+
+    if keyContent == "" {
+        return fmt.Errorf("private key content cannot be empty") 
+    }
+
+    if caContent == "" {
+        return fmt.Errorf("CA certificate content cannot be empty")
+    }
+
+    c.configuration.MTLSConfiguration = &MTLSConfiguration {
+		CertFile: []byte(certContent),
+		KeyFile: []byte(keyContent),
+		CAFile: []byte(caContent),
+	}
+	return nil
+}
+
 // Handles the MTLS Gateway Configuration
 func (c *APIClient) configureMTLS() (*tls.Config, error) {
 	if c.configuration.MTLSConfiguration == nil {
 		return nil, nil
 	}
 
-	cert, err := tls.LoadX509KeyPair(
-		c.configuration.MTLSConfiguration.CertFile,
-		c.configuration.MTLSConfiguration.KeyFile,
+	if c.configuration.MTLSConfiguration.CertFile == nil {
+		return nil, fmt.Errorf("failed to load certificate content")
+	}
+
+	if c.configuration.MTLSConfiguration.KeyFile == nil {
+		return nil, fmt.Errorf("failed to load Key file content")
+	}
+
+	if c.configuration.MTLSConfiguration.CAFile == nil {
+        return nil, fmt.Errorf("Failed to load CA certificate content")
+    }
+
+	cert, err := tls.X509KeyPair(
+		[]byte(c.configuration.MTLSConfiguration.CertFile), 
+		[]byte(c.configuration.MTLSConfiguration.KeyFile),
 	)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to load client certificate: %v", err)
 	}
 
-	caCert, err := os.ReadFile(c.configuration.MTLSConfiguration.CAFile)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load CA certificate: %v", err)
-	}
-
 	caCertPool := x509.NewCertPool()
-	if !caCertPool.AppendCertsFromPEM(caCert) {
+	if !caCertPool.AppendCertsFromPEM([]byte(c.configuration.MTLSConfiguration.CAFile)) {
 		return nil, fmt.Errorf("failed to append CA certificate")
 	}
 
-	 // Create TLS config with custom verification
+	// Create TLS config with custom verification
     tlsConfig := &tls.Config{
         Certificates: []tls.Certificate{cert},
         RootCAs:     caCertPool,
         MinVersion:  tls.VersionTLS12,
 		InsecureSkipVerify: true,  // Required for custom verification
-
     }
 
     return tlsConfig, nil
@@ -246,13 +274,40 @@ func (c *APIClient) configureTransport(pathName string) (*http.Transport, error)
 	return transport, nil
 }
 
-// Sets the MTLS Certificates
+// Sets the MTLS Certificates for the file paths
 func (c *APIClient) SetMTLSCertificates(certFile, keyFile, caFile string) error {
-	c.configuration.MTLSConfiguration = &MTLSConfiguration {
-		CertFile: certFile,
-		KeyFile: keyFile,
-		CAFile: caFile,
+	if certFile == "" {
+		return fmt.Errorf("Failed to load the Certificate")
 	}
+
+	if keyFile == "" {
+		return fmt.Errorf("Failed to load Key File")
+	}
+
+	if caFile == "" {
+		return fmt.Errorf("Failed to load CA certificate")
+	}
+	
+	certPEMBlock, err := os.ReadFile(certFile)
+	if err != nil {
+		return err
+	}
+	keyPEMBlock, err := os.ReadFile(keyFile)
+	if err != nil {
+		return err
+	}
+
+	caPEMBlock, err := os.ReadFile(caFile)
+	if err != nil {
+		return err
+	}
+
+	c.configuration.MTLSConfiguration = &MTLSConfiguration {
+		CertFile: certPEMBlock,
+		KeyFile: keyPEMBlock,
+		CAFile: caPEMBlock,
+	}
+
 	return nil
 }
 
