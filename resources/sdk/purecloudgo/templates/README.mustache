@@ -365,6 +365,62 @@ This serializes to the JSON document below. Note that only the properties set us
 }
 ```
 
+### Custom HTTP Client
+
+The SDK supports injecting a custom HTTP client to handle requests. This allows you to customize request handling, add custom middleware, or implement specific networking requirements.
+The CustomHttpClient should be an instance of AbstractHttpClient defined in the SDK which will implement the request method.
+Please find an example for the same.
+
+```go
+// Create a custom HTTP client
+customClient := &CustomHttpClient{
+    // Configure your custom client settings
+}
+
+// Set the custom client on the configuration
+config.APIClient.SetHttpClient(customClient)
+```
+
+### Using MTLS Authentication via Gateway
+
+Configure MTLS authentication for gateway servers (when Genesys Cloud requests must go through an intermediate API gateway):
+
+```go
+config := platformclientv2.GetDefaultConfiguration()
+
+// Configure gateway settings
+config.SetGateway(&platformclientv2.GatewayConfiguration{
+    Host:            "mygateway.mydomain.myextension",
+    Protocol:        "https",
+    Port:            1443,
+})
+
+// Set MTLS certificates
+err := config.SetMTLSCertificates(
+    "path/to/client.cert.pem",
+    "path/to/client.key.pem",
+    "path/to/ca.cert.pem",
+)
+if err != nil {
+    panic(err)
+}
+```
+
+If you have the certificate contents in memory (for example, from a secrets manager or environment variables), you can use SetMTLSContents:
+
+```go
+client := platformclient.GetDefaultConfiguration()
+client.SetGateway("mygateway.mydomain.myextension", "https", 1443, "myadditionalpathforlogin", "myadditionalpathforapi")
+
+// certPEM, keyPEM, and caChainPEM are []byte containing the PEM-encoded certificates
+err := client.SetMTLSContents(certPEM, keyPEM, caChainPEM)
+if err != nil {
+    log.Fatal(err)
+}
+
+// If your private key is passphrase-protected, make sure to decrypt it before passing to SetMTLSContents
+```
+
 ## Versioning
 
 The SDK's version is incremented according to the [Semantic Versioning Specification](https://semver.org/). The decision to increment version numbers is determined by [diffing the Platform API's swagger](https://github.com/purecloudlabs/platform-client-sdk-common/blob/master/modules/swaggerDiff.js) for automated builds, and optionally forcing a version bump when a build is triggered manually (e.g. releasing a bugfix).
