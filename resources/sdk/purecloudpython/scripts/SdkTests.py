@@ -163,4 +163,6 @@ class SdkTests(unittest.TestCase):
 
 if __name__ == '__main__':
 	unittest.sortTestMethodsUsing(None)
+	print("Running SdkTests Tests")
 	unittest.main()
+	print("SdkTests Tests Complete")

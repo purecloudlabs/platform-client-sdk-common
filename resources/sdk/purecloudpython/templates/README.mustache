@@ -379,6 +379,31 @@ worktype_update.default_queue_id = PureCloudPlatformClientV2.ApiNullValue()
 task_api.patch_taskmanagement_worktype(worktype_id, worktype_update)
 ```
 
+## Inject Custom HTTP Client
+By default, the SDK uses the urllib3 library as the default HTTP client. If you want to inject a new third-party/custom implementation of the client, you can set the HTTP client instance.
+
+The CustomHttpClient should be a class that inherits from AbstractHttpClient defined in the SDK and implements the request method. Here's an example:
+
+```python
+from PureCloudPlatformClientV2 import AbstractHttpClient
+import requests
+
+class CustomHttpClient(AbstractHttpClient):
+    def __init__(self):
+        super().__init__()
+        self._session = requests.Session()
+
+    def request(self, options):
+        return self._session.request(**options)
+
+# Initialize the API client
+api_client = PureCloudPlatformClientV2.api_client.ApiClient()
+
+# Create and set custom HTTP client
+http_client = CustomHttpClient()
+api_client.set_http_client(http_client)
+
+
 ## SDK Source Code Generation
 
 The SDK is automatically regenerated and published from the API's definition after each API release. For more information on the build process, see the [platform-client-sdk-common](https://github.com/MyPureCloud/platform-client-sdk-common) project.
