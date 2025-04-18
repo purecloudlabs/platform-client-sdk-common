@@ -106,10 +106,12 @@ func getConfUrl(c *Configuration, path string, extendedPath string) *url.URL {
 			if param.PathName == path {
 				tempValue := param.PathValue
 
-				if !strings.HasPrefix(tempValue, "/") {
-					pathValue = fmt.Sprintf("/%v", tempValue)
-				} else {
-					pathValue = fmt.Sprintf("%v", tempValue)
+				if tempValue != "" {
+					if !strings.HasPrefix(tempValue, "/") {
+						pathValue = fmt.Sprintf("/%v", tempValue)
+					} else {
+						pathValue = fmt.Sprintf("%v", tempValue)
+					}
 				}
 				break
 			}
