@@ -13,19 +13,19 @@ then
 fi
 
 echo "Upgrading PIP"
-python3.6 -m pip install --upgrade --user pip
+python3.9 -m pip install --upgrade --user pip
 
 echo "Installing Twine and Wheel"
-python3.6 -m pip install twine wheel setuptools --user --upgrade
+python3.9 -m pip install twine wheel setuptools --user --upgrade
 
 echo "Creating the distribution package"
-python3.6 setup.py sdist bdist_wheel
+python3.9 setup.py sdist bdist_wheel
 
 echo "Running twine check"
-python3.6 -m twine check dist/*
+python3.9 -m twine check dist/*
 
 echo "uploading to the pypi test server"
-python3.6 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/* -u __token__ -p $DEVTOOLING_SDK_PYPI_TEST
+python3.9 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/* -u __token__ -p $DEVTOOLING_SDK_PYPI_TEST
 
 echo "uploading to the pypi prod server"
-python3.6 -m twine upload --verbose --repository-url https://upload.pypi.org/legacy/ dist/* -u __token__ -p $DEVTOOLING_SDK_PYPI_PROD
+python3.9 -m twine upload --verbose --repository-url https://upload.pypi.org/legacy/ dist/* -u __token__ -p $DEVTOOLING_SDK_PYPI_PROD

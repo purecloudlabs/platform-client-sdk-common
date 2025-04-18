@@ -51,6 +51,7 @@ public class ApiClient implements AutoCloseable {
     private static final String DEFAULT_BASE_PATH = "{{basePath}}";
     private static final String DEFAULT_USER_AGENT = "{{#httpUserAgent}}{{.}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen{{/httpUserAgent}}/java";
     private static final String USER_AGENT_HEADER = "User-Agent";
+    public static Boolean LEGACY_EMPTY_LIST = true;
 
     private static Map<String, Authentication> buildAuthentications() {
         Map<String, Authentication> authentications = new HashMap<>();{{#authMethods}}{{#isBasic}}

@@ -29,6 +29,24 @@ const NOTIFICATION_ID_REGEX = /^urn:jsonschema:(.+):v2:(.+)$/i;
 let _this: Builder;
 let newSwaggerTempFile = '';
 
+// Quarantine Operations
+const quarantineOperationIds: string[] = ['postGroupImages', 'postUserImages'];
+// Override OperationId due to name conflict ("operationId", "x-purecloud-method-name")
+const overrideOperationIds: any = {};
+const aliasOperationIds: any = {
+	"/api/v2/presence/definitions/{definitionId}": {
+		"get": "getDivisionBasedPresenceDefinition",
+		"put": "putDivisionBasedPresenceDefinition",
+		"delete": "deleteDivisionBasedPresenceDefinition"
+	},
+	"/api/v2/presence/definitions": {
+		"get": "getDivisionBasedPresenceDefinitions",
+		"post": "postDivisionBasedPresenceDefinitions"
+	}
+};
+// Override available topics schema properties from type: "integer" to type: "integer", format: "int64"
+let forceInt64Integers = true;
+
 export class Builder {
 
 	config: Config;
@@ -285,6 +303,10 @@ function prebuildImpl(): Promise<string> {
 					// Diff swagger
 					log.info('Diffing swagger files...');
 					swaggerDiff.useSdkVersioning = true;
+					// Special treatment for Web Messaging specification (downgrade from OpenAPI v3 to Swagger v2)
+					if (_this.config.settings.swaggerCodegen.codegenLanguage == "webmessagingjava") {
+						swaggerDiff.downgradeToSwaggerV2 = true;
+					}
 					swaggerDiff.getAndDiff(
 						_this.config.settings.swagger.oldSwaggerPath,
 						_this.config.settings.swagger.newSwaggerPath,
@@ -322,6 +344,12 @@ function prebuildImpl(): Promise<string> {
 						}
 					}
 					return forceCSVCollectionFormat(forceCSVCollectionFormatInTags);
+				})
+				.then(() => {
+					return quarantineOperations(quarantineOperationIds);
+				})
+				.then(() => {
+					return overrideOperations(overrideOperationIds);
 				})
 				.then(() => {
 					// Save new swagger to temp file for build
@@ -745,6 +773,51 @@ function forceCSVCollectionFormat(forceCSVCollectionFormatInTags: string[]) {
 	return;
 }
 
+function quarantineOperations(quarantineOperationIds: string[]) {
+	if (quarantineOperationIds && quarantineOperationIds.length > 0) {
+		log.info(`Quarantine for OperationIds: ${quarantineOperationIds.toString()}`);
+		const paths = Object.keys(swaggerDiff.newSwagger.paths);
+		for (const path of paths) {
+			const methods = Object.keys(swaggerDiff.newSwagger.paths[path]);
+			for (const method of methods) {
+				let operation = swaggerDiff.newSwagger.paths[path][method];
+				if (operation && operation.operationId && quarantineOperationIds.includes(operation.operationId)) {
+					// Remove Operation
+					delete swaggerDiff.newSwagger.paths[path][method];
+				}
+			}
+			const remainingMethods = Object.keys(swaggerDiff.newSwagger.paths[path]);
+			if (remainingMethods.length == 0) {
+				delete swaggerDiff.newSwagger.paths[path];
+			}
+		}
+	}
+	return;
+}
+
+function overrideOperations(overrideOperationIds: any) {
+	if (overrideOperationIds && Object.keys(overrideOperationIds).length > 0) {
+		const overridePaths = Object.keys(overrideOperationIds);
+		for (const path of overridePaths) {
+			const overrideMethods = Object.keys(overrideOperationIds[path]);
+			for (const method of overrideMethods) {
+				let newOperationId = overrideOperationIds[path][method];
+				if (swaggerDiff.newSwagger.paths && swaggerDiff.newSwagger.paths[path] && swaggerDiff.newSwagger.paths[path][method]) {
+					let operation = swaggerDiff.newSwagger.paths[path][method];
+					if (operation && operation.operationId) {
+						log.info(`Override OperationId (path: ${path}, method: ${method}): old=${operation.operationId}, new=${newOperationId}`);
+						operation.operationId = newOperationId;
+					}
+					if (operation && operation["x-purecloud-method-name"]) {
+						operation["x-purecloud-method-name"] = newOperationId;
+					}
+				}
+			}
+		}
+	}
+	return;
+}
+
 function processPaths() {
 	const paths = Object.keys(swaggerDiff.newSwagger.paths);
 	for (const path of paths) {
@@ -794,6 +867,15 @@ function extractDefinitons(entity: { [key: string]: any }) {
 			// Rewrite URN refs to JSON refs
 			if (key == '$ref' && !property.startsWith('#')) {
 				entity[key] = '#/definitions/' + getNotificationClassName(property);
+			}
+
+			// Force int64 integers
+			if (forceInt64Integers == true) {
+				if (key == 'type' && property == 'integer') {
+					if (!entity['format']) {
+						entity['format'] = 'int64';
+					}
+				}
 			}
 
 			// Recurse on objects

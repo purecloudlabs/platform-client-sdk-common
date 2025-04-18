@@ -9,7 +9,13 @@ public class {{classname}} {{#parent}}extends {{{parent}}}{{/parent}} {{#seriali
 {{>modelInnerEnum}}{{/isEnum}}{{#items.isEnum}}{{#items}}
 
 {{>modelInnerEnum}}{{/items}}{{/items.isEnum}}
-  private {{{datatypeWithEnum}}} {{name}} = {{{defaultValue}}};{{/vars}}
+  private {{{datatypeWithEnum}}} {{name}} = {{^isArray}}{{{defaultValue}}}{{/isArray}}{{#isArray}}null{{/isArray}};{{/vars}}
+
+  public {{classname}}() {
+    if (ApiClient.LEGACY_EMPTY_LIST == true) { {{#vars}}{{#isArray}}
+      {{name}} = {{{defaultValue}}};{{/isArray}}{{/vars}}
+    }
+  }
 
   {{#vars}}{{^isReadOnly}}
   /**{{#description}}
