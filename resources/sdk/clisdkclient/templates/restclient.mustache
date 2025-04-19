@@ -646,10 +646,12 @@ func getConfUrl(c config.Configuration, path string, extendedPath string, overri
         if len(gateWayConfiguration.PathParams) > 0 {
             params := gateWayConfiguration.PathParams
            if tempValue, exists := params[path]; exists {
-                if !strings.HasPrefix(tempValue, "/") {
-                   pathValue = fmt.Sprintf("/%v", tempValue)
-                } else {
-                    pathValue = fmt.Sprintf("%v", tempValue)
+                if tempValue != "" {
+                   if !strings.HasPrefix(tempValue, "/") {
+                      pathValue = fmt.Sprintf("/%v", tempValue)
+                   } else {
+                      pathValue = fmt.Sprintf("%v", tempValue)
+                   }
                 }
            }
          }
