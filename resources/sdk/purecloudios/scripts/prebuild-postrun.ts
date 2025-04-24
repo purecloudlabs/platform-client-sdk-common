@@ -18,10 +18,10 @@ export class PreBuildPostRun {
 				podSource: `{ :git => 'git@github.com:MyPureCloud/platform-client-sdk-ios.git', :tag => '${version.displayFull}' }`,
 				podAuthors: 'Genesys Developer Evangelists',
 				podSocialMediaURL: 'https://twitter.com/PureCloud_Dev',
-				podDocsetURL: 'https://developer.mypurecloud.com/api/rest/client-libraries/ios/',
+				podDocsetURL: 'https://mypurecloud.github.io/platform-client-sdk-ios/',
 				podLicense: 'MIT',
-				podHomepage: 'https://developer.mypurecloud.com/',
-				podDocumentationURL: 'https://developer.mypurecloud.com/api/rest/client-libraries/ios/',
+				podHomepage: 'https://developer.genesys.cloud/',
+				podDocumentationURL: 'https://mypurecloud.github.io/platform-client-sdk-ios/',
 				podVersion: version.displayFull,
 				aggregateModels: (aggregateModels.toLowerCase() === "true")
 			};
