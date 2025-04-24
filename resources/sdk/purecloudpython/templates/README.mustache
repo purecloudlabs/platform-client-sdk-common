@@ -379,6 +379,14 @@ worktype_update.default_queue_id = PureCloudPlatformClientV2.ApiNullValue()
 task_api.patch_taskmanagement_worktype(worktype_id, worktype_update)
 ```
 
+### Managing updates in Platform API Enumerations
+
+The Platform API Client SDKs (Java, Javascript/NodeJs, Python, Go, .Net, iOS/Swift) are automatically generated using the Platform API OpenAPI v2 definition.
+The Platform API definition file is downloaded at the time of the SDK build and is used to generate operations (i.e. API methods) and definitions (i.e. classes for the different models, enumerations, ...) in the different SDK languages.
+
+The Python Platform API Client SDK implements the following strategy to manage the introduction of new enumeration values in the Platform API (i.e. in a version of the SDK which doesn't include these changes):
+* If an unknown enumeration value is received (i.e. a new enumeration value, introduced in Platform API, after the SDK version you are using was built), the SDK will map it to a `outdated_sdk_version` string value. This is to prevent errors during deserialization when an unknown enumeration value is received from Genesys Cloud.
+
 ## Inject Custom HTTP Client
 By default, the SDK uses the urllib3 library as the default HTTP client. If you want to inject a new third-party/custom implementation of the client, you can set the HTTP client instance.
 
