@@ -472,7 +472,7 @@ The Platform API definition file is downloaded at the time of the SDK build and 
 
 The .Net Platform API Client SDK implements the following strategy to manage the introduction of new enumeration values in the Platform API (i.e. in a version of the SDK which doesn't include these changes):
 * Each enumeration, generated from the Platform API OpenAPI v2 definition, always contains the following enumeration value: `[EnumMember(Value = "OUTDATED_SDK_VERSION")] OutdatedSdkVersion`
-* If an unknown enumeration value is received (i.e. a new enumeration value, introduced in Platform API, after the SDK version you are using was built), theSDK will map it to the `[EnumMember(Value = "OUTDATED_SDK_VERSION")] OutdatedSdkVersion` enumeration value. This is to prevent errors during deserialization when an unknown enumeration value is received from Genesys Cloud.
+* If an unknown enumeration value is received (i.e. a new enumeration value, introduced in Platform API, after the SDK version you are using was built), the SDK will map it to the `[EnumMember(Value = "OUTDATED_SDK_VERSION")] OutdatedSdkVersion` enumeration value. This is to prevent errors during deserialization when an unknown enumeration value is received from Genesys Cloud.
 
 ## NotificationHandler Helper Class
 
