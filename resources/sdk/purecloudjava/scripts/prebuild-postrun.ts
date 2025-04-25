@@ -18,7 +18,7 @@ export class PreBuildPostRun {
 				hideGenerationTimestamp: 'false',
 				httpUserAgent: 'PureCloud SDK',
 				packageDescription: 'A Java package to interface with the PureCloud Platform API',
-				packageUrl: 'https://developer.mypurecloud.com/api/rest/client-libraries/java/latest/'
+				packageUrl: 'https://mypurecloud.github.io/platform-client-sdk-java/'
 			};
 
 			fs.writeFileSync(swaggerCodegenConfigFilePath, JSON.stringify(config, null, 2));
