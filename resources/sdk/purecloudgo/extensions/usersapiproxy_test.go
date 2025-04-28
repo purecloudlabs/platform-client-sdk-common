@@ -101,7 +101,7 @@ func TestExampleUsersApi_GetUsers_CustomClient(t *testing.T) {
 
 	config.APIClient.SetMTLSCertificates("mtls-test/localhost.cert.pem", "mtls-test/localhost.key.pem", "mtls-test/ca-chain.cert.pem")
 
-	config.APIClient.client.SetRequestLogHook(PreHook)
+	config.APIClient.client.SetPreHook(PreHook)
 
 	// Create an API instance using the default config
 	usersAPI := NewUsersApiWithConfig(config)

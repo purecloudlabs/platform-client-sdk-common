@@ -452,7 +452,7 @@ func PreHook(logger retryablehttp.Logger, req *http.Request, retry int) {
 config.APIClient.SetMTLSCertificates("mtls-test/localhost.cert.pem", "mtls-test/localhost.key.pem", "mtls-test/ca-chain.cert.pem")
 
 // Set the pre-hook
-config.APIClient.client.SetRequestLogHook(PreHook)
+config.APIClient.client.SetPreHook(PreHook)
 
 ```
 
