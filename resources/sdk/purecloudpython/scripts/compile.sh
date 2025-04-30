@@ -28,3 +28,7 @@ echo "Install retry..."
 python3.9 -m pip install --user -U retry
 echo "Run unit tests -> SdkTests"
 python3.9 -m unittest SdkTests
+echo "Run unit tests mtls"
+python3.9 -m unittest SdkTests_mtls
+echo "Run unit tests proxy"
+python3.9 -m unittest SdkTests_proxy
