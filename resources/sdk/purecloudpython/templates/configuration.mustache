@@ -154,7 +154,7 @@ class Configuration(object):
             self._config_updater()
 
     def set_mtls_contents(self, certContent, keyContent, caContent):
-        ssl_context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+        ssl_context = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
 
         if not certContent or not keyContent or not caContent:
             raise ValueError("certContent, keyContent, and caContent must be provided for mTLS.")
@@ -169,7 +169,7 @@ class Configuration(object):
         self.ssl_context = ssl_context
 
     def set_mtls_certificates(self, certPath, keyPath, caPath = None):
-        ssl_context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+        ssl_context = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
 
         if not certPath or not keyPath:
             raise ValueError("certPath, keyPath and caPath must be provided for mTLS.")
@@ -185,7 +185,7 @@ class Configuration(object):
     
     def create_mtls_or_ssl_context(self):
         if self.ssl_context is None:  # set_mtls_contents() or set_mtls_certificates() were not called.
-            ssl_context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+            ssl_context = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
 
             if self.ssl_ca_cert:
                 ssl_context.load_verify_locations(cafile=self.ssl_ca_cert)
