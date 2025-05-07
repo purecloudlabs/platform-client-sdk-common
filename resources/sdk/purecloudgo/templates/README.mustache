@@ -421,6 +421,41 @@ if err != nil {
 // If your private key is passphrase-protected, make sure to decrypt it before passing to SetMTLSContents
 ```
 
+### Using Pre Commit and Post Commit Hooks
+
+For any custom requirements like pre validations or post cleanups (for ex: OCSP and CRL validation), we can inject the prehook and posthook functions.
+The SDK's default client will make sure the injected hook functions are executed.
+
+```go
+// PreHook implements the certificate revocation check
+func PreHook(logger retryablehttp.Logger, req *http.Request, retry int) {
+	config := platformclientv2.GetDefaultConfiguration()
+
+	// certificate extraction logic
+
+	// Check certificate status
+	isValid, err := validateCertificate(issuerCertificate, certificate)
+	if err != nil {
+		logger.Printf("[ERROR] Certificate validation failed: %v", err)
+		return
+	}
+
+	if !isValid {
+		logger.Printf("[ERROR] Certificate is revoked")
+	}
+    else {
+	    logger.Printf("[INFO] Certificate validation successful")
+    }
+}
+
+// Set MTLS certificates
+config.APIClient.SetMTLSCertificates("mtls-test/localhost.cert.pem", "mtls-test/localhost.key.pem", "mtls-test/ca-chain.cert.pem")
+
+// Set the pre-hook
+config.APIClient.client.SetPreHook(PreHook)
+
+```
+
 ## Versioning
 
 The SDK's version is incremented according to the [Semantic Versioning Specification](https://semver.org/). The decision to increment version numbers is determined by [diffing the Platform API's swagger](https://github.com/purecloudlabs/platform-client-sdk-common/blob/master/modules/swaggerDiff.js) for automated builds, and optionally forcing a version bump when a build is triggered manually (e.g. releasing a bugfix).
