@@ -47,11 +47,13 @@ export default class GatewayServer {
           reqURL = req.url.replace(/^\/login/, '')
           this.environment = this.fetchEnvironment("login");
       } else if (req.url?.includes('/api')) {
-          reqURL = req.url.replace(/^\/api/, '')
+          // Handle API requests - replace '/api/api' with '/api' if it exists
+          reqURL = req.url?.includes('/api/api') ? req.url.replace('/api/api', '/api') : req.url;
           this.environment = this.fetchEnvironment("api");
       } else {
           reqURL = req.url || ''
-      }      
+      }
+      
       // Parse incoming request URL
       const targetHost = url.parse(reqURL || '');
       log('Parsed target host', targetHost);
