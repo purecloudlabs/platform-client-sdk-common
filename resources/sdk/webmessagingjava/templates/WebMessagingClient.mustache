@@ -744,63 +744,69 @@ public class WebMessagingClient {
         }
 
 						String tracingId = baseMessage.getTracingId();
-						Object response = objectMapper.convertValue(baseMessage.getBody(), messageClass);
-						try {
-								((BaseResponse)(response)).setTracingId(tracingId);
-						} catch (ClassCastException e) {
 
-						}
-						switch (className) {
+        Object response = objectMapper.convertValue(baseMessage.getBody(), messageClass);
+        switch (className) {
             case "SessionResponse":
                 //set the configured allowed media for Supported Content Profile
-                setAllowedMediaInbound(((SessionResponse)response).getAllowedMedia());
+                setAllowedMediaInbound(((SessionResponse) response).getAllowedMedia());
+                ((SessionResponse) response).tracingId(tracingId);
                 // Invoke each listener
                 for (SessionListener sessionListener : sessionListeners) {
                     sessionListener.sessionResponse((SessionResponse) response, rawMessage);
                 }
                 break;
             case "StructuredMessage":
+                ((StructuredMessage) response).tracingId(tracingId);
                 for (SessionListener sessionListener : sessionListeners) {
                     sessionListener.structuredMessage((StructuredMessage) response, rawMessage);
                 }
                 break;
             case "PresignedUrlResponse":
+                ((PresignedUrlResponse) response).tracingId(tracingId);
                 for (SessionListener sessionListener : sessionListeners) {
                     sessionListener.presignedUrlResponse((PresignedUrlResponse) response, rawMessage);
                 }
                 break;
             case "UploadSuccessEvent":
+                ((UploadSuccessEvent) response).tracingId(tracingId);
                 for (SessionListener sessionListener : sessionListeners) {
                     sessionListener.uploadSuccessEvent((UploadSuccessEvent) response, rawMessage);
                 }
                 break;
             case "UploadFailureEvent":
+                ((UploadFailureEvent) response).tracingId(tracingId);
                 for (SessionListener sessionListener : sessionListeners) {
                     sessionListener.uploadFailureEvent((UploadFailureEvent) response, rawMessage);
                 }
                 break;
             case "ConnectionClosedEvent":
+                ((ConnectionClosedEvent) response).tracingId(tracingId);
                 for (SessionListener sessionListener : sessionListeners) {
                     sessionListener.connectionClosedEvent((ConnectionClosedEvent) response, rawMessage);
                 }
                 break;
             case "SessionExpiredEvent":
+                ((SessionExpiredEvent) response).tracingId(tracingId);
                 for (SessionListener sessionListener : sessionListeners) {
                     sessionListener.sessionExpiredEvent((SessionExpiredEvent) response, rawMessage);
                 }
                 break;
             case "SessionClearedEvent":
+                ((SessionClearedEvent) response).tracingId(tracingId);
                 for (SessionListener sessionListener : sessionListeners) {
                     sessionListener.sessionClearedEvent((SessionClearedEvent) response, rawMessage);
                 }
                 break;
             case "GetConfigurationResponse":
-                setAllowedMediaInbound(((GetConfigurationResponse)response).getAllowedMedia());
+                ((GetConfigurationResponse) response).tracingId(tracingId);
+                setAllowedMediaInbound(((GetConfigurationResponse) response).getAllowedMedia());
                 for (SessionListener sessionListener : sessionListeners) {
                     sessionListener.getConfigurationResponse((GetConfigurationResponse) response, rawMessage);
                 }
                 break;
             case "JwtResponse":
+                ((JwtResponse) response).tracingId(tracingId);
                 for (SessionListener sessionListener : sessionListeners) {
                     sessionListener.jwtResponse((JwtResponse) response, rawMessage);
                 }
