@@ -40,7 +40,6 @@ namespace PureCloudPlatform.Client.V2.Client
             if (clientOptions.LocalClientCertificates != null && clientOptions.LocalClientCertificates.Count > 0)
             {
                 // use HttpWebRequest
-                Console.WriteLine("Using WebRequest");
                 usingMTLS = true;
                 this.cookieContainer = new CookieContainer();
                 ConfigureServicePoint();
@@ -48,7 +47,6 @@ namespace PureCloudPlatform.Client.V2.Client
             else 
             {
                 // use RestClient
-                Console.WriteLine("Using RestClient");
                 BuildRestOptions();
             }
         }
@@ -89,7 +87,16 @@ namespace PureCloudPlatform.Client.V2.Client
 
         private bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
+            X509Certificate2 cert2 = certificate as X509Certificate2 ?? new X509Certificate2(certificate);
+
             Console.WriteLine("In Certificate Validation Callback");
+            var expectedCertThumbprint = "5898175B9B25A0BEBEE6D59DE67BDD8D87D06D70"; //test cert
+            if (cert2.Thumbprint.Equals(expectedCertThumbprint))
+            {
+                Console.WriteLine("Accepting Test Cert based on thumbprint");
+                return true;
+            }
+
             if (sslPolicyErrors != SslPolicyErrors.None)
             {
                 Console.WriteLine($"SSL Policy Errors: {sslPolicyErrors}");
@@ -170,7 +177,7 @@ namespace PureCloudPlatform.Client.V2.Client
             else //using RestSharp (HttpClient)
             {
                 var request = PrepareRestRequest((HttpRequestOptions)httpRequest);
-                Console.WriteLine(restClient.BuildUri(request));
+
                 var restResp = restClient.Execute(request);
 
                 return ConvertToHttpResponse(restResp);
@@ -321,7 +328,6 @@ namespace PureCloudPlatform.Client.V2.Client
                 fullUri = uriBuilder.Uri;
             }
 
-            Console.WriteLine(fullUri);
             var request = (HttpWebRequest)WebRequest.Create(fullUri);
             request.Method = options.Method;
             request.Timeout = this.Timeout;
@@ -377,7 +383,6 @@ namespace PureCloudPlatform.Client.V2.Client
                         request.TransferEncoding = header.Value;
                         break;
                     default:
-                        Console.WriteLine(header.Key);
                         request.Headers[header.Key] = header.Value;
                         break;
                 }

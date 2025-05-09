@@ -258,8 +258,7 @@ public class ApiClientTests
 
         stopwatch = Stopwatch.StartNew();
         HttpResponse user = (HttpResponse)await apiClient.CallApiAsync(path, method, queryParams, postBody, headerParams, formParams, fileParams, pathParams, contentType);
-        Console.WriteLine(stopwatch.ElapsedMilliseconds);
-        Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 5000 && stopwatch.ElapsedMilliseconds < 5150, "It will wait for every 1 Sec provided by Retry-After header Sec and retry for 5 Sec");
+        Assert.IsTrue(stopwatch.ElapsedMilliseconds >= 5000 && stopwatch.ElapsedMilliseconds < 5100, "It will wait for every 1 Sec provided by Retry-After header Sec and retry for 5 Sec");
         Assert.AreEqual(429, (int)user.StatusCode);
         stopwatch.Stop();
     }

@@ -17,11 +17,6 @@ else
 	echo "Using mozroots"
 	mozroots --import --sync
 fi
-# curl -L -o /tmp/cacert.pem https://curl.haxx.se/ca/cacert.pem
-# cert-sync --user /tmp/cacert.pem
-cert-sync --user $COMMON_DIR/resources/scripts/certs/ca-chain.cert.pem
-# certmgr -add -c -p "password123" CA $COMMON_DIR/resources/sdk/pureclouddotnet/scripts/mtls-test/client-mono.pfx
-# certmgr -list -c Trust
 
 # Install packages
 echo "Installing packages"
