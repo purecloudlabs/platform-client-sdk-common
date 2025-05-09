@@ -18,7 +18,7 @@ export class PreBuildPostRun {
 				hideGenerationTimestamp: 'false',
 				httpUserAgent: 'PureCloud Guest Chat SDK',
 				packageDescription: 'A Java package to interface with the PureCloud Platform API Guest Chat APIs',
-				packageUrl: 'https://developer.mypurecloud.com/api/rest/client-libraries/java-guest/'
+				packageUrl: 'https://mypurecloud.github.io/purecloud-guest-chat-client-java/'
 			};
 
 			fs.writeFileSync(swaggerCodegenConfigFilePath, JSON.stringify(config, null, 2));

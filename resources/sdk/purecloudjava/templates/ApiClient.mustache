@@ -45,12 +45,13 @@ import {{invokerPackage}}.auth.OAuth;
 import {{invokerPackage}}.connector.*;
 import {{invokerPackage}}.extensions.AuthResponse;
 import {{invokerPackage}}.Logger;
-import {{invokerPackage}}.LocalDateSerializer;
+import {{invokerPackage}}.extensions.LocalDateSerializer;
 
 public class ApiClient implements AutoCloseable {
     private static final String DEFAULT_BASE_PATH = "{{basePath}}";
     private static final String DEFAULT_USER_AGENT = "{{#httpUserAgent}}{{.}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen{{/httpUserAgent}}/java";
     private static final String USER_AGENT_HEADER = "User-Agent";
+    public static Boolean LEGACY_EMPTY_LIST = true;
 
     private static Map<String, Authentication> buildAuthentications() {
         Map<String, Authentication> authentications = new HashMap<>();{{#authMethods}}{{#isBasic}}
@@ -194,6 +195,9 @@ public class ApiClient implements AutoCloseable {
     }
 
     private ApiClientConnector buildHttpConnector(Builder builder) {
+        if (builder.connectorProvider != null) {
+            return builder.connectorProvider.create(properties);
+        }
         return ApiClientConnectorLoader.load(properties);
     }
 
@@ -1091,6 +1095,24 @@ public class ApiClient implements AutoCloseable {
         private Logger logger = null;
         private String configFilePath = null;
         private Boolean autoReloadConfig = true;
+        private ApiClientConnectorProvider connectorProvider;
+
+        public Builder withMTLSKeyStore(String keyStorePath, String keyStorePassword){
+            properties.setProperty(ApiClientConnectorProperty.KEYSTORE_PATH, keyStorePath);
+            properties.setProperty(ApiClientConnectorProperty.KEYSTORE_PASSWORD, keyStorePassword);
+            return this;
+        }
+        
+        public Builder withMTLSTrustStore(String trustStorePath, String trustStorePassword){
+            properties.setProperty(ApiClientConnectorProperty.TRUSTSTORE_PATH, trustStorePath);
+            properties.setProperty(ApiClientConnectorProperty.TRUSTSTORE_PASSWORD, trustStorePassword);
+            return this;
+        }
+
+        public Builder withClientProvider(ApiClientConnectorProvider provider) {
+            this.connectorProvider = provider;
+            return this;
+        }
 
         private Builder(ConnectorProperties properties) {
             this.gatewayConfiguration = new GatewayConfiguration();

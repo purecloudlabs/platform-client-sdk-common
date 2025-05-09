@@ -13,7 +13,7 @@ export class PreBuildPostRun {
 				packageDescription: 'A Python library to interface with the PureCloud Platform API',
 				packageAuthor: 'Genesys Developer Evangelists',
 				packageAuthorEmail: 'DeveloperEvangelists@Genesys.com',
-				packageUrl: 'https://developer.mypurecloud.com/api/rest/client-libraries/python/',
+				packageUrl: 'https://mypurecloud.github.io/platform-client-sdk-python/',
 				packageKeywords: 'PureCloud Platform API Genesys',
 				install_requires: '',
 				httpUserAgent: 'PureCloud SDK'

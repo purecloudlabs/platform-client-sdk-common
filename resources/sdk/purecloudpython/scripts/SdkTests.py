@@ -11,7 +11,7 @@ class SdkTests(unittest.TestCase):
 	lastResult = None
 
 	userId = None
-	userEmail = None;
+	userEmail = None
 	userName = 'Python SDK Tester'
 	userDepartment = 'Ministry of Testing'
 	userProfileSkill = 'Testmaster'
@@ -45,7 +45,7 @@ class SdkTests(unittest.TestCase):
 		print(PureCloudPlatformClientV2)
 
 	def test_2_authenticate(self):
-		environment = os.environ.get('PURECLOUD_ENVIRONMENT');
+		environment = os.environ.get('PURECLOUD_ENVIRONMENT')
 		region = self.purecloudregiontest(environment)
 		if isinstance(region,PureCloudPlatformClientV2.PureCloudRegionHosts):
 			PureCloudPlatformClientV2.configuration.host = region.get_api_host()
@@ -163,4 +163,6 @@ class SdkTests(unittest.TestCase):
 
 if __name__ == '__main__':
 	unittest.sortTestMethodsUsing(None)
+	print("Running SdkTests Tests")
 	unittest.main()
+	print("SdkTests Tests Complete")

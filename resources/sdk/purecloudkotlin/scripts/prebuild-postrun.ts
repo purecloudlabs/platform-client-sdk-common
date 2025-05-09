@@ -19,7 +19,7 @@ export class PreBuildPostRun {
 				hideGenerationTimestamp: 'true',
 				httpUserAgent: 'PureCloud SDK',
 				packageDescription: 'A Kotlin package to interface with the PureCloud Platform API',
-				packageUrl: 'https://developer.mypurecloud.com/api/rest/client-libraries/kotlin/latest/'
+				packageUrl: 'https://developer.genesys.cloud/api/rest/client-libraries/kotlin/latest/'
 			};
 
 			fs.writeFileSync(swaggerCodegenConfigFilePath, JSON.stringify(config, null, 2));

@@ -44,7 +44,7 @@ val usersApi = UsersApi()
 val users = usersApi.getUsers(null, null, null, null, null, null, null)
 ```
 
-For user applications, the consuming application must complete an implicit, auth token, or SAML2 Bearer OAuth flow to get an access token outside the scope of the SDK. Once an access token is obtained, it should be set on the SDK via constructing a new ApiClient instance (use `withAccessToken(token: String)`). For more information about authenticating with OAuth, see the Developer Center article [Authorization](https://developer.mypurecloud.com/api/rest/authorization/index.html). For more information about SAML2 Bearer Oauth flow view the example below 
+For user applications, the consuming application must complete an implicit, auth token, or SAML2 Bearer OAuth flow to get an access token outside the scope of the SDK. Once an access token is obtained, it should be set on the SDK via constructing a new ApiClient instance (use `withAccessToken(token: String)`). For more information about authenticating with OAuth, see the Developer Center article [Authorization](https://developer.genesys.cloud/api/rest/authorization/index.html). For more information about SAML2 Bearer Oauth flow view the example below 
 
 #### Authentication with SAML2Bearer token
 
@@ -64,7 +64,7 @@ println("Authentication successful. Access token expires in ${authResponse.getBo
 
 #### Authentication with Authorization Code
 
-See example on how to authenticate with an authorization code below. For more information see the article on [Code Authorization](https://developer.mypurecloud.com/api/rest/authorization/use-authorization-code.html)
+See example on how to authenticate with an authorization code below. For more information see the article on [Code Authorization](https://developer.genesys.cloud/api/rest/authorization/use-authorization-code.html)
 
 ```{"language":"kotlin"}
 val clientId = "a0bda580-cb41-4ff6-8f06-28ffb4227594"
@@ -168,7 +168,7 @@ Setting `RetryConfiguration` instance to `ApiClient`:
 ```
 Set the `maxRetryTimeSec` to the number of seconds to process retries before returning an error.
 When the retry time is a a positive integer, the SDK will follow the recommended backoff logic using the provided configuration.
-The best practices are documented in the [Rate Limiting](https://developer.mypurecloud.com/api/rest/rate_limits.html) Developer Center article.
+The best practices are documented in the [Rate Limiting](https://developer.genesys.cloud/api/rest/rate_limits.html) Developer Center article.
 
 #### Other ApiClient.Builder methods
 
@@ -284,7 +284,7 @@ notificationHandler.addSubscriptions(
 
 **Send a ping**
 
-To test the connection, you may send a ping. For more information about this ping, see [Use the notification service](https://developer.mypurecloud.com/api/rest/v2/notifications/notification_service.html) under the _WebSocket Health Check_ heading.
+To test the connection, you may send a ping. For more information about this ping, see [Use the notification service](https://developer.genesys.cloud/api/rest/v2/notifications/notification_service.html) under the _WebSocket Health Check_ heading.
 
 ```{"language":"kotlin"}
 notificationHandler.sendPing()
@@ -346,4 +346,4 @@ The SDK's version is incremented according to the [Semantic Versioning Specifica
 
 This package is intended to be forwards compatible with v2 of PureCloud's Platform API. While the general policy for the API is not to introduce breaking changes, there are certain additions and changes to the API that cause breaking changes for the SDK, often due to the way the API is expressed in its swagger definition. Because of this, the SDK can have a major version bump while the API remains at major version 2. While the SDK is intended to be forward compatible, patches will only be released to the latest version. For these reasons, it is strongly recommended that all applications using this SDK are kept up to date and use the latest version of the SDK.
 
-For any issues, questions, or suggestions for the SDK, visit the [PureCloud Developer Forum](https://developer.mypurecloud.com/forum/).
+For any issues, questions, or suggestions for the SDK, visit the [Genesys Cloud Developer Community](https://community.genesys.com/communities/community-home1/digestviewer?CommunityKey=a39cc4d6-857e-43cb-be7b-019581ab9f38).

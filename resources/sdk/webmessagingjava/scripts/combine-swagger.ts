@@ -1,6 +1,7 @@
 import fs from 'fs';
 import childProcess from 'child_process';
-import { Swagger , Definition, Property} from '../../../../modules/types/swagger';
+import { Swagger , Definition, Property, ProduceElement, ItemsType} from '../../../../modules/types/swagger';
+
 export class CombineSwagger {
     internalSwagger: Swagger;
     newSwagger: Swagger;
@@ -9,58 +10,72 @@ export class CombineSwagger {
     init() {
         try {
 
-            const newSwaggerPath = process.argv[2]
-            const internalSwaggerPath = process.argv[3]
+            const newSwaggerPath = process.argv[2];
+            const internalSwaggerPath = process.argv[3];
             const saveNewSwaggerPath = process.argv[4];
 
             // Retrieve internal swagger
             if (fs.existsSync(internalSwaggerPath)) {
-                console.log(`Loading internal swagger from disk: ${internalSwaggerPath}`)
-                this.internalSwagger = JSON.parse(fs.readFileSync(internalSwaggerPath, 'utf8'))
+                console.log('Loading internal swagger from disk');
+                this.internalSwagger = JSON.parse(fs.readFileSync(internalSwaggerPath, 'utf8'));
             } else if (internalSwaggerPath.toLowerCase().startsWith('http')) {
-                console.log(`Downloading internal swagger from: ${internalSwaggerPath}`)
-                let file = this.downloadFile(internalSwaggerPath)
-                this.internalSwagger = JSON.parse(file)
+                console.log('Downloading internal swagger');
+                let file = this.downloadFile(internalSwaggerPath);
+                this.internalSwagger = JSON.parse(file);
             } else {
-                console.log(`Invalid internalSwaggerPath: ${internalSwaggerPath}`)
+                console.log('Invalid internalSwaggerPath');
             }
 
             // Retrieve new swagger
             if (fs.existsSync(newSwaggerPath)) {
-                console.log(`Loading new swagger from disk: ${newSwaggerPath}`)
-                this.newSwagger = JSON.parse(fs.readFileSync(newSwaggerPath, 'utf8'))
+                console.log('Loading new swagger');
+                // Special treatment for Web Messaging specification (downgrade from OpenAPI v3 to Swagger v2)
+				// Verify specification version and downgrade only if openapi=="3..." (starts with 3)
+                let newSwaggerRaw: any = JSON.parse(fs.readFileSync(newSwaggerPath, 'utf8'));
+                if (newSwaggerRaw && newSwaggerRaw.openapi && newSwaggerRaw.openapi.startsWith("3")) {
+                    this.newSwagger = this.convertToV2(newSwaggerRaw);
+                } else {
+                    this.newSwagger = newSwaggerRaw;
+                }
             } else if (newSwaggerPath.toLowerCase().startsWith('http')) {
-                console.log(`Downloading new swagger from: ${newSwaggerPath}`)
-                this.newSwagger = JSON.parse(this.downloadFile(newSwaggerPath))
+                console.log('Downloading new swagger');
+                // Special treatment for Web Messaging specification (downgrade from OpenAPI v3 to Swagger v2)
+				// Verify specification version and downgrade only if openapi=="3..." (starts with 3)
+                let newSwaggerRaw: any = JSON.parse(this.downloadFile(newSwaggerPath));
+                if (newSwaggerRaw && newSwaggerRaw.openapi && newSwaggerRaw.openapi.startsWith("3")) {
+                    this.newSwagger = this.convertToV2(newSwaggerRaw);
+                } else {
+                    this.newSwagger = newSwaggerRaw;
+                }
             } else {
-                console.log(`Invalid newSwaggerPath: ${newSwaggerPath}`)
+                console.log('Invalid newSwaggerPath');
             }
 
-            this.internalSwagger = this.processRefs(this.internalSwagger)
-            this.newSwagger = this.processRefs(this.newSwagger)
+            this.internalSwagger = this.processRefs(this.internalSwagger);
+            this.newSwagger = this.processRefs(this.newSwagger);
 
-            const webmessagingPath = "/api/v2/webmessaging/messages"
-            delete this.newSwagger["basePath"]
-            this.newSwagger["host"] = "api.mypurecloud.com"
-            this.newSwagger["paths"][webmessagingPath] = this.internalSwagger["paths"][webmessagingPath]
-            this.newSwagger["responses"] = this.internalSwagger["responses"]
-            this.newSwagger["securityDefinitions"] = this.internalSwagger["securityDefinitions"]
+            const webmessagingPath = "/api/v2/webmessaging/messages";
+            delete this.newSwagger["basePath"];
+            this.newSwagger["host"] = "api.mypurecloud.com";
+            this.newSwagger["paths"][webmessagingPath] = this.internalSwagger["paths"][webmessagingPath];
+            this.newSwagger["responses"] = this.internalSwagger["responses"];
+            this.newSwagger["securityDefinitions"] = this.internalSwagger["securityDefinitions"];
 
-            const responses = this.internalSwagger.paths[webmessagingPath].get.responses
+            const responses = this.internalSwagger.paths[webmessagingPath].get.responses;
 
             for (const responseValues of Object.values(responses)) {
-                let responseValuesSchemaDefinition = responseValues["schema"]["$ref"].replace("#/definitions/", "")
+                let responseValuesSchemaDefinition = responseValues["schema"]["$ref"].replace("#/definitions/", "");
                 if (this.existingDefinitions !== undefined && this.existingDefinitions.includes(responseValuesSchemaDefinition))
-                    continue
+                    continue;
 
-                this.newSwagger["definitions"][responseValuesSchemaDefinition] = this.internalSwagger.definitions[responseValuesSchemaDefinition]
-                this.addDefinitions(this.internalSwagger.definitions[responseValuesSchemaDefinition])
-                this.existingDefinitions.push(responseValuesSchemaDefinition)
+                this.newSwagger["definitions"][responseValuesSchemaDefinition] = this.internalSwagger.definitions[responseValuesSchemaDefinition];
+                this.addDefinitions(this.internalSwagger.definitions[responseValuesSchemaDefinition]);
+                this.existingDefinitions.push(responseValuesSchemaDefinition);
             }
 
             if (saveNewSwaggerPath) {
-                console.log(`Writing new swagger to ${saveNewSwaggerPath}`)
-                fs.writeFileSync(saveNewSwaggerPath, JSON.stringify(this.newSwagger))
+                console.log('Writing new swagger');
+                fs.writeFileSync(saveNewSwaggerPath, JSON.stringify(this.newSwagger));
             }
 
 
@@ -68,6 +83,110 @@ export class CombineSwagger {
             process.exitCode = 1;
             console.log(err);
         }
+    }
+
+    convertToV2(swaggerV3 : any) {
+        let swaggerV2: Swagger = {
+            swagger: '2.0',
+            host: '',
+            info: {
+                description: '',
+                    version: '',
+                    title: '',
+                    contact: {
+                        name: '',
+                        url: '',
+                        email: ''
+                    }
+            },
+            externalDocs: {
+                description: '',
+                url: ''
+            },
+            consumes: [ProduceElement.ApplicationJSON],
+            produces: [ProduceElement.ApplicationJSON],
+            tags: [],
+            definitions: {},
+            paths: {},
+            responses: {},
+            schemes: [],
+            securityDefinitions: {}
+        };
+        swaggerV2["basePath"] = '/';
+        swaggerV2["info"] = swaggerV3["info"];
+
+        // At this time, web messaging specification only includes definitions/schemas (no API operation)
+		// We only take care of the schemas (v3) to definitions migration (v2)
+		if (swaggerV3 && swaggerV3.components && swaggerV3.components.schemas) {
+            // Change #/components/schemas/ to #/definitions/ using string replace
+			let allSwaggerV3SchemasAsStr = JSON.stringify(swaggerV3.components.schemas);
+            const regexConvertSchemas = /#\/components\/schemas\//g;
+            allSwaggerV3SchemasAsStr = allSwaggerV3SchemasAsStr.replace(regexConvertSchemas, '#/definitions/');
+            swaggerV2["definitions"] = JSON.parse(allSwaggerV3SchemasAsStr);
+
+            // Clean unwanted attributes from the migrated schemas
+			const keys = Object.keys(swaggerV2.definitions);
+            keys.forEach((key, index) => {
+                let obj: any = swaggerV2.definitions[key];
+                if (obj) {
+                    // Update "additionalProperties: { additionalProperties: true }"" and "additionalProperties: {}"" to "additionalProperties: true"
+					if (obj && obj.additionalProperties && (typeof obj.additionalProperties == 'object') && obj.additionalProperties.additionalProperties && obj.additionalProperties.additionalProperties == true) {
+                        obj.additionalProperties = true;
+                    } else if (obj && obj.additionalProperties && (typeof obj.additionalProperties == 'object') && Object.keys(obj.additionalProperties).length == 0) {
+                        obj.additionalProperties = true;
+                    }
+                    // anyOf not supported at definition level - update to generic { type: object }
+					if (obj.hasOwnProperty("anyOf")) {
+                        obj["type"] = ItemsType.Object;
+                        delete obj["anyOf"];
+                    }
+
+                    if (obj && obj.properties) {
+                        const keys = Object.keys(swaggerV2.definitions[key].properties);
+                        keys.forEach((key2, index) => {
+                            let obj2 = swaggerV2.definitions[key].properties[key2];
+                            if (obj2) {
+                                // Remove nullable attribute (not supported in v2)
+								if (obj2.hasOwnProperty("nullable")) {
+                                    delete obj2["nullable"];
+                                }
+                                // Remove anyOf attribute (not supported in v2)
+								// Interpret as string (date, time) - [{"type": "string"},{"type": "number","format": "double"}]
+								// Interpret as generic object otherwise
+								if (obj2.hasOwnProperty("anyOf")) {
+                                    if (obj2["anyOf"].length == 2) {
+                                        if (obj2["anyOf"][0] && obj2["anyOf"][0].type && obj2["anyOf"][0].type == "string" &&
+                                            obj2["anyOf"][1] && obj2["anyOf"][1].type && obj2["anyOf"][1].type == "number") {
+                                            obj2["type"] = ItemsType.String;
+                                        } else if (obj2["anyOf"][0] && obj2["anyOf"][0].type && obj2["anyOf"][0].type == "number" &&
+                                            obj2["anyOf"][1] && obj2["anyOf"][1].type && obj2["anyOf"][1].type == "string") {
+                                            obj2["type"] = ItemsType.String;
+                                        } else {
+                                            obj2["type"] = ItemsType.Object;
+                                        }
+                                    } else {
+                                        obj2["type"] = ItemsType.Object;
+                                    }
+                                    delete obj2["anyOf"];
+                                }
+                                // Remove allOf with single element and replace with $ref
+								// This is to facilitate swagger diff comparison
+								if (obj2.hasOwnProperty("allOf")) {
+									if (obj2["allOf"].length == 1) {
+										if (obj2["allOf"][0]["$ref"]) {
+											obj2["$ref"] = obj2["allOf"][0]["$ref"];
+											delete obj2["allOf"];
+										}
+									}
+								}
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        return swaggerV2;
     }
 
     addDefinitions(definitionBody:  Definition ) {
