@@ -69,7 +69,6 @@ namespace PureCloudPlatform.Client.V2.Client
 
             if (clientOptions.HttpMessageHandler != null)
             {
-                Console.WriteLine("MOCK HANDLER");
                 options.ConfigureMessageHandler = _ =>
                 {
                     return clientOptions.HttpMessageHandler;
@@ -341,7 +340,6 @@ namespace PureCloudPlatform.Client.V2.Client
 
             if (clientOptions.Proxy != null)
             {
-                Console.WriteLine("SETTING PROXY");
                 request.Proxy = clientOptions.Proxy;
             }
 
