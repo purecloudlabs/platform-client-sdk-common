@@ -45,7 +45,6 @@ export default class GatewayServer {
       let reqURL: string | undefined;
       if (req.url?.includes('/login') || req.url?.includes('/oauth/token')) {
           reqURL = req.url.replace(/^\/login/, '')
-          console.log("HERE");
           this.environment = this.fetchEnvironment("login");
       } else if (req.url?.includes('/api')) {
           // Handle API requests - replace '/api/api' with '/api' if it exists
