@@ -43,7 +43,7 @@ export default class GatewayServer {
       });
 
       let reqURL: string | undefined;
-      if (req.url?.includes('/login')) {
+      if (req.url?.includes('/login') || req.url?.includes('/oauth/token')) {
           reqURL = req.url.replace(/^\/login/, '')
           this.environment = this.fetchEnvironment("login");
       } else if (req.url?.includes('/api')) {

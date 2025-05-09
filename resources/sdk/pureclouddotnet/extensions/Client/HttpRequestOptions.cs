@@ -133,6 +133,7 @@ namespace {{=it.packageName }}.Client
         }
 
         // Optional fields
+        /// <summary>
         /// Sets the query parameters
         /// </summary>
         /// <param name="queryParams">The query parameters to set</param>
