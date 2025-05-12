@@ -9,9 +9,9 @@ using System.Net.Http;
 using System.Net.Security;
 using RestSharp;
 using System.Security.Cryptography.X509Certificates;
-using PureCloudPlatform.Client.V2.Extensions;
+using {{=it.packageName }}.Extensions;
 
-namespace PureCloudPlatform.Client.V2.Client
+namespace {{=it.packageName }}.Client
 {
     /// <summary>
     /// Default implementation of HTTP client that uses RestSharp to execute HTTP requests
