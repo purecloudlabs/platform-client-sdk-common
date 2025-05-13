@@ -114,6 +114,9 @@ namespace {{=it.packageName }}.Client
         /// </summary>
         public override async Task<IHttpResponse> ExecuteAsync(IHttpRequest httpRequest, CancellationToken cancellationToken = default(CancellationToken))
         {
+            httpRequest = ApplyPreRequestHook(httpRequest);
+            IHttpResponse resp;
+
             if (usingMTLS)  //using HttpWebRequest
             {
                 var request = PrepareWebRequest((HttpRequestOptions)httpRequest);
@@ -140,14 +143,14 @@ namespace {{=it.packageName }}.Client
                 {
                     using (var response = (HttpWebResponse)await request.GetResponseAsync())
                     {
-                        return await ConvertToHttpResponse(response);
+                        resp = await ConvertToHttpResponse(response);
                     }
                 }
                 catch (WebException ex)
                 {
                     if (ex.Response is HttpWebResponse errorResponse)
                     {
-                        return await ConvertToHttpResponse(errorResponse);
+                        resp = await ConvertToHttpResponse(errorResponse);
                     }
                     throw;
                 }
@@ -158,8 +161,10 @@ namespace {{=it.packageName }}.Client
 
                 var restResp =  await restClient.ExecuteAsync(request, cancellationToken);
 
-                return ConvertToHttpResponse(restResp);
+                resp = ConvertToHttpResponse(restResp);
             }
+
+            return ApplyPostRequestHook(resp);
         }
 
         /// <summary>
@@ -167,9 +172,12 @@ namespace {{=it.packageName }}.Client
         /// </summary>
         public override IHttpResponse Execute(IHttpRequest httpRequest)
         {
+            httpRequest = ApplyPreRequestHook(httpRequest);
+            IHttpResponse resp;
+
             if (usingMTLS) //using HttpWebRequest
             {
-                return ExecuteAsync(httpRequest).GetAwaiter().GetResult();
+                resp = ExecuteAsync(httpRequest).GetAwaiter().GetResult();
             }
             else //using RestSharp (HttpClient)
             {
@@ -177,8 +185,10 @@ namespace {{=it.packageName }}.Client
 
                 var restResp = restClient.Execute(request);
 
-                return ConvertToHttpResponse(restResp);
+                resp = ConvertToHttpResponse(restResp);
             }
+
+            return ApplyPostRequestHook(resp);
         }
 
         private IHttpResponse ConvertToHttpResponse(RestResponse response)
