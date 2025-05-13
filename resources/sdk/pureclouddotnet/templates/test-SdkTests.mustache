@@ -346,14 +346,14 @@ namespace {{packageName}}.Tests
             // Configure MTLS certificates
             var certPath = "../../../resources/sdk/pureclouddotnet/scripts/mtls-test/mono-test-cert.pfx";
             var certPass = "goodPassword123";
-            PureCloudPlatform.Client.V2.Client.Configuration.Default.ApiClient.SetMTLSCertificates(certPath, certPass);
+            {{packageName}}.Client.Configuration.Default.ApiClient.SetMTLSCertificates(certPath, certPass);
 
             // Verify certificate was loaded
-            var certCollection = PureCloudPlatform.Client.V2.Client.Configuration.Default.ApiClient.ClientOptions.LocalClientCertificates;
+            var certCollection = {{packageName}}.Client.Configuration.Default.ApiClient.ClientOptions.LocalClientCertificates;
             Assert.IsNotNull(certCollection, "Certificate collection should not be null");
 
             // Setup Gateway
-            PureCloudPlatform.Client.V2.Client.Configuration.Default.ApiClient.SetGateway(
+            {{packageName}}.Client.Configuration.Default.ApiClient.SetGateway(
                 host: "localhost",
                 protocol: "https",
                 port: 4027,
@@ -371,17 +371,17 @@ namespace {{packageName}}.Tests
             PureCloudRegionHosts? region = getRegion(environment);
             if (region == null)
             { //Returned in the case of default value
-                PureCloudPlatform.Client.V2.Client.Configuration.Default.ApiClient.setBasePath("https://api." + environment);
+                {{packageName}}.Client.Configuration.Default.ApiClient.setBasePath("https://api." + environment);
             }
             else
             {
                 PureCloudRegionHosts regionval = region.GetValueOrDefault();
-                PureCloudPlatform.Client.V2.Client.Configuration.Default.ApiClient.setBasePath(regionval);
+                {{packageName}}.Client.Configuration.Default.ApiClient.setBasePath(regionval);
             }
 
-            PureCloudPlatform.Client.V2.Client.Configuration.Default.ApiClient.PostToken(clientId, clientSecret);
+            {{packageName}}.Client.Configuration.Default.ApiClient.PostToken(clientId, clientSecret);
 
-            Assert.IsNotEmpty(PureCloudPlatform.Client.V2.Client.Configuration.Default.AccessToken);
+            Assert.IsNotEmpty({{packageName}}.Client.Configuration.Default.AccessToken);
         }
 
         ///<Summary>
@@ -458,10 +458,10 @@ namespace {{packageName}}.Tests
         [Test, Order(7)]
         public void CleanUp()
         {
-            PureCloudPlatform.Client.V2.Client.Configuration.Default.ApiClient.ClientOptions.LocalClientCertificates.Clear();
-            PureCloudPlatform.Client.V2.Client.Configuration.Default.ApiClient.ClientOptions.LocalClientCertificates = null;
+            {{packageName}}.Client.Configuration.Default.ApiClient.ClientOptions.LocalClientCertificates.Clear();
+            {{packageName}}.Client.Configuration.Default.ApiClient.ClientOptions.LocalClientCertificates = null;
 
-            PureCloudPlatform.Client.V2.Client.Configuration.Default.ApiClient.SetGateway(
+            {{packageName}}.Client.Configuration.Default.ApiClient.SetGateway(
                 host: null,
                 protocol: "https",
                 port: -1,
