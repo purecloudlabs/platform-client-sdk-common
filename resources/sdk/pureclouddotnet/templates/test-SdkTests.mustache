@@ -39,6 +39,27 @@ namespace {{packageName}}.Tests
         string busyPresenceId = "31fe3bac-dea6-44b7-bed7-47f91660a1a0";
         string availablePresenceId = "6a3af858-942f-489d-9700-5f9bcdcdae9b";
 
+        private IHttpRequest preHook(IHttpRequest request)
+        {
+            Console.WriteLine("Running Pre-Request Hook");
+            var options = (HttpRequestOptions)request;
+            
+            options.AddHeaderParam("Test-Header", "Pre-Hook-Test");
+            
+            Console.WriteLine($"Pre-Hook: Making {options.Method} request to {options.Url}");
+            
+            return request;
+        }
+
+        private IHttpResponse postHook(IHttpResponse response)
+        {
+            Console.WriteLine("Running Post-Request Hook");
+            
+            Console.WriteLine($"Post-Hook: Received status code {response.StatusCode}");
+            
+            return response;
+        }
+
         ///<Summary>
         /// SdkTests default constructor
         ///</Summary>
@@ -207,6 +228,9 @@ namespace {{packageName}}.Tests
         [Test, Retry(2), Order(6)]
         public void GetUser()
         {
+                {{packageName}}.Client.Configuration.Default.ApiClient.HttpClient.SetPreRequestHook(preHook);
+                {{packageName}}.Client.Configuration.Default.ApiClient.HttpClient.SetPostRequestHook(postHook);
+
                 Thread.Sleep(6000);
                 var user = usersApi.GetUserWithHttpInfo(userId, new List<string>() { "profileSkills" }, null, null);
                 Assert.AreEqual(user.Data.Id, userId);
@@ -219,6 +243,9 @@ namespace {{packageName}}.Tests
                 // Assert.IsNotNull(user.Data.ProfileSkills);
                 // Assert.AreEqual(user.Data.ProfileSkills.Count, 1);
                 // Assert.AreEqual(user.Data.ProfileSkills[0], userProfileSkill);
+
+                {{packageName}}.Client.Configuration.Default.ApiClient.HttpClient.SetPreRequestHook(null);
+                {{packageName}}.Client.Configuration.Default.ApiClient.HttpClient.SetPostRequestHook(null);
         }
 
         ///<Summary>
@@ -308,6 +335,27 @@ namespace {{packageName}}.Tests
         string userEmail;
         string userName = ".NET SDK MTLS Tester";
         string userDepartment = "Ministry of MTLS Testing";
+
+        private IHttpRequest preHook(IHttpRequest request)
+        {
+            Console.WriteLine("Running Pre-Request Hook");
+            var options = (HttpRequestOptions)request;
+            
+            options.AddHeaderParam("X-Test-Header", "Pre-Hook-Test");
+            
+            Console.WriteLine($"Pre-Hook: Making {options.Method} request to {options.Url}");
+            
+            return request;
+        }
+
+        private IHttpResponse postHook(IHttpResponse response)
+        {
+            Console.WriteLine("Running Post-Request Hook");
+            
+            Console.WriteLine($"Post-Hook: Received status code {response.StatusCode}");
+            
+            return response;
+        }
 
         ///<Summary>
         /// MTLSTests default constructor
@@ -414,6 +462,9 @@ namespace {{packageName}}.Tests
         [Test, Order(4)]
         public void UpdateUser()
         {
+            {{packageName}}.Client.Configuration.Default.ApiClient.HttpClient.SetPreRequestHook(preHook);
+            {{packageName}}.Client.Configuration.Default.ApiClient.HttpClient.SetPostRequestHook(postHook);
+
             var updateUser = new UpdateUser()
             {
                 Department = userDepartment,
@@ -426,6 +477,9 @@ namespace {{packageName}}.Tests
             Assert.AreEqual(user.Name, userName);
             Assert.AreEqual(user.Email, userEmail);
             Assert.AreEqual(user.Department, userDepartment);
+
+            {{packageName}}.Client.Configuration.Default.ApiClient.HttpClient.SetPreRequestHook(null);
+            {{packageName}}.Client.Configuration.Default.ApiClient.HttpClient.SetPostRequestHook(null);
         }
 
         ///<Summary>
