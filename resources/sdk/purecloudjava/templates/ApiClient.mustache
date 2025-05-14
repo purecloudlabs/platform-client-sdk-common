@@ -47,6 +47,12 @@ import {{invokerPackage}}.extensions.AuthResponse;
 import {{invokerPackage}}.Logger;
 import {{invokerPackage}}.extensions.LocalDateSerializer;
 
+import {{invokerPackage}}.hooksmanager.HookManager;
+import {{invokerPackage}}.hooksmanager.LoggingPostResponseHook;
+import {{invokerPackage}}.hooksmanager.LoggingPreRequestHook;
+import {{invokerPackage}}.hooksmanager.PostResponseHook;
+import {{invokerPackage}}.hooksmanager.PreRequestHook;
+
 public class ApiClient implements AutoCloseable {
     private static final String DEFAULT_BASE_PATH = "{{basePath}}";
     private static final String DEFAULT_USER_AGENT = "{{#httpUserAgent}}{{.}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen{{/httpUserAgent}}/java";
@@ -89,6 +95,9 @@ public class ApiClient implements AutoCloseable {
     private String configFilePath;
     private Boolean autoReloadConfig;
 
+    // prehook/posthook declarations
+    private final HookManager hookManager;
+
     public ApiClient() {
         this(Builder.standard());
     }
@@ -99,6 +108,8 @@ public class ApiClient implements AutoCloseable {
             basePath = DEFAULT_BASE_PATH;
         }
         this.basePath = basePath;
+
+        this.hookManager = new HookManager();
 
         RetryConfiguration retryConfig = builder.retryConfiguration;
         if (retryConfig == null) {
@@ -281,6 +292,17 @@ public class ApiClient implements AutoCloseable {
             String pathParamsLogin,
             String pathParamsApi) {
         this.gatewayConfiguration = new GatewayConfiguration(host, protocol, port, pathParamsLogin, pathParamsApi);
+    }
+
+    /**
+    *   Methods to set the hooks
+    */
+    public void addPreRequestHook(PreRequestHook hook) {
+        hookManager.addPreRequestHook(hook);
+    }
+
+    public void addPostResponseHook(PostResponseHook hook) {
+        hookManager.addPostResponseHook(hook);
     }
 
     /**
@@ -878,6 +900,12 @@ public class ApiClient implements AutoCloseable {
         ApiClientConnectorRequest connectorRequest = prepareConnectorRequest(request, isAuthRequest);
         ApiClientConnectorResponse connectorResponse = null;
         Map<String,String> requestHeaderCopy = new HashMap<>(connectorRequest.getHeaders());
+
+        // Execute pre-request hooks
+        for (PreRequestHook hook : hookManager.getPreRequestHooks()) {
+            connectorRequest = hook.execute(connectorRequest);
+        }
+
         try {
             Retry retry = new Retry(retryConfiguration);
             do {
@@ -888,7 +916,14 @@ public class ApiClient implements AutoCloseable {
                 logger.trace(connectorRequest.getMethod(), connectorRequest.getUrl(), connectorRequest.readBody(), connectorResponse.getStatusCode(), requestHeaderCopy, responseHeaderCopy);
             } while (retry.shouldRetry(connectorResponse));
             try {
-                return interpretConnectorResponse(connectorResponse, returnType);
+                 ApiResponse<T> response = interpretConnectorResponse(connectorResponse, returnType);
+            
+                // Execute post-response hooks
+                for (PostResponseHook<?> hook : hookManager.getPostResponseHooks()) {
+                    response = hook.execute(response);
+                }
+                
+                return response;
             } catch (ApiException e) {
                 if (e.getStatusCode() == 401 && shouldRefreshAccessToken) {
                     handleExpiredAccessToken();
