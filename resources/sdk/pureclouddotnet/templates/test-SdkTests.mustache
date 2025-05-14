@@ -468,6 +468,10 @@ namespace {{packageName}}.Tests
                 pathParamsLogin: null,
                 pathParamsApi: null
             );
+
+            {{packageName}}.Client.Configuration.Default.ApiClient.HttpClient = new DefaultHttpClient(
+                {{packageName}}.Client.Configuration.Default.ApiClient.ClientOptions
+            );
         }
 
         ///<Summary>
