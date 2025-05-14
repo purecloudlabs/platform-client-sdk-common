@@ -341,7 +341,7 @@ namespace {{packageName}}.Tests
             Console.WriteLine("Running Pre-Request Hook");
             var options = (HttpRequestOptions)request;
             
-            options.AddHeaderParam("X-Test-Header", "Pre-Hook-Test");
+            options.AddHeaderParam("Test-Header", "Pre-Hook-Test");
             
             Console.WriteLine($"Pre-Hook: Making {options.Method} request to {options.Url}");
             
@@ -509,6 +509,9 @@ namespace {{packageName}}.Tests
             Console.WriteLine($"Deleted user with ID {userId}");
         }
 
+        ///<Summary>
+        /// CleanUp
+        ///</Summary>
         [Test, Order(7)]
         public void CleanUp()
         {

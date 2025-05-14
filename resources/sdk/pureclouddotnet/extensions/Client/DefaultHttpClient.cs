@@ -172,7 +172,6 @@ namespace {{=it.packageName }}.Client
         /// </summary>
         public override IHttpResponse Execute(IHttpRequest httpRequest)
         {
-            httpRequest = ApplyPreRequestHook(httpRequest);
             IHttpResponse resp;
 
             if (usingMTLS) //using HttpWebRequest
@@ -181,14 +180,16 @@ namespace {{=it.packageName }}.Client
             }
             else //using RestSharp (HttpClient)
             {
+                httpRequest = ApplyPreRequestHook(httpRequest);
                 var request = PrepareRestRequest((HttpRequestOptions)httpRequest);
 
                 var restResp = restClient.Execute(request);
 
                 resp = ConvertToHttpResponse(restResp);
+                resp = ApplyPostRequestHook(resp);
             }
 
-            return ApplyPostRequestHook(resp);
+            return resp;
         }
 
         private IHttpResponse ConvertToHttpResponse(RestResponse response)

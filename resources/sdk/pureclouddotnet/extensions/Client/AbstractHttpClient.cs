@@ -94,7 +94,7 @@ namespace {{=it.packageName }}.Client
         }
 
         /// <summary>
-        /// Applies the pre-request hook if available
+        /// Applies the pre-request hook if set
         /// </summary>
         /// <param name="request">The original request</param>
         /// <returns>The modified request</returns>
@@ -116,7 +116,7 @@ namespace {{=it.packageName }}.Client
         }
 
         /// <summary>
-        /// Applies the post-request hook if available
+        /// Applies the post-request hook if set
         /// </summary>
         /// <param name="response">The original response</param>
         /// <returns>The modified response</returns>
