@@ -150,7 +150,7 @@ namespace {{=it.packageName }}.Client
                 {
                     if (ex.Response is HttpWebResponse errorResponse)
                     {
-                        resp = await ConvertToHttpResponse(errorResponse);
+                        return await ConvertToHttpResponse(errorResponse);
                     }
                     throw;
                 }
