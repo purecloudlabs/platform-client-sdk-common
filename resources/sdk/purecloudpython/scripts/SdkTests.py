@@ -130,6 +130,9 @@ class SdkTests(unittest.TestCase):
 		client = PureCloudPlatformClientV2.ApiClient()
 		# Set the access token on the ApiClient instead of the configuration
 		client.access_token = responseJson['access_token']
+		# Set Pre/Post hooks for testing
+		client.get_http_client().set_pre_request_hook(SdkTests.pre_hook)
+		client.get_http_client().set_post_request_hook(SdkTests.post_hook)
 		SdkTests.users_api = PureCloudPlatformClientV2.UsersApi(client)
 
 	def test_8_get_user_again(self):
@@ -158,8 +161,19 @@ class SdkTests(unittest.TestCase):
 			'aps1.pure.cloud': PureCloudPlatformClientV2.PureCloudRegionHosts.ap_south_1,
 			'use2.us-gov-pure.cloud': PureCloudPlatformClientV2.PureCloudRegionHosts.us_east_2
 			}.get(x,x)
-
-
+	
+	# test hooks
+	def pre_hook(http_request_options):
+		print('Running Pre-Request Hook:')
+		print('PreHook: Making ', http_request_options.method, ' request to ', http_request_options.url)
+		http_request_options.headers['Test-Header'] = 'PreHook-Test'
+		return http_request_options
+		
+	def post_hook(response):
+		print('Running Post-Request Hook:')
+		print('PostHook: Received status code: ', response.status)
+		return response
+	
 
 if __name__ == '__main__':
 	unittest.sortTestMethodsUsing(None)
