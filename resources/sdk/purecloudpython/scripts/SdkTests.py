@@ -18,6 +18,9 @@ class SdkTests(unittest.TestCase):
 	busyPresenceId = '31fe3bac-dea6-44b7-bed7-47f91660a1a0'
 	availablePresenceId = '6a3af858-942f-489d-9700-5f9bcdcdae9b'
 
+	preHookCalled = False
+	postHookCalled = False
+
 	def setUp(self):
 		# Skip if there has been a failure
 		if SdkTests.lastResult != None and (len(SdkTests.lastResult.failures) > 0 or len(SdkTests.lastResult.errors) > 0):
@@ -138,6 +141,8 @@ class SdkTests(unittest.TestCase):
 	def test_8_get_user_again(self):
 		user = SdkTests.users_api.get_user(SdkTests.userId, expand = [ 'profileSkills' ])
 
+		self.assertTrue(SdkTests.preHookCalled, 'Pre-Hook was not called')
+		self.assertTrue(SdkTests.postHookCalled, 'Post-Hook was not called')
 		self.assertEqual(user.id, SdkTests.userId)
 		self.assertEqual(user.name, SdkTests.userName)
 		self.assertEqual(user.email, SdkTests.userEmail)
@@ -164,12 +169,14 @@ class SdkTests(unittest.TestCase):
 	
 	# test hooks
 	def pre_hook(http_request_options):
+		SdkTests.preHookCalled = True
 		print('Running Pre-Request Hook:')
 		print('PreHook: Making ', http_request_options.method, ' request to ', http_request_options.url)
 		http_request_options.headers['Test-Header'] = 'PreHook-Test'
 		return http_request_options
 		
 	def post_hook(response):
+		SdkTests.postHookCalled = True
 		print('Running Post-Request Hook:')
 		print('PostHook: Received status code: ', response.status)
 		return response
