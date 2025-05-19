@@ -39,20 +39,24 @@ namespace {{packageName}}.Tests
         string busyPresenceId = "31fe3bac-dea6-44b7-bed7-47f91660a1a0";
         string availablePresenceId = "6a3af858-942f-489d-9700-5f9bcdcdae9b";
 
+        bool preHookCalled = false;
+        bool postHookCalled = false;
         private IHttpRequest preHook(IHttpRequest request)
         {
+            preHookCalled = true;
             Console.WriteLine("Running Pre-Request Hook");
             var options = (HttpRequestOptions)request;
-            
+
             options.AddHeaderParam("Test-Header", "Pre-Hook-Test");
-            
+
             Console.WriteLine($"Pre-Hook: Making {options.Method} request to {options.Url}");
-            
+
             return request;
         }
 
         private IHttpResponse postHook(IHttpResponse response)
         {
+            postHookCalled = true;
             Console.WriteLine("Running Post-Request Hook");
             
             Console.WriteLine($"Post-Hook: Received status code {response.StatusCode}");
@@ -228,24 +232,27 @@ namespace {{packageName}}.Tests
         [Test, Retry(2), Order(6)]
         public void GetUser()
         {
-                {{packageName}}.Client.Configuration.Default.ApiClient.HttpClient.SetPreRequestHook(preHook);
-                {{packageName}}.Client.Configuration.Default.ApiClient.HttpClient.SetPostRequestHook(postHook);
+            {{packageName}}.Client.Configuration.Default.ApiClient.HttpClient.SetPreRequestHook(preHook);
+            {{packageName}}.Client.Configuration.Default.ApiClient.HttpClient.SetPostRequestHook(postHook);
 
-                Thread.Sleep(6000);
-                var user = usersApi.GetUserWithHttpInfo(userId, new List<string>() { "profileSkills" }, null, null);
-                Assert.AreEqual(user.Data.Id, userId);
-                Assert.AreEqual(user.Data.Name, userName);
-                Assert.AreEqual(user.Data.Email, userEmail);
-                Assert.AreEqual(user.Data.Department, userDepartment);
-                Console.WriteLine($"CorrelationId for GetUserWithHttpInfo {user.CorrelationId}");
-                Console.WriteLine($"Version for GetUserWithHttpInfo {user.Data.Version}");
-                // Commented out until the issue with APIs to send the latest Version of the User is fixed.
-                // Assert.IsNotNull(user.Data.ProfileSkills);
-                // Assert.AreEqual(user.Data.ProfileSkills.Count, 1);
-                // Assert.AreEqual(user.Data.ProfileSkills[0], userProfileSkill);
+            Thread.Sleep(6000);
+            var user = usersApi.GetUserWithHttpInfo(userId, new List<string>() { "profileSkills" }, null, null);
 
-                {{packageName}}.Client.Configuration.Default.ApiClient.HttpClient.SetPreRequestHook(null);
-                {{packageName}}.Client.Configuration.Default.ApiClient.HttpClient.SetPostRequestHook(null);
+            Assert.IsTrue(preHookCalled, "Pre-Hook was not called");
+            Assert.IsTrue(postHookCalled, "Post-Hook was not called");
+            Assert.AreEqual(user.Data.Id, userId);
+            Assert.AreEqual(user.Data.Name, userName);
+            Assert.AreEqual(user.Data.Email, userEmail);
+            Assert.AreEqual(user.Data.Department, userDepartment);
+            Console.WriteLine($"CorrelationId for GetUserWithHttpInfo {user.CorrelationId}");
+            Console.WriteLine($"Version for GetUserWithHttpInfo {user.Data.Version}");
+            // Commented out until the issue with APIs to send the latest Version of the User is fixed.
+            // Assert.IsNotNull(user.Data.ProfileSkills);
+            // Assert.AreEqual(user.Data.ProfileSkills.Count, 1);
+            // Assert.AreEqual(user.Data.ProfileSkills[0], userProfileSkill);
+
+            {{packageName}}.Client.Configuration.Default.ApiClient.HttpClient.SetPreRequestHook(null);
+            {{packageName}}.Client.Configuration.Default.ApiClient.HttpClient.SetPostRequestHook(null);
         }
 
         ///<Summary>
@@ -336,20 +343,24 @@ namespace {{packageName}}.Tests
         string userName = ".NET SDK MTLS Tester";
         string userDepartment = "Ministry of MTLS Testing";
 
+        bool preHookCalled = false;
+        bool postHookCalled = false;
         private IHttpRequest preHook(IHttpRequest request)
         {
+            preHookCalled = true;
             Console.WriteLine("Running Pre-Request Hook");
             var options = (HttpRequestOptions)request;
-            
+
             options.AddHeaderParam("Test-Header", "Pre-Hook-Test");
-            
+
             Console.WriteLine($"Pre-Hook: Making {options.Method} request to {options.Url}");
-            
+
             return request;
         }
 
         private IHttpResponse postHook(IHttpResponse response)
         {
+            postHookCalled = true;
             Console.WriteLine("Running Post-Request Hook");
             
             Console.WriteLine($"Post-Hook: Received status code {response.StatusCode}");
@@ -473,6 +484,8 @@ namespace {{packageName}}.Tests
 
             var user = usersApi.PatchUser(userId, updateUser);
 
+            Assert.IsTrue(preHookCalled, "Pre-Hook was not called");
+            Assert.IsTrue(postHookCalled, "Post-Hook was not called");
             Assert.AreEqual(user.Id, userId);
             Assert.AreEqual(user.Name, userName);
             Assert.AreEqual(user.Email, userEmail);
