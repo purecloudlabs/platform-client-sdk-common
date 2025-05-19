@@ -196,7 +196,7 @@ namespace {{=it.packageName }}.Client
                     .GroupBy(h => h.Name)
                     .ToDictionary(
                         g => g.Key,
-                        g => string.Join(";", g.Select(h => h.Value?.ToString()))
+                        g => string.Join(", ", g.Select(h => h.Value?.ToString()))
                     ) ?? new Dictionary<string, string>()
             };
         }
@@ -214,7 +214,12 @@ namespace {{=it.packageName }}.Client
                     StatusDescription = response.StatusDescription,
                     Content = content,
                     RawBytes = rawBytes,
-                    Headers = response.Headers.AllKeys.ToDictionary(k => k, k => response.Headers[k])
+                    Headers = response.Headers.AllKeys
+                        .GroupBy(key => key)
+                        .ToDictionary(
+                            g => g.Key,
+                            g => string.Join(", ", g.Select(key => response.Headers[key]))
+                        )
                 };
             }
         }

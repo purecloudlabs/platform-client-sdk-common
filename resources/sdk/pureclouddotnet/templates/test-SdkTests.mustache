@@ -174,7 +174,7 @@ namespace {{packageName}}.Tests
                             if (busyReceived && availableReceived) tcs.SetResult(true);
                         }
                     }
-                    catch (InvalidOperationException ex)
+                    catch (InvalidOperationException)
                     {
                         // Suppress this error that happens occasionally:
                         // An attempt was made to transition a task to a final state when it had already completed.

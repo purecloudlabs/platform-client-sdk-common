@@ -106,7 +106,7 @@ public class ApiClientTests
         var mockHttp = new MockHttpMessageHandler();
         var response = new HttpResponseMessage((System.Net.HttpStatusCode)429);
         response.Headers.Add("Retry-After", "3");
-        mockHttp.When("*").Respond(response);
+        mockHttp.When("*").Respond(req => response);
         
         var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
@@ -279,7 +279,7 @@ public class ApiClientTests
         var response = new HttpResponseMessage((System.Net.HttpStatusCode)429);
         response.Headers.Add("Retry-After", "1");
 
-        mockHttp.When("*").Respond(response);
+        mockHttp.When("*").Respond(req => response);
 
         var apiClient = new ApiClient(new {{packageName}}.Client.Configuration());
         apiClient.RetryConfig = retryConfig;
