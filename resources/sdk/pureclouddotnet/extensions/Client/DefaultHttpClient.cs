@@ -22,7 +22,6 @@ namespace {{=it.packageName }}.Client
         private bool usingMTLS = false;
         private Configuration configuration;
         private ClientRestOptions clientOptions;
-        private CookieContainer cookieContainer;
 
         ///<Summary>
         /// Create an instane of the DefaultHttpClient with configuration
@@ -41,7 +40,6 @@ namespace {{=it.packageName }}.Client
             {
                 // use HttpWebRequest
                 usingMTLS = true;
-                this.cookieContainer = new CookieContainer();
                 ConfigureServicePoint();
             }
             else 
@@ -336,7 +334,6 @@ namespace {{=it.packageName }}.Client
             request.Method = options.Method;
             request.Timeout = this.Timeout;
             request.UserAgent = this.UserAgent;
-            request.CookieContainer = cookieContainer;
 
             if (clientOptions.LocalClientCertificates != null && clientOptions.LocalClientCertificates.Count > 0)
             {
