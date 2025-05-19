@@ -252,8 +252,11 @@ public class SdkTests {
     @Test(priority = 9)
     public void testPreAndPostHooks() {
         try {
+            final boolean[] prehookExecuted = {false};
+            final boolean[] posthookExecuted = {false};
             // Create hook implementations
             PreRequestHook preHook = request -> {
+                prehookExecuted[0] = true;
                 System.out.println("Pre-request hook - Method: " + request.getMethod());
                 System.out.println("Pre-request hook - URL: " + request.getUrl());
                 return request;
@@ -262,6 +265,7 @@ public class SdkTests {
             PostResponseHook<UserEntityListing> postHook = new PostResponseHook<UserEntityListing>() {
                 @Override
                 public <T> ApiResponse<T> execute(ApiResponse<T> response) throws ApiException {
+                    posthookExecuted[0] = true;
                     System.out.println("Post-hook executed. Status code: " + response.getStatusCode());
                     return response;
                 }
@@ -271,6 +275,9 @@ public class SdkTests {
             apiClient.addPostResponseHook(postHook);
 
             User user = usersApi.getUser(userId, Collections.singletonList("profileSkills"), null, null);
+
+            Assert.assertTrue(prehookExecuted[0], "Prehook was not executed");
+            Assert.assertTrue(posthookExecuted[0], "Posthook was not executed");
 
             Assert.assertEquals(user.getId(), userId);
             Assert.assertEquals(user.getName(), userName);
@@ -290,7 +297,7 @@ public class SdkTests {
     @Test(priority = 10)
     public void deleteUser() {
         try {
-            usersApi.deleteUser(userId);
+            usersApi.deleteUser(userId, false);
         } catch (ApiException ex) {
             handleApiException(ex);
         } catch (Exception ex) {
