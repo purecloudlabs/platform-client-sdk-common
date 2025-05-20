@@ -586,5 +586,10 @@
 		"get": {
 			"name": "getuserbyexternalid"
 		}
+	},
+	"/api/v2/guides/{guideId}/jobs/{jobId}": {
+		"get": {
+			"name": "getjobforguide"
+		}
 	}
 }
