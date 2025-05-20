@@ -352,7 +352,7 @@ namespace {{=it.packageName}}.Extensions
         {
             apiClient.ClientOptions.Prefix = "login";
 
-            var httpClient = new DefaultHttpClient(apiClient.Configuration, apiClient.ClientOptions);
+            var httpClient = new DefaultHttpClient(apiClient.ClientOptions, apiClient.Configuration);
 
             var requestOptions = new HttpRequestOptions(
                 path, 

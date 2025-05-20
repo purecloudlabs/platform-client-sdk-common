@@ -594,7 +594,7 @@ public class CustomHttpClient : AbstractHttpClient
 {
     private HttpClient httpClient;
 
-    public DefaultHttpClient() : base()
+    public CustomHttpClient() : base()
     {
         httpClient = new HttpClient();
     }
@@ -610,7 +610,27 @@ public class CustomHttpClient : AbstractHttpClient
     }
 }
 
-Configuration.Default.ApiClient.HttpClient = new CustomHttpClient
+Configuration.Default.ApiClient.HttpClient = new CustomHttpClient();
+```
+
+### Using MTLS authentication via a Gateway
+
+If there is MTLS authentication that needs to be set for a gateway server (i.e. if the Genesys Cloud requests must be sent through an intermediate API gateway or equivalent, with MTLS enabled), you can use SetMTLSCertificates to set the clients certificate.
+
+An example using `SetMTLSCertificates` to setup MTLS for gateway is shown below
+
+```csharp
+ApiClient.GatewayConfiguration gatewayConfiguration = new ApiClient.GatewayConfiguration();
+gatewayConfiguration.Host = "mygateway.mydomain.myextension";
+gatewayConfiguration.Protocol = "https";
+gatewayConfiguration.Port = 1443;
+gatewayConfiguration.PathParamsLogin = "myadditionalpathforlogin";
+gatewayConfiguration.PathParamsApi = "myadditionalpathforapi";
+Configuration.Default.ApiClient.GatewayConfig = gatewayConfiguration;
+
+var certPath = "path/to/cert.pfx";
+var certPass = "x509Password";
+Configuration.Default.ApiClient.SetMTLSCertificates(certPath, certPass);
 ```
 
 ### Building from Source

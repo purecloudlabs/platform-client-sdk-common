@@ -15,6 +15,7 @@ using System.Text;
 using Newtonsoft.Json;
 using {{packageName}}.Extensions;
 using System.Net.Http;
+using System.Security.Cryptography.X509Certificates;
 
 namespace {{packageName}}.Client
 {
@@ -154,7 +155,7 @@ namespace {{packageName}}.Client
                 if (httpClient != null) {
                     return this.httpClient;
                 } else {
-                    httpClient = new DefaultHttpClient(Configuration, ClientOptions);
+                    httpClient = new DefaultHttpClient(ClientOptions, Configuration);
                     return this.httpClient;
                 }
             }
@@ -165,6 +166,21 @@ namespace {{packageName}}.Client
                 }
                 httpClient = value;
             }
+        }
+
+        ///<Summary>
+        /// Sets the ApiClients X509 certificate
+        ///</Summary>
+        public void SetMTLSCertificates(string certPath, string certPass)
+        {
+            var cert = new X509Certificate2(
+                certPath,
+                certPass,
+                X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable
+            );
+
+            ClientOptions.LocalClientCertificates = new X509CertificateCollection();
+            ClientOptions.LocalClientCertificates.Add(cert);
         }
 
         ///<Summary>
