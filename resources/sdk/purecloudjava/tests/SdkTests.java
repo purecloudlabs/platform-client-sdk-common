@@ -297,7 +297,8 @@ public class SdkTests {
     @Test(priority = 10)
     public void deleteUser() {
         try {
-            usersApi.deleteUser(userId, false);
+            // usersApi.deleteUser(userId, false);
+            usersApi.deleteUser(userId);
         } catch (ApiException ex) {
             handleApiException(ex);
         } catch (Exception ex) {
