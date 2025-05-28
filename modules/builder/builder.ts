@@ -18,6 +18,7 @@ import SwaggerDiff from '../swagger/swaggerDiff';
 import GitModule from '../git/gitModule';
 import Zip from '../util/zip';
 import { Models } from 'purecloud-platform-client-v2';
+import { PassThrough } from 'stream';
 
 
 const log = new Logger();
@@ -61,6 +62,7 @@ export class Builder {
 	pureCloud: PureCloud;
 	releaseNoteTemplatePath: string = '';
 	releaseNoteSummaryTemplatePath: string = '';
+	readmeDevelopmentEpiloguePath: string = '';
 
 	init(configPath: string, localConfigPath: string): Promise<string> {
 		return new Promise<string>((resolve, reject) => {
@@ -196,6 +198,10 @@ export class Builder {
 					? this.config.settings.releaseNoteSummaryTemplatePath
 					: './resources/templates/releaseNoteSummary.md';
 
+				this.readmeDevelopmentEpiloguePath = this.config.settings.readmeDevelopmentEpiloguePath
+					? this.config.settings.readmeDevelopmentEpiloguePath
+					: path.join(getEnv('COMMON_ROOT') as string, 'resources', 'templates', 'readmeDevelopmentEpilogue.md');
+
 				// Initialize other things
 				git.authToken = getEnv('GITHUB_TOKEN') as string;
 				resolve("");
@@ -316,7 +322,7 @@ function prebuildImpl(): Promise<string> {
 					);
 				})
 				.then(() => {
-					// For Jenkins only. 
+					// For Jenkins only.
 					if (newSwaggerTempFile.includes('build-platform-sdks-internal-pipeline') && process.argv.includes("build-contains-upstream-changes")) {
 						if (swaggerDiff.changeCount == 0) {
 							throw new Error('The build contains upstream changes, but the Swagger definition has not changed.');
@@ -505,9 +511,21 @@ function buildImpl(): Promise<string> {
 			// Copy readme from build to docs and repo root
 			log.info('Copying readme...');
 			fs.ensureDirSync(path.join(getEnv('SDK_REPO') as string, 'build/docs'));
-			fs.createReadStream(path.join(getEnv('SDK_REPO') as string, 'build/README.md')).pipe(
-				fs.createWriteStream(path.join(getEnv('SDK_REPO') as string, 'build/docs/index.md'))
-			);
+
+			// Appends an epilogue to all Readme files
+			const readmeFileStream = fs.createReadStream(path.join(getEnv('SDK_REPO') as string, 'build/README.md'));
+			const readmeFileEpilogueStream = fs.createReadStream(_this.readmeDevelopmentEpiloguePath);
+			const passThroughStream = new PassThrough();
+			readmeFileStream.pipe(passThroughStream, { end: false });
+			readmeFileStream.on('end', () => {
+				readmeFileEpilogueStream.pipe(passThroughStream, { end: false });
+				readmeFileEpilogueStream.on('end', () => {
+					passThroughStream.end();
+				});
+			});
+			passThroughStream.pipe(fs.createWriteStream(path.join(getEnv('SDK_REPO') as string, 'build/docs/index.md')));
+
+			// Copy the readme file from build to the root directory of the repo
 			fs.createReadStream(path.join(getEnv('SDK_REPO') as string, 'build/README.md')).pipe(
 				fs.createWriteStream(path.join(getEnv('SDK_REPO') as string, 'README.md'))
 			);
