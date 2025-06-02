@@ -301,8 +301,16 @@ public class ApiClient implements AutoCloseable {
         hookManager.addPreRequestHook(hook);
     }
 
+    public void removePreRequestHook(PreRequestHook hook) {
+        hookManager.removePreRequestHook(hook);
+    }
+
     public void addPostResponseHook(PostResponseHook hook) {
         hookManager.addPostResponseHook(hook);
+    }
+
+    public void removePostResponseHook(PostResponseHook hook) {
+        hookManager.removePostResponseHook(hook);
     }
 
     /**
