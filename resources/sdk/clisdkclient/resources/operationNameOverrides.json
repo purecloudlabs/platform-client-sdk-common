@@ -591,5 +591,10 @@
 		"get": {
 			"name": "getjobforguide"
 		}
+	},
+	"/api/v2/organizations/settings/{namespaceName}": {
+		"get": {
+			"name": "getbynamespace"
+		}
 	}
 }
