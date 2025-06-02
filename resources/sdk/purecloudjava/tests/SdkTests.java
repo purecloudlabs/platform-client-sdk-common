@@ -276,6 +276,9 @@ public class SdkTests {
 
             User user = usersApi.getUser(userId, Collections.singletonList("profileSkills"), null, null);
 
+            apiClient.removePreRequestHook(preHook);
+            apiClient.removePostResponseHook(postHook);
+
             Assert.assertTrue(prehookExecuted[0], "Prehook was not executed");
             Assert.assertTrue(posthookExecuted[0], "Posthook was not executed");
 
