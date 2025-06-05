@@ -1198,14 +1198,20 @@ class ApiClient {
 	 * @returns {String} The string representation of <code>param</code>.
 	 */
 	paramToString(param) {
+		if (param !== null && param !== undefined) {
+			if (typeof param === "boolean") {
+				return param.toString().toLowerCase();
+			} else if (param instanceof Boolean) {
+				return param.toString().toLowerCase();
+			} else if (typeof param === "number") {
+				return param.toString();
+			}
+		}
 		if (!param) {
 			return '';
 		}
 		if (param instanceof Date) {
 			return param.toJSON();
-		}
-		if (param instanceof Boolean) {
-			return param.toString().toLowerCase();
 		}
 		return param.toString();
 	}
