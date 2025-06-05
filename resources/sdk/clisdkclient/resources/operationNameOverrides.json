@@ -596,5 +596,10 @@
 		"get": {
 			"name": "getbynamespace"
 		}
+	},
+	"/api/v2/businessrules/decisiontables/{tableId}/versions/{tableVersion}/rows/{rowId}": {
+		"patch": {
+			"name": "partialupdate"
+		}
 	}
 }
