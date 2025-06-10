@@ -56,12 +56,14 @@ func (c *DefaultHttpClient) SetHttpsAgent(agent *ProxyAgent) {
 
 // NewDefaultHttpClient creates and returns a new DefaultHttpClient instance with default settings
 func NewDefaultHttpClient(proxyAgent *ProxyAgent) *DefaultHttpClient {
-	_, err := time.ParseDuration("16s")
+	timeout, err := time.ParseDuration("16s")
 	if err != nil {
 		panic(err)
 	}
 
 	client := retryablehttp.NewClient()
+	client.Logger = nil
+	client.HTTPClient.Timeout = timeout
 	if proxyAgent != nil && proxyAgent.ProxyURL != "" {
 		proxyURL, err := url.Parse(proxyAgent.ProxyURL)
 		if err == nil {
