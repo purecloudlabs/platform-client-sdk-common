@@ -130,7 +130,7 @@ func getConfUrl(c *Configuration, path string, extendedPath string) *url.URL {
 			if param.PathName == path {
 				tempValue := param.PathValue
 				if tempValue != "" {
-					tempValue := strings.TrimSpace(tempValue)
+					tempValue = strings.TrimSpace(tempValue)
 				}
 				if tempValue != "" {
 					tempValue = strings.TrimRight(tempValue, "/")
