@@ -426,25 +426,34 @@ if err != nil {
 For any custom requirements like pre validations or post cleanups (for ex: OCSP and CRL validation), we can inject the prehook and posthook functions.
 The SDK's default client will make sure the injected hook functions are executed.
 
+When using the default HTTP Client, the retryablehttp.Logger is unavailable (set to nil).
+This is a limitation of the go-retryablehttp client. The client will print DEBUG logs of the HTTP Requests, regardless of the log level settings, unless it is set to nil.
+
 ```go
 // PreHook implements the certificate revocation check
 func PreHook(logger retryablehttp.Logger, req *http.Request, retry int) {
-	config := platformclientv2.GetDefaultConfiguration()
+
+    // NOTICE:
+    // DO NOT USE the retryablehttp.logger - it is nil - logger == nil
+    // This is a limitation of the go-retryablehttp client.
+    // The client will print DEBUG logs of the HTTP Requests, regardless of the log level settings, unless it is set to nil.
+	
+    config := platformclientv2.GetDefaultConfiguration()
 
 	// certificate extraction logic
 
 	// Check certificate status
 	isValid, err := validateCertificate(issuerCertificate, certificate)
 	if err != nil {
-		logger.Printf("[ERROR] Certificate validation failed: %v", err)
+		fmt.Printf("[ERROR] Certificate validation failed: %v", err)
 		return
 	}
 
 	if !isValid {
-		logger.Printf("[ERROR] Certificate is revoked")
+		fmt.Printf("[ERROR] Certificate is revoked")
 	}
     else {
-	    logger.Printf("[INFO] Certificate validation successful")
+	    fmt.Printf("[INFO] Certificate validation successful")
     }
 }
 
