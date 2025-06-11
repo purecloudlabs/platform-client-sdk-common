@@ -128,7 +128,10 @@ func getConfUrl(c *Configuration, path string, extendedPath string) *url.URL {
 	if len(gateWayConfiguration.PathParams) > 0 {
 		for _, param := range gateWayConfiguration.PathParams {
 			if param.PathName == path {
-				tempValue := strings.TrimSpace(param.PathValue)
+				tempValue := param.PathValue
+				if tempValue != "" {
+					tempValue := strings.TrimSpace(tempValue)
+				}
 				if tempValue != "" {
 					tempValue = strings.TrimRight(tempValue, "/")
 				}
