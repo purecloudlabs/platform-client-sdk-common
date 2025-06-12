@@ -33,11 +33,23 @@ class {{classname}} {
 	 */{{/emitJSDoc}}
 	{{operationId}}({{vendorExtensions.x-codegen-arg-list}}) { {{#hasOptionalParams}}
 		opts = opts || {};
-		{{/hasOptionalParams}}{{#allParams}}{{#required}}
+		{{/hasOptionalParams}}{{#allParams}}{{#required}}{{#isPathParam}}{{#isString}}{{#isArray}}
 		// verify the required parameter '{{paramName}}' is set
 		if ({{paramName}} === undefined || {{paramName}} === null) {
 			throw 'Missing the required parameter "{{paramName}}" when calling {{operationId}}';
-		}{{/required}}{{/allParams}}
+		}{{/isArray}}{{^isArray}}
+		// verify the required parameter '{{paramName}}' is set
+		if ({{paramName}} === undefined || {{paramName}} === null || {{paramName}} === '') {
+			throw 'Missing the required parameter "{{paramName}}" when calling {{operationId}}';
+		}{{/isArray}}{{/isString}}{{^isString}}
+		// verify the required parameter '{{paramName}}' is set
+		if ({{paramName}} === undefined || {{paramName}} === null) {
+			throw 'Missing the required parameter "{{paramName}}" when calling {{operationId}}';
+		}{{/isString}}{{/isPathParam}}{{^isPathParam}}
+		// verify the required parameter '{{paramName}}' is set
+		if ({{paramName}} === undefined || {{paramName}} === null) {
+			throw 'Missing the required parameter "{{paramName}}" when calling {{operationId}}';
+		}{{/isPathParam}}{{/required}}{{/allParams}}
 
 		return this.apiClient.callApi(
 			'{{&path}}', 
