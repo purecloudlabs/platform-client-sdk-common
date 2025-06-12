@@ -388,11 +388,25 @@ Configure MTLS authentication for gateway servers (when Genesys Cloud requests m
 ```go
 config := platformclientv2.GetDefaultConfiguration()
 
-// Configure gateway settings
-config.SetGateway(&platformclientv2.GatewayConfiguration{
+// Configure additional path for Login and API endpoints (optional)
+login := PathParams{
+    PathName:  "login",
+    PathValue: "myadditionalpathforlogin",
+}
+api := PathParams{
+	PathName:  "api",
+	PathValue: "myadditionalpathforapi",
+}
+gatewayPathParams := []*PathParams{
+	&api,
+	&login,
+}
+
+config.SetGateway(&GateWayConfiguration{
     Host:            "mygateway.mydomain.myextension",
     Protocol:        "https",
-    Port:            1443,
+    Port:            "1443",
+    PathParams: gatewayPathParams
 })
 
 // Set MTLS certificates
@@ -410,7 +424,16 @@ If you have the certificate contents in memory (for example, from a secrets mana
 
 ```go
 client := platformclient.GetDefaultConfiguration()
-client.SetGateway("mygateway.mydomain.myextension", "https", 1443, "myadditionalpathforlogin", "myadditionalpathforapi")
+
+// Configure additional path for Login and API endpoints (optional) - using ConvertStringToPathParams helper
+gatewayPathParams, err := ConvertStringToPathParams("login:myadditionalpathforlogin,api:myadditionalpathforapi")
+
+config.SetGateway(&GateWayConfiguration{
+    Host:            "mygateway.mydomain.myextension",
+    Protocol:        "https",
+    Port:            "1443",
+    PathParams: gatewayPathParams
+})
 
 // certPEM, keyPEM, and caChainPEM are []byte containing the PEM-encoded certificates
 err := client.SetMTLSContents(certPEM, keyPEM, caChainPEM)
