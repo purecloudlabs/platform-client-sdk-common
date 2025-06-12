@@ -2,12 +2,21 @@ package platformclientv2
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
 )
+
+type retryableLogger struct {
+	logger *log.Logger
+}
+
+func (rl *retryableLogger) Printf(format string, v ...interface{}) {
+}
 
 // DefaultHttpClient wraps retryablehttp.Client to provide HTTP functionality with automatic retries
 type DefaultHttpClient struct {
@@ -57,12 +66,13 @@ func (c *DefaultHttpClient) SetHttpsAgent(agent *ProxyAgent) {
 // NewDefaultHttpClient creates and returns a new DefaultHttpClient instance with default settings
 func NewDefaultHttpClient(proxyAgent *ProxyAgent) *DefaultHttpClient {
 	timeout, err := time.ParseDuration("16s")
+	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
 	if err != nil {
 		panic(err)
 	}
 
 	client := retryablehttp.NewClient()
-	client.Logger = nil
+	client.Logger = &retryableLogger{logger: logger}
 	client.HTTPClient.Timeout = timeout
 	if proxyAgent != nil && proxyAgent.ProxyURL != "" {
 		proxyURL, err := url.Parse(proxyAgent.ProxyURL)
