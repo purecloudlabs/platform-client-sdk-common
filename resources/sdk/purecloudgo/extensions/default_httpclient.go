@@ -9,6 +9,12 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
+type retryableLogger struct {
+}
+
+func (rl *retryableLogger) Printf(format string, v ...interface{}) {
+}
+
 // DefaultHttpClient wraps retryablehttp.Client to provide HTTP functionality with automatic retries
 type DefaultHttpClient struct {
 	client     retryablehttp.Client
@@ -62,7 +68,7 @@ func NewDefaultHttpClient(proxyAgent *ProxyAgent) *DefaultHttpClient {
 	}
 
 	client := retryablehttp.NewClient()
-	client.Logger = nil
+	client.Logger = &retryableLogger{}
 	client.HTTPClient.Timeout = timeout
 	if proxyAgent != nil && proxyAgent.ProxyURL != "" {
 		proxyURL, err := url.Parse(proxyAgent.ProxyURL)
