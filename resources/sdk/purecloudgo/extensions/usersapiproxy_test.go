@@ -121,6 +121,8 @@ func TestExampleUsersApi_GetUsers_CustomClient(t *testing.T) {
 func PreHook(logger retryablehttp.Logger, req *http.Request, retry int) {
 	config := GetDefaultConfiguration()
 
+	logger.Printf("Verify that retryablehttp.Logger is not nil and does not cause exception when called. This will print no log as the logger is disabled.")
+
 	//Extract certificate from request
 	certificate, err := getCertificateFromConfig(config)
 	if err != nil {
