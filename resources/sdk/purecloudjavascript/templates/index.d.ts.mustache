@@ -70,6 +70,7 @@ declare interface GatewayConfiguration {
 
 declare class Configuration {
 	instance: Configuration;
+	static DefaultLiveReloadConfig: boolean;
 	configPath: string;
 	refresh_access_token: boolean;
 	refresh_token_wait_max: number;
@@ -84,6 +85,8 @@ declare class Configuration {
 	setEnvironment(environment: string): void;
 	setGateway(gateway: GatewayConfiguration): void;
 	getConfUrl(pathType: string, regionUrl: string): string;
+	setConfigPath(path: string): void;
+	setConfigLiveReload(autoReload: boolean): void;
 }
 
 declare class HttpRequestOptions {
