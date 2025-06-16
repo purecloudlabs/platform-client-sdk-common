@@ -13,7 +13,7 @@
     "browserify": "browserify modules/swagger/swaggerDiffImpl.ts -o docs/swaggerDiffImpl.ts",
     "ios": "tsx sdkBuilder.ts --sdk purecloudswift4",
     "webmessaging": "tsx sdkBuilder.ts --sdk webmessagingjava",
-    "run-ts": "node --loader ts-node/esm",
+    "run-ts": "node --import ts-node/esm",
     "synk": "snyk test --file=package-lock.json --severity-threshold=high --skip-unresolved=true"
   },
   "repository": {
