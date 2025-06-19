@@ -15,8 +15,6 @@ class Configuration {
 		Configuration.instance = value;
 	}
 
-	static DefaultLiveReloadConfig = true;
-
 	constructor() {
 		if (!Configuration.instance) {
 			Configuration.instance = this;
@@ -32,7 +30,7 @@ class Configuration {
 		this.watchedConfigPath;
 		this.refresh_access_token = true;
 		this.refresh_token_wait_max = 10;
-		this.live_reload_config = Configuration.DefaultLiveReloadConfig;
+		this._live_reload_config = true;
 		this.host;
 		this.environment;
 		this.basePath;
@@ -42,6 +40,39 @@ class Configuration {
 		this.logger = new Logger();
 		this.setEnvironment();
 		this.liveLoadConfig();
+	}
+
+	/**
+	 * live_reload_config getter
+	 */
+	get live_reload_config() {
+		return this._live_reload_config;
+	}
+
+	/**
+	 * live_reload_config setter
+	 */
+	set live_reload_config(value) {
+		if (typeof window === 'undefined') {
+			const fs = require('fs');
+			if (value !== null && value !== undefined) {
+				if (this.live_reload_config !== value) {
+					this._live_reload_config = value;
+					// Stop existing listener (if already started)
+					if (this.watchedConfigPath) {
+						fs.unwatchFile(this.watchedConfigPath);
+						this.watchedConfigPath = null;
+					}
+					// Start listener if requested
+					if (value === true) {
+						this.liveLoadConfig();
+					}
+				}
+			}
+			return;
+		}
+		// If in browser, don't read config file, use default values
+		this._live_reload_config = false;
 	}
 
 	liveLoadConfig() {
@@ -77,6 +108,7 @@ class Configuration {
 
 	setConfigPath(path) {
 		if (typeof window === 'undefined') {
+			const fs = require('fs');
 			if (path && path !== this.configPath) {
 				this.configPath = path;
 				if (this.watchedConfigPath) {
@@ -95,28 +127,6 @@ class Configuration {
 		}
 		// If in browser, don't read config file, use default values
 		this.configPath = '';
-	}
-
-	setConfigLiveReload(autoReload) {
-		if (typeof window === 'undefined') {
-			if (autoReload !== null && autoReload !== undefined) {
-				if (this.live_reload_config !== autoReload) {
-					this.live_reload_config = autoReload;
-					// Stop existing listener (if already started)
-					if (this.watchedConfigPath) {
-						fs.unwatchFile(this.watchedConfigPath);
-						this.watchedConfigPath = null;
-					}
-					// Start listener if requested
-					if (autoReload === true) {
-						this.liveLoadConfig();
-					}
-				}
-			}
-			return;
-		}
-		// If in browser, don't read config file, use default values
-		this.live_reload_config = false;
 	}
 
 	updateConfigFromFile() {
