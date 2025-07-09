@@ -219,6 +219,10 @@ function setEnvironment() {
 			return platformClient.PureCloudRegionHosts.ap_south_1;
 		case 'use2.us-gov-pure.cloud':
 			return platformClient.PureCloudRegionHosts.us_east_2;
+		case 'mxc1.pure.cloud':
+			return platformClient.PureCloudRegionHosts.mx_central_1;
+		case 'apse1.pure.cloud':
+			return platformClient.PureCloudRegionHosts.ap_southeast_1;
 		default:
 			console.log('Value does not exist in PureCloudRegionHosts defaulting to PURECLOUD ENVIRONMENT value');
 			return PURECLOUD_ENVIRONMENT;
