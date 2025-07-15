@@ -3,44 +3,82 @@ import child_process from 'child_process';
 import { Swagger } from '../../../../modules/types/swagger';
 import { ResourceDefinitions } from './resourceDefinitions';
 import childProcess from 'child_process';
+import log from '../../../../modules/log/logger';
 const maxFileBufferSize = 1024 * 1024 * 1024;
+
 
 export class PreProcessSwagger {
 	init() {
 		try {
-			const newSwaggerPath: string = process.argv[2];
-			const saveNewSwaggerPath: string = process.argv[3];
-			const saveSuperCommandsPath: string = process.argv[4];
-			const saveResourceDefinitionsPath: string = process.argv[5];
-			const overridesPath: string = process.argv[6];
-			const previewSwaggerPath: string = process.argv[7]
+				log.debug('PreProcessSwagger initialization started');
+				const newSwaggerPath: string = process.argv[2];
+				const saveNewSwaggerPath: string = process.argv[3];
+				const saveSuperCommandsPath: string = process.argv[4];
+				const saveResourceDefinitionsPath: string = process.argv[5];
+				const overridesPath: string = process.argv[6];
+				const previewSwaggerPath: string = process.argv[7];
 
-			let newSwagger: Swagger = retrieveSwagger(newSwaggerPath, previewSwaggerPath);
-			newSwagger = processRefs(newSwagger);
-			const overrides = JSON.parse(fs.readFileSync(overridesPath, 'utf8'));
-			const resourceDefinitions: ResourceDefinitions = overrideDefinitions(createDefinitions(newSwagger), overrides)
-			let [superCommands, includedSwaggerPathObjects]: [Set<string>, Swagger["paths"]] = initialProcessOfDefinitions(newSwagger, resourceDefinitions);
-			newSwagger['paths'] = processDefinitions(includedSwaggerPathObjects, resourceDefinitions, newSwagger);
+				log.debug(`Command line arguments parsed: 
+					newSwaggerPath=${newSwaggerPath}, 
+					saveNewSwaggerPath=${saveNewSwaggerPath}, 
+					saveSuperCommandsPath=${saveSuperCommandsPath}, 
+					saveResourceDefinitionsPath=${saveResourceDefinitionsPath}, 
+					overridesPath=${overridesPath}, 
+					previewSwaggerPath=${previewSwaggerPath}`);
 
-			if (saveNewSwaggerPath) {
-				console.log(`Writing new swagger to ${saveNewSwaggerPath}`);
-				fs.writeFileSync(saveNewSwaggerPath, JSON.stringify(newSwagger));
-			}
-			if (saveSuperCommandsPath) {
-				console.log(`Writing top level commands to ${saveSuperCommandsPath}`);
-				fs.writeFileSync(saveSuperCommandsPath, JSON.stringify(Array.from(superCommands)));
-			}
+				log.debug('Retrieving swagger files');
+				let newSwagger: Swagger = retrieveSwagger(newSwaggerPath, previewSwaggerPath);
+				log.debug('Swagger files retrieved successfully');
 
-			if (saveResourceDefinitionsPath) {
-				console.log(`Writing resource definitions commands to ${saveResourceDefinitionsPath}`);
-				fs.writeFileSync(saveResourceDefinitionsPath, JSON.stringify(resourceDefinitions));
+				log.debug('Processing swagger references');
+				newSwagger = processRefs(newSwagger);
+				log.debug('Swagger references processed');
+
+				log.debug(`Loading overrides file: overridesPath=${overridesPath}`);
+				const overrides = JSON.parse(fs.readFileSync(overridesPath, 'utf8'));
+				log.debug(`Overrides loaded: overrideCount=${Object.keys(overrides).length}`);
+
+				log.debug('Creating resource definitions');
+				const baseDefinitions = createDefinitions(newSwagger);
+				const resourceDefinitions: ResourceDefinitions = overrideDefinitions(baseDefinitions, overrides);
+				log.debug(`Resource definitions created: definitionCount=${Object.keys(resourceDefinitions).length}`);
+
+				log.debug('Initial processing of definitions');
+				let [superCommands, includedSwaggerPathObjects]: [Set<string>, Swagger["paths"]] = initialProcessOfDefinitions(newSwagger, resourceDefinitions);
+				log.debug(`Initial processing completed: superCommandCount=${superCommands.size}, pathCount=${Object.keys(includedSwaggerPathObjects).length}`);
+
+				log.debug('Processing definitions');
+				newSwagger['paths'] = processDefinitions(includedSwaggerPathObjects, resourceDefinitions, newSwagger);
+				log.debug('Definitions processing completed');
+
+				if (saveNewSwaggerPath) {
+					log.debug(`Writing processed swagger to file: saveNewSwaggerPath=${saveNewSwaggerPath}`);
+					log.debug(`Writing new swagger to ${saveNewSwaggerPath}`);
+					fs.writeFileSync(saveNewSwaggerPath, JSON.stringify(newSwagger));
+					log.debug('New swagger file written successfully');
+				}
+				if (saveSuperCommandsPath) {
+					log.debug(`Writing super commands to file: saveSuperCommandsPath=${saveSuperCommandsPath}, commandCount=${superCommands.size}`);
+					log.debug(`Writing top level commands to ${saveSuperCommandsPath}`);
+					fs.writeFileSync(saveSuperCommandsPath, JSON.stringify(Array.from(superCommands)));
+					log.debug('Super commands file written successfully');
+				}
+				if (saveResourceDefinitionsPath) {
+					log.debug(`Writing resource definitions to file: saveResourceDefinitionsPath=${saveResourceDefinitionsPath}`);
+					log.debug(`Writing resource definitions commands to ${saveResourceDefinitionsPath}`);
+					fs.writeFileSync(saveResourceDefinitionsPath, JSON.stringify(resourceDefinitions));
+					log.debug('Resource definitions file written successfully');
+				}
+				log.debug('PreProcessSwagger completed successfully');
+			} 
+			catch (err) {
+				log.debug(`PreProcessSwagger failed: error=${err instanceof Error ? err.message : err}, stack=${err instanceof Error ? err.stack : 'N/A'}`);
+				process.exitCode = 1;
+				log.error(err);
 			}
-		} catch (err) {
-			process.exitCode = 1;
-			console.log(err);
-		}
-	};
+	}
 }
+
 
 function processRefs(swagger: Swagger) {
 	const keys = Object.keys(swagger.definitions);
@@ -251,35 +289,52 @@ function overrideDefinitions(resourceDefinitions, overrides) {
 }
 
 function retrieveSwagger(newSwaggerPath: string, previewSwaggerPath: string) {
+	log.debug('Starting swagger retrieval process');
 	let newSwagger;
 	let previewSwagger
 
 	// Retrieve new swagger
+	log.debug(`Retrieving main swagger file, ${newSwaggerPath}`);
 	if (fs.existsSync(newSwaggerPath)) {
-		console.log(`Loading new swagger from disk: ${newSwaggerPath}`);
+		log.debug('Loading swagger from local file system');
+		log.debug(`Loading new swagger from disk: ${newSwaggerPath}`);
 		newSwagger = JSON.parse(fs.readFileSync(newSwaggerPath, 'utf8'));
+		log.debug('Local swagger file loaded successfully');
 	} else if (newSwaggerPath.toLowerCase().startsWith('http')) {
-		console.log(`Downloading new swagger from: ${newSwaggerPath}`);
+		log.debug('Downloading swagger from URL');
+		log.debug(`Downloading new swagger from: ${newSwaggerPath}`);
 		newSwagger = JSON.parse(downloadFile(newSwaggerPath));
+		log.debug('Swagger download completed successfully');
 	} else {
+		log.debug(`Invalid swagger path provided', ${newSwaggerPath}`);
 		throw `Invalid newSwaggerPath: ${newSwaggerPath}`;
 	}
 
 	// Check to see if preview swagger path is present. Internal builds do not need the preview swagger
 	if (previewSwaggerPath) {
+		log.debug(`Preview swagger path provided, retrieving preview swagger, ${previewSwaggerPath}`);
 		// Retrieve preview swagger
 		if (fs.existsSync(previewSwaggerPath)) {
-			console.log(`Loading preview swagger from disk: ${previewSwaggerPath}`);
+			log.debug('Loading preview swagger from local file system');
+			log.debug(`Loading preview swagger from disk: ${previewSwaggerPath}`);
 			previewSwagger = JSON.parse(fs.readFileSync(previewSwaggerPath, 'utf8'));
+			log.debug('Local preview swagger file loaded successfully');
 		} else if (previewSwaggerPath.toLowerCase().startsWith('http')) {
-			console.log(`Downloading preview swagger from: ${previewSwaggerPath}`);
+			log.debug('Downloading preview swagger from URL');
+			log.debug(`Downloading preview swagger from: ${previewSwaggerPath}`);
 			previewSwagger = JSON.parse(downloadFile(previewSwaggerPath));
+			log.debug('Preview swagger download completed successfully');
 		} else {
+			log.debug(`Invalid preview swagger path provided', ${previewSwaggerPath}`);
 			throw `Invalid previewSwaggerPath: ${previewSwaggerPath}`;
 		}
 
 		// Add the preview swagger and the public swagger together to create the full new swagger
+		log.debug('Combining public and preview swagger files');
 		newSwagger = combineSwagger(newSwagger, previewSwagger);
+		log.debug('Swagger files combined successfully');
+	} else {
+		log.debug('No preview swagger path provided, using only main swagger');
 	}
 
 	return newSwagger;
@@ -336,11 +391,11 @@ function downloadFile(url: string) {
 	var i = 0;
 	while (i < 10) {
 		i++;
-		console.log(`Downloading file: ${url}`);
+		log.debug(`Downloading file: ${url}`);
 		// Source: https://www.npmjs.com/package/download-file-sync
 		var file = childProcess.execFileSync('curl', ['--silent', '-L', url], { encoding: 'utf8', maxBuffer: maxFileBufferSize });
 		if (!file || file === '') {
-			console.log(`File was empty! sleeping for 5 seconds. Retries left: ${10 - i}`);
+			log.debug(`File was empty! sleeping for 5 seconds. Retries left: ${10 - i}`);
 			childProcess.execFileSync('curl', ['--silent', 'https://httpbin.org/delay/10'], { encoding: 'utf8' });
 		} else {
 			return file;
@@ -351,5 +406,7 @@ function downloadFile(url: string) {
 
 
 // Call the method directly
+log.debug('Starting PreProcessSwagger script execution');
 const preProcessSwagger = new PreProcessSwagger();
 preProcessSwagger.init();
+log.debug('PreProcessSwagger script execution completed');

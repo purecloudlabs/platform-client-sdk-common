@@ -2,37 +2,75 @@ import fs from 'fs-extra';
 import path from 'path';
 import dot, { TemplateSettings } from 'dot';
 import { ResourceDefinitions, Template } from './resourceDefinitions'
+import log from '../../../../modules/log/logger';
+
+type SwaggerMethodDetails = {
+  tags?: string[];
+  operationId?: string;
+  summary?: string;
+  description?: string;
+  [key: string]: any;
+};
 
 export class PostProcess {
 	init() {
 		try {
+			log.debug('PostProcess initialization started');
 
 			dot.templateSettings.strip = false;
+			log.debug('Template settings configured');
 
 			const rootPath: string = path.resolve(process.argv[2]);
 			const topLevelCommandsPath: string = path.resolve(process.argv[3]);
 			const resourceDefinitionsPath: string = path.resolve(process.argv[4]);
+			const newSwaggerPath: string = path.resolve(process.argv[5]);
+			const operationNameOverridesPath: string = path.resolve(process.argv[6]);
+			const docsDir: string = path.resolve(process.argv[7]);
+			const apiDataPath: string = path.resolve(process.argv[8]);
 
-			console.log(`rootPath=${rootPath}`);
-			console.log(`topLevelCommandsPath=${topLevelCommandsPath}`);
+			log.debug(`Command line arguments parsed - rootPath: ${rootPath}, topLevelCommandsPath: ${topLevelCommandsPath}, resourceDefinitionsPath: ${resourceDefinitionsPath}`);
+			log.info(`rootPath=${rootPath}`);
+			log.info(`topLevelCommandsPath=${topLevelCommandsPath}`);
 
+			log.debug('Loading resource definitions and top level commands');
 			const resourceDefinitions: ResourceDefinitions = JSON.parse(fs.readFileSync(resourceDefinitionsPath, 'utf8'));
 			const topLevelCommands: string[] = JSON.parse(fs.readFileSync(topLevelCommandsPath, 'utf8'));
+			log.debug(`Files loaded successfully - resourceDefinitions: ${Object.keys(resourceDefinitions).length}, topLevelCommands: ${topLevelCommands.length}`);
 
 			const rootFileName: string = rootPath.split('/').pop();
 			const rootDir: string = rootPath.replace(rootFileName, '');
+			log.debug(`Path components extracted - rootFileName: ${rootFileName}, rootDir: ${rootDir}`);
 
+			log.debug('Starting super command file generation');
 			generateSuperCommandFiles(rootDir, topLevelCommands, resourceDefinitions, null);
+			log.debug('Super command files generated');
+			
+			log.debug('Starting root file generation');
 			generateRootFiles(rootDir, resourceDefinitions);
+			log.debug('Root files generated');
+			
+			log.debug('Starting root processing');
 			processRoot(rootDir, rootFileName, resourceDefinitions, topLevelCommands);
+			log.debug('Root processing completed');
+			
+			log.debug('Starting cli doc processing');
+			generate_cli_docs_from_swagger(topLevelCommandsPath, newSwaggerPath, 
+				operationNameOverridesPath, docsDir, apiDataPath );
+			log.debug('CLI doc processing completed');
+			
+			log.info('PostProcess completed successfully');
 		} catch (err) {
+			log.error(`PostProcess failed: ${err instanceof Error ? err.message : err}`);
+			if (err instanceof Error && err.stack) {
+				log.debug(`Stack trace: ${err.stack}`);
+			}
 			process.exitCode = 1;
-			console.log(err);
 		}
 	};
 }
 // Creates command root files if they don't already exist
 function generateSuperCommandFiles(rootDir: string, topLevelCommands: string[], resourceDefinitions: ResourceDefinitions, resourcePath: string) {
+	log.debug(`Starting super command file generation - rootDir: ${rootDir}, topLevelCommands: ${topLevelCommands.length}, resourcePath: ${resourcePath}`);
 	const templateString = `package {{addit.supercommand}}
 
 import (
@@ -61,9 +99,12 @@ func Cmd{{addit.supercommand}}() *cobra.Command {
 }
 `;
 	for (const supercommand of topLevelCommands) {
+		log.debug(`Processing supercommand: ${supercommand}`);
 		const commandPath = path.join(rootDir, supercommand);
 		const commandFile = path.join(commandPath, `${supercommand}.go`);
+		log.debug(`Checking command file existence: ${commandFile}`);
 		if (!fs.existsSync(commandFile)) {
+			log.debug('Command file does not exist, creating new file');
 			if (!fs.existsSync(commandPath)) fs.mkdirSync(commandPath);
 
 			let description = ""
@@ -84,9 +125,13 @@ func Cmd{{addit.supercommand}}() *cobra.Command {
 			}
 			description = description.replace(/\/$/g, "")
 
-			console.log(`Creating ${commandFile} with description ${description}`)
+			log.debug(`Creating command file: ${commandFile}, description: ${description}`);
+			log.info(`Creating ${commandFile} with description ${description}`);
 
 			writeTemplate(templateString, { supercommand: supercommand, description: description }, commandFile);
+			log.debug('Command file created successfully');
+		} else {
+			log.debug('Command file already exists, skipping creation');
 		}
 	}
 }
@@ -235,6 +280,7 @@ function processRoot(rootDir: string, rootFileName: string, resourceDefinitions:
 }
 
 function writeTemplate(templateString: string, templateObj: Template, filePath) {
+	log.debug(`Writing template to file, ${filePath}, ${templateObj}`);
 
 	const templateSettings: TemplateSettings = {
 		evaluate: /\{\{([\s\S]+?)\}\}/g,
@@ -253,15 +299,158 @@ function writeTemplate(templateString: string, templateObj: Template, filePath) 
 	}
 
 
+	log.debug('Compiling template');
 	let template = dot.template(templateString, dot.templateSettings = templateSettings, templateObj);
 	//let template = dot.template(templateString, null, templateObj);
+	log.debug('Executing template');
 	let result = template(templateObj);
 
+	log.debug('Writing template result to file');
 	fs.writeFileSync(filePath, result);
+	log.debug('Template file written successfully');
 	console.log(`Extension templated to ${filePath}`);
 }
 
+async function generate_cli_docs_from_swagger(topLevelCommandsPath: string, 
+  newSwaggerPath: string, 
+  operationNameOverridesPath: string, 
+  docsDir: string, 
+  apiDataPath: string
+): Promise<void> {
+
+  log.debug("Starting CLI doc generation from swagger");
+  log.debug(`Top level commands path: ${topLevelCommandsPath}`);
+  log.debug(`New Swagger file path: ${newSwaggerPath}`);
+  log.debug(`Operation name overrides path: ${operationNameOverridesPath}`);
+  log.debug(`Output directory: ${docsDir}`);
+  log.debug(`APIData directory: ${apiDataPath}`);
+ 
+  log.debug("Reading swagger data file");
+  const swaggerData = JSON.parse(fs.readFileSync(newSwaggerPath, "utf8"));
+  log.debug(`Swagger data loaded with ${Object.keys(swaggerData.paths || {}).length} paths`);
+  
+  log.debug("Reading top level commands file");
+  const topLevelCommands: string[] = JSON.parse(fs.readFileSync(topLevelCommandsPath, "utf8"));
+  log.debug(`Loaded ${topLevelCommands.length} top level commands: ${topLevelCommands.join(', ')}`);
+  
+  log.debug("Reading operation overrides file");
+  const operationOverrides = JSON.parse(fs.readFileSync(operationNameOverridesPath, "utf8"));
+  log.debug(`Loaded operation overrides for ${Object.keys(operationOverrides).length} paths`);
+
+  log.debug("Building override lookup table");
+  const overrideLookup: Record<string, string> = {};
+  let overrideCount = 0;
+  for (const [p, methods] of Object.entries(operationOverrides)) {
+    for (const [m, meta] of Object.entries(methods as any)) {
+      overrideLookup[`${m.toLowerCase()} ${p.toLowerCase()}`] = (meta as any).name;
+      overrideCount++;
+    }
+  }
+  log.debug(`Built override lookup with ${overrideCount} entries`);
+
+  log.debug("Processing swagger paths to build tag groups");
+  const tagGroups: Record<string, string[]> = {};
+  let pathCount = 0;
+  for (const [path, methods] of Object.entries(swaggerData.paths)) {
+    for (const [method, details] of Object.entries(methods as any)) {
+	  const d = details as SwaggerMethodDetails;
+      const tags = d.tags || [];
+      if (!tags.length) continue;
+      const tag = tags[0].toLowerCase();
+      const base = tag.split("_")[0];
+      if (!tagGroups[base]) tagGroups[base] = [];
+      if (!tagGroups[base].includes(tag)) tagGroups[base].push(tag);
+      pathCount++;
+    }
+  }
+  log.debug(`Processed ${pathCount} API paths, created ${Object.keys(tagGroups).length} tag groups`);
+
+  const topTags = new Set(topLevelCommands.map((x) => x.toLowerCase()));
+  const unifiedTags = Object.fromEntries(Object.entries(tagGroups).filter(([k]) => topTags.has(k)));
+  log.debug(`Filtered to ${Object.keys(unifiedTags).length} unified tag groups matching top level commands`);
+
+  log.debug("Building tag to supercommand mapping");
+  const tagToSuper: Record<string, string> = {};
+  for (const [supercmd, tags] of Object.entries(unifiedTags)) {
+    for (const tag of tags) tagToSuper[tag] = supercmd;
+  }
+  log.debug(`Created tag mapping for ${Object.keys(tagToSuper).length} tags`);
+
+  log.debug("Processing swagger paths to build CLI docs");
+  const cliDocs: Record<string, any> = {};
+  const descCandidates: Record<string, [string, string][]> = {};
+  let processedOperations = 0;
+
+  for (const [path, methods] of Object.entries(swaggerData.paths)) {
+    for (const [method, details] of Object.entries(methods as any)) {
+	   const d = details as SwaggerMethodDetails;
+      const tags = d.tags || [];
+      if (!tags.length) continue;
+      const tag = tags[0].toLowerCase();
+      const supercmd = tagToSuper[tag];
+      if (!supercmd) continue;
+
+      const opId = (d.operationId || "").toLowerCase();
+      const summary = d.summary || "";
+      const override = overrideLookup[`${method.toLowerCase()} ${path.toLowerCase()}`];
+      const name = override || opId;
+
+      if (!cliDocs[supercmd]) {
+        cliDocs[supercmd] = { supercommand: supercmd, description: "", resources: [] };
+        log.debug(`Created new CLI doc entry for supercommand: ${supercmd}`);
+      }
+      cliDocs[supercmd].resources.push({ name, path, description: summary });
+      processedOperations++;
+
+      if (d.description?.includes("SWAGGER_OVERRIDE_")) {
+        if (!descCandidates[supercmd]) descCandidates[supercmd] = [];
+        descCandidates[supercmd].push([path, d.description]);
+      }
+    }
+  }
+  log.debug(`Processed ${processedOperations} operations into ${Object.keys(cliDocs).length} CLI doc entries`);
+
+  log.debug("Setting strict descriptions for supercommands");
+  let descriptionsSet = 0;
+
+  for (const supercmd of Object.keys(cliDocs)) {
+   const expectedPath = `/api/v2/${supercmd}`;
+   cliDocs[supercmd].description = expectedPath;
+
+   const candidates = descCandidates[supercmd] || [];
+   const found = candidates.find(([path]) => path === expectedPath);
+
+   if (found) {
+   	log.debug(`Confirmed exact match in Swagger for ${supercmd}: ${expectedPath}`);
+   } else {
+	log.warn(`No exact path match in Swagger for ${supercmd}, using strict fallback: ${expectedPath}`);
+   }
+
+   descriptionsSet++;
+  }
+
+  log.debug(`Set strict descriptions for ${descriptionsSet} supercommands`);
+
+
+  log.debug("Writing CLI doc files");
+  fs.ensureDirSync(docsDir);
+  let filesWritten = 0;
+  for (const [tag, doc] of Object.entries(cliDocs)) {
+    const filePath = path.join(docsDir, `${tag}.json`);
+    fs.writeFileSync(filePath, JSON.stringify(doc, null, 2));
+    filesWritten++;
+    log.debug(`Written CLI doc file: ${filePath}`);
+  }
+  
+  fs.writeFileSync(apiDataPath, JSON.stringify(Object.values(cliDocs), null, 2));
+  log.debug(`Written API data file: ${apiDataPath}`);
+
+  log.info(`CLI docs generation completed. Written ${filesWritten} individual docs and 1 API data file`);
+  log.info("CLI docs generated into /docs folder.");
+}
 
 // Call the method directly
+log.debug('Starting PostProcess script execution');
 const postProcess = new PostProcess();
 postProcess.init();
+log.debug('PostProcess script execution completed');

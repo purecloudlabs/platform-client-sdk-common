@@ -1,8 +1,10 @@
 import _ from 'lodash';
 import dot from 'dot';
 import pluralize from 'pluralize';
+import Logger from '../log/logger';
 import { Swagger, Info, Path, TypeResponse, ItemsType, Property, HttpMethod, valueTypes, Parameter, Changes } from '../types/swagger';
 import { Version, Data } from '../types/builderTypes';
+import log from '../log/logger';
 
 /* PRIVATE VARS */
 
@@ -50,7 +52,11 @@ class SwaggerDiffImpl {
 		dot.templateSettings.strip = false;
 	}
 	public diff(oldSwagger: Swagger, newSwagger: Swagger): void {
-		console.log('Diffing swagger files...');
+		log.info('Starting swagger diff implementation');
+		log.debug(`Old swagger paths: ${Object.keys(oldSwagger?.paths || {}).length}`);
+		log.debug(`New swagger paths: ${Object.keys(newSwagger?.paths || {}).length}`);
+		log.debug(`Old swagger definitions: ${Object.keys(oldSwagger?.definitions || {}).length}`);
+		log.debug(`New swagger definitions: ${Object.keys(newSwagger?.definitions || {}).length}`);
 
 		// Set data
 		this.oldSwagger = oldSwagger;
@@ -59,14 +65,21 @@ class SwaggerDiffImpl {
 		this.swaggerInfo.swagger = newSwagger.swagger;
 		this.swaggerInfo.host = newSwagger.host;
 		this.changes = {};
+		this.changeCount = 0;
+		
 		// Diff
+		log.info('Checking operations for changes');
 		checkOperations(oldSwagger, newSwagger);
+		log.info('Checking models for changes');
 		checkModels(oldSwagger, newSwagger);
 
-		console.log(`Swagger diff complete. Found ${this.changeCount} changes.`);
+		log.info(`Swagger diff implementation complete. Found ${this.changeCount} changes.`);
 	};
 
 	public generateReleaseNotes(template: string, data: Data) {
+		log.info('Starting release notes generation in implementation');
+		log.debug(`Template length: ${template.length}`);
+		log.debug(`Total changes to process: ${Object.keys(this.changes).length}`);
 		var changesObject = {
 			major: {},
 			minor: {},
@@ -74,6 +87,7 @@ class SwaggerDiffImpl {
 		};
 
 		// Organize data for templating
+		log.debug('Organizing changes by impact level');
 		_.forEach(this.changes, function (changeItem, entity) {
 			if (changeItem.major) {
 				if (!changesObject.major[entity]) changesObject.major[entity] = { key: entity, changes: [] };
@@ -127,47 +141,50 @@ class SwaggerDiffImpl {
 		};
 
 		// Compile template
-		console.log('Compiling template...');
+		log.debug('Compiling template with DOT engine');
+		log.debug(`Changes summary - Major: ${changesData.majorCount}, Minor: ${changesData.minorCount}, Point: ${changesData.pointCount}`);
 		var compiledTemplate = dot.template(template, null, defs);
 
 		// Execute template
-		console.log('Executing template...');
-		return compiledTemplate(defs);
+		log.debug('Executing compiled template');
+		const result = compiledTemplate(defs);
+		log.info(`Release notes generated successfully, length: ${result.length}`);
+		return result;
 	};
 
 	public incrementVersion = function (version: Version, forceMajor: boolean, forceMinor: boolean, forcePoint: boolean) {
+		log.debug('Analyzing changes to determine version increment');
+		const majorChanges = _.find(this.changes, function (changeGroup) {
+			return changeGroup[IMPACT_MAJOR] ? changeGroup[IMPACT_MAJOR].length > 0 : false;
+		});
+		const minorChanges = _.find(this.changes, function (changeGroup) {
+			return changeGroup[IMPACT_MINOR] ? changeGroup[IMPACT_MINOR].length > 0 : false;
+		});
+		const pointChanges = _.find(this.changes, function (changeGroup) {
+			return changeGroup[IMPACT_POINT] ? changeGroup[IMPACT_POINT].length > 0 : false;
+		});
+		
+		log.debug(`Change analysis - Major: ${!!majorChanges}, Minor: ${!!minorChanges}, Point: ${!!pointChanges}`);
+		
 		// Major
-		if (
-			forceMajor === true ||
-			_.find(this.changes, function (changeGroup) {
-				return changeGroup[IMPACT_MAJOR] ? changeGroup[IMPACT_MAJOR].length > 0 : false;
-			})
-		) {
-			console.log('Increment version: major');
+		if (forceMajor === true || majorChanges) {
+			log.info(`Increment version: major (forced: ${forceMajor}, changes: ${!!majorChanges})`);
 			version.major++;
 			version.minor = 0;
 			version.point = 0;
 		}
 		// Minor
-		else if (
-			forceMinor === true ||
-			_.find(this.changes, function (changeGroup) {
-				return changeGroup[IMPACT_MINOR] ? changeGroup[IMPACT_MINOR].length > 0 : false;
-			})
-		) {
-			console.log('Increment version: minor');
+		else if (forceMinor === true || minorChanges) {
+			log.info(`Increment version: minor (forced: ${forceMinor}, changes: ${!!minorChanges})`);
 			version.minor++;
 			version.point = 0;
 		}
 		// Point
-		else if (
-			forcePoint === true ||
-			_.find(this.changes, function (changeGroup) {
-				return changeGroup[IMPACT_POINT] ? changeGroup[IMPACT_POINT].length > 0 : false;
-			})
-		) {
-			console.log('Increment version: point');
+		else if (forcePoint === true || pointChanges) {
+			log.info(`Increment version: point (forced: ${forcePoint}, changes: ${!!pointChanges})`);
 			version.point++;
+		} else {
+			log.info('No version increment needed - no changes detected');
 		}
 
 		version.display = this.stringifyVersion(version);
@@ -203,6 +220,9 @@ function addChange(id: string, key: string, location: string, impact: string, ol
 		else if (oldValue && !newValue) description = `${location.capitalizeFirstLetter()} ${key} was removed`;
 		else description = `${location.capitalizeFirstLetter()} ${key} was changed from ${oldValue} to ${newValue}`;
 	}
+	
+	log.debug(`Adding ${impact} change: ${id} - ${description}`);
+	
 	// Initialize
 	if (!_this.changes[id]) _this.changes[id] = {};
 	if (!_this.changes[id][impact]) _this.changes[id][impact] = [];
@@ -220,6 +240,7 @@ function addChange(id: string, key: string, location: string, impact: string, ol
 
 	// Increment change count
 	_this.changeCount++;
+	log.debug(`Total change count: ${_this.changeCount}`);
 }
 
 function checkForChange(id: string, key: string, location: string, impact: string, property: string, oldObject: TypeResponse, newObject: TypeResponse, description: string) {
@@ -234,19 +255,31 @@ function checkForChange(id: string, key: string, location: string, impact: strin
 }
 
 function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
-	if (!oldSwagger) return;
+	if (!oldSwagger) {
+		log.warn('No old swagger provided, skipping operation checks');
+		return;
+	}
+	log.debug('Starting operation comparison');
+	const oldPathCount = Object.keys(oldSwagger.paths || {}).length;
+	const newPathCount = Object.keys(newSwagger.paths || {}).length;
+	log.debug(`Comparing ${oldPathCount} old paths with ${newPathCount} new paths`);
+	
 	// Check for removed paths
+	log.debug('Checking for removed paths');
 	_.forEach(oldSwagger.paths, function (oldPath: Path, pathKey) {
 		var newPath = newSwagger.paths[pathKey];
 		if (!newPath) {
+			log.debug(`Path removed: ${pathKey}`);
 			addChange(pathKey, pathKey, LOCATION_PATH, IMPACT_MAJOR, pathKey, undefined, undefined);
 		}
 	});
 
 	// Check for changed and added paths
+	log.debug('Checking for changed and added paths');
 	_.forEach(newSwagger.paths, function (newPath: Path, pathKey) {
 		var oldPath = oldSwagger.paths[pathKey];
 		if (!oldPath) {
+			log.debug(`New path added: ${pathKey}`);
 			// Add note about the new path itself
 			addChange(pathKey, pathKey, LOCATION_PATH, IMPACT_MINOR, undefined, pathKey, 'Path was added');
 
@@ -464,47 +497,88 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 }
 
 function getSchemaType(schema: Property) {
-	if (schema && schema['$ref']) return schema['$ref'].replace('#/definitions/', '');
+	if (!schema) {
+		log.debug('getSchemaType called with null/undefined schema');
+		return '_undefined_';
+	}
+	
+	if (schema && schema['$ref']) {
+		const refType = schema['$ref'].replace('#/definitions/', '');
+		log.debug(`Schema type resolved as reference: ${refType}`);
+		return refType;
+	}
 
 	if (schema && schema.type) {
 		if (schema.type.toLowerCase() == 'array' && schema.items) {
-			if (schema.items['$ref']) return `${schema.items['$ref'].replace('#/definitions/', '')}[]`;
-			if (schema.items.type) return `${schema.items.type}[]`;
+			if (schema.items['$ref']) {
+				const arrayType = `${schema.items['$ref'].replace('#/definitions/', '')}[]`;
+				log.debug(`Schema type resolved as array reference: ${arrayType}`);
+				return arrayType;
+			}
+			if (schema.items.type) {
+				const arrayType = `${schema.items.type}[]`;
+				log.debug(`Schema type resolved as array: ${arrayType}`);
+				return arrayType;
+			}
 		}
 		if (schema.type.toLowerCase() == 'object' && schema.additionalProperties) {
-			return `Map<${schema.type}, ${getSchemaType(schema.additionalProperties)}>`;
+			const mapType = `Map<${schema.type}, ${getSchemaType(schema.additionalProperties)}>`;
+			log.debug(`Schema type resolved as map: ${mapType}`);
+			return mapType;
 		}
 
+		log.debug(`Schema type resolved as simple type: ${schema.type}`);
 		return schema.type;
 	}
 
+	log.debug('Schema type could not be determined, returning _undefined_');
 	return '_undefined_';
 }
 
 function checkModels(oldSwagger: Swagger, newSwagger: Swagger) {
-	if (!oldSwagger) return;
+	if (!oldSwagger) {
+		log.warn('No old swagger provided, skipping model checks');
+		return;
+	}
+	log.debug('Starting model comparison');
+	const oldModelCount = Object.keys(oldSwagger.definitions || {}).length;
+	const newModelCount = Object.keys(newSwagger.definitions || {}).length;
+	log.debug(`Comparing ${oldModelCount} old models with ${newModelCount} new models`);
+	
 	// Check for removed models
+	log.debug('Checking for removed models');
 	_.forEach(oldSwagger.definitions, function (oldModel, modelKey) {
 		var newModel = newSwagger.definitions[modelKey];
 		if (!newModel) {
+			log.debug(`Model removed: ${modelKey}`);
 			addChange(modelKey, modelKey, LOCATION_MODEL, IMPACT_MAJOR, modelKey, undefined, undefined);
 		}
 	});
 
 	// Check for changed and added models
+	log.debug('Checking for changed and added models');
 	_.forEach(newSwagger.definitions, function (newModel, modelKey) {
 		// ArrayNode and JsonNode were removed in API-5692
-		if (!newModel.properties || modelKey === 'ArrayNode' || modelKey == 'JsonNode') return;
+		if (!newModel.properties || modelKey === 'ArrayNode' || modelKey == 'JsonNode') {
+			log.debug(`Skipping model ${modelKey} (no properties or excluded type)`);
+			return;
+		}
 		var oldModel = oldSwagger.definitions[modelKey];
 		if (!oldModel) {
+			log.debug(`New model added: ${modelKey}`);
 			// Add note about the new model
 			addChange(modelKey, modelKey, LOCATION_MODEL, IMPACT_MINOR, undefined, modelKey, 'Model was added');
 		} else {
-			if (!oldModel.properties) return;
+			if (!oldModel.properties) {
+				log.debug(`Skipping model ${modelKey} comparison (old model has no properties)`);
+				return;
+			}
+			log.debug(`Comparing properties for model: ${modelKey}`);
 			// Check for removed properties
 			_.forEach(oldModel.properties, function (oldProperty, propertyKey) {
 				var newProperty = newModel.properties[propertyKey];
 				if (!newProperty) {
+					log.debug(`Property removed from ${modelKey}: ${propertyKey}`);
 					addChange(modelKey, propertyKey, LOCATION_PROPERTY, IMPACT_MAJOR, propertyKey, undefined, undefined);
 				}
 			});
@@ -643,10 +717,22 @@ function checkModels(oldSwagger: Swagger, newSwagger: Swagger) {
 }
 
 function getEnumValues(property) {
-	if (property.enum) return property.enum;
+	if (!property) {
+		log.debug('getEnumValues called with null/undefined property');
+		return undefined;
+	}
+	
+	if (property.enum) {
+		log.debug(`Found enum values: ${property.enum.length} items`);
+		return property.enum;
+	}
 
-	if (property.items && property.items.enum) return property.items.enum;
+	if (property.items && property.items.enum) {
+		log.debug(`Found enum values in items: ${property.items.enum.length} items`);
+		return property.items.enum;
+	}
 
+	log.debug('No enum values found in property');
 	return undefined;
 }
 

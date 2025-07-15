@@ -1,12 +1,9 @@
 import childProcess from 'child_process';
 import fs from 'fs';
 import swaggerDiffImpl from './swaggerDiffImpl';
-import Logger from '../log/logger';
 import { Swagger, Info, Changes, ProduceElement, ItemsType } from '../types/swagger';
 import { Data, Version } from '../types/builderTypes';
-
-const log = new Logger();
-
+import log from '../log/logger';
 export default class SwaggerDiff {
 
 	changes: Changes;
@@ -21,6 +18,8 @@ export default class SwaggerDiff {
 
 	public getAndDiff(oldSwaggerPath: string, newSwaggerPath: string, previewSwaggerPath: string,
 		saveOldSwaggerPath: string, saveNewSwaggerPath: string) {
+		log.info('Starting swagger diff process');
+		log.debug(`Parameters: oldPath=${oldSwaggerPath}, newPath=${newSwaggerPath}, previewPath=${previewSwaggerPath}`);
 		let oldSwagger: Swagger, newSwagger: Swagger, previewSwagger: Swagger;
 
 		// Retrieve old swagger
@@ -32,9 +31,11 @@ export default class SwaggerDiff {
 			oldSwagger = JSON.parse(downloadFile(oldSwaggerPath));
 		} else {
 			log.warn(`Invalid oldSwaggerPath: ${oldSwaggerPath}`);
+			throw new Error(`Invalid old swagger path: ${oldSwaggerPath}`);
 		}
 
-		log.debug(`Old swagger length: ${(JSON.stringify(oldSwagger) || []).length}`);
+		log.debug(`Old swagger loaded successfully, length: ${(JSON.stringify(oldSwagger) || []).length}`);
+		log.debug(`Old swagger info: ${oldSwagger?.info?.title || 'Unknown'} v${oldSwagger?.info?.version || 'Unknown'}`);
 
 		// Retrieve new swagger
 		if (fs.existsSync(newSwaggerPath)) {
@@ -67,6 +68,7 @@ export default class SwaggerDiff {
 			}
 		} else {
 			log.warn(`Invalid newSwaggerPath: ${newSwaggerPath}`);
+			throw new Error(`Invalid new swagger path: ${newSwaggerPath}`);
 		}
 
 		// Check to see if preview swagger path is present. Internal builds do not need the preview swagger
@@ -79,73 +81,110 @@ export default class SwaggerDiff {
 				log.info(`Downloading preview swagger from: ${previewSwaggerPath}`);
 				previewSwagger = JSON.parse(downloadFile(previewSwaggerPath));
 			} else {
-				log.warn(`Invalid newSwaggerPath: ${previewSwaggerPath}`);
+				log.warn(`Invalid previewSwaggerPath: ${previewSwaggerPath}`);
 			}
 
+			log.info('Combining preview swagger with new swagger');
 			// Add the preview swagger and the public swagger together to create the full new swagger
 			newSwagger = combineSwagger(newSwagger, previewSwagger);
+			log.debug('Preview swagger combined successfully');
+		} else {
+			log.debug('No preview swagger path provided, skipping preview swagger processing');
 		}
 
-		log.debug(`New swagger length: ${JSON.stringify(newSwagger).length}`);
+		log.debug(`New swagger loaded successfully, length: ${JSON.stringify(newSwagger).length}`);
+		log.debug(`New swagger info: ${newSwagger?.info?.title || 'Unknown'} v${newSwagger?.info?.version || 'Unknown'}`);
 
 		// Save files to disk
 		if (saveOldSwaggerPath) {
 			log.info(`Writing old swagger to ${saveOldSwaggerPath}`);
-			fs.writeFileSync(saveOldSwaggerPath, JSON.stringify(oldSwagger));
+			try {
+				fs.writeFileSync(saveOldSwaggerPath, JSON.stringify(oldSwagger));
+				log.debug('Old swagger file saved successfully');
+			} catch (error) {
+				log.warn(`Failed to save old swagger: ${error.message}`);
+			}
 		}
 		if (saveNewSwaggerPath) {
 			log.info(`Writing new swagger to ${saveNewSwaggerPath}`);
-			fs.writeFileSync(saveNewSwaggerPath, JSON.stringify(newSwagger));
+			try {
+				fs.writeFileSync(saveNewSwaggerPath, JSON.stringify(newSwagger));
+				log.debug('New swagger file saved successfully');
+			} catch (error) {
+				log.warn(`Failed to save new swagger: ${error.message}`);
+			}
 		}
 
 		// Diff swaggers
+		log.info('Starting swagger diff comparison');
 		this.diff(oldSwagger, newSwagger);
+		log.info(`Swagger diff completed with ${this.changeCount} total changes`);
 	};
 
 	public diff(oldSwagger: Swagger, newSwagger: Swagger) {
+		log.debug('Copying properties to implementation');
 		this.copyPropertiesToImpl();
 
 		// Diff
+		log.debug('Executing swagger diff implementation');
 		let retval = swaggerDiffImpl.diff(oldSwagger, newSwagger);
 
 		// Set vars from diff impl
+		log.debug('Retrieving results from diff implementation');
 		this.changeCount = swaggerDiffImpl.changeCount;
 		this.changes = swaggerDiffImpl.changes;
 		this.oldSwagger = swaggerDiffImpl.oldSwagger;
 		this.newSwagger = swaggerDiffImpl.newSwagger;
 		this.swaggerInfo = swaggerDiffImpl.swaggerInfo;
 
+		log.info(`Diff completed: ${this.changeCount} changes found`);
 		return retval;
 	};
 
 	public generateReleaseNotes(template: string, data: Data) {
+		log.info('Generating release notes');
+		log.debug(`Template source: ${fs.existsSync(template) ? 'file' : 'string'}`);
 		this.copyPropertiesToImpl();
 
 		let templateString = template;
 		if (fs.existsSync(template) === true) {
+			log.debug(`Loading template from file: ${template}`);
 			templateString = fs.readFileSync(template, 'utf8');
+			log.debug(`Template loaded, length: ${templateString.length}`);
+		} else {
+			log.debug('Using template string directly');
 		}
 
-		return swaggerDiffImpl.generateReleaseNotes(templateString, data);
+		log.debug('Calling implementation to generate release notes');
+		const result = swaggerDiffImpl.generateReleaseNotes(templateString, data);
+		log.info('Release notes generated successfully');
+		return result;
 	};
 
 	public incrementVersion(version: Version) {
+		log.info(`Starting version increment from ${version.major}.${version.minor}.${version.point}`);
 		var forceMajor: boolean = getEnv('INCREMENT_MAJOR', false, true);
 		var forceMinor: boolean = getEnv('INCREMENT_MINOR', false, true);
 		var forcePoint: boolean = getEnv('INCREMENT_POINT', false, true);
+		log.debug(`Force flags - Major: ${forceMajor}, Minor: ${forceMinor}, Point: ${forcePoint}`);
 		if (forceMajor === true) log.info('Forcing major release!');
 		if (forceMinor === true) log.info('Forcing minor release!');
 		if (forcePoint === true) log.info('Forcing point release!');
 
 		this.copyPropertiesToImpl();
 
-		return swaggerDiffImpl.incrementVersion(version, forceMajor, forceMinor, forcePoint);
+		const result = swaggerDiffImpl.incrementVersion(version, forceMajor, forceMinor, forcePoint);
+		log.info(`Version incremented to ${result.major}.${result.minor}.${result.point}`);
+		return result;
 	};
 
 	public stringifyVersion(version, includePrerelease) {
+		log.debug(`Stringifying version: ${version.major}.${version.minor}.${version.point}, includePrerelease: ${includePrerelease}`);
 		this.copyPropertiesToImpl();
 
-		return swaggerDiffImpl.stringifyVersion(version, includePrerelease);
+		const result = swaggerDiffImpl.stringifyVersion(version, includePrerelease);
+		log.debug(`Version string result: ${result}`);
+		return result;
 	};
 
 	private copyPropertiesToImpl() {
@@ -159,6 +198,8 @@ export default class SwaggerDiff {
 	}
 
 	private convertToV2(swaggerV3 : any) {
+		log.info('Converting OpenAPI v3 to Swagger v2');
+		log.debug(`Input swagger version: ${swaggerV3?.openapi || 'unknown'}`);
 		let swaggerV2: Swagger = {
 			swagger: '2.0',
 			host: '',
@@ -191,14 +232,19 @@ export default class SwaggerDiff {
 		// At this time, web messaging specification only includes definitions/schemas (no API operation)
 		// We only take care of the schemas (v3) to definitions migration (v2)
 		if (swaggerV3 && swaggerV3.components && swaggerV3.components.schemas) {
+			log.debug('Converting v3 schemas to v2 definitions');
+			const schemaCount = Object.keys(swaggerV3.components.schemas).length;
+			log.debug(`Processing ${schemaCount} schemas`);
 			// Change #/components/schemas/ to #/definitions/ using string replace
 			let allSwaggerV3SchemasAsStr = JSON.stringify(swaggerV3.components.schemas);
 			const regexConvertSchemas = /#\/components\/schemas\//g;
 			allSwaggerV3SchemasAsStr = allSwaggerV3SchemasAsStr.replace(regexConvertSchemas, '#/definitions/');
 			swaggerV2["definitions"] = JSON.parse(allSwaggerV3SchemasAsStr);
+			log.debug('Schema references converted from v3 to v2 format');
 
 			// Clean unwanted attributes from the migrated schemas
 			const keys = Object.keys(swaggerV2.definitions);
+			log.debug(`Cleaning attributes for ${keys.length} definitions`);
 			keys.forEach((key, index) => {
 				let obj: any = swaggerV2.definitions[key];
 				if (obj) {

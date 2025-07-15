@@ -13,14 +13,13 @@ import { Resourcepaths, Version, ApiVersionData, Data, Release } from '../types/
 import { ItemsType, Format } from '../types/swagger'
 import platformClient from 'purecloud-platform-client-v2';
 import yaml from 'js-yaml';
-import Logger from '../log/logger';
 import SwaggerDiff from '../swagger/swaggerDiff';
 import GitModule from '../git/gitModule';
 import Zip from '../util/zip';
 import { Models } from 'purecloud-platform-client-v2';
+import log from '../log/logger';
 
 
-const log = new Logger();
 const swaggerDiff = new SwaggerDiff();
 const git = new GitModule();
 const zip = new Zip();
@@ -28,6 +27,8 @@ const TIMESTAMP_FORMAT = 'h:mm:ss a';
 const NOTIFICATION_ID_REGEX = /^urn:jsonschema:(.+):v2:(.+)$/i;
 let _this: Builder;
 let newSwaggerTempFile = '';
+
+
 
 // Quarantine Operations
 const quarantineOperationIds: string[] = ['postGroupImages', 'postUserImages'];
@@ -64,41 +65,68 @@ export class Builder {
 
 	init(configPath: string, localConfigPath: string): Promise<string> {
 		return new Promise<string>((resolve, reject) => {
+			log.debug(`Builder initialization started - Config: ${configPath}, LocalConfig: ${localConfigPath}`);
 
 			this.constructBuilder(configPath, localConfigPath)
-				.then(() => this.deref()
-					.then(() => this.postConstructBuilder()
-						.then(() => console.log("Builder construct Completed")))
-					.then(() => resolve(""))
-					.catch((err: Error) => reject(err)));
-
+				.then(() => {
+					log.debug('Builder construction completed, starting deref');
+					return this.deref();
+				})
+				.then(() => {
+					log.debug('Deref completed, starting post-construction');
+					return this.postConstructBuilder();
+				})
+				.then(() => {
+					log.debug('Builder construct completed successfully');
+					console.log("Builder construct Completed");
+					resolve("");
+				})
+				.catch((err: Error) => {
+					log.error(`Builder initialization failed: ${err.message}`);
+					log.debug(`Stack trace: ${err.stack}`);
+					reject(err);
+				});
 		});
 	}
 
 	constructBuilder(configPath: string, localConfigPath: string): Promise<string> {
 		return new Promise<string>((resolve, reject) => {
 			try {
+				log.debug('Starting builder construction');
 				log.writeBox('Constructing Builder');
 
 				// Load config files
+				log.debug(`Checking config file existence: ${configPath}`);
 				if (fs.existsSync(configPath)) {
+					log.debug('Loading main config file');
 					this.config = loadConfig(configPath);
+					log.debug('Main config loaded successfully');
 				}
-				else throw new Error(`Config file doesn't exist! Path: ${configPath}`);
-
-				if (fs.existsSync(localConfigPath)) this.localConfig = loadConfig(localConfigPath);
 				else {
+					log.error(`Config file not found: ${configPath}`);
+					throw new Error(`Config file doesn't exist! Path: ${configPath}`);
+				}
+
+				log.debug(`Checking local config file existence: ${localConfigPath}`);
+				if (fs.existsSync(localConfigPath)) {
+					log.debug('Loading local config file');
+					this.localConfig = loadConfig(localConfigPath);
+					log.debug('Local config loaded successfully');
+				} else {
+					log.debug('Local config file not found, using empty config');
 					this.localConfig = {} as LocalConfig;
 					log.warn(`No local config provided. Path: ${localConfigPath}`);
 				}
 
 				// Apply overrides
+				log.debug('Applying configuration overrides');
 				log.info('Applying overrides...');
 				applyOverrides(this.config, this.localConfig.overrides);
+				log.debug('Configuration overrides applied successfully');
 				resolve("");
 			}
 			catch (err) {
-				console.log(err);
+				log.error(`Builder construction failed: ${err}`);
 				reject(err)
 			}
 		});
@@ -107,11 +135,15 @@ export class Builder {
 	postConstructBuilder(): Promise<string> {
 		return new Promise<string>((resolve, reject) => {
 			try {
+				log.debug('Starting post-construction builder setup');
 				_this = this;
 
 				// https://github.com/winstonjs/winston#logging-levels
 				// silly > debug > verbose > info > warn > error
-				if (this.config.settings.logLevel) log.setLogLevel(this.config.settings.logLevel);
+				if (this.config.settings.logLevel) {
+					log.debug(`Setting log level: ${this.config.settings.logLevel}`);
+					log.setLogLevel(this.config.settings.logLevel);
+				}
 
 				// Checketh thyself before thou wrecketh thyself
 				maybeInit(this, 'config', {}, "1 config");
@@ -147,10 +179,18 @@ export class Builder {
 				}
 
 				// Set env vars
-				setEnv('COMMON_ROOT', path.resolve('./'));
-				setEnv('SDK_REPO', path.resolve(path.join('./output', this.config.settings.swaggerCodegen.codegenLanguage)));
+				log.debug('Setting up environment variables');
+				const commonRoot = path.resolve('./');
+				const sdkRepo = path.resolve(path.join('./output', this.config.settings.swaggerCodegen.codegenLanguage));
+				const sdkTemp = path.resolve(path.join('./temp', this.config.settings.swaggerCodegen.codegenLanguage));
+				
+				log.debug(`Environment paths - CommonRoot: ${commonRoot}, SdkRepo: ${sdkRepo}, SdkTemp: ${sdkTemp}`);
+				setEnv('COMMON_ROOT', commonRoot);
+				setEnv('SDK_REPO', sdkRepo);
+				log.debug('Removing existing SDK_REPO directory');
 				fs.removeSync(getEnv('SDK_REPO') as string);
-				setEnv('SDK_TEMP', path.resolve(path.join('./temp', this.config.settings.swaggerCodegen.codegenLanguage)));
+				setEnv('SDK_TEMP', sdkTemp);
+				log.debug('Emptying SDK_TEMP directory');
 				fs.emptyDirSync(getEnv('SDK_TEMP') as string);
 
 				// Load env vars from config
@@ -197,11 +237,13 @@ export class Builder {
 					: './resources/templates/releaseNoteSummary.md';
 
 				// Initialize other things
+				log.debug('Setting up Git authentication');
 				git.authToken = getEnv('GITHUB_TOKEN') as string;
+				log.debug('Post-construction setup completed successfully');
 				resolve("");
 			}
 			catch (err) {
-				console.log(err);
+				log.error(`Post-construction setup failed: ${err}`);
 				reject(err)
 			}
 		});
@@ -209,22 +251,25 @@ export class Builder {
 
 	deref(): Promise<string> {
 		return new Promise<string>((resolve, reject) => {
+			log.debug('Starting schema dereferencing');
 			$RefParser.dereference(this.config, (err, schema) => {
 				if (err) {
-					console.error(err);
+					log.error(`Main config dereferencing failed: ${err}`);
 					reject(err);
 				}
 				else {
+					log.debug('Main config dereferencing completed');
 					this.config = schema as typeof this.config;
 				}
 			})
 
 			$RefParser.dereference(this.localConfig, (err, schema) => {
 				if (err) {
-					console.error(err);
+					log.error(`Local config dereferencing failed: ${err}`);
 					reject(err);
 				}
 				else {
+					log.debug('Local config dereferencing completed');
 					this.localConfig = schema as typeof this.localConfig;
 					resolve("");
 				}
@@ -234,53 +279,86 @@ export class Builder {
 
 	fullBuild(): Promise<string> {
 		return new Promise<string>((resolve, reject) => {
+			log.debug('Full build process initiated');
 			log.info('Full build initiated!');
 			let fullBuildStartTime = moment();
 			this.prebuild()
-				.then(() => this.build())
-				.then(() => this.postbuild())
-				.then(() => log.info(`Full build complete at ${moment().format(TIMESTAMP_FORMAT)} in ${measureDurationFrom(fullBuildStartTime)}`))
-				.then(() => resolve(""))
-				.catch((err: Error) => reject(err));
+				.then(() => {
+					log.debug('Prebuild completed, starting build phase');
+					return this.build();
+				})
+				.then(() => {
+					log.debug('Build completed, starting postbuild phase');
+					return this.postbuild();
+				})
+				.then(() => {
+					log.debug('Full build process completed successfully');
+					log.info(`Full build complete at ${moment().format(TIMESTAMP_FORMAT)} in ${measureDurationFrom(fullBuildStartTime)}`);
+					resolve("");
+				})
+				.catch((err: Error) => {
+					log.error(`Full build process failed: ${err.message}`);
+					log.debug(`Stack trace: ${err.stack}`);
+					reject(err);
+				});
 		});
 	}
 
 	prebuild(): Promise<string> {
 		return new Promise<string>((resolve, reject) => {
+			log.debug('Prebuild stage initiated');
 			log.writeBox('STAGE: pre-build');
 			let prebuildStartTime = moment();
 			prebuildImpl()
-				.then(() => log.info(`Pre-build complete at ${moment().format(TIMESTAMP_FORMAT)} in ${measureDurationFrom(prebuildStartTime)}`))
-				.then(() => resolve(""))
-				.catch((err) => reject(err));
+				.then(() => {
+					log.debug('Prebuild implementation completed');
+					log.info(`Pre-build complete at ${moment().format(TIMESTAMP_FORMAT)} in ${measureDurationFrom(prebuildStartTime)}`);
+					resolve("");
+				})
+				.catch((err) => {
+					log.error(`Prebuild stage failed: ${err}`);
+					reject(err);
+				});
 		});
 	}
 
 	build(): Promise<string> {
 		return new Promise<string>((resolve, reject) => {
-
+			log.debug('Build stage initiated');
 			log.writeBox('STAGE: build');
 			let buildStartTime = moment();
 
 			buildImpl()
-				.then(() => log.info(`Build complete at ${moment().format(TIMESTAMP_FORMAT)} in ${measureDurationFrom(buildStartTime)}`))
-				.then(() => resolve(""))
-				.catch((err: Error) => reject(err));
-
+				.then(() => {
+					log.debug('Build implementation completed');
+					log.info(`Build complete at ${moment().format(TIMESTAMP_FORMAT)} in ${measureDurationFrom(buildStartTime)}`);
+					resolve("");
+				})
+				.catch((err: Error) => {
+					log.error(`Build stage failed: ${err.message}`);
+					log.debug(`Stack trace: ${err.stack}`);
+					reject(err);
+				});
 		});
 	}
 
 	postbuild(): Promise<string> {
 		return new Promise<string>((resolve, reject) => {
-
+			log.debug('Postbuild stage initiated');
 			log.writeBox('STAGE: post-build');
 			let postbuildStartTime = moment();
 
 			postbuildImpl()
-				.then(() => log.info(`Post-build complete at ${moment().format(TIMESTAMP_FORMAT)} in ${measureDurationFrom(postbuildStartTime)}`))
-				.then(() => resolve(""))
-				.catch((err: Error) => reject(err));
-
+				.then(() => {
+					log.debug('Postbuild implementation completed');
+					log.info(`Post-build complete at ${moment().format(TIMESTAMP_FORMAT)} in ${measureDurationFrom(postbuildStartTime)}`);
+					resolve("");
+				})
+				.catch((err: Error) => {
+					log.error(`Postbuild stage failed: ${err.message}`);
+					log.debug(`Stack trace: ${err.stack}`);
+					reject(err);
+				});
 		});
 	}
 }
@@ -288,25 +366,32 @@ export class Builder {
 function prebuildImpl(): Promise<string> {
 	return new Promise<string>((resolve, reject) => {
 		try {
+			log.debug('Starting prebuild implementation');
 			// Pre-run scripts
+			log.debug('Executing prebuild pre-run scripts');
 			executeScripts(_this.config.stageSettings.prebuild.preRunScripts, 'custom prebuild pre-run');
 
 			// Clone repo
 			let startTime = moment();
+			log.debug(`Starting repository clone operation - Repo: ${_this.config.settings.sdkRepo.repo}, Branch: ${_this.config.settings.sdkRepo.branch}, Target: ${getEnv('SDK_REPO')}`);
 			log.info(`Cloning ${_this.config.settings.sdkRepo.repo} (${_this.config.settings.sdkRepo.branch}) to ${getEnv('SDK_REPO')}`);
 			git
 				.clone(_this.config.settings.sdkRepo.repo, _this.config.settings.sdkRepo.branch, getEnv('SDK_REPO') as string)
 				.then(function () {
+					log.debug('Repository clone completed successfully');
 					log.debug(`Clone operation completed in ${measureDurationFrom(startTime)}`);
 				})
 				.then(function () {
 					// Diff swagger
+					log.debug('Starting swagger diff operation');
 					log.info('Diffing swagger files...');
 					swaggerDiff.useSdkVersioning = true;
 					// Special treatment for Web Messaging specification (downgrade from OpenAPI v3 to Swagger v2)
 					if (_this.config.settings.swaggerCodegen.codegenLanguage == "webmessagingjava") {
+						log.debug('Enabling OpenAPI v3 to Swagger v2 downgrade for webmessagingjava');
 						swaggerDiff.downgradeToSwaggerV2 = true;
 					}
+					log.debug(`Swagger diff paths - Old: ${_this.config.settings.swagger.oldSwaggerPath}, New: ${_this.config.settings.swagger.newSwaggerPath}, Preview: ${_this.config.settings.swagger.previewSwaggerPath}`);
 					swaggerDiff.getAndDiff(
 						_this.config.settings.swagger.oldSwaggerPath,
 						_this.config.settings.swagger.newSwaggerPath,
@@ -314,25 +399,33 @@ function prebuildImpl(): Promise<string> {
 						_this.config.settings.swagger.saveOldSwaggerPath,
 						_this.config.settings.swagger.saveNewSwaggerPath
 					);
+					log.debug('Swagger diff completed');
 				})
 				.then(() => {
 					// For Jenkins only. 
+					log.debug('Checking for upstream changes validation');
 					if (newSwaggerTempFile.includes('build-platform-sdks-internal-pipeline') && process.argv.includes("build-contains-upstream-changes")) {
+						log.debug(`Validating upstream changes - Change count: ${swaggerDiff.changeCount}`);
 						if (swaggerDiff.changeCount == 0) {
+							log.debug('No swagger changes detected but upstream changes expected');
 							throw new Error('The build contains upstream changes, but the Swagger definition has not changed.');
 						}
 					}
 				})
 				.then(() => {
+					log.debug('Adding notifications to schema');
 					return addNotifications();
 				})
 				.then(() => {
+					log.debug('Processing swagger paths');
 					return processPaths();
 				})
 				.then(() => {
+					log.debug('Processing swagger references');
 					return processRefs();
 				})
 				.then(() => {
+					log.debug('Processing any types in schema');
 					return processAnyTypes();
 				})
 				.then(() => {
@@ -353,8 +446,10 @@ function prebuildImpl(): Promise<string> {
 				})
 				.then(() => {
 					// Save new swagger to temp file for build
+					log.debug(`Writing processed swagger to temp file: ${newSwaggerTempFile}`);
 					log.info(`Writing new swagger file to temp storage path: ${newSwaggerTempFile}`);
 					fs.writeFileSync(newSwaggerTempFile, JSON.stringify(swaggerDiff.newSwagger));
+					log.debug('Swagger file written successfully');
 				})
 				.then(function (): Promise<string> {
 					return new Promise<string>((resolve, reject) => {
@@ -441,10 +536,21 @@ function prebuildImpl(): Promise<string> {
 					log.info(`Writing release notes to ${releaseNotePath}`);
 					fs.writeFileSync(releaseNotePath, _this.releaseNotes);
 				})
-				.then(() => executeScripts(_this.config.stageSettings.prebuild.postRunScripts, 'custom prebuild post-run'))
-				.then(() => resolve(""))
-				.catch((err: Error) => reject(err));
+				.then(() => {
+					log.debug('Executing prebuild post-run scripts');
+					return executeScripts(_this.config.stageSettings.prebuild.postRunScripts, 'custom prebuild post-run');
+				})
+				.then(() => {
+					log.debug('Prebuild implementation completed successfully');
+					resolve("");
+				})
+				.catch((err: Error) => {
+					log.error(`Prebuild implementation failed: ${err.message}`);
+					log.debug(`Stack trace: ${err.stack}`);
+					reject(err);
+				});
 		} catch (err) {
+			log.error(`Prebuild implementation caught exception: ${err}`);
 			reject(err);
 		}
 
@@ -454,13 +560,14 @@ function prebuildImpl(): Promise<string> {
 
 function buildImpl(): Promise<string> {
 	return new Promise<string>((resolve, reject) => {
-
 		try {
+			log.debug('Starting build implementation');
 			// Pre-run scripts
+			log.debug('Executing build pre-run scripts');
 			executeScripts(_this.config.stageSettings.build.preRunScripts, 'custom build pre-run');
 
 			let outputDir = path.join(getEnv('SDK_REPO') as string, 'build');
-			log.debug(`SDK build dir -> ${outputDir}`);
+			log.debug(`Setting up build output directory: ${outputDir}`);
 			fs.emptyDirSync(outputDir);
 
 			let command = '';
@@ -483,14 +590,18 @@ function buildImpl(): Promise<string> {
 
 			_.forEach(_this.config.settings.swaggerCodegen.extraGeneratorOptions, (option) => (command += ' ' + option));
 
+			log.debug(`Executing swagger-codegen command: ${command}`);
 			log.info('Running swagger-codegen...');
-			log.debug(`command: ${command}`);
 			let code = childProcess.execSync(command, { stdio: 'inherit' });
+			log.debug('Swagger-codegen execution completed');
 
+			log.debug('Checking for extensions to copy', { extensionsPath: _this.resourcePaths.extensions });
 			if (fs.existsSync(_this.resourcePaths.extensions)) {
+				log.debug(`Copying extensions from ${_this.resourcePaths.extensions} to ${_this.config.settings.extensionsDestination}`);
 				log.info('Copying extensions...');
 				fs.copySync(_this.resourcePaths.extensions, _this.config.settings.extensionsDestination);
 			} else {
+				log.debug('Extensions path not found');
 				log.warn(`Extensions path does not exist! Path: ${_this.resourcePaths.extensions}`);
 			}
 
@@ -500,9 +611,11 @@ function buildImpl(): Promise<string> {
 			});
 
 			// Run compile scripts
+			log.debug('Executing compile scripts');
 			executeScripts(_this.config.stageSettings.build.compileScripts, 'compile');
 
 			// Copy readme from build to docs and repo root
+			log.debug('Starting readme copy operations');
 			log.info('Copying readme...');
 			fs.ensureDirSync(path.join(getEnv('SDK_REPO') as string, 'build/docs'));
 			fs.createReadStream(path.join(getEnv('SDK_REPO') as string, 'build/README.md')).pipe(
@@ -518,13 +631,25 @@ function buildImpl(): Promise<string> {
 				fs.createWriteStream(path.join(getEnv('SDK_REPO') as string, 'build/docs/releaseNotes.md'))
 			);
 
+			log.debug('Starting documentation zip operation');
 			log.info('Zipping docs...');
 			zip
 				.zipDir(path.join(outputDir, 'docs'), path.join(getEnv('SDK_TEMP') as string, 'docs.zip'))
-				.then(() => executeScripts(_this.config.stageSettings.build.postRunScripts, 'custom build post-run'))
-				.then(() => resolve(""))
-				.catch((err: Error) => reject(err));
+				.then(() => {
+					log.debug('Documentation zipped successfully, executing post-run scripts');
+					return executeScripts(_this.config.stageSettings.build.postRunScripts, 'custom build post-run');
+				})
+				.then(() => {
+					log.debug('Build implementation completed successfully');
+					resolve("");
+				})
+				.catch((err: Error) => {
+					log.error(`Build implementation failed: ${err.message}`);
+					log.debug(`Stack trace: ${err.stack}`);
+					reject(err);
+				});
 		} catch (err: unknown) {
+			log.error(`Build implementation caught exception: ${err}`);
 			reject(err);
 		}
 	});
@@ -532,16 +657,29 @@ function buildImpl(): Promise<string> {
 
 function postbuildImpl(): Promise<string> {
 	return new Promise<string>((resolve, reject) => {
-
 		try {
+			log.debug('Starting postbuild implementation');
 			// Pre-run scripts
+			log.debug('Executing postbuild pre-run scripts');
 			executeScripts(_this.config.stageSettings.postbuild.preRunScripts, 'custom postbuild pre-run');
 
+			log.debug('Creating release');
 			createRelease()
-				.then(() => executeScripts(_this.config.stageSettings.postbuild.postRunScripts, 'custom postbuild post-run'))
-				.then(() => resolve(""))
-				.catch((err: Error) => reject(err));
+				.then(() => {
+					log.debug('Release created, executing postbuild post-run scripts');
+					return executeScripts(_this.config.stageSettings.postbuild.postRunScripts, 'custom postbuild post-run');
+				})
+				.then(() => {
+					log.debug('Postbuild implementation completed successfully');
+					resolve("");
+				})
+				.catch((err: Error) => {
+					log.error(`Postbuild implementation failed: ${err.message}`);
+					log.debug(`Stack trace: ${err.stack}`);
+					reject(err);
+				});
 		} catch (err) {
+			log.error(`Postbuild implementation caught exception: ${err}`);
 			reject(err);
 		}
 	});
@@ -600,8 +738,8 @@ function createRelease(): Promise<string> {
 				let repoName = repoParts[repoParts.length - 1];
 				let repoOwner = repoParts[repoParts.length - 2];
 				if (repoName.endsWith('.git')) repoName = repoName.substring(0, repoName.length - 4);
-				log.debug(`repoName: ${repoName}`);
-				log.debug(`repoOwner: ${repoOwner}`);
+				log.log.debug(`repoName: ${repoName}`);
+				log.log.debug(`repoOwner: ${repoOwner}`);
 
 				githubApi.config.repo = repoName;
 				githubApi.config.owner = repoOwner;
@@ -933,6 +1071,7 @@ function executeScript(script: Script) {
 	let startTime = moment();
 	let bufferCode: Number;
 
+	log.debug(`Executing script - Type: ${script.type}, Path: ${script.path}, Args: ${script.args ? script.args.join(' ') : 'none'}`);
 	try {
 		let args = script.args ? script.args.slice() : [];
 		let options: { [key: string]: string } = { stdio: 'inherit' };
@@ -978,15 +1117,18 @@ function executeScript(script: Script) {
 			bufferCode = parseInt(code.toString(), 10);
 		}
 	} catch (err: unknown) {
+		log.error(`Script execution failed - Type: ${script.type}, Error: ${err}`);
 		if (err instanceof Error) {
 			if (err.message) log.error(err.message);
 		}
 	}
 
 	let completedMessage = `Script completed with return code ${bufferCode} in ${measureDurationFrom(startTime)}`;
+	log.debug(`Script execution completed - Type: ${script.type}, ReturnCode: ${bufferCode}, Duration: ${measureDurationFrom(startTime)}`);
 	if (bufferCode !== 0) {
 		log.error(completedMessage);
 		if (script.failOnError === true) {
+			log.error('Script failed with failOnError=true, aborting');
 			throw new Error(`Script failed! Aborting. Script: ${JSON.stringify(script, null, 2)}`);
 		}
 	} else {
