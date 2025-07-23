@@ -1,23 +1,60 @@
 import _ from 'lodash';
 import Winston from 'winston';
+import path from 'path';
+import fs from 'fs';
 
-export default class Logger {
+class Logger {
 
 	public log: Winston.LoggerInstance;
-
+	private static instance: Logger;
 	private defaultWidth: number = 0;
 
-	constructor() {
+	private constructor() {
+		const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+		const logFileName = `app-${timestamp}.log`;
+		const logDir = 'logs';
+		
+		// Ensure logs directory exists
+		if (!fs.existsSync(logDir)) {
+			fs.mkdirSync(logDir, { recursive: true });
+		}
+		
+		const logFilePath = path.join(logDir, logFileName);
+		
 		this.log = new Winston.Logger({
+			level: 'debug',
 			transports: [
 				new Winston.transports.Console({
-					level: 'silly',
+					level: 'debug',
 					handleExceptions: true,
 					json: false,
 					colorize: false,
+					timestamp: () => new Date().toISOString(),
+					formatter: (options) => {
+						const ts = typeof options.timestamp === 'function' ? options.timestamp() : options.timestamp;
+        				return `${ts} [${options.level.toUpperCase()}] ${options.message}`;
+					}
 				}),
+				new Winston.transports.File({
+					filename: logFilePath,
+					level: 'debug',
+					handleExceptions: true,
+					json: false,
+					timestamp: () => new Date().toISOString(),
+					formatter: (options) => {
+						const ts = typeof options.timestamp === 'function' ? options.timestamp() : options.timestamp;
+						return `${ts} [${options.level.toUpperCase()}] ${options.message}`;
+					}
+				})
 			],
 		});
+	}
+	
+	public static getInstance(): Logger {
+		if (!Logger.instance) {
+			Logger.instance = new Logger();
+		}
+		return Logger.instance;
 	}
 
 	public setLogLevel(level: string): void {
@@ -33,31 +70,63 @@ export default class Logger {
 
 
 	public silly(msg: string) {
-		this.log.silly(msg);
+		const location = this.getCallerInfo();
+		this.log.silly(`${location} ${msg}`);
 	}
 
 	public debug(msg: string) {
-		this.log.debug(msg);
+		const location = this.getCallerInfo();
+		this.log.debug(`${location} ${msg}`);
 	}
 
 	public verbose(msg: string) {
-		this.log.verbose(msg);
+		const location = this.getCallerInfo();
+		this.log.verbose(`${location} ${msg}`);
 	}
 
 	public info(msg: string) {
-		this.log.info(msg);
+		const location = this.getCallerInfo();
+		this.log.info(`${location} ${msg}`);
 	}
 
 	public error(msg: string) {
-		this.log.error(msg);
+		const location = this.getCallerInfo();
+		this.log.error(`${location} ${msg}`);
 	}
 
 	public profile(msg: string) {
-		this.log.profile(msg);
+		const location = this.getCallerInfo();
+		this.log.profile(`${location} ${msg}`);
 	}
 
 	public warn(msg: string) {
-		this.log.warn(msg);
+		const location = this.getCallerInfo();
+		this.log.warn(`${location} ${msg}`);
+	}
+
+	private getCallerInfo(): string {
+		const stack = new Error().stack;
+		if (!stack) return '[unknown]';
+		
+		const lines = stack.split('\n');
+		// Skip first 3 lines: Error, getCallerInfo, and the logging method
+		const callerLine = lines[3];
+		
+		if (!callerLine) return '[unknown]';
+		
+		// Extract file path and line number from stack trace
+		const match = callerLine.match(/\((.+):(\d+):(\d+)\)/) || callerLine.match(/at (.+):(\d+):(\d+)/);
+		if (!match) return '[unknown]';
+		
+		const filePath = match[1];
+		const lineNumber = match[2];
+		const fileName = path.basename(filePath);
+		
+		// Extract function name if available
+		const functionMatch = callerLine.match(/at\s+([^\s]+)\s+\(/) || callerLine.match(/at\s+([^\s(]+)/);
+		const functionName = functionMatch && functionMatch[1] !== filePath ? functionMatch[1] : 'anonymous';
+		
+		return `[${fileName}:${functionName}:${lineNumber}]`;
 	}
 
 	public writeBoxedLine(string: string, width: number, padchar: string, level: string) {
@@ -113,6 +182,10 @@ export default class Logger {
 		this.writeBoxBottom(width, level);
 	};
 }
+
+// Export singleton instance
+const logger = Logger.getInstance();
+export default logger;
 
 function pad(value: string, length: number, padchar: string) {
 	return value.toString().length < length ? pad(value + padchar, length, padchar) : value;

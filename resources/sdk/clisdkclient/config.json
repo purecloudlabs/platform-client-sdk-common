@@ -87,7 +87,11 @@
           "args": [
             "${SDK_REPO}/build/gc/cmd/root.go",
             "${SDK_TEMP}/topLevelCommands.json",
-            "${SDK_TEMP}/resourceDefinitions.json"
+            "${SDK_TEMP}/resourceDefinitions.json",
+            "${SDK_TEMP}/newSwagger.json",
+            "${COMMON_ROOT}/resources/sdk/clisdkclient/resources/operationNameOverrides.json",
+            "${SDK_REPO}/docs",
+            "${SDK_REPO}/APIData.json"
           ],
           "failOnError": true
         }
@@ -103,15 +107,6 @@
           "path": "postbuild-postrun.ts",
           "args": [
             "${SDK_REPO}"
-          ],
-          "failOnError": true
-        },
-        {
-          "type": "tsx",
-          "path": "${COMMON_ROOT}/resources/scripts/combineApiDataFiles.ts",
-          "args": [
-            "${SDK_REPO}/docs",
-            "${SDK_REPO}/APIData.json"
           ],
           "failOnError": true
         },
