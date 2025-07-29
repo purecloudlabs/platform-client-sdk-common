@@ -95,7 +95,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
-        <version>3.6.0</version>
+        <version>3.6.1</version>
         <executions>
           <execution>
             <id>add_sources</id>
@@ -353,9 +353,9 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <slf4j-version>2.0.17</slf4j-version>
-    <swagger-annotations-version>1.6.15</swagger-annotations-version>
+    <swagger-annotations-version>1.6.16</swagger-annotations-version>
     <jersey-version>1.19.1</jersey-version>
-    <jackson-version>2.18.3</jackson-version>
+    <jackson-version>2.19.0</jackson-version>
     <jodatime-version>2.14.0</jodatime-version>
     <maven-plugin-version>1.0.0</maven-plugin-version>
     <testng-version>7.10.2</testng-version>
@@ -364,9 +364,9 @@
     <ning-asynchttpclient-version>3.0.2</ning-asynchttpclient-version>
     <nv-websocket-client-version>2.14</nv-websocket-client-version>
     <guava-version>33.4.8-jre</guava-version>
-    <mockito.version>5.17.0</mockito.version>
+    <mockito.version>5.18.0</mockito.version>
     <ini4j-version>0.5.4</ini4j-version>
-    <io-netty-version>4.2.0.Final</io-netty-version>
+    <io-netty-version>4.2.3.Final</io-netty-version>
 
     <name>${props.name}</name>
     <version>${props.version}</version>
