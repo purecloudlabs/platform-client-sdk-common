@@ -10,7 +10,7 @@
   "license": "MIT",
   "devDependencies": {
     "hpagent": "^1.2.0",
-    "mocha": "^10.2.0"
+    "mocha": "^11.7.1"
   },
   "dependencies": {
     "@peculiar/x509": "^1.12.3",
