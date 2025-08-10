@@ -215,12 +215,16 @@ public class Configuration {
         iniData.read(fileReader);
         fileFormat = FileFormat.INI;
         emptyData = iniData.isEmpty();
-        if (emptyData == true || iniData.getSections().isEmpty() == true || (iniData.getSections().size() == 1 && iniData.getSections().contains(null))) {
+        if (emptyData == true) {
           throw new Exception("Empty Ini file");
         }
-        if (iniData.getSections().contains(null)) {
+        Set<String> iniSections = iniData.getSections();
+        if (iniSections.isEmpty() == true || (iniSections.size() == 1 && iniSections.contains(null))) {
+          throw new Exception("Empty Ini file");
+        }
+        if (iniSections.contains(null)) {
           Set<String> sectionNames = new HashSet<>();
-          for (String name : iniData.getSections()) {
+          for (String name : iniSections) {
               if (name != null) {
                 sectionNames.add(name);
               }
