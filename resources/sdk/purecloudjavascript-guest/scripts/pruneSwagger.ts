@@ -1,6 +1,6 @@
 import _ from 'lodash';
+import childProcess from 'child_process';
 import fs from 'fs-extra';
-import request from 'request-promise';
 import path from 'path';
 export class PruneSwagger {
 	init() {
@@ -67,10 +67,23 @@ export class PruneSwagger {
 }
 
 function downloadFile(url) {
-	return request({
-		method: 'GET',
-		uri: url,
-		json: true
+	return new Promise((resolve, reject) => {
+		var i = 0;
+		while (i < 10) {
+			i++;
+			// console.log(`Downloading file: ${url}`);
+			// Source: https://www.npmjs.com/package/download-file-sync
+			var file = childProcess.execFileSync('curl', ['--silent', '-L', url], { encoding: 'utf8', maxBuffer: 1024 * 1024 * 1024 });
+			if (!file || file === '') {
+				// console.log(`File was empty! sleeping for 5 seconds. Retries left: ${10 - i}`);
+				childProcess.execFileSync('curl', ['--silent', 'https://httpbin.org/delay/10'], { encoding: 'utf8' });
+			} else {
+				if (!file) reject('Failed to get contents for file!');
+				resolve(JSON.parse(file));
+			}
+		}
+		// console.log('Failed to get contents for file!');
+		reject('Failed to get contents for file!');
 	});
 }
 
