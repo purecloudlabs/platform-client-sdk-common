@@ -1268,9 +1268,7 @@ function githubLogRequestSuccess(res: any, message?: string) {
 	if (githubConfig.debug != true) {
 		return;
 	}
-
-	console.log(
-		"[INFO]" +
+	let logMsg: string = "[INFO]" +
 		"[" +
 		res.statusCode +
 		"]" +
@@ -1279,14 +1277,14 @@ function githubLogRequestSuccess(res: any, message?: string) {
 		" " +
 		res.req.path +
 		"] " +
-		(message ? message : "")
-	);
+		(message ? message : "");
+
+	console.log(logMsg);
 }
 
 function githubLogRequestError(err: any) {
 	if (err) {
-		console.log(
-			"[ERROR]" +
+		let logMsg: string = "[ERROR]" +
 			"[" +
 			(err.res ? err.res.statusCode : "Unknown Status Code") +
 			"]" +
@@ -1295,8 +1293,8 @@ function githubLogRequestError(err: any) {
 			" " +
 			(err.res && err.res.req ? err.res.req.path : "Unknown Path") +
 			"] " +
-			(err.message ? err.message : "Unknown Error Message")
-		);
+			(err.message ? err.message : "Unknown Error Message");
+		console.log(logMsg);
 	} else {
 		console.log("[ERROR] Unknown Error");
 	}
