@@ -12,5 +12,7 @@ enum class PureCloudRegionHosts(val apiHost: String) {
     eu_west_2("https://api.euw2.pure.cloud"),
     ap_south_1("https://api.aps1.pure.cloud"),
     us_east_2("https://api.use2.us-gov-pure.cloud"),
-    sa_east_1("https://api.sae1.pure.cloud");
+    sa_east_1("https://api.sae1.pure.cloud"),
+    mx_central_1("https://api.mxc1.pure.cloud"),
+    ap_southeast_1("https://api.apse1.pure.cloud");
 }
