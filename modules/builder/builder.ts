@@ -2,7 +2,6 @@ import _ from 'lodash';
 import childProcess from 'child_process';
 import $RefParser from "@apidevtools/json-schema-ref-parser";
 import fs from 'fs-extra';
-// import githubApi from "github-api-promise";
 import https from 'https';
 import path from 'path';
 import pluralize from 'pluralize';
@@ -743,9 +742,6 @@ function createRelease(): Promise<string> {
 				log.log.debug(`repoName: ${repoName}`);
 				log.log.debug(`repoOwner: ${repoOwner}`);
 
-				// githubApi.config.repo = repoName;
-				// githubApi.config.owner = repoOwner;
-				// githubApi.config.token = getEnv('GITHUB_TOKEN') as string;
 				githubConfig.repo = repoName;
 				githubConfig.owner = repoOwner;
 				githubConfig.token = getEnv('GITHUB_TOKEN') as string;
@@ -762,7 +758,6 @@ function createRelease(): Promise<string> {
 
 				console.log(createReleaseOptions);
 				// Create release
-				// return githubApi.repos.releases.createRelease(createReleaseOptions);
 				return githubCreateRelease(createReleaseOptions);
 			})
 			.then((release) => {
