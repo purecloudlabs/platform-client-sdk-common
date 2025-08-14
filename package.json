@@ -20,6 +20,7 @@
     "run-json": "json",
     "run-snyk-monitor": "snyk monitor",
     "run-snyk-auth": "snyk auth",
+    "run-tsx": "tsx",
     "synk": "snyk test --file=package-lock.json --severity-threshold=high --skip-unresolved=true"
   },
   "repository": {
