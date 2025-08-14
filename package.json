@@ -12,8 +12,14 @@
     "test": "jasmine",
     "browserify": "browserify modules/swagger/swaggerDiffImpl.ts -o docs/swaggerDiffImpl.ts",
     "ios": "tsx sdkBuilder.ts --sdk purecloudswift4",
+    "sdk_js": "tsx sdkBuilder.ts --sdk purecloudjavascript",
+    "sdk_js_chat": "tsx sdkBuilder.ts --sdk purecloudjavascript-guest",
     "webmessaging": "tsx sdkBuilder.ts --sdk webmessagingjava",
     "run-ts": "node --import ts-node/esm",
+    "run-pm2": "pm2",
+    "run-json": "json",
+    "run-snyk-monitor": "snyk monitor",
+    "run-snyk-auth": "snyk auth",
     "synk": "snyk test --file=package-lock.json --severity-threshold=high --skip-unresolved=true"
   },
   "repository": {
