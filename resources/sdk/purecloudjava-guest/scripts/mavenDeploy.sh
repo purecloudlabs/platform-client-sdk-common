@@ -42,7 +42,7 @@ cd $BUILD_DIR
 # Sonatype URLs: http://central.sonatype.org/pages/apache-maven.html
 # Sign and deploy
 mvn $MAVEN_SETTINGS_FILE jar:jar gpg:sign-and-deploy-file \
--Durl=$MAVEN_REPO_URL \
+-e -Durl=$MAVEN_REPO_URL \
 -DrepositoryId=$MAVEN_REPO_ID \
 -Dfile=target/$ARTIFACT_NAME-$VERSION.jar \
 -DpomFile=pom.xml \
