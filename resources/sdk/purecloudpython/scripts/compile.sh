@@ -14,21 +14,20 @@ cp $TESTS_DIR/setup.cfg $BUILD_DIR/setup.cfg
 
 # Compile module
 cd $BUILD_DIR
-python3.9 -m pip install --user -U urllib3==1.26.20
-python3.9 setup.py build
+python3.10 setup.py build
 
 # Run tests
 echo "Running tests"
 cd "$TESTS_DIR"
 echo "Install requests..."
-python3.9 -m pip install --user -U requests
+python3.10 -m pip install --user -U requests
 echo "Install watchdog..."
-python3.9 -m pip install --user -U watchdog
+python3.10 -m pip install --user -U watchdog
 echo "Install retry..."
-python3.9 -m pip install --user -U retry
+python3.10 -m pip install --user -U retry
 echo "Run unit tests -> SdkTests"
-python3.9 -m unittest SdkTests
+python3.10 -m unittest SdkTests
 echo "Run unit tests mtls"
-python3.9 -m unittest SdkTests_mtls
+python3.10 -m unittest SdkTests_mtls
 echo "Run unit tests proxy"
-python3.9 -m unittest SdkTests_proxy
+python3.10 -m unittest SdkTests_proxy

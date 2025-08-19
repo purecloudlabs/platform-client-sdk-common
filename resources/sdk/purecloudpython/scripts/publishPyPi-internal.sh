@@ -15,16 +15,16 @@ then
 fi
 
 echo "Upgrading PIP"
-python3.9 -m pip install --upgrade --user pip
+python3.10 -m pip install --upgrade --user pip
 
 echo "Installing Twine and Wheel"
-python3.9 -m pip install twine wheel setuptools --user --upgrade
+python3.10 -m pip install twine wheel setuptools --user --upgrade
 
 echo "Creating the distribution package"
-python3.9 setup.py sdist
+python3.10 setup.py sdist
 
 echo "Running twine check"
-python3.9 -m twine check dist/*
+python3.10 -m twine check dist/*
 
 echo "uploading to the pypi server"
-python3.9 -m twine upload --repository $INDEX_SERVER dist/*
+python3.10 -m twine upload --repository $INDEX_SERVER dist/*
