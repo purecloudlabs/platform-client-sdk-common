@@ -48,6 +48,8 @@ const aliasOperationIds: any = {
 };
 // Override available topics schema properties from type: "integer" to type: "integer", format: "int64"
 let forceInt64Integers = true;
+// Remove duplicates in topics enumerations
+let removeEnumDuplicates = true;
 
 export class Builder {
 
@@ -1013,6 +1015,26 @@ function extractDefinitons(entity: { [key: string]: any }) {
 				if (key == 'type' && property == 'integer') {
 					if (!entity['format']) {
 						entity['format'] = 'int64';
+					}
+				}
+			}
+			// Remove enum duplicates
+			if (removeEnumDuplicates == true) {
+				if (key == 'enum') {
+					if (entity["type"] && entity["type"] == "string") {
+						if (entity["enum"] && entity["enum"].length > 0) {
+							let filteredEnum: string[] = [];
+							let upperCaseEnum: string[] = [];
+							for (let enumValue of entity["enum"]) {
+								if (!upperCaseEnum.includes(enumValue.toUpperCase())) {
+									upperCaseEnum.push(enumValue.toUpperCase());
+									filteredEnum.push(enumValue);
+								} else {
+									log.info(`Duplicate enum value in topic: ${enumValue}. Removing it...`);
+								}
+							}
+							entity["enum"] = filteredEnum;
+						}
 					}
 				}
 			}
