@@ -443,7 +443,8 @@ This choice of default value has been made to facilitate the transition from leg
 
 ```javascript
 const client = {{moduleName}}.ApiClient.instance;
-client.setUseLegacyParameterFilter(true);
+// To use modern and accurate parameter filtering, set UseLegacyParameterFilter to false
+client.setUseLegacyParameterFilter(false);
 ```
 
 ### Setting an intermediate Gateway
