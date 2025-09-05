@@ -20,7 +20,7 @@ namespace {{=it.packageName}}.Client
         [Description("https://api.mypurecloud.jp")]
         ap_northeast_1,
         [Description("https://api.mypurecloud.com.au")]
-        ap_southeast_1,
+        ap_southeast_2,
         [Description("https://api.usw2.pure.cloud")]
         us_west_2,
         [Description("https://api.cac1.pure.cloud")]
@@ -41,6 +41,10 @@ namespace {{=it.packageName}}.Client
         ap_northeast_3,
         [Description("https://api.euc2.pure.cloud")]
         eu_central_2,
+        [Description("https://api.mxc1.pure.cloud")]
+        mx_central_1,
+        [Description("https://api.apse1.pure.cloud")]
+        ap_southeast_1,
     }
 
     public static class EnumExtensionMethods
