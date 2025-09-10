@@ -1112,7 +1112,7 @@ function executeScript(script: Script) {
 				args.unshift(getScriptPath(script));
 				args.unshift('--import', 'tsx');
 				log.verbose(`Executing node script: ${args.join(' ')}`);
-				code = childProcess.execFileSync('tsx', args, options);
+				code = childProcess.execFileSync('node', args, options);
 
 				break;
 			}
