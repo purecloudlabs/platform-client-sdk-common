@@ -1110,6 +1110,7 @@ function executeScript(script: Script) {
 		switch (script.type.toLowerCase()) {
 			case 'tsx': {
 				args.unshift(getScriptPath(script));
+				args.unshift('--import', 'tsx');
 				log.verbose(`Executing node script: ${args.join(' ')}`);
 				code = childProcess.execFileSync('tsx', args, options);
 
