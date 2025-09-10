@@ -18,6 +18,11 @@
     "sdk_python": "tsx sdkBuilder.ts --sdk purecloudpython",
     "webmessaging": "tsx sdkBuilder.ts --sdk webmessagingjava",
     "run-ts": "node --import ts-node/esm",
+    "run-pm2": "pm2",
+    "run-json": "json",
+    "run-snyk-monitor": "snyk monitor",
+    "run-snyk-auth": "snyk auth",
+    "run-tsx": "tsx",
     "synk": "snyk test --file=package-lock.json --severity-threshold=high --skip-unresolved=true"
   },
   "repository": {
