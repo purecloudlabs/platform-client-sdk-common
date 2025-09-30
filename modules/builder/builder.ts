@@ -2,7 +2,6 @@ import _ from 'lodash';
 import childProcess from 'child_process';
 import $RefParser from "@apidevtools/json-schema-ref-parser";
 import fs from 'fs-extra';
-import githubApi from "github-api-promise";
 import https from 'https';
 import path from 'path';
 import pluralize from 'pluralize';
@@ -18,6 +17,8 @@ import GitModule from '../git/gitModule';
 import Zip from '../util/zip';
 import { Models } from 'purecloud-platform-client-v2';
 import log from '../log/logger';
+import axios from "axios";
+import { Endpoints } from "@octokit/types";
 
 
 const swaggerDiff = new SwaggerDiff();
@@ -47,6 +48,8 @@ const aliasOperationIds: any = {
 };
 // Override available topics schema properties from type: "integer" to type: "integer", format: "int64"
 let forceInt64Integers = true;
+// Remove duplicates in topics enumerations
+let removeEnumDuplicates = true;
 
 export class Builder {
 
@@ -183,7 +186,7 @@ export class Builder {
 				const commonRoot = path.resolve('./');
 				const sdkRepo = path.resolve(path.join('./output', this.config.settings.swaggerCodegen.codegenLanguage));
 				const sdkTemp = path.resolve(path.join('./temp', this.config.settings.swaggerCodegen.codegenLanguage));
-				
+
 				log.debug(`Environment paths - CommonRoot: ${commonRoot}, SdkRepo: ${sdkRepo}, SdkTemp: ${sdkTemp}`);
 				setEnv('COMMON_ROOT', commonRoot);
 				setEnv('SDK_REPO', sdkRepo);
@@ -741,9 +744,9 @@ function createRelease(): Promise<string> {
 				log.log.debug(`repoName: ${repoName}`);
 				log.log.debug(`repoOwner: ${repoOwner}`);
 
-				githubApi.config.repo = repoName;
-				githubApi.config.owner = repoOwner;
-				githubApi.config.token = getEnv('GITHUB_TOKEN') as string;
+				githubConfig.repo = repoName;
+				githubConfig.owner = repoOwner;
+				githubConfig.token = getEnv('GITHUB_TOKEN') as string;
 
 				const tagName = _this.config.settings.sdkRepo.tagFormat.replace('{version}', _this.version.displayFull);
 				let createReleaseOptions = {
@@ -757,7 +760,7 @@ function createRelease(): Promise<string> {
 
 				console.log(createReleaseOptions);
 				// Create release
-				return githubApi.repos.releases.createRelease(createReleaseOptions);
+				return githubCreateRelease(createReleaseOptions);
 			})
 			.then((release) => {
 				log.info(`Created release #${release}`);
@@ -1015,6 +1018,26 @@ function extractDefinitons(entity: { [key: string]: any }) {
 					}
 				}
 			}
+			// Remove enum duplicates
+			if (removeEnumDuplicates == true) {
+				if (key == 'enum') {
+					if (entity["type"] && entity["type"] == "string") {
+						if (entity["enum"] && entity["enum"].length > 0) {
+							let filteredEnum: string[] = [];
+							let upperCaseEnum: string[] = [];
+							for (let enumValue of entity["enum"]) {
+								if (!upperCaseEnum.includes(enumValue.toUpperCase())) {
+									upperCaseEnum.push(enumValue.toUpperCase());
+									filteredEnum.push(enumValue);
+								} else {
+									log.info(`Duplicate enum value in topic: ${enumValue}. Removing it...`);
+								}
+							}
+							entity["enum"] = filteredEnum;
+						}
+					}
+				}
+			}
 
 			// Recurse on objects
 			if (typeof property !== 'object') return;
@@ -1240,4 +1263,93 @@ function getFileCount(dir: fs.PathLike) {
 	}
 
 	return files.length;
+}
+
+// Alternative to github-api-promise until update
+
+let githubConfig: any = {
+  owner: "github_username",
+  repo: "repo_name",
+  token: "your_github_token",
+  host: "https://api.github.com",
+  debug: false,
+};
+
+function githubGetRepoUrl(additionalPath: string) {
+	var url = githubConfig.host + "/repos/" + githubConfig.owner + "/" + githubConfig.repo + "/";
+	if (additionalPath) url += additionalPath;
+	return url;
+}
+
+function githubLogRequestSuccess(res: any, message?: string) {
+	if (githubConfig.debug != true) {
+		return;
+	}
+	let logMsg: string = "[INFO]" +
+		"[" +
+		res.statusCode +
+		"]" +
+		"[" +
+		res.req.method +
+		" " +
+		res.req.path +
+		"] " +
+		(message ? message : "");
+
+	console.log(logMsg);
+}
+
+function githubLogRequestError(err: any) {
+	if (err) {
+		let logMsg: string = "[ERROR]" +
+			"[" +
+			(err.res ? err.res.statusCode : "Unknown Status Code") +
+			"]" +
+			"[" +
+			(err.res && err.res.req ? err.res.req.method : "Unknown Method") +
+			" " +
+			(err.res && err.res.req ? err.res.req.path : "Unknown Path") +
+			"] " +
+			(err.message ? err.message : "Unknown Error Message");
+		console.log(logMsg);
+	} else {
+		console.log("[ERROR] Unknown Error");
+	}
+}
+
+/**
+ * Users with push access to the repository can create a release. Returns 422 if anything is wrong with the values in the body.
+ * @param  {JSON} 	body  		A JSON document to send with the request
+ * @return {JSON}           	The release data
+ */
+function githubCreateRelease(
+	body: any
+): Promise<
+	Endpoints["POST /repos/{owner}/{repo}/releases"]["response"]["data"]
+> {
+	return new Promise((resolve, reject) => {
+		try {
+			axios
+				.post(githubGetRepoUrl("releases"), body, {
+					headers: {
+						Authorization: `token ${githubConfig.token}`,
+						"User-Agent": "github-api-promise",
+						"Content-Type": "application/json",
+					},
+				})
+				.then(
+					function (res: any) {
+						githubLogRequestSuccess(res);
+						resolve(res.body);
+					},
+					function (err: any) {
+						githubLogRequestError(err);
+						reject(err.message);
+					}
+				);
+		} catch (err) {
+			console.log(err);
+			reject(err.message);
+		}
+	});
 }

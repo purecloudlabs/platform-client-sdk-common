@@ -601,5 +601,10 @@
 		"patch": {
 			"name": "partialupdate"
 		}
+	},
+	"/api/v2/users/{userId}/customattributes": {
+		"patch": {
+			"name": "patch"
+		}
 	}
 }

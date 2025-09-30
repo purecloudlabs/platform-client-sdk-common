@@ -79,7 +79,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
-        <version>3.6.0</version>
+        <version>3.6.1</version>
         <executions>
           <execution>
             <id>add_sources</id>
@@ -98,7 +98,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.13.0</version>
+        <version>3.14.0</version>
         <configuration>
           <source>1.8</source>
           <target>1.8 </target>
@@ -125,7 +125,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <version>3.10.0</version>
+        <version>3.11.3</version>
         <configuration>
           <additionalparam>-Xdoclint:none</additionalparam>
         </configuration>
@@ -156,7 +156,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-gpg-plugin</artifactId>
-        <version>3.2.6</version>
+        <version>3.2.8</version>
         <executions>
           <execution>
             <id>sign-artifacts</id>
@@ -282,18 +282,18 @@
   </dependencies>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <swagger-annotations-version>1.6.14</swagger-annotations-version>
-    <jackson-version>2.17.2</jackson-version>
-    <slf4j-version>2.0.16</slf4j-version>
-    <jodatime-version>2.13.0</jodatime-version>
+    <swagger-annotations-version>1.6.16</swagger-annotations-version>
+    <jackson-version>2.19.2</jackson-version>
+    <slf4j-version>2.0.17</slf4j-version>
+    <jodatime-version>2.14.0</jodatime-version>
     <testng-version>6.14.3</testng-version>
     <apache-httpclient-version>4.5.14</apache-httpclient-version>
     <okhttpclient-version>4.12.0</okhttpclient-version>
-    <ning-asynchttpclient-version>3.0.1</ning-asynchttpclient-version>
+    <ning-asynchttpclient-version>3.0.2</ning-asynchttpclient-version>
     <nv-websocket-client-version>2.14</nv-websocket-client-version>
-    <guava-version>33.3.1-jre</guava-version>
+    <guava-version>33.4.8-jre</guava-version>
     <ini4j-version>0.5.4</ini4j-version>
-    <io-netty-version>4.1.115.Final</io-netty-version>
+    <io-netty-version>4.2.5.Final</io-netty-version>
     <name>${props.name}</name>
     <version>${props.version}</version>
     <description>${props.description}</description>
