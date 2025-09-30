@@ -32,7 +32,6 @@ cp $BUILD_DIR/packages/RestSharp.112.0.0/lib/net471/RestSharp.dll $BUILD_DIR/bin
 cp $BUILD_DIR/packages/WebSocketSharp.1.0.3-rc11/lib/websocket-sharp.dll $BUILD_DIR/bin/websocket-sharp.dll;
 cp $BUILD_DIR/packages/NUnit.3.10.1/lib/net45/nunit.framework.dll $BUILD_DIR/bin/nunit.framework.dll;
 cp $BUILD_DIR/packages/Moq.4.5.3/lib/net45/Moq.dll $BUILD_DIR/bin/Moq.dll;
-cp $BUILD_DIR/packages/ini-parser.2.5.2/lib/net20/INIFileParser.dll $BUILD_DIR/bin/INIFileParser.dll;
 cp $BUILD_DIR/packages/RichardSzalay.MockHttp.6.0.0/lib/net45/RichardSzalay.MockHttp.dll $BUILD_DIR/bin/RichardSzalay.MockHttp.dll;
 cp $BUILD_DIR/packages/System.Text.Json.8.0.5/lib/net462/System.Text.Json.dll $BUILD_DIR/bin/System.Text.Json.dll;
 cp $BUILD_DIR/packages/System.Text.Encodings.Web.8.0.0/lib/net462/System.Text.Encodings.Web.dll $BUILD_DIR/bin/System.Text.Encodings.Web.dll;
@@ -45,7 +44,6 @@ echo "Target: netstandard2.0"
 mcs -r:$BUILD_DIR/bin/Newtonsoft.Json.dll,\
 $BUILD_DIR/bin/RestSharp.dll,\
 $BUILD_DIR/bin/websocket-sharp.dll,\
-$BUILD_DIR/bin/INIFileParser.dll,\
 System.Net.Http.dll,\
 $BUILD_DIR/bin/System.Text.Json.dll,\
 $BUILD_DIR/bin/System.Text.Encodings.Web.dll,\
@@ -76,7 +74,6 @@ echo "Compiling tests..."
 mcs -r:$BUILD_DIR/bin/Newtonsoft.Json.dll,\
 $BUILD_DIR/bin/RestSharp.dll,\
 $BUILD_DIR/bin/websocket-sharp.dll,\
-$BUILD_DIR/bin/INIFileParser.dll,\
 System.Net.Http.dll,\
 $BUILD_DIR/bin/System.Text.Json.dll,\
 $BUILD_DIR/bin/System.Text.Encodings.Web.dll,\
