@@ -606,5 +606,10 @@
 		"patch": {
 			"name": "patch"
 		}
+	},
+	"/api/v2/knowledge/sources/synchronizations": {
+		"get": {
+			"name": "listallsources"
+		}
 	}
 }
