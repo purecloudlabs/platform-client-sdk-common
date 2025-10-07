@@ -12,6 +12,7 @@
     "test": "jasmine",
     "browserify": "browserify modules/swagger/swaggerDiffImpl.ts -o docs/swaggerDiffImpl.ts",
     "ios": "tsx sdkBuilder.ts --sdk purecloudswift4",
+    "sdk_cli": "tsx sdkBuilder.ts --sdk clisdkclient",
     "sdk_js": "tsx sdkBuilder.ts --sdk purecloudjavascript",
     "sdk_js_chat": "tsx sdkBuilder.ts --sdk purecloudjavascript-guest",
     "sdk_java": "tsx sdkBuilder.ts --sdk purecloudjava",
