@@ -611,10 +611,5 @@
 		"get": {
 			"name": "listallsources"
 		}
-	},
-    "/api/v2/carrierservices/report/usage/calls/csv/{conversationId}": {
-        "post": {
-            "name": "createforconv"
-        }
-    }
+	}
 }

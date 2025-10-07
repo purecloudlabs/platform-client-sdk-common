@@ -590,12 +590,7 @@ func openBrowserForLoginFunc(loginURL string) {
         var err error
         switch runtime.GOOS {
         case "linux":
-                linuxBrowser := os.Getenv("GENESYSCLOUD_BROWSER")
-                if linuxBrowser != "" {
-                        err = exec.Command(linuxBrowser, loginURL).Start()
-                } else {
-                        err = exec.Command("xdg-open", loginURL).Start()
-                }
+                err = exec.Command("xdg-open", loginURL).Start()
         case "windows":
                 err = exec.Command("rundll32", "url.dll,FileProtocolHandler", loginURL).Start()
         case "darwin":
