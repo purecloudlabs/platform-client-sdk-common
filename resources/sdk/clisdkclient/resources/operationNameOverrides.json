@@ -616,5 +616,10 @@
         "post": {
             "name": "createforconv"
         }
+    },
+    "/api/v2/externalcontacts/contacts/{contactId}": {
+        "patch": {
+            "name": "patch"
+        }
     }
 }
