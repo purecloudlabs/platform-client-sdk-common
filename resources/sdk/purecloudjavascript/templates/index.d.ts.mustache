@@ -23,6 +23,10 @@ declare class ApiClientClass {
 	logout(logoutRedirectUri: string): void;
 	setAccessToken(token: string): void;
 	setEnvironment(environment: string): void;
+	setDefaultHeaders(newHeaders: Record<string, string>): void;
+	getDefaultHeaders(): Record<string, string>;
+	setGenesysAppHeader(headerValue: string): void;
+	getGenesysAppHeader(): string | null;
 	setGateway(gateway: GatewayConfiguration): void;
 	setPersistSettings(doPersist: boolean, prefix?: string): void;
 	setReturnExtendedResponses(returnExtended: boolean): void;
