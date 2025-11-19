@@ -621,5 +621,13 @@
         "patch": {
             "name": "patch"
         }
-    }
+    },
+	"/api/v2/apps/users/{userId}/connections/{connectionId}": {
+		"get": {
+            "name": "getforconn"
+        },
+		"delete": {
+            "name": "deleteforconn"
+        }
+	}
 }
