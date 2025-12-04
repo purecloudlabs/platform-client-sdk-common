@@ -629,5 +629,15 @@
 		"delete": {
             "name": "deleteforconn"
         }
+	},
+	"/api/v2/workforcemanagement/shifttrading/trades/{tradeId}/jobs": {
+		"post": {
+            "name": "createfortrade"
+        }
+	},
+	"/api/v2/workforcemanagement/shifttrading/trades/{tradeId}/jobs/{jobId}": {
+		"get": {
+            "name": "getfortrade"
+        }
 	}
 }
