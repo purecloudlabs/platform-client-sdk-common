@@ -56,7 +56,7 @@ System.Runtime.Serialization.dll \
 -recurse:'src/'${ROOT_NAMESPACE}'/*.cs' \
 -platform:anycpu \
 
-function compile_sdk() {
+compile_sdk() {
 	echo "Target: .NET $1"
 	rm -rf src/${ROOT_NAMESPACE}/obj
 	rm -rf src/${ROOT_NAMESPACE}.Tests/obj
