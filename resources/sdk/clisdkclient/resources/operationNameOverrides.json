@@ -639,5 +639,15 @@
 		"get": {
             "name": "getfortrade"
         }
+	},
+	"/api/v2/notifications/messaging/messages/me": {
+		"patch": {
+            "name": "updatemessages"
+        }
+	},
+	"/api/v2/notifications/messaging/users/{userId}/messages": {
+		"patch": {
+            "name": "updatemessages"
+        }
 	}
 }
