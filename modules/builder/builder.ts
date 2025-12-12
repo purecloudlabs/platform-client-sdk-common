@@ -32,7 +32,7 @@ let newSwaggerTempFile = '';
 
 
 // Quarantine Operations
-const quarantineOperationIds: string[] = ['postGroupImages', 'postUserImages'];
+const quarantineOperationIds: string[] = ['postGroupImages', 'postUserImages', 'postLocationImages'];
 // Override OperationId due to name conflict ("operationId", "x-purecloud-method-name")
 const overrideOperationIds: any = {};
 const aliasOperationIds: any = {
