@@ -649,5 +649,10 @@
 		"patch": {
             "name": "updatemessages"
         }
+	},
+	"/api/v2/workforcemanagement/businessunits/{businessUnitId}/timeofflimits/values/query": {
+		"post": {
+            "name": "createforlimits"
+        }
 	}
 }
