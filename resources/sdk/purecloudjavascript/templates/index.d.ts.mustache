@@ -22,6 +22,7 @@ declare class ApiClientClass {
 	authorizePKCEGrant(clientId: string, codeVerifier: string, authCode: string, redirectUri: string): Promise<AuthData>;
 	logout(logoutRedirectUri: string): void;
 	setAccessToken(token: string): void;
+	clearAccessToken(): void;
 	setEnvironment(environment: string): void;
 	setDefaultHeaders(newHeaders: Record<string, string>): void;
 	getDefaultHeaders(): Record<string, string>;
