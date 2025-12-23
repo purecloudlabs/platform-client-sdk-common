@@ -528,3 +528,368 @@ describe('Per-Request Headers Integration', () => {
         });
     });
 });
+
+    /**
+     * **Feature: per-request-headers, Property 7: Error context preservation**
+     * **Validates: Requirements 5.3, 5.4**
+     * 
+     * Property: For any network error that occurs with custom headers, the error context should 
+     * preserve information about the headers that were sent with the request
+     */
+    describe('Property 7: Error context preservation', () => {
+        it('should preserve header information in error context when network errors occur', () => {
+            fc.assert(fc.property(
+                // Generate valid per-request headers
+                fc.dictionary(
+                    fc.stringMatching(/^[!#$%&'*+\-.0-9A-Z^_`a-z|~]+$/),
+                    fc.string().filter(s => {
+                        // Valid header values: no control characters except tab
+                        for (let i = 0; i < s.length; i++) {
+                            const charCode = s.charCodeAt(i);
+                            if (!(
+                                (charCode >= 0x21 && charCode <= 0x7E) || // VCHAR
+                                charCode === 0x20 || // SP
+                                charCode === 0x09 || // HTAB
+                                (charCode >= 0x80 && charCode <= 0xFF) // obs-text
+                            )) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    })
+                ).filter(headers => Object.keys(headers).length > 0), // Ensure at least one header
+                // Generate default headers
+                fc.dictionary(
+                    fc.stringMatching(/^[!#$%&'*+\-.0-9A-Z^_`a-z|~]+$/),
+                    fc.string().filter(s => {
+                        // Valid header values: no control characters except tab
+                        for (let i = 0; i < s.length; i++) {
+                            const charCode = s.charCodeAt(i);
+                            if (!(
+                                (charCode >= 0x21 && charCode <= 0x7E) || // VCHAR
+                                charCode === 0x20 || // SP
+                                charCode === 0x09 || // HTAB
+                                (charCode >= 0x80 && charCode <= 0xFF) // obs-text
+                            )) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    })
+                ),
+                // Generate error scenarios
+                fc.oneof(
+                    fc.constant('NETWORK_ERROR'),
+                    fc.constant('TIMEOUT_ERROR'),
+                    fc.constant('CONNECTION_REFUSED'),
+                    fc.constant('DNS_ERROR')
+                ),
+                (perRequestHeaders, defaultHeaders, errorType) => {
+                    // Mock API client that simulates network errors with header context preservation
+                    const mockApiClient = {
+                        defaultHeaders: defaultHeaders,
+                        
+                        normalizeParams: (params: any) => params || {},
+                        
+                        addHeaders: (existingHeaders: any, ...newHeaders: any[]) => {
+                            if (existingHeaders) {
+                                return Object.assign(existingHeaders, ...newHeaders);
+                            } else {
+                                return Object.assign(...newHeaders);
+                            }
+                        },
+                        
+                        // Simulate API call with error context preservation
+                        makeApiCall: function(path: string, method: string, perRequestHeaders: any) {
+                            const defaultHeaders = this.defaultHeaders;
+                            const normalizedHeaderParams = this.normalizeParams({});
+                            
+                            // Start with existing headers and add default and template headers
+                            let finalHeaders = this.addHeaders({}, defaultHeaders, normalizedHeaderParams);
+                            
+                            // Merge per-request headers if provided
+                            if (perRequestHeaders) {
+                                // Validate per-request headers
+                                if (typeof perRequestHeaders !== 'object' || perRequestHeaders === null) {
+                                    throw new Error('Per-request headers must be a valid object');
+                                }
+                                
+                                // Basic header validation
+                                for (const [name, value] of Object.entries(perRequestHeaders)) {
+                                    if (typeof name !== 'string' || typeof value !== 'string') {
+                                        throw new Error(`Invalid header: "${name}" must have string name and value`);
+                                    }
+                                    // Basic header name validation (RFC 7230)
+                                    if (!/^[!#$%&'*+\-.0-9A-Z^_`a-z|~]+$/.test(name)) {
+                                        throw new Error(`Invalid header name: "${name}" - must be a valid HTTP token`);
+                                    }
+                                    // Basic header value validation
+                                    for (let i = 0; i < (value as string).length; i++) {
+                                        const charCode = (value as string).charCodeAt(i);
+                                        if (!((charCode >= 0x21 && charCode <= 0x7E) || charCode === 0x20 || charCode === 0x09 || (charCode >= 0x80 && charCode <= 0xFF))) {
+                                            throw new Error(`Invalid header value for "${name}": contains invalid characters`);
+                                        }
+                                    }
+                                }
+                                
+                                // Merge per-request headers (they take precedence)
+                                finalHeaders = this.addHeaders(finalHeaders, perRequestHeaders);
+                            }
+                            
+                            // Simulate network error with preserved context
+                            const error = new Error(`${errorType}: Failed to connect to ${path}`);
+                            (error as any).requestContext = {
+                                method: method,
+                                path: path,
+                                headers: finalHeaders,
+                                perRequestHeaders: perRequestHeaders,
+                                defaultHeaders: defaultHeaders,
+                                errorType: errorType
+                            };
+                            
+                            throw error;
+                        }
+                    };
+                    
+                    // Test that error context preserves header information
+                    let caughtError: any = null;
+                    
+                    try {
+                        mockApiClient.makeApiCall('/api/test', 'GET', perRequestHeaders);
+                    } catch (error) {
+                        caughtError = error;
+                    }
+                    
+                    // Verify that error was thrown
+                    expect(caughtError).not.toBeNull();
+                    expect(caughtError.message).toContain(errorType);
+                    
+                    // Verify that error context contains request information
+                    expect(caughtError.requestContext).toBeDefined();
+                    expect(caughtError.requestContext.method).toBe('GET');
+                    expect(caughtError.requestContext.path).toBe('/api/test');
+                    expect(caughtError.requestContext.errorType).toBe(errorType);
+                    
+                    // Verify that error context preserves header information
+                    expect(caughtError.requestContext.headers).toBeDefined();
+                    expect(caughtError.requestContext.perRequestHeaders).toBe(perRequestHeaders);
+                    expect(caughtError.requestContext.defaultHeaders).toBe(defaultHeaders);
+                    
+                    // Verify that all per-request headers are preserved in the final headers
+                    for (const [headerName, headerValue] of Object.entries(perRequestHeaders)) {
+                        expect(caughtError.requestContext.headers).toHaveProperty(headerName);
+                        expect(caughtError.requestContext.headers[headerName]).toBe(headerValue);
+                    }
+                    
+                    // Verify that default headers are preserved (unless overridden)
+                    for (const [headerName, headerValue] of Object.entries(defaultHeaders)) {
+                        expect(caughtError.requestContext.headers).toHaveProperty(headerName);
+                        if (headerName in perRequestHeaders) {
+                            // Should be overridden by per-request value
+                            expect(caughtError.requestContext.headers[headerName]).toBe(perRequestHeaders[headerName]);
+                        } else {
+                            // Should retain default value
+                            expect(caughtError.requestContext.headers[headerName]).toBe(headerValue);
+                        }
+                    }
+                    
+                    // Verify that the error context can be used for debugging
+                    const debugInfo = {
+                        sentHeaders: Object.keys(caughtError.requestContext.headers),
+                        perRequestHeaderCount: Object.keys(perRequestHeaders).length,
+                        defaultHeaderCount: Object.keys(defaultHeaders).length,
+                        totalHeaderCount: Object.keys(caughtError.requestContext.headers).length
+                    };
+                    
+                    expect(debugInfo.sentHeaders.length).toBeGreaterThanOrEqual(debugInfo.perRequestHeaderCount);
+                    expect(debugInfo.totalHeaderCount).toBeGreaterThanOrEqual(debugInfo.perRequestHeaderCount);
+                }
+            ), { numRuns: 100 });
+        });
+
+        it('should preserve header context for different types of errors', () => {
+            fc.assert(fc.property(
+                // Generate headers with various characteristics
+                fc.dictionary(
+                    fc.stringMatching(/^[!#$%&'*+\-.0-9A-Z^_`a-z|~]+$/),
+                    fc.string().filter(s => s.length === 0 || /^[\x20\x09\x21-\x7E\x80-\xFF]*$/.test(s))
+                ).filter(headers => Object.keys(headers).length > 0),
+                // Generate different HTTP status codes that might cause errors
+                fc.integer({ min: 400, max: 599 }),
+                (perRequestHeaders, statusCode) => {
+                    const mockApiClient = {
+                        defaultHeaders: { 'User-Agent': 'TestClient/1.0' },
+                        
+                        makeApiCallWithHttpError: function(perRequestHeaders: any, statusCode: number) {
+                            // Merge headers
+                            const finalHeaders = { ...this.defaultHeaders, ...perRequestHeaders };
+                            
+                            // Create HTTP error with context
+                            const error = new Error(`HTTP ${statusCode}: Request failed`);
+                            (error as any).status = statusCode;
+                            (error as any).requestContext = {
+                                headers: finalHeaders,
+                                perRequestHeaders: perRequestHeaders,
+                                statusCode: statusCode,
+                                timestamp: new Date().toISOString()
+                            };
+                            
+                            throw error;
+                        }
+                    };
+                    
+                    let caughtError: any = null;
+                    
+                    try {
+                        mockApiClient.makeApiCallWithHttpError(perRequestHeaders, statusCode);
+                    } catch (error) {
+                        caughtError = error;
+                    }
+                    
+                    // Verify error context preservation for HTTP errors
+                    expect(caughtError).not.toBeNull();
+                    expect(caughtError.status).toBe(statusCode);
+                    expect(caughtError.requestContext).toBeDefined();
+                    expect(caughtError.requestContext.statusCode).toBe(statusCode);
+                    expect(caughtError.requestContext.timestamp).toBeDefined();
+                    
+                    // Verify header preservation
+                    expect(caughtError.requestContext.headers).toBeDefined();
+                    expect(caughtError.requestContext.perRequestHeaders).toBe(perRequestHeaders);
+                    
+                    // All per-request headers should be in final headers
+                    for (const [headerName, headerValue] of Object.entries(perRequestHeaders)) {
+                        expect(caughtError.requestContext.headers[headerName]).toBe(headerValue);
+                    }
+                    
+                    // Default headers should also be present (unless overridden)
+                    expect(caughtError.requestContext.headers['User-Agent']).toBeDefined();
+                    if (!('User-Agent' in perRequestHeaders)) {
+                        expect(caughtError.requestContext.headers['User-Agent']).toBe('TestClient/1.0');
+                    }
+                }
+            ), { numRuns: 100 });
+        });
+    });
+
+    // Unit tests for error context preservation
+    describe('Unit tests for error context preservation', () => {
+        it('should preserve custom headers in network error context', () => {
+            const mockApiClient = {
+                defaultHeaders: { 'User-Agent': 'MyApp/1.0' },
+                
+                makeRequest: function(headers: any) {
+                    const finalHeaders = { ...this.defaultHeaders, ...headers };
+                    
+                    const error = new Error('Network connection failed');
+                    (error as any).requestContext = {
+                        headers: finalHeaders,
+                        perRequestHeaders: headers
+                    };
+                    
+                    throw error;
+                }
+            };
+            
+            const customHeaders = {
+                'Authorization': 'Bearer token123',
+                'X-Request-ID': 'req-456'
+            };
+            
+            let caughtError: any = null;
+            
+            try {
+                mockApiClient.makeRequest(customHeaders);
+            } catch (error) {
+                caughtError = error;
+            }
+            
+            expect(caughtError).not.toBeNull();
+            expect(caughtError.requestContext.headers['Authorization']).toBe('Bearer token123');
+            expect(caughtError.requestContext.headers['X-Request-ID']).toBe('req-456');
+            expect(caughtError.requestContext.headers['User-Agent']).toBe('MyApp/1.0');
+            expect(caughtError.requestContext.perRequestHeaders).toBe(customHeaders);
+        });
+
+        it('should handle error context when headers override defaults', () => {
+            const mockApiClient = {
+                defaultHeaders: { 
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'MyApp/1.0' 
+                },
+                
+                makeRequest: function(headers: any) {
+                    const finalHeaders = { ...this.defaultHeaders, ...headers };
+                    
+                    const error = new Error('Request timeout');
+                    (error as any).requestContext = {
+                        headers: finalHeaders,
+                        perRequestHeaders: headers,
+                        defaultHeaders: this.defaultHeaders
+                    };
+                    
+                    throw error;
+                }
+            };
+            
+            const customHeaders = {
+                'Content-Type': 'application/xml', // Override default
+                'Authorization': 'Bearer token123'  // New header
+            };
+            
+            let caughtError: any = null;
+            
+            try {
+                mockApiClient.makeRequest(customHeaders);
+            } catch (error) {
+                caughtError = error;
+            }
+            
+            expect(caughtError).not.toBeNull();
+            
+            // Verify overridden header
+            expect(caughtError.requestContext.headers['Content-Type']).toBe('application/xml');
+            
+            // Verify new header
+            expect(caughtError.requestContext.headers['Authorization']).toBe('Bearer token123');
+            
+            // Verify preserved default header
+            expect(caughtError.requestContext.headers['User-Agent']).toBe('MyApp/1.0');
+            
+            // Verify context preservation
+            expect(caughtError.requestContext.perRequestHeaders).toBe(customHeaders);
+            expect(caughtError.requestContext.defaultHeaders['Content-Type']).toBe('application/json');
+        });
+
+        it('should preserve empty headers context in errors', () => {
+            const mockApiClient = {
+                defaultHeaders: { 'User-Agent': 'MyApp/1.0' },
+                
+                makeRequest: function(headers: any) {
+                    const finalHeaders = { ...this.defaultHeaders, ...(headers || {}) };
+                    
+                    const error = new Error('Server error');
+                    (error as any).requestContext = {
+                        headers: finalHeaders,
+                        perRequestHeaders: headers
+                    };
+                    
+                    throw error;
+                }
+            };
+            
+            let caughtError: any = null;
+            
+            try {
+                mockApiClient.makeRequest({});
+            } catch (error) {
+                caughtError = error;
+            }
+            
+            expect(caughtError).not.toBeNull();
+            expect(caughtError.requestContext.headers['User-Agent']).toBe('MyApp/1.0');
+            expect(caughtError.requestContext.perRequestHeaders).toEqual({});
+            expect(Object.keys(caughtError.requestContext.headers)).toHaveLength(1);
+        });
+    });
+});

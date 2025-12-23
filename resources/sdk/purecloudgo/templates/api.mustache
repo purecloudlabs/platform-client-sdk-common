@@ -42,7 +42,7 @@ func New{{classname}}WithConfig(config *Configuration) *{{classname}} {
 // Deprecated: {{nickname}} is deprecated{{/isDeprecated}}{{#vendorExtensions.x-genesys-preview}}
 //
 // Preview: {{nickname}} is a preview method and is subject to both breaking and non-breaking changes at any time without notice{{/vendorExtensions.x-genesys-preview}}
-func (a {{classname}}) {{nickname}}({{#allParams}}{{paramName}} {{{dataType}}}{{^-last}}, {{/-last}}{{/allParams}}) ({{#returnType}}{{^isArray}}*{{/isArray}}{{{returnType}}}, {{/returnType}}*APIResponse, error) {
+func (a {{classname}}) {{nickname}}({{#allParams}}{{paramName}} {{{dataType}}}, {{/allParams}}headers map[string]string) ({{#returnType}}{{^isArray}}*{{/isArray}}{{{returnType}}}, {{/returnType}}*APIResponse, error) {
 	var httpMethod = "{{httpMethod}}"
 	// create path and map variables
 	path := a.Configuration.BasePath + "{{path}}"{{#pathParams}}
@@ -85,6 +85,34 @@ func (a {{classname}}) {{nickname}}({{#allParams}}{{paramName}} {{{dataType}}}{{
 	for key := range a.Configuration.DefaultHeader {
 		headerParams[key] = a.Configuration.DefaultHeader[key]
 	}
+
+	// Merge per-request headers if provided
+	if headers != nil {
+		// Validate per-request headers
+		for name, value := range headers {
+			if name == "" {
+				return {{#returnType}}defaultReturn, {{/returnType}}nil, errors.New("Header name cannot be empty")
+			}
+			
+			// Basic header name validation (RFC 7230)
+			matched, _ := regexp.MatchString(`^[!#$%&'*+\-.0-9A-Z^_` + "`" + `a-z|~]+$`, name)
+			if !matched {
+				return {{#returnType}}defaultReturn, {{/returnType}}nil, fmt.Errorf("Invalid header name: '%s' - must be a valid HTTP token", name)
+			}
+			
+			// Basic header value validation
+			for _, char := range value {
+				charCode := int(char)
+				if !((charCode >= 0x21 && charCode <= 0x7E) || charCode == 0x20 || charCode == 0x09 || (charCode >= 0x80 && charCode <= 0xFF)) {
+					return {{#returnType}}defaultReturn, {{/returnType}}nil, fmt.Errorf("Invalid header value for '%s': contains invalid characters", name)
+				}
+			}
+			
+			// Add or override header (per-request headers take precedence)
+			headerParams[name] = value
+		}
+	}
+
 	{{#hasQueryParams}}{{#queryParams}}
 	queryParams["{{paramName}}"] = a.Configuration.APIClient.ParameterToString({{paramName}}, "{{#collectionFormat}}{{collectionFormat}}{{/collectionFormat}}")
 	{{/queryParams}}{{/hasQueryParams}}

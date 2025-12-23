@@ -27,9 +27,10 @@ namespace {{packageName}}.Api
         /// </remarks>
         /// <exception cref="{{packageName}}.Client.ApiException">Thrown when fails to make API call</exception>
         {{#allParams}}/// <param name="{{paramName}}">{{description}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}</param>
-        {{/allParams}}/// <returns>{{#returnType}}{{returnType}}{{/returnType}}</returns>
+        {{/allParams}}/// <param name="headers">Optional per-request headers to include with this API call</param>
+        /// <returns>{{#returnType}}{{returnType}}{{/returnType}}</returns>
         {{#isDeprecated}}[Obsolete]{{/isDeprecated}}
-        {{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}void{{/returnType}} {{operationId}} ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{^-last}}, {{/-last}}{{/allParams}});
+        {{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}void{{/returnType}} {{operationId}} ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}, {{/-last}}{{/allParams}}Dictionary<String, String> headers = null);
 
         /// <summary>
         /// {{summary}}
@@ -40,9 +41,10 @@ namespace {{packageName}}.Api
         /// </remarks>
         /// <exception cref="{{packageName}}.Client.ApiException">Thrown when fails to make API call</exception>
         {{#allParams}}/// <param name="{{paramName}}">{{description}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}</param>
-        {{/allParams}}/// <returns>ApiResponse of {{#returnType}}{{returnType}}{{/returnType}}{{^returnType}}Object(void){{/returnType}}</returns>
+        {{/allParams}}/// <param name="headers">Optional per-request headers to include with this API call</param>
+        /// <returns>ApiResponse of {{#returnType}}{{returnType}}{{/returnType}}{{^returnType}}Object(void){{/returnType}}</returns>
         {{#isDeprecated}}[Obsolete]{{/isDeprecated}}
-        ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Object{{/returnType}}> {{operationId}}WithHttpInfo ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{^-last}}, {{/-last}}{{/allParams}});
+        ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Object{{/returnType}}> {{operationId}}WithHttpInfo ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}, {{/-last}}{{/allParams}}Dictionary<String, String> headers = null);
         {{/operation}}
 
         #endregion Synchronous Operations
@@ -60,9 +62,10 @@ namespace {{packageName}}.Api
         /// </remarks>
         /// <exception cref="{{packageName}}.Client.ApiException">Thrown when fails to make API call</exception>
         {{#allParams}}/// <param name="{{paramName}}">{{description}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}</param>
-        {{/allParams}}/// <returns>Task of {{#returnType}}{{returnType}}{{/returnType}}{{^returnType}}void{{/returnType}}</returns>
+        {{/allParams}}/// <param name="headers">Optional per-request headers to include with this API call</param>
+        /// <returns>Task of {{#returnType}}{{returnType}}{{/returnType}}{{^returnType}}void{{/returnType}}</returns>
         {{#isDeprecated}}[Obsolete]{{/isDeprecated}}
-        {{#returnType}}System.Threading.Tasks.Task<{{{returnType}}}>{{/returnType}}{{^returnType}}System.Threading.Tasks.Task{{/returnType}} {{operationId}}Async ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{^-last}}, {{/-last}}{{/allParams}});
+        {{#returnType}}System.Threading.Tasks.Task<{{{returnType}}}>{{/returnType}}{{^returnType}}System.Threading.Tasks.Task{{/returnType}} {{operationId}}Async ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}, {{/-last}}{{/allParams}}Dictionary<String, String> headers = null);
 
         /// <summary>
         /// {{summary}}
@@ -73,9 +76,10 @@ namespace {{packageName}}.Api
         /// </remarks>
         /// <exception cref="{{packageName}}.Client.ApiException">Thrown when fails to make API call</exception>
         {{#allParams}}/// <param name="{{paramName}}">{{description}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}</param>
-        {{/allParams}}/// <returns>Task of ApiResponse{{#returnType}} ({{returnType}}){{/returnType}}</returns>
+        {{/allParams}}/// <param name="headers">Optional per-request headers to include with this API call</param>
+        /// <returns>Task of ApiResponse{{#returnType}} ({{returnType}}){{/returnType}}</returns>
         {{#isDeprecated}}[Obsolete]{{/isDeprecated}}
-        System.Threading.Tasks.Task<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Object{{/returnType}}>> {{operationId}}AsyncWithHttpInfo ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{^-last}}, {{/-last}}{{/allParams}});
+        System.Threading.Tasks.Task<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Object{{/returnType}}>> {{operationId}}AsyncWithHttpInfo ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}, {{/-last}}{{/allParams}}Dictionary<String, String> headers = null);
         {{/operation}}
 
         #endregion Asynchronous Operations
@@ -179,12 +183,13 @@ namespace {{packageName}}.Api
         /// </summary>
         /// <exception cref="{{packageName}}.Client.ApiException">Thrown when fails to make API call</exception>
         {{#allParams}}/// <param name="{{paramName}}">{{description}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}</param>
-        {{/allParams}}/// <returns>{{#returnType}}{{returnType}}{{/returnType}}</returns>
+        {{/allParams}}/// <param name="headers">Optional per-request headers to include with this API call</param>
+        /// <returns>{{#returnType}}{{returnType}}{{/returnType}}</returns>
         {{#isDeprecated}}[Obsolete]{{/isDeprecated}}
-        public {{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}void{{/returnType}} {{operationId}} ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{^-last}}, {{/-last}}{{/allParams}})
+        public {{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}void{{/returnType}} {{operationId}} ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}, {{/-last}}{{/allParams}}Dictionary<String, String> headers = null)
         {
-             {{#returnType}}ApiResponse<{{{returnType}}}> localVarResponse = {{operationId}}WithHttpInfo({{#allParams}}{{paramName}}{{^-last}}, {{/-last}}{{/allParams}});
-             return localVarResponse.Data;{{/returnType}}{{^returnType}}{{operationId}}WithHttpInfo({{#allParams}}{{paramName}}{{^-last}}, {{/-last}}{{/allParams}});{{/returnType}}
+             {{#returnType}}ApiResponse<{{{returnType}}}> localVarResponse = {{operationId}}WithHttpInfo({{#allParams}}{{paramName}}, {{/allParams}}headers);
+             return localVarResponse.Data;{{/returnType}}{{^returnType}}{{operationId}}WithHttpInfo({{#allParams}}{{paramName}}, {{/allParams}}headers);{{/returnType}}
         }
 
         /// <summary>
@@ -194,9 +199,10 @@ namespace {{packageName}}.Api
         /// </summary>
         /// <exception cref="{{packageName}}.Client.ApiException">Thrown when fails to make API call</exception>
         {{#allParams}}/// <param name="{{paramName}}">{{description}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}</param>
-        {{/allParams}}/// <returns>ApiResponse of {{#returnType}}{{returnType}}{{/returnType}}{{^returnType}}Object(void){{/returnType}}</returns>
+        {{/allParams}}/// <param name="headers">Optional per-request headers to include with this API call</param>
+        /// <returns>ApiResponse of {{#returnType}}{{returnType}}{{/returnType}}{{^returnType}}Object(void){{/returnType}}</returns>
         {{#isDeprecated}}[Obsolete]{{/isDeprecated}}
-        public ApiResponse<{{#returnType}} {{{returnType}}} {{/returnType}}{{^returnType}}Object{{/returnType}}> {{operationId}}WithHttpInfo ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{^-last}}, {{/-last}}{{/allParams}})
+        public ApiResponse<{{#returnType}} {{{returnType}}} {{/returnType}}{{^returnType}}Object{{/returnType}}> {{operationId}}WithHttpInfo ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}, {{/-last}}{{/allParams}}Dictionary<String, String> headers = null)
         { {{#allParams}}{{#required}}
             // verify the required parameter '{{paramName}}' is set
             if ({{paramName}} == null)
@@ -210,6 +216,34 @@ namespace {{packageName}}.Api
             var localVarFormParams = new Dictionary<String, String>();
             var localVarFileParams = new Dictionary<String, IFileParameter>();
             Object localVarPostBody = null;
+
+            // Merge per-request headers if provided
+            if (headers != null)
+            {
+                // Validate per-request headers
+                foreach (var header in headers)
+                {
+                    if (string.IsNullOrEmpty(header.Key))
+                        throw new ApiException(400, "Header name cannot be null or empty");
+                    if (header.Value == null)
+                        throw new ApiException(400, $"Header value for '{header.Key}' cannot be null");
+                    
+                    // Basic header name validation (RFC 7230)
+                    if (!System.Text.RegularExpressions.Regex.IsMatch(header.Key, @"^[!#$%&'*+\-.0-9A-Z^_`a-z|~]+$"))
+                        throw new ApiException(400, $"Invalid header name: '{header.Key}' - must be a valid HTTP token");
+                    
+                    // Basic header value validation
+                    foreach (char c in header.Value)
+                    {
+                        int charCode = (int)c;
+                        if (!((charCode >= 0x21 && charCode <= 0x7E) || charCode == 0x20 || charCode == 0x09 || (charCode >= 0x80 && charCode <= 0xFF)))
+                            throw new ApiException(400, $"Invalid header value for '{header.Key}': contains invalid characters");
+                    }
+                    
+                    // Add or override header (per-request headers take precedence)
+                    localVarHeaderParams[header.Key] = header.Value;
+                }
+            }
 
             // to determine the Content-Type header
             String[] localVarHttpContentTypes = new String[] {
@@ -310,12 +344,13 @@ namespace {{packageName}}.Api
         /// </summary>
         /// <exception cref="{{packageName}}.Client.ApiException">Thrown when fails to make API call</exception>
         {{#allParams}}/// <param name="{{paramName}}">{{description}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}</param>
-        {{/allParams}}/// <returns>Task of {{#returnType}}{{returnType}}{{/returnType}}{{^returnType}}void{{/returnType}}</returns>
+        {{/allParams}}/// <param name="headers">Optional per-request headers to include with this API call</param>
+        /// <returns>Task of {{#returnType}}{{returnType}}{{/returnType}}{{^returnType}}void{{/returnType}}</returns>
         {{#isDeprecated}}[Obsolete]{{/isDeprecated}}
-        {{#returnType}}public async System.Threading.Tasks.Task<{{{returnType}}}>{{/returnType}}{{^returnType}}public async System.Threading.Tasks.Task{{/returnType}} {{operationId}}Async ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{^-last}}, {{/-last}}{{/allParams}})
+        {{#returnType}}public async System.Threading.Tasks.Task<{{{returnType}}}>{{/returnType}}{{^returnType}}public async System.Threading.Tasks.Task{{/returnType}} {{operationId}}Async ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}, {{/-last}}{{/allParams}}Dictionary<String, String> headers = null)
         {
-             {{#returnType}}ApiResponse<{{{returnType}}}> localVarResponse = await {{operationId}}AsyncWithHttpInfo({{#allParams}}{{paramName}}{{^-last}}, {{/-last}}{{/allParams}});
-             return localVarResponse.Data;{{/returnType}}{{^returnType}}await {{operationId}}AsyncWithHttpInfo({{#allParams}}{{paramName}}{{^-last}}, {{/-last}}{{/allParams}});{{/returnType}}
+             {{#returnType}}ApiResponse<{{{returnType}}}> localVarResponse = await {{operationId}}AsyncWithHttpInfo({{#allParams}}{{paramName}}, {{/allParams}}headers);
+             return localVarResponse.Data;{{/returnType}}{{^returnType}}await {{operationId}}AsyncWithHttpInfo({{#allParams}}{{paramName}}, {{/allParams}}headers);{{/returnType}}
 
         }
 
@@ -326,9 +361,10 @@ namespace {{packageName}}.Api
         /// </summary>
         /// <exception cref="{{packageName}}.Client.ApiException">Thrown when fails to make API call</exception>
         {{#allParams}}/// <param name="{{paramName}}">{{description}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}</param>
-        {{/allParams}}/// <returns>Task of ApiResponse{{#returnType}} ({{returnType}}){{/returnType}}</returns>
+        {{/allParams}}/// <param name="headers">Optional per-request headers to include with this API call</param>
+        /// <returns>Task of ApiResponse{{#returnType}} ({{returnType}}){{/returnType}}</returns>
         {{#isDeprecated}}[Obsolete]{{/isDeprecated}}
-        public async System.Threading.Tasks.Task<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Object{{/returnType}}>> {{operationId}}AsyncWithHttpInfo ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}{{^-last}}, {{/-last}}{{/allParams}})
+        public async System.Threading.Tasks.Task<ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Object{{/returnType}}>> {{operationId}}AsyncWithHttpInfo ({{#allParams}}{{{dataType}}} {{paramName}}{{^required}}{{#optionalMethodArgument}} = null{{/optionalMethodArgument}}{{/required}}, {{/-last}}{{/allParams}}Dictionary<String, String> headers = null)
         { {{#allParams}}{{#required}}
             // verify the required parameter '{{paramName}}' is set
             if ({{paramName}} == null)
@@ -343,6 +379,34 @@ namespace {{packageName}}.Api
             var localVarFormParams = new Dictionary<String, String>();
             var localVarFileParams = new Dictionary<String, IFileParameter>();
             Object localVarPostBody = null;
+
+            // Merge per-request headers if provided
+            if (headers != null)
+            {
+                // Validate per-request headers
+                foreach (var header in headers)
+                {
+                    if (string.IsNullOrEmpty(header.Key))
+                        throw new ApiException(400, "Header name cannot be null or empty");
+                    if (header.Value == null)
+                        throw new ApiException(400, $"Header value for '{header.Key}' cannot be null");
+                    
+                    // Basic header name validation (RFC 7230)
+                    if (!System.Text.RegularExpressions.Regex.IsMatch(header.Key, @"^[!#$%&'*+\-.0-9A-Z^_`a-z|~]+$"))
+                        throw new ApiException(400, $"Invalid header name: '{header.Key}' - must be a valid HTTP token");
+                    
+                    // Basic header value validation
+                    foreach (char c in header.Value)
+                    {
+                        int charCode = (int)c;
+                        if (!((charCode >= 0x21 && charCode <= 0x7E) || charCode == 0x20 || charCode == 0x09 || (charCode >= 0x80 && charCode <= 0xFF)))
+                            throw new ApiException(400, $"Invalid header value for '{header.Key}': contains invalid characters");
+                    }
+                    
+                    // Add or override header (per-request headers take precedence)
+                    localVarHeaderParams[header.Key] = header.Value;
+                }
+            }
 
             // to determine the Content-Type header
             String[] localVarHttpContentTypes = new String[] {
