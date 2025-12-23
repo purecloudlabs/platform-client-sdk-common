@@ -19,6 +19,8 @@ import { Models } from 'purecloud-platform-client-v2';
 import log from '../log/logger';
 import axios from "axios";
 import { Endpoints } from "@octokit/types";
+import { validateHeaders, HeaderValidationError } from '../headers/headerValidator.js';
+import { mergeHeaders } from '../headers/headerMerger.js';
 
 
 const swaggerDiff = new SwaggerDiff();
@@ -598,7 +600,7 @@ function buildImpl(): Promise<string> {
 			let code = childProcess.execSync(command, { stdio: 'inherit' });
 			log.debug('Swagger-codegen execution completed');
 
-			log.debug('Checking for extensions to copy', { extensionsPath: _this.resourcePaths.extensions });
+			log.debug(`Checking for extensions to copy - extensionsPath: ${_this.resourcePaths.extensions}`);
 			if (fs.existsSync(_this.resourcePaths.extensions)) {
 				log.debug(`Copying extensions from ${_this.resourcePaths.extensions} to ${_this.config.settings.extensionsDestination}`);
 				log.info('Copying extensions...');
@@ -607,6 +609,10 @@ function buildImpl(): Promise<string> {
 				log.debug('Extensions path not found');
 				log.warn(`Extensions path does not exist! Path: ${_this.resourcePaths.extensions}`);
 			}
+
+			// Validate header functionality in generated SDK
+			log.debug('Validating header functionality in generated SDK');
+			validateHeaderFunctionality(outputDir, _this.config.settings.swaggerCodegen.codegenLanguage);
 
 			// Ensure compile scripts fail on error
 			_.forEach(_this.config.stageSettings.build.compileScripts, function (script) {
@@ -689,6 +695,252 @@ function postbuildImpl(): Promise<string> {
 }
 
 /* PRIVATE FUNCTIONS */
+
+function validateHeaderFunctionality(outputDir: string, codegenLanguage: string): void {
+	log.info('Validating header functionality in generated SDK...');
+	
+	try {
+		// Language-specific validation patterns
+		const validationPatterns = getHeaderValidationPatterns(codegenLanguage);
+		
+		// Check for header support in API methods
+		validateApiMethodHeaderSupport(outputDir, validationPatterns);
+		
+		// Check for header processing in ApiClient
+		validateApiClientHeaderProcessing(outputDir, validationPatterns);
+		
+		log.info('Header functionality validation completed successfully');
+	} catch (error) {
+		log.error(`Header functionality validation failed: ${error}`);
+		throw new Error(`Header functionality validation failed for ${codegenLanguage}: ${error}`);
+	}
+}
+
+function getHeaderValidationPatterns(codegenLanguage: string): { [key: string]: RegExp[] } {
+	const patterns: { [key: string]: { [key: string]: RegExp[] } } = {
+		'purecloudjavascript': {
+			apiMethod: [
+				/headers\?\s*:\s*Record<string,\s*string>/,  // TypeScript type definition
+				/opts\.headers/,  // Header extraction from options
+			],
+			apiClient: [
+				/mergeHeaders|headerMerger/,  // Header merging logic
+				/validateHeaders|headerValidator/,  // Header validation logic
+			]
+		},
+		'purecloudjava': {
+			apiMethod: [
+				/Map<String,\s*String>\s+headers/,  // Java Map type for headers
+				/\.headers\(/,  // Request builder header method
+			],
+			apiClient: [
+				/HeaderMerger|mergeHeaders/,  // Header merging logic
+				/HeaderValidator|validateHeaders/,  // Header validation logic
+			]
+		},
+		'pureclouddotnet': {
+			apiMethod: [
+				/Dictionary<string,\s*string>\s+[Hh]eaders/,  // C# Dictionary type
+				/\.Headers\s*=/,  // Header assignment
+			],
+			apiClient: [
+				/HeaderMerger|MergeHeaders/,  // Header merging logic
+				/HeaderValidator|ValidateHeaders/,  // Header validation logic
+			]
+		},
+		'purecloudpython': {
+			apiMethod: [
+				/headers:\s*Dict\[str,\s*str\]/,  // Python type hint
+				/kwargs\.get\(['"]headers['"]\)/,  // Header extraction from kwargs
+			],
+			apiClient: [
+				/merge_headers|header_merger/,  // Header merging logic
+				/validate_headers|header_validator/,  // Header validation logic
+			]
+		},
+		'purecloudgo': {
+			apiMethod: [
+				/Headers\s+map\[string\]string/,  // Go map type
+				/opts\.Headers/,  // Header field access
+			],
+			apiClient: [
+				/MergeHeaders|mergeHeaders/,  // Header merging logic
+				/ValidateHeaders|validateHeaders/,  // Header validation logic
+			]
+		}
+	};
+	
+	return patterns[codegenLanguage] || {
+		apiMethod: [],
+		apiClient: []
+	};
+}
+
+function validateApiMethodHeaderSupport(outputDir: string, patterns: { [key: string]: RegExp[] }): void {
+	if (!patterns.apiMethod || patterns.apiMethod.length === 0) {
+		log.warn('No API method validation patterns defined for this language');
+		return;
+	}
+	
+	// Find API method files
+	const apiFiles = findApiFiles(outputDir);
+	
+	if (apiFiles.length === 0) {
+		throw new Error('No API method files found in generated SDK');
+	}
+	
+	let headerSupportFound = false;
+	
+	for (const apiFile of apiFiles) {
+		const content = fs.readFileSync(apiFile, 'utf8');
+		
+		// Check if any header pattern matches
+		for (const pattern of patterns.apiMethod) {
+			if (pattern.test(content)) {
+				headerSupportFound = true;
+				log.debug(`Header support found in ${apiFile}`);
+				break;
+			}
+		}
+		
+		if (headerSupportFound) break;
+	}
+	
+	if (!headerSupportFound) {
+		throw new Error('Header support not found in generated API methods');
+	}
+	
+	log.info('API method header support validation passed');
+}
+
+function validateApiClientHeaderProcessing(outputDir: string, patterns: { [key: string]: RegExp[] }): void {
+	if (!patterns.apiClient || patterns.apiClient.length === 0) {
+		log.warn('No API client validation patterns defined for this language');
+		return;
+	}
+	
+	// Find ApiClient files
+	const apiClientFiles = findApiClientFiles(outputDir);
+	
+	if (apiClientFiles.length === 0) {
+		throw new Error('No ApiClient files found in generated SDK');
+	}
+	
+	let headerProcessingFound = false;
+	
+	for (const apiClientFile of apiClientFiles) {
+		const content = fs.readFileSync(apiClientFile, 'utf8');
+		
+		// Check if any header processing pattern matches
+		for (const pattern of patterns.apiClient) {
+			if (pattern.test(content)) {
+				headerProcessingFound = true;
+				log.debug(`Header processing found in ${apiClientFile}`);
+				break;
+			}
+		}
+		
+		if (headerProcessingFound) break;
+	}
+	
+	if (!headerProcessingFound) {
+		throw new Error('Header processing logic not found in generated ApiClient');
+	}
+	
+	log.info('ApiClient header processing validation passed');
+}
+
+function findApiFiles(outputDir: string): string[] {
+	const apiFiles: string[] = [];
+	
+	// Common API file patterns across languages
+	const apiPatterns = [
+		'**/api/**/*.js',
+		'**/api/**/*.ts', 
+		'**/api/**/*.java',
+		'**/api/**/*.cs',
+		'**/api/**/*.py',
+		'**/api/**/*.go'
+	];
+	
+	for (const pattern of apiPatterns) {
+		try {
+			const files = findFilesByPattern(outputDir, pattern);
+			apiFiles.push(...files);
+		} catch (error) {
+			// Pattern not found, continue
+		}
+	}
+	
+	return apiFiles;
+}
+
+function findApiClientFiles(outputDir: string): string[] {
+	const apiClientFiles: string[] = [];
+	
+	// Common ApiClient file patterns across languages
+	const clientPatterns = [
+		'**/ApiClient.js',
+		'**/ApiClient.ts',
+		'**/ApiClient.java', 
+		'**/ApiClient.cs',
+		'**/api_client.py',
+		'**/ApiClient.go'
+	];
+	
+	for (const pattern of clientPatterns) {
+		try {
+			const files = findFilesByPattern(outputDir, pattern);
+			apiClientFiles.push(...files);
+		} catch (error) {
+			// Pattern not found, continue
+		}
+	}
+	
+	return apiClientFiles;
+}
+
+function findFilesByPattern(baseDir: string, pattern: string): string[] {
+	const files: string[] = [];
+	
+	function searchDirectory(dir: string, remainingPattern: string): void {
+		if (!fs.existsSync(dir)) return;
+		
+		const stats = fs.statSync(dir);
+		if (!stats.isDirectory()) return;
+		
+		const entries = fs.readdirSync(dir);
+		
+		for (const entry of entries) {
+			const fullPath = path.join(dir, entry);
+			const entryStats = fs.statSync(fullPath);
+			
+			if (entryStats.isDirectory()) {
+				// Recursively search subdirectories
+				searchDirectory(fullPath, remainingPattern);
+			} else if (entryStats.isFile()) {
+				// Check if file matches pattern
+				if (matchesPattern(entry, remainingPattern) || matchesPattern(fullPath, pattern)) {
+					files.push(fullPath);
+				}
+			}
+		}
+	}
+	
+	searchDirectory(baseDir, pattern);
+	return files;
+}
+
+function matchesPattern(filename: string, pattern: string): boolean {
+	// Simple pattern matching - convert glob pattern to regex
+	const regexPattern = pattern
+		.replace(/\*\*/g, '.*')  // ** matches any path
+		.replace(/\*/g, '[^/]*')  // * matches any filename chars except path separator
+		.replace(/\./g, '\\.');   // Escape dots
+	
+	const regex = new RegExp(regexPattern + '$');
+	return regex.test(filename);
+}
 
 function applyOverrides(original: Config, overrides: valueOverides) {
 	if (!original || !overrides) return;

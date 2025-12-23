@@ -764,6 +764,42 @@ public class ApiClient implements AutoCloseable {
         return url.toString();
     }
 
+    /**
+     * Validate header names and values according to HTTP standards (RFC 7230)
+     */
+    private void validateHeaders(Map<String, String> headers) throws IllegalArgumentException {
+        if (headers == null) return;
+        
+        for (Map.Entry<String, String> header : headers.entrySet()) {
+            String name = header.getKey();
+            String value = header.getValue();
+            
+            // Validate header name
+            if (name == null || name.isEmpty()) {
+                throw new IllegalArgumentException("Header name cannot be null or empty");
+            }
+            
+            // Header names must be ASCII and cannot contain control characters or spaces
+            for (int i = 0; i < name.length(); i++) {
+                char c = name.charAt(i);
+                if (c <= 32 || c >= 127 || c == ':') {
+                    throw new IllegalArgumentException("Invalid header name '" + name + "': contains invalid character at position " + i);
+                }
+            }
+            
+            // Validate header value
+            if (value != null) {
+                // Header values cannot contain control characters except tab
+                for (int i = 0; i < value.length(); i++) {
+                    char c = value.charAt(i);
+                    if ((c < 32 && c != 9) || c == 127) {
+                        throw new IllegalArgumentException("Invalid header value for '" + name + "': contains invalid character at position " + i);
+                    }
+                }
+            }
+        }
+    }
+
     private ApiClientConnectorRequest prepareConnectorRequest(final ApiRequest<?> request, boolean isAuthRequest) throws IOException {
         final String path = request.getPath();
         final List<Pair> queryParams = new ArrayList<>(request.getQueryParams());
@@ -786,6 +822,7 @@ public class ApiClient implements AutoCloseable {
         }
         Map<String, String> customHeaders = request.getCustomHeaders();
         if (customHeaders != null && !customHeaders.isEmpty()) {
+            validateHeaders(customHeaders);
             for (Map.Entry<String, String> customHeader : customHeaders.entrySet()) {
                 headers.put(customHeader.getKey(), customHeader.getValue());
             }

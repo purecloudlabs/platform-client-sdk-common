@@ -11,7 +11,7 @@ declare class ApiClientClass {
     private proxyAgent: any;
     httpClient: AbstractHttpClient;
 
-	callApi(path: string, httpMethod: string, pathParams: { [key: string]: string; }, queryParams: { [key: string]: object; }, headerParams: { [key: string]: object; }, formParams: { [key: string]: object; }, bodyParam: any, authNames: Array<string>, contentTypes: Array<string>, accepts: Array<string>): Promise<any>;
+	callApi(path: string, httpMethod: string, pathParams: { [key: string]: string; }, queryParams: { [key: string]: object; }, headerParams: { [key: string]: object; }, formParams: { [key: string]: object; }, bodyParam: any, authNames: Array<string>, contentTypes: Array<string>, accepts: Array<string>, perRequestHeaders?: Record<string, string>): Promise<any>;
 	loginClientCredentialsGrant(clientId: string, clientSecret: string): Promise<AuthData>;
 	loginImplicitGrant(clientId: string, redirectUri: string, opts?: LoginImplicitGrantOptions): Promise<AuthData>;
 	loginCodeAuthorizationGrant(clientId: string, clientSecret: string, authCode: string, redirectUri: string): Promise<AuthData>;
@@ -160,12 +160,16 @@ declare class Logger {
 {{#apis}}{{#operations}}
 declare class {{classname}} {
 	constructor(apiClient?: ApiClientClass);{{#operation}}{{!-- class: CodegenOperation --}}
-  	{{operationId}}({{#allParams}}{{#required}}{{{paramName}}}: {{{typeScriptType}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts?: {{classname}}.{{operationId}}Options{{/hasOptionalParams}}): Promise<{{{typeScriptResponseType}}}>;{{/operation}}
+  	{{operationId}}({{#allParams}}{{#required}}{{{paramName}}}: {{{typeScriptType}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts?: {{classname}}.{{operationId}}Options{{/hasOptionalParams}}{{^hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts?: {{classname}}.{{operationId}}Options{{/hasOptionalParams}}): Promise<{{{typeScriptResponseType}}}>;{{/operation}}
 }
 
 declare namespace {{classname}} { {{#operation}}{{#hasOptionalParams}}
 	export interface {{operationId}}Options { {{#allParams}}{{^required}}
 		"{{{paramName}}}"?: {{{typeScriptType}}};{{/required}}{{/allParams}}
+		"headers"?: Record<string, string>;
+	}{{/hasOptionalParams}}{{^hasOptionalParams}}
+	export interface {{operationId}}Options {
+		"headers"?: Record<string, string>;
 	}{{/hasOptionalParams}}{{/operation}}
 }
 {{/operations}}

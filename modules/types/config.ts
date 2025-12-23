@@ -24,6 +24,7 @@ export interface Settings {
     extensionsDestination: string;
     swagger: Swagger;
     swaggerCodegen: SwaggerCodegen;
+    headerProcessing?: HeaderProcessing;
     releaseNoteTemplatePath: string;
     releaseNoteSummaryTemplatePath: string;
     debugConfig: boolean;
@@ -61,6 +62,24 @@ export interface SwaggerCodegen {
     generateApiTests: boolean;
     generateModelTests: boolean;
 
+}
+
+export interface HeaderProcessing {
+    enabled: boolean;
+    validationEnabled: boolean;
+    mergingEnabled: boolean;
+    supportedLanguages: string[];
+    templateVariables: HeaderTemplateVariables;
+}
+
+export interface HeaderTemplateVariables {
+    headerSupport: boolean;
+    headerValidation: boolean;
+    headerMerging: boolean;
+    requestBuilderPattern?: boolean;
+    dictionaryType?: string;
+    dictType?: string;
+    mapType?: string;
 }
 
 export interface StageSettings {
@@ -106,4 +125,4 @@ export interface ArgClass {
     $ref: string;
 }
 
-export type Haystack = Config | Settings | SwaggerCodegen | SDKRepo | StageSettings | Swagger | PureCloud | boolean | {};
+export type Haystack = Config | Settings | SwaggerCodegen | SDKRepo | StageSettings | Swagger | PureCloud | HeaderProcessing | boolean | {};

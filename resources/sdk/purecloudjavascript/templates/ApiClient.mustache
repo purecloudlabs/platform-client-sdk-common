@@ -1560,9 +1560,10 @@ class ApiClient {
 	 * @param {Array.<String>} contentTypes An array of request MIME types.
 	 * @param {Array.<String>} accepts An array of acceptable response MIME types.types or the
 	 * constructor for a complex type.
+	 * @param {Object.<string, string>} perRequestHeaders Optional per-request headers to include with the API call.
 	 * @returns {Promise} A Promise object.
 	 */
-	callApi(path, httpMethod, pathParams, queryParams, headerParams, formParams, bodyParam, authNames, contentTypes, accepts) {
+	callApi(path, httpMethod, pathParams, queryParams, headerParams, formParams, bodyParam, authNames, contentTypes, accepts, perRequestHeaders) {
 		return new Promise((resolve, reject) => {
 			sendRequest(this);
 			function sendRequest(that) {
@@ -1575,7 +1576,40 @@ class ApiClient {
 				// set header parameters
 				const defaultHeaders = that.defaultHeaders;
 				const normalizedHeaderParams = that.normalizeParams(headerParams);
-				request.headers = that.addHeaders(request.headers, defaultHeaders, normalizedHeaderParams);
+				
+				// Start with existing headers and add default and template headers
+				let finalHeaders = that.addHeaders(request.headers, defaultHeaders, normalizedHeaderParams);
+				
+				// Merge per-request headers if provided
+				if (perRequestHeaders) {
+					// Validate per-request headers
+					if (typeof perRequestHeaders !== 'object' || perRequestHeaders === null) {
+						throw new Error('Per-request headers must be a valid object');
+					}
+					
+					// Basic header validation
+					for (const [name, value] of Object.entries(perRequestHeaders)) {
+						if (typeof name !== 'string' || typeof value !== 'string') {
+							throw new Error(`Invalid header: "${name}" must have string name and value`);
+						}
+						// Basic header name validation (RFC 7230)
+						if (!/^[!#$%&'*+\-.0-9A-Z^_`a-z|~]+$/.test(name)) {
+							throw new Error(`Invalid header name: "${name}" - must be a valid HTTP token`);
+						}
+						// Basic header value validation
+						for (let i = 0; i < value.length; i++) {
+							const charCode = value.charCodeAt(i);
+							if (!((charCode >= 0x21 && charCode <= 0x7E) || charCode === 0x20 || charCode === 0x09 || (charCode >= 0x80 && charCode <= 0xFF))) {
+								throw new Error(`Invalid header value for "${name}": contains invalid characters`);
+							}
+						}
+					}
+					
+					// Merge per-request headers (they take precedence)
+					finalHeaders = that.addHeaders(finalHeaders, perRequestHeaders);
+				}
+				
+				request.headers = finalHeaders;
 
 				var contentType = that.jsonPreferredMime(contentTypes);
 				if (contentType) {
