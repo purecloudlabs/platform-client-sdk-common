@@ -27,13 +27,16 @@ class {{classname}} {
 	 * {{{notes}}}{{/notes}}{{#allParams}}{{#required}}
 	 * @param {{&vendorExtensions.x-jsdoc-type}} {{paramName}} {{{description}}}{{/required}}{{/allParams}}{{#hasOptionalParams}}
 	 * @param {Object} opts Optional parameters{{#allParams}}{{^required}}
-	 * @param {{&vendorExtensions.x-jsdoc-type}} opts.{{paramName}} {{{description}}}{{#defaultValue}} (default to {{.}}){{/defaultValue}}{{/required}}{{/allParams}}{{/hasOptionalParams}}{{#isDeprecated}}
+	 * @param {{&vendorExtensions.x-jsdoc-type}} opts.{{paramName}} {{{description}}}{{#defaultValue}} (default to {{.}}){{/defaultValue}}{{/required}}{{/allParams}}
+	 * @param {Object.<string, string>} opts.headers Optional per-request headers to include with the API call{{/hasOptionalParams}}{{^hasOptionalParams}}
+	 * @param {Object} opts Optional parameters
+	 * @param {Object.<string, string>} opts.headers Optional per-request headers to include with the API call{{/hasOptionalParams}}{{#isDeprecated}}
 	 * @deprecated{{/isDeprecated}}{{#vendorExtensions.x-genesys-preview}}
 	 * {{nickname}} is a preview method and is subject to both breaking and non-breaking changes at any time without notice{{/vendorExtensions.x-genesys-preview}}
 	 */{{/emitJSDoc}}
-	{{operationId}}({{vendorExtensions.x-codegen-arg-list}}) { {{#hasOptionalParams}}
+	{{operationId}}({{vendorExtensions.x-codegen-arg-list}}) { 
 		opts = opts || {};
-		{{/hasOptionalParams}}{{#allParams}}{{#required}}{{#isPathParam}}{{#isString}}{{#isArray}}
+		{{#allParams}}{{#required}}{{#isPathParam}}{{#isString}}{{#isArray}}
 		// verify the required parameter '{{paramName}}' is set
 		if ({{paramName}} === undefined || {{paramName}} === null) {
 			throw 'Missing the required parameter "{{paramName}}" when calling {{operationId}}';
@@ -61,7 +64,8 @@ class {{classname}} {
 			{{#bodyParam}}{{#required}}{{paramName}}{{/required}}{{^required}}opts['{{paramName}}']{{/required}}{{/bodyParam}}{{^bodyParam}}null{{/bodyParam}}, 
 			['PureCloud OAuth'], 
 			[{{^consumes}}'application/json'{{/consumes}}{{#consumes}}'{{mediaType}}'{{^-last}}, {{/-last}}{{/consumes}}],
-			[{{#produces}}'{{mediaType}}'{{^-last}}, {{/-last}}{{/produces}}]{{^usePromises}},
+			[{{#produces}}'{{mediaType}}'{{^-last}}, {{/-last}}{{/produces}}],
+			opts['headers']{{^usePromises}},
 			callback{{/usePromises}}
 		);
 	}
