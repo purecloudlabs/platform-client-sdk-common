@@ -118,6 +118,13 @@ public class {{classname}} {
                 .build();
     }
 
+    public Builder toBuilder() {
+        Builder builder = new Builder();{{#allParams}}
+        builder.with{{#lambda.titlecase}}{{paramName}}{{/lambda.titlecase}}(this.{{paramName}});{{/allParams}}
+        builder.request.setCustomHeaders(this.customHeaders);
+        return builder;
+    }
+
 	public static Builder builder() {
 		return new Builder();
 	}
@@ -172,6 +179,13 @@ public class {{classname}} {
 			return this;
 		}
 		{{/hasRequiredParams}}
+
+		public Builder withCustomHeaders(Map<String, String> headers) {
+			if (headers != null) {
+				request.setCustomHeaders(headers);
+			}
+			return this;
+		}
 
 
 		public {{classname}} build() {

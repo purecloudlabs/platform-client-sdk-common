@@ -55,6 +55,25 @@ public class {{classname}} {
    * {{{summary}}}
    * {{{notes}}}{{#vendorExtensions.x-genesys-preview}}
    * {{operationId}} is a preview method and is subject to both breaking and non-breaking changes at any time without notice{{/vendorExtensions.x-genesys-preview}}{{#allParams}}
+   * @param {{paramName}} {{{description}}}{{#required}} (required){{/required}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}{{/allParams}}
+   * @param headers Custom headers to include with the request (optional){{#returnType}}
+   * @return {{{returnType}}}{{/returnType}}
+   * @throws ApiException if the request fails on the server
+   * @throws IOException if the request fails to be processed{{#isDeprecated}}
+   * @deprecated{{/isDeprecated}}
+   */
+  public {{#returnType}}{{{returnType}}} {{/returnType}}{{^returnType}}void {{/returnType}}{{operationId}}({{#allParams}}{{{dataType}}} {{paramName}}, {{/allParams}}Map<String, String> headers) throws IOException, ApiException {
+    {{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}Request.Builder builder = create{{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}Request({{#allParams}}{{paramName}}{{^-last}}, {{/-last}}{{/allParams}}).toBuilder();
+    if (headers != null) {
+      builder.withCustomHeaders(headers);
+    }
+    {{#returnType}}return {{/returnType}} {{operationId}}(builder.build());
+  }
+
+  /**
+   * {{{summary}}}
+   * {{{notes}}}{{#vendorExtensions.x-genesys-preview}}
+   * {{operationId}} is a preview method and is subject to both breaking and non-breaking changes at any time without notice{{/vendorExtensions.x-genesys-preview}}{{#allParams}}
    * @param {{paramName}} {{{description}}}{{#required}} (required){{/required}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}{{/allParams}}{{#returnType}}
    * @return {{{returnType}}}{{/returnType}}
    * @throws IOException if the request fails to be processed{{#isDeprecated}}
@@ -62,6 +81,24 @@ public class {{classname}} {
    */
   public ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> {{operationId}}WithHttpInfo({{#allParams}}{{{dataType}}} {{paramName}}{{^-last}}, {{/-last}}{{/allParams}}) throws IOException {
     return {{operationId}}(create{{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}Request({{#allParams}}{{paramName}}{{^-last}}, {{/-last}}{{/allParams}}).withHttpInfo());
+  }
+
+  /**
+   * {{{summary}}}
+   * {{{notes}}}{{#vendorExtensions.x-genesys-preview}}
+   * {{operationId}} is a preview method and is subject to both breaking and non-breaking changes at any time without notice{{/vendorExtensions.x-genesys-preview}}{{#allParams}}
+   * @param {{paramName}} {{{description}}}{{#required}} (required){{/required}}{{^required}} (optional{{#defaultValue}}, default to {{{.}}}{{/defaultValue}}){{/required}}{{/allParams}}
+   * @param headers Custom headers to include with the request (optional){{#returnType}}
+   * @return {{{returnType}}}{{/returnType}}
+   * @throws IOException if the request fails to be processed{{#isDeprecated}}
+   * @deprecated{{/isDeprecated}}
+   */
+  public ApiResponse<{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}Void{{/returnType}}> {{operationId}}WithHttpInfo({{#allParams}}{{{dataType}}} {{paramName}}, {{/allParams}}Map<String, String> headers) throws IOException {
+    {{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}Request.Builder builder = create{{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}Request({{#allParams}}{{paramName}}{{^-last}}, {{/-last}}{{/allParams}}).toBuilder();
+    if (headers != null) {
+      builder.withCustomHeaders(headers);
+    }
+    return {{operationId}}(builder.build().withHttpInfo());
   }
 
   private {{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}Request create{{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}Request({{#allParams}}{{{dataType}}} {{paramName}}{{^-last}}, {{/-last}}{{/allParams}}) {
