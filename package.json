@@ -57,7 +57,7 @@
     "pm2": "^5.4.3",
     "purecloud-platform-client-v2": "^241.1.0",
     "q": "^1.4.1",
-    "semver": "^7.6.2",
+    "semver": "^7.7.3",
     "synk": "^0.0.2",
     "wget": "^0.0.1",
     "winston": "^2.3.1",
