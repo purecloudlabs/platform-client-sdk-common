@@ -20,6 +20,7 @@ import java.net.URLEncoder;
 import java.net.Proxy;
 import java.text.DateFormat;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Future;
@@ -47,6 +48,7 @@ import {{invokerPackage}}.connector.*;
 import {{invokerPackage}}.extensions.AuthResponse;
 import {{invokerPackage}}.Logger;
 import {{invokerPackage}}.extensions.LocalDateSerializer;
+import {{invokerPackage}}.extensions.YearMonthSerializer;
 
 import {{invokerPackage}}.hooksmanager.HookManager;
 import {{invokerPackage}}.hooksmanager.LoggingPostResponseHook;
@@ -185,6 +187,10 @@ public class ApiClient implements AutoCloseable {
         objectMapper.registerModule(new JodaModule());
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.setDateFormat(dateFormat);
+        SimpleModule yearMonthModule = new SimpleModule();
+        yearMonthModule.addSerializer(YearMonth.class, new YearMonthSerializer());
+        yearMonthModule.addDeserializer(YearMonth.class, new YearMonthDeserializer());
+        objectMapper.registerModule(yearMonthModule);
         SimpleModule localDateModule = new SimpleModule();
         localDateModule.addSerializer(LocalDate.class, new LocalDateSerializer());
         localDateModule.addDeserializer(LocalDate.class, new LocalDateDeserializer());

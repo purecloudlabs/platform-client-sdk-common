@@ -33,6 +33,8 @@ let newSwaggerTempFile = '';
 
 // Quarantine Operations
 const quarantineOperationIds: string[] = ['postGroupImages', 'postUserImages', 'postLocationImages'];
+// Remove Definition Names If Unused
+const removeDefinitionNames: string[] = ['YearMonth'];
 // Override OperationId due to name conflict ("operationId", "x-purecloud-method-name")
 const overrideOperationIds: any = {};
 const aliasOperationIds: any = {
@@ -445,6 +447,9 @@ function prebuildImpl(): Promise<string> {
 					return quarantineOperations(quarantineOperationIds);
 				})
 				.then(() => {
+					return removeDefinitionsIfUnused(removeDefinitionNames);
+				})
+				.then(() => {
 					return overrideOperations(overrideOperationIds);
 				})
 				.then(() => {
@@ -598,7 +603,7 @@ function buildImpl(): Promise<string> {
 			let code = childProcess.execSync(command, { stdio: 'inherit' });
 			log.debug('Swagger-codegen execution completed');
 
-			log.debug('Checking for extensions to copy', { extensionsPath: _this.resourcePaths.extensions });
+			log.debug('Checking for extensions to copy...');
 			if (fs.existsSync(_this.resourcePaths.extensions)) {
 				log.debug(`Copying extensions from ${_this.resourcePaths.extensions} to ${_this.config.settings.extensionsDestination}`);
 				log.info('Copying extensions...');
@@ -930,6 +935,25 @@ function quarantineOperations(quarantineOperationIds: string[]) {
 			const remainingMethods = Object.keys(swaggerDiff.newSwagger.paths[path]);
 			if (remainingMethods.length == 0) {
 				delete swaggerDiff.newSwagger.paths[path];
+			}
+		}
+	}
+	return;
+}
+
+function removeDefinitionsIfUnused(removeDefinitionNames: string[]) {
+	if (removeDefinitionNames && removeDefinitionNames.length > 0) {
+		log.info(`Removed Definition Names If Unused: ${removeDefinitionNames.toString()}`);
+		const swaggerAsString = JSON.stringify(swaggerDiff.newSwagger);
+		for (const defName of removeDefinitionNames) {
+			if (swaggerDiff.newSwagger.definitions[defName]) {
+				// Found Definition Name
+				// Check if referenced somewhere
+				if (!swaggerAsString.includes(`"#/definitions/${defName}"`)) {
+					// No found references
+					delete swaggerDiff.newSwagger.definitions[defName];
+					log.info(`Removed Definition Name: ${defName}`);
+				}
 			}
 		}
 	}

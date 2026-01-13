@@ -140,6 +140,7 @@ export enum Format {
     Int64 = "int64",
     Interval = "interval",
     LocalDateTime = "local-date-time",
+    YearMonth = "year-month",
     URI = "uri",
     URL = "url",
 }
