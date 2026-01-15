@@ -598,7 +598,7 @@ function buildImpl(): Promise<string> {
 			let code = childProcess.execSync(command, { stdio: 'inherit' });
 			log.debug('Swagger-codegen execution completed');
 
-			log.debug('Checking for extensions to copy', { extensionsPath: _this.resourcePaths.extensions });
+			log.debug('Checking for extensions to copy...');
 			if (fs.existsSync(_this.resourcePaths.extensions)) {
 				log.debug(`Copying extensions from ${_this.resourcePaths.extensions} to ${_this.config.settings.extensionsDestination}`);
 				log.info('Copying extensions...');
