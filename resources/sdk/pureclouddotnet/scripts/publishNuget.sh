@@ -1,5 +1,3 @@
-#!/bin/bash
-
 BUILD_DIR=$1
 COMMON_DIR=$2
 NAMESPACE=$3
