@@ -1,3 +1,5 @@
+#!/bin/bash
+
 BUILD_DIR=$1
 COMMON_DIR=$2
 NAMESPACE=$3
@@ -17,6 +19,17 @@ if [ ! "$IS_NEW_RELEASE" = "true" ]
 then
 	echo "Skipping nuget publish"
 	exit 0
+fi
+
+# Determine authentication method
+# For JFrog: Use JFROG_USR:JFROG_PSW from environment if available and source is JFrog
+# For NuGet.org: Use NUGET_API_KEY as-is
+if [ -n "$JFROG_USR" ] && [ -n "$JFROG_PSW" ] && [[ "$NUGET_SOURCE" == *"jfrog"* ]]; then
+    echo "Using JFrog credentials from environment variables"
+    AUTH_KEY="$JFROG_USR:$JFROG_PSW"
+else
+    echo "Using NuGet API key"
+    AUTH_KEY="$NUGET_API_KEY"
 fi
 
 # CD to build dir
@@ -84,7 +97,7 @@ cp package/$NAMESPACE.$VERSION.repack.nupkg $NAMESPACE.$VERSION.repack.nupkg
 # Publish to nuget
 mono $COMMON_DIR/resources/sdk/pureclouddotnet/bin/nuget.exe push \
 $NAMESPACE.$VERSION.repack.nupkg \
-$NUGET_API_KEY \
+$AUTH_KEY \
 -source $NUGET_SOURCE \
 -Verbosity detailed \
 -Timeout 900
