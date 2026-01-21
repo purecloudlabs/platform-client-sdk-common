@@ -872,7 +872,7 @@ public class ApiClient implements AutoCloseable {
             return new ApiResponseWrapper<>(statusCode, reasonPhrase, headers, body, entity);
         }
         else {
-            String message = "error";
+            String message = (statusCode == 429) ? "Max number of retries exceeded" : "error";
             String body = response.readBody();
             throw new ApiException(statusCode, message, headers, body);
         }
@@ -1659,6 +1659,7 @@ public class ApiClient implements AutoCloseable {
 
         private boolean waitBeforeRetry(long retryAfterMs){
             try {
+                System.out.printf("Rate limit encountered. Retry the request in [%d] seconds\n", retryAfterMs/1000L);
                 Thread.sleep(retryAfterMs);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
