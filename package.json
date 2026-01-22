@@ -48,7 +48,7 @@
     "http-proxy": "^1.18.1",
     "json-schema-deref-sync": "^0.14.0",
     "klaw-sync": "^3.0.2",
-    "lodash": "^4.17.19",
+    "lodash": "^4.17.23",
     "lognext": "0.0.4",
     "mdjavadoc-api": "^1.0.4",
     "moment-timezone": "^0.5.45",
