@@ -9,6 +9,8 @@ export class PreBuildPostRun {
 			var version = fs.readJsonSync(process.argv[3]);
 			var moduleName = process.argv[4];
 			var projectName = process.argv[5];
+			let enableCustomHeaders: boolean = false;
+			if (process.argv[6] && process.argv[6].toLowerCase() === 'true') enableCustomHeaders = true;
 
 			var config = {
 				moduleName: moduleName || 'platformClient',
@@ -21,7 +23,8 @@ export class PreBuildPostRun {
 				emitModelMethods: true,
 				emitJSDoc: true,
 				localVariablePrefix: 'pc',
-				invokerPackage: projectName || 'purecloud-platform-client-v2'
+				invokerPackage: projectName || 'purecloud-platform-client-v2',
+				enableCustomHeaders: enableCustomHeaders || false
 			};
 
 			fs.writeFileSync(swaggerCodegenConfigFilePath, JSON.stringify(config, null, 2));

@@ -19,13 +19,20 @@ client.setAccessToken("your_access_token");{{/isOAuth}}
 
 let apiInstance = new platformClient.{{baseName}}Api();{{#hasParams}}
 {{#vendorExtensions.x-codegen-hasRequiredParams}}{{#allParams}}{{#required}}
-let {{{paramName}}} = {{{example}}}; // {{{dataType}}} | {{{description}}}{{/required}}{{/allParams}}{{/vendorExtensions.x-codegen-hasRequiredParams}}{{#hasOptionalParams}}
+let {{{paramName}}} = {{{example}}}; // {{{dataType}}} | {{{description}}}{{/required}}{{/allParams}}{{/vendorExtensions.x-codegen-hasRequiredParams}}{{^enableCustomHeaders}}{{#hasOptionalParams}}
 let opts = { {{#allParams}}{{^required}}
   "{{{paramName}}}": {{{example}}}{{#vendorExtensions.x-codegen-hasMoreOptional}},{{/vendorExtensions.x-codegen-hasMoreOptional}} // {{{dataType}}} | {{{description}}}{{/required}}{{/allParams}}
-};{{/hasOptionalParams}}{{/hasParams}}
+};{{/hasOptionalParams}}{{/enableCustomHeaders}}{{/hasParams}}{{#enableCustomHeaders}}
+let opts = { {{#hasOptionalParams}}{{#allParams}}{{^required}}
+  "{{{paramName}}}": {{{example}}}, // {{{dataType}}} | {{{description}}}{{/required}}{{/allParams}}{{/hasOptionalParams}}
+  "customHeaders": {  // Object.<string, string> | Request Custom Headers
+    'X-Service-Name': 'customer-service',
+    'X-Request-ID': 'req-12345'
+  }
+};{{/enableCustomHeaders}}
 
 {{#summary}}// {{{.}}}{{/summary}}
-apiInstance.{{{operationId}}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/hasOptionalParams}})
+apiInstance.{{{operationId}}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{^enableCustomHeaders}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/hasOptionalParams}}{{/enableCustomHeaders}}{{#enableCustomHeaders}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/enableCustomHeaders}})
   .then(({{#returnType}}data{{/returnType}}) => {
     {{#returnType}}console.log(`{{{operationId}}} success! data: ${JSON.stringify(data, null, 2)}`);{{/returnType}}{{^returnType}}console.log("{{{operationId}}} returned successfully.");{{/returnType}}
   })
