@@ -654,5 +654,10 @@
 		"post": {
             "name": "createforlimits"
         }
-	}
+	},
+    "/api/v2/integrations/mcp/{integrationId}/tools": {
+        "get": {
+            "name": "list"
+        }
+    }
 }
