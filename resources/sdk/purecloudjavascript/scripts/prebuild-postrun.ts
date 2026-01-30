@@ -27,6 +27,8 @@ export class PreBuildPostRun {
 				enableCustomHeaders: enableCustomHeaders || false
 			};
 
+			if (enableCustomHeaders == true) console.log("Custom Headers Support enabled");
+
 			fs.writeFileSync(swaggerCodegenConfigFilePath, JSON.stringify(config, null, 2));
 			console.log(`Config file written to ${swaggerCodegenConfigFilePath}`);
 		} catch (err) {
