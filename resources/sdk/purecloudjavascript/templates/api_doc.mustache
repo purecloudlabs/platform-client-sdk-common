@@ -15,7 +15,7 @@ All URIs are relative to *{{basePath}}*
 
 ## {{operationId}}
 
-> {{#returnType}}{{#returnTypeIsPrimitive}}**{{returnType}}**{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}{{returnType}}{{/returnTypeIsPrimitive}}{{/returnType}}{{^returnType}}void{{/returnType}} {{operationId}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/hasOptionalParams}})
+> {{#returnType}}{{#returnTypeIsPrimitive}}**{{returnType}}**{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}{{returnType}}{{/returnTypeIsPrimitive}}{{/returnType}}{{^returnType}}void{{/returnType}} {{operationId}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{^enableCustomHeaders}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/hasOptionalParams}}{{/enableCustomHeaders}}{{#enableCustomHeaders}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/enableCustomHeaders}})
 
 {{#isDeprecated}}:::{"alert":"warning","title":"Deprecated","collapsible":false,"autoCollapse":false}
 This resource has been deprecated
@@ -66,13 +66,20 @@ let {{{name}}} = {{{moduleName}}}.ApiClient.instance.authentications['{{{name}}}
 
 let apiInstance = new {{{moduleName}}}.{{{classname}}}();{{#hasParams}}
 {{#vendorExtensions.x-codegen-hasRequiredParams}}{{#allParams}}{{#required}}
-let {{{paramName}}} = {{{example}}}; // {{{dataType}}} | {{{description}}}{{/required}}{{/allParams}}{{/vendorExtensions.x-codegen-hasRequiredParams}}{{#hasOptionalParams}}
+let {{{paramName}}} = {{{example}}}; // {{{dataType}}} | {{{description}}}{{/required}}{{/allParams}}{{/vendorExtensions.x-codegen-hasRequiredParams}}{{^enableCustomHeaders}}{{#hasOptionalParams}}
 let opts = { {{#allParams}}{{^required}}
   '{{{paramName}}}': {{{example}}}{{#vendorExtensions.x-codegen-hasMoreOptional}},{{/vendorExtensions.x-codegen-hasMoreOptional}} // {{{dataType}}} | {{{description}}}{{/required}}{{/allParams}}
-};{{/hasOptionalParams}}{{/hasParams}}
+};{{/hasOptionalParams}}{{/enableCustomHeaders}}{{/hasParams}}{{#enableCustomHeaders}}
+let opts = { {{#hasOptionalParams}}{{#allParams}}{{^required}}
+  '{{{paramName}}}': {{{example}}}, // {{{dataType}}} | {{{description}}}{{/required}}{{/allParams}}{{/hasOptionalParams}}
+  'customHeaders': {  // Object.<string, string> | Request Custom Headers
+    'X-Service-Name': 'customer-service',
+    'X-Request-ID': 'req-12345'
+  }
+};{{/enableCustomHeaders}}
 
 {{#usePromises}}
-apiInstance.{{{operationId}}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/hasOptionalParams}})
+apiInstance.{{{operationId}}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{^enableCustomHeaders}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/hasOptionalParams}}{{/enableCustomHeaders}}{{#enableCustomHeaders}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/enableCustomHeaders}})
   .then(({{#returnType}}data{{/returnType}}) => {
     {{#returnType}}console.log(`{{{operationId}}} success! data: ${JSON.stringify(data, null, 2)}`);{{/returnType}}{{^returnType}}console.log('{{{operationId}}} returned successfully.');{{/returnType}}
   })
@@ -87,16 +94,19 @@ let callback = (error, data, response) => {
     {{#returnType}}console.log('API called successfully. Returned data: ' + data);{{/returnType}}{{^returnType}}console.log('API called successfully.');{{/returnType}}
   }
 };
-apiInstance.{{{operationId}}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/hasOptionalParams}}{{#hasParams}}, {{/hasParams}}callback);{{/usePromises}}
+apiInstance.{{{operationId}}}({{#allParams}}{{#required}}{{{paramName}}}{{#vendorExtensions.x-codegen-hasMoreRequired}}, {{/vendorExtensions.x-codegen-hasMoreRequired}}{{/required}}{{/allParams}}{{^enableCustomHeaders}}{{#hasOptionalParams}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts{{/hasOptionalParams}}{{#hasParams}}, {{/hasParams}}{{/enableCustomHeaders}}{{#enableCustomHeaders}}{{#vendorExtensions.x-codegen-hasRequiredParams}}, {{/vendorExtensions.x-codegen-hasRequiredParams}}opts, {{/enableCustomHeaders}}callback);{{/usePromises}}
 ```
 
 ### Parameters
 
-{{^allParams}}This endpoint does not need any parameter.{{/allParams}}{{#allParams}}{{#-last}}
+{{^enableCustomHeaders}}{{^allParams}}This endpoint does not need any parameter.{{/allParams}}{{#allParams}}{{#-last}}
 | Name | Type | Description  | Notes |
-| ------------- | ------------- | ------------- | ------------- |{{/-last}}{{/allParams}}
+| ------------- | ------------- | ------------- | ------------- |{{/-last}}{{/allParams}}{{/enableCustomHeaders}}{{#enableCustomHeaders}}
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |{{/enableCustomHeaders}}
 {{#allParams}} **{{paramName}}** | **{{dataType}}** | {{{description}}} | {{^required}}[optional] {{/required}}{{#defaultValue}}[default to {{{defaultValue}}}]{{/defaultValue}}{{#allowableValues}}<br />**Values**: {{#values}}{{.}}{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}} |
-{{/allParams}}
+{{/allParams}}{{#enableCustomHeaders}} **customHeaders** | **Object.<string, string>** | Request Custom Headers | [optional] |
+{{/enableCustomHeaders}}
 
 ### Return type
 
