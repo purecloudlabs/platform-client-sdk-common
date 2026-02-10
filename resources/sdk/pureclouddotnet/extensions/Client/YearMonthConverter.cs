@@ -49,6 +49,8 @@ namespace {{=it.packageName}}.Client
                         return ymValue;
                     }
                     break;
+                default:
+                    return null;
             }
 
             return null;
