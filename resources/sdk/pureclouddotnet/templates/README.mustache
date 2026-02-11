@@ -474,6 +474,23 @@ The .Net Platform API Client SDK implements the following strategy to manage the
 * Each enumeration, generated from the Platform API OpenAPI v2 definition, always contains the following enumeration value: `[EnumMember(Value = "OUTDATED_SDK_VERSION")] OutdatedSdkVersion`
 * If an unknown enumeration value is received (i.e. a new enumeration value, introduced in Platform API, after the SDK version you are using was built), the SDK will map it to the `[EnumMember(Value = "OUTDATED_SDK_VERSION")] OutdatedSdkVersion` enumeration value. This is to prevent errors during deserialization when an unknown enumeration value is received from Genesys Cloud.
 
+### SDK Specific Types and Classes
+
+The Platform API Client SDK for .Net defines some types and classes specific to the SDK.
+
+#### YearMonth
+
+Some API Endpoints of the Platform API (REST API) contain properties defined as string with a "year-month" format (e.g. value equal to "2026-01").  
+If part of an API Response, these properties will be deserialized to the SDK's YearMonth class.  
+YearMonth class instance will be serialized to "year-month" string format if part of an API Request (REST API).
+
+You can import the YearMonth class in your C# code with: `using {{packageName}}.Client;`  
+The YearMonth class is defined in the `{{packageName}}.Client` namespace.
+
+The YearMonth class contains two properties of integer type: **Year** (allowing value from 0 to 9999) and **Month** (allowing value from 1 to 12).  
+An instance of the class can be created using the class constructor `YearMonth(int? Year = null, int? Month = null)` or parsing a `DateTime` with `YearMonth(DateTime Date)`.  
+A YearMonth instance can also be transformed into a DateTime (with day being forced to 1) with `myYearMonth.ToDate()`.
+
 ## NotificationHandler Helper Class
 
 The .NET SDK includes a helper class `NotificationHandler` to assist in managing GenesysCloud notifications. The class will create a single notification channel, or use an existing one, and provides methods to add and remove subscriptions and raises an event with a deserialized notification object whenever one is received.
