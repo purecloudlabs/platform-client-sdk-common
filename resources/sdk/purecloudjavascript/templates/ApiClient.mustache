@@ -1520,7 +1520,10 @@ class ApiClient {
 							request.headers =  this.addHeaders(request.headers, data);
 						} else {
 							request.setParams(this.serialize(data));
+							request.headers =  this.addHeaders(request.headers, {});
 						}
+					} else {
+						request.headers =  this.addHeaders(request.headers, {});
 					}
 					break;
 				case 'oauth2':
