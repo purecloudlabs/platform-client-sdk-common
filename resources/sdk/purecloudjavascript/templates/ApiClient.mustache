@@ -1526,6 +1526,8 @@ class ApiClient {
 				case 'oauth2':
 					if (auth.accessToken) {
 						request.headers =  this.addHeaders(request.headers, {'Authorization': `Bearer ${auth.accessToken}`});
+					} else {
+						request.headers =  this.addHeaders(request.headers, {});
 					}
 					break;
 				default:
