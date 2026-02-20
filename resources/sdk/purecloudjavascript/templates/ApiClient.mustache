@@ -1520,12 +1520,17 @@ class ApiClient {
 							request.headers =  this.addHeaders(request.headers, data);
 						} else {
 							request.setParams(this.serialize(data));
+							request.headers =  this.addHeaders(request.headers, {});
 						}
+					} else {
+						request.headers =  this.addHeaders(request.headers, {});
 					}
 					break;
 				case 'oauth2':
 					if (auth.accessToken) {
 						request.headers =  this.addHeaders(request.headers, {'Authorization': `Bearer ${auth.accessToken}`});
+					} else {
+						request.headers =  this.addHeaders(request.headers, {});
 					}
 					break;
 				default:
