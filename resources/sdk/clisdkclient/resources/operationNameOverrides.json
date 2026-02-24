@@ -659,5 +659,30 @@
         "get": {
             "name": "list"
         }
+    },
+    "/api/v2/externalcontacts/contacts/{contactId}/notes/{noteId}": {
+        "patch": {
+			"name": "patch"
+		}
+    },
+    "/api/v2/externalcontacts/organizations/{externalOrganizationId}/notes/{noteId}": {
+        "patch": {
+			"name": "patch"
+		}
+    },
+    "/api/v2/externalcontacts/relationships/{relationshipId}": {
+        "patch": {
+			"name": "patch"
+		}
+    },
+    "/api/v2/externalcontacts/organizations/{externalOrganizationId}": {
+        "patch": {
+			"name": "patch"
+		}
+    },
+    "/api/v2/knowledge/knowledgebases/{knowledgeBaseId}/documents/{documentId}/feedback": {
+        "get": {
+			"name": "getfordoc"
+		}
     }
 }
