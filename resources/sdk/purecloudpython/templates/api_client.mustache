@@ -515,14 +515,15 @@ class ApiClient(object):
 
     def sanitize_params_for_serialization(self, obj):
         """
-        Builds a JSON POST object.
+        Sanitizes request parameters - path, query, header.
+        Ignores parameters with a value equal to None.
 
         If obj is None, return None.
         If obj is str, int, float, bool, return directly.
         If obj is datetime.datetime, datetime.date
             convert to string in iso8601 format.
         If obj is list, sanitize each element in the list.
-        If obj is dict, return the dict.
+        If obj is dict, return the dict, ignoring entries with a value equal to None.
         If obj is swagger model, return the properties dict.
 
         :param obj: The data to serialize.
