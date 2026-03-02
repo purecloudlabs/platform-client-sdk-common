@@ -57,6 +57,7 @@ namespace {{=it.packageName }}.Client
             ))
             {
                 UserAgent = this.UserAgent,
+                FollowRedirects = false,
                 Timeout = TimeSpan.FromMilliseconds(this.Timeout)
             };
 
