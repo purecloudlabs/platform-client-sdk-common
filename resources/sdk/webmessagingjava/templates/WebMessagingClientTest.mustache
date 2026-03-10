@@ -238,9 +238,10 @@ public class WebMessagingClientTest {
     public void testConfigureSessionSendsPayload() throws Exception {
         setField(client, "apiClient", mock(ApiClient.class));
 
-        boolean result = client.configureSession("deploy-123", "my-origin");
+        CompletableFuture<WebSocket> result = client.configureSession("deploy-123", "my-origin");
 
-        assertTrue(result);
+        assertNotNull(result);
+        assertSame(mockWebSocket, result.join());
         String payload = capturePayload();
         assertTrue(payload.contains("\"action\":\"configureSession\""));
         assertTrue(payload.contains("\"deploymentId\":\"deploy-123\""));
@@ -250,10 +251,11 @@ public class WebMessagingClientTest {
     public void testConfigureSessionWithToken() throws Exception {
         setField(client, "apiClient", mock(ApiClient.class));
 
-        boolean result = client.configureSession("deploy-123", "token-abc",
+        CompletableFuture<WebSocket> result = client.configureSession("deploy-123", "token-abc",
                 "my-origin", "trace-1", java.util.Optional.empty());
 
-        assertTrue(result);
+        assertNotNull(result);
+        assertSame(mockWebSocket, result.join());
         String payload = capturePayload();
         assertTrue(payload.contains("\"token\":\"token-abc\""));
         assertTrue(payload.contains("\"tracingId\":\"trace-1\""));
@@ -457,8 +459,9 @@ public class WebMessagingClientTest {
         // 5. Configure session
         String deploymentId = "my-deployment-id";
         String origin = "example.com";
-        boolean configured = scenarioClient.configureSession(deploymentId, origin);
-        assertTrue(configured, "configureSession should succeed");
+        CompletableFuture<WebSocket> configureFuture = scenarioClient.configureSession(deploymentId, origin);
+        assertNotNull(configureFuture, "configureSession should return a non-null future");
+        assertSame(mockWs, configureFuture.join(), "configureSession future should resolve to the WebSocket");
 
         // Verify the configure payload
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
