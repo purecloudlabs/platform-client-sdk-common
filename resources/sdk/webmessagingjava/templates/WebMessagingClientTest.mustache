@@ -1,0 +1,527 @@
+package {{invokerPackage}};
+
+import {{modelPackage}}.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+
+import java.lang.reflect.Field;
+import java.net.http.WebSocket;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+/**
+ * Tests for WebMessagingClient.
+ * Uses Mockito to mock the WebSocket so we can test message-sending methods
+ * without a live connection.
+ */
+public class WebMessagingClientTest {
+
+    private WebMessagingClient client;
+    private WebSocket mockWebSocket;
+    private ObjectMapper objectMapper;
+
+    @BeforeEach
+    public void setUp() throws Exception {
+        client = new WebMessagingClient("wss://webmessaging.example.com/v1");
+        mockWebSocket = mock(WebSocket.class);
+        when(mockWebSocket.sendText(anyString(), anyBoolean()))
+                .thenReturn(CompletableFuture.completedFuture(mockWebSocket));
+        when(mockWebSocket.sendClose(anyInt(), anyString()))
+                .thenReturn(CompletableFuture.completedFuture(mockWebSocket));
+
+        // Inject mock WebSocket via reflection
+        setField(client, "webSocket", mockWebSocket);
+        // Set a token so message-sending methods work
+        setField(client, "token", "test-token");
+
+        objectMapper = new ObjectMapper();
+    }
+
+    private static void setField(Object target, String fieldName, Object value) throws Exception {
+        Field field = target.getClass().getDeclaredField(fieldName);
+        field.setAccessible(true);
+        field.set(target, value);
+    }
+
+    private String capturePayload() {
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(mockWebSocket).sendText(captor.capture(), eq(true));
+        return captor.getValue();
+    }
+
+    // -----------------------------------------------------------------------
+    // Construction
+    // -----------------------------------------------------------------------
+
+    @Test
+    public void testConstructWithAddress() {
+        WebMessagingClient c = new WebMessagingClient("wss://webmessaging.mypurecloud.com/v1");
+        assertNotNull(c);
+        assertNull(c.getWebSocket(), "WebSocket should be null before connect()");
+    }
+
+    @Test
+    public void testConstructWithRegion() {
+        WebMessagingClient c = new WebMessagingClient(GenesysCloudRegionWebSocketHosts.us_east_1);
+        assertNotNull(c);
+    }
+
+    @Test
+    public void testConstructWithEachRegion() {
+        for (GenesysCloudRegionWebSocketHosts region : GenesysCloudRegionWebSocketHosts.values()) {
+            WebMessagingClient c = new WebMessagingClient(region);
+            assertNotNull(c, "Client should be created for region " + region.name());
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Default app name
+    // -----------------------------------------------------------------------
+
+    @Test
+    public void testGetDefaultAppName() {
+        String appName = WebMessagingClient.getDefaultAppName();
+        assertNotNull(appName);
+        assertFalse(appName.isEmpty());
+    }
+
+    // -----------------------------------------------------------------------
+    // Session listener management
+    // -----------------------------------------------------------------------
+
+    @Test
+    public void testAddAndRemoveSessionListener() {
+        WebMessagingClient.SessionListener listener = createNoOpListener();
+        client.addSessionListener(listener);
+        client.removeSessionListener(listener);
+    }
+
+    // -----------------------------------------------------------------------
+    // Static helper methods: hasPresenceEvents / hasTypingEvents / hasEvents
+    // -----------------------------------------------------------------------
+
+    @Test
+    public void testHasPresenceEventsTrue() {
+        StructuredMessage msg = new StructuredMessage();
+        msg.setEvents(Collections.singletonList(
+                new MessageEvent().eventType(EventTypeEnum.PRESENCE)
+                        .presence(new EventPresence().type(EventPresenceType.JOIN))
+        ));
+        assertTrue(WebMessagingClient.hasPresenceEvents(msg));
+    }
+
+    @Test
+    public void testHasPresenceEventsFalse() {
+        StructuredMessage msg = new StructuredMessage();
+        msg.setEvents(Collections.singletonList(
+                new MessageEvent().eventType(EventTypeEnum.TYPING)
+                        .typing(new EventTyping().type(EventTypingType.ON))
+        ));
+        assertFalse(WebMessagingClient.hasPresenceEvents(msg));
+    }
+
+    @Test
+    public void testHasTypingEventsTrue() {
+        StructuredMessage msg = new StructuredMessage();
+        msg.setEvents(Collections.singletonList(
+                new MessageEvent().eventType(EventTypeEnum.TYPING)
+                        .typing(new EventTyping().type(EventTypingType.ON))
+        ));
+        assertTrue(WebMessagingClient.hasTypingEvents(msg));
+    }
+
+    @Test
+    public void testHasTypingEventsFalse() {
+        StructuredMessage msg = new StructuredMessage();
+        msg.setEvents(Collections.singletonList(
+                new MessageEvent().eventType(EventTypeEnum.PRESENCE)
+        ));
+        assertFalse(WebMessagingClient.hasTypingEvents(msg));
+    }
+
+    @Test
+    public void testHasEventsEmptyList() {
+        StructuredMessage msg = new StructuredMessage();
+        msg.setEvents(new ArrayList<>());
+        assertFalse(WebMessagingClient.hasEvents(msg, EventTypeEnum.TYPING));
+        assertFalse(WebMessagingClient.hasEvents(msg, EventTypeEnum.PRESENCE));
+    }
+
+    @Test
+    public void testHasEventsMultipleEvents() {
+        StructuredMessage msg = new StructuredMessage();
+        msg.setEvents(Arrays.asList(
+                new MessageEvent().eventType(EventTypeEnum.TYPING),
+                new MessageEvent().eventType(EventTypeEnum.PRESENCE)
+        ));
+        assertTrue(WebMessagingClient.hasEvents(msg, EventTypeEnum.TYPING));
+        assertTrue(WebMessagingClient.hasEvents(msg, EventTypeEnum.PRESENCE));
+        assertFalse(WebMessagingClient.hasEvents(msg, EventTypeEnum.COBROWSE));
+    }
+
+    // -----------------------------------------------------------------------
+    // AllowedMedia / isMimeTypeAllowedInbound
+    // -----------------------------------------------------------------------
+
+    @Test
+    public void testAllowedMediaInbound() {
+        assertNull(client.getAllowedMediaInbound());
+
+        AllowedMedia media = new AllowedMedia();
+        client.setAllowedMediaInbound(media);
+        assertSame(media, client.getAllowedMediaInbound());
+    }
+
+    @Test
+    public void testIsMimeTypeAllowedInbound() {
+        FileUploadMode mode = new FileUploadMode();
+        mode.setFileTypes(Arrays.asList(
+                new FileType().type("image/png"),
+                new FileType().type("application/pdf")
+        ));
+        AllowedMedia media = new AllowedMedia().inbound(mode);
+        client.setAllowedMediaInbound(media);
+
+        assertTrue(client.isMimeTypeAllowedInbound("image/png"));
+        assertTrue(client.isMimeTypeAllowedInbound("application/pdf"));
+        assertFalse(client.isMimeTypeAllowedInbound("video/mp4"));
+    }
+
+    // -----------------------------------------------------------------------
+    // sendMessage (mocked WebSocket)
+    // -----------------------------------------------------------------------
+
+    @Test
+    public void testSendMessageSimple() throws Exception {
+        client.sendMessage("Hello world");
+
+        String payload = capturePayload();
+        assertTrue(payload.contains("\"text\":\"Hello world\""));
+        assertTrue(payload.contains("\"action\":\"onMessage\""));
+        assertTrue(payload.contains("\"token\":\"test-token\""));
+        assertTrue(payload.contains("\"type\":\"Text\""));
+    }
+
+    @Test
+    public void testSendMessageWithAttachment() throws Exception {
+        client.sendMessage("See attached", "attachment-id-1");
+
+        String payload = capturePayload();
+        assertTrue(payload.contains("\"text\":\"See attached\""));
+        assertTrue(payload.contains("\"id\":\"attachment-id-1\""));
+        assertTrue(payload.contains("\"contentType\":\"Attachment\""));
+    }
+
+    @Test
+    public void testSendMessagePayloadIsValidJson() throws Exception {
+        client.sendMessage("Test message");
+
+        String payload = capturePayload();
+        assertDoesNotThrow(() -> objectMapper.readTree(payload));
+    }
+
+    // -----------------------------------------------------------------------
+    // configureSession (mocked WebSocket)
+    // -----------------------------------------------------------------------
+
+    @Test
+    public void testConfigureSessionSendsPayload() throws Exception {
+        setField(client, "apiClient", mock(ApiClient.class));
+
+        boolean result = client.configureSession("deploy-123", "my-origin");
+
+        assertTrue(result);
+        String payload = capturePayload();
+        assertTrue(payload.contains("\"action\":\"configureSession\""));
+        assertTrue(payload.contains("\"deploymentId\":\"deploy-123\""));
+    }
+
+    @Test
+    public void testConfigureSessionWithToken() throws Exception {
+        setField(client, "apiClient", mock(ApiClient.class));
+
+        boolean result = client.configureSession("deploy-123", "token-abc",
+                "my-origin", "trace-1", java.util.Optional.empty());
+
+        assertTrue(result);
+        String payload = capturePayload();
+        assertTrue(payload.contains("\"token\":\"token-abc\""));
+        assertTrue(payload.contains("\"tracingId\":\"trace-1\""));
+    }
+
+    // -----------------------------------------------------------------------
+    // ping (mocked WebSocket)
+    // -----------------------------------------------------------------------
+
+    @Test
+    public void testPingSendsEchoRequest() throws Exception {
+        client.ping("trace-ping");
+
+        String payload = capturePayload();
+        assertTrue(payload.contains("\"action\":\"echo\""));
+        assertTrue(payload.contains("\"text\":\"ping\""));
+        assertTrue(payload.contains("\"tracingId\":\"trace-ping\""));
+        assertTrue(payload.contains("\"token\":\"test-token\""));
+    }
+
+    // -----------------------------------------------------------------------
+    // sendTypingEvent (mocked WebSocket)
+    // -----------------------------------------------------------------------
+
+    @Test
+    public void testSendTypingEvent() throws Exception {
+        client.sendTypingEvent("trace-typing");
+
+        String payload = capturePayload();
+        assertTrue(payload.contains("\"eventType\":\"Typing\""));
+        assertTrue(payload.contains("\"type\":\"On\""));
+        assertTrue(payload.contains("\"tracingId\":\"trace-typing\""));
+    }
+
+    // -----------------------------------------------------------------------
+    // sendPresenceEvent (mocked WebSocket)
+    // -----------------------------------------------------------------------
+
+    @Test
+    public void testSendPresenceEventJoin() throws Exception {
+        client.sendPresenceEvent(EventPresenceType.JOIN, "trace-presence");
+
+        String payload = capturePayload();
+        assertTrue(payload.contains("\"eventType\":\"Presence\""));
+        assertTrue(payload.contains("\"type\":\"Join\""));
+        assertTrue(payload.contains("\"tracingId\":\"trace-presence\""));
+    }
+
+    @Test
+    public void testSendPresenceEventClear() throws Exception {
+        client.sendPresenceEvent(EventPresenceType.CLEAR, "trace-clear");
+
+        String payload = capturePayload();
+        assertTrue(payload.contains("\"type\":\"Clear\""));
+    }
+
+    @Test
+    public void testSendPresenceEventJoinShortcut() throws Exception {
+        client.sendPresenceEventJoin();
+
+        String payload = capturePayload();
+        assertTrue(payload.contains("\"type\":\"Join\""));
+    }
+
+    @Test
+    public void testSendPresenceEventEndUserClearShortcut() throws Exception {
+        client.sendPresenceEventEndUserClear();
+
+        String payload = capturePayload();
+        assertTrue(payload.contains("\"type\":\"Clear\""));
+    }
+
+    // -----------------------------------------------------------------------
+    // attachment operations (mocked WebSocket)
+    // -----------------------------------------------------------------------
+
+    @Test
+    public void testAttachmentUpload() throws Exception {
+        client.attachment("photo.png", 2048, "image/png", "trace-attach");
+
+        String payload = capturePayload();
+        assertTrue(payload.contains("\"action\":\"onAttachment\""));
+        assertTrue(payload.contains("\"fileName\":\"photo.png\""));
+        assertTrue(payload.contains("\"fileSize\":2048"));
+        assertTrue(payload.contains("\"fileType\":\"image/png\""));
+        assertTrue(payload.contains("\"tracingId\":\"trace-attach\""));
+    }
+
+    @Test
+    public void testGetAttachment() throws Exception {
+        client.getAttachment("att-123", "trace-get");
+
+        String payload = capturePayload();
+        assertTrue(payload.contains("\"action\":\"getAttachment\""));
+        assertTrue(payload.contains("\"attachmentId\":\"att-123\""));
+        assertTrue(payload.contains("\"tracingId\":\"trace-get\""));
+    }
+
+    @Test
+    public void testDeleteAttachment() throws Exception {
+        client.deleteAttachment("att-456", "trace-del");
+
+        String payload = capturePayload();
+        assertTrue(payload.contains("\"action\":\"deleteAttachment\""));
+        assertTrue(payload.contains("\"attachmentId\":\"att-456\""));
+        assertTrue(payload.contains("\"tracingId\":\"trace-del\""));
+    }
+
+    // -----------------------------------------------------------------------
+    // getJwt (mocked WebSocket)
+    // -----------------------------------------------------------------------
+
+    @Test
+    public void testGetJwt() throws Exception {
+        client.getJwt("trace-jwt");
+
+        String payload = capturePayload();
+        assertTrue(payload.contains("\"action\":\"getJwt\""));
+        assertTrue(payload.contains("\"tracingId\":\"trace-jwt\""));
+    }
+
+    // -----------------------------------------------------------------------
+    // disconnect (mocked WebSocket)
+    // -----------------------------------------------------------------------
+
+    @Test
+    public void testDisconnect() {
+        client.disconnect();
+        verify(mockWebSocket).sendClose(eq(1000), eq("Guest client disconnect"));
+    }
+
+    // -----------------------------------------------------------------------
+    // Full usage scenario (mocked WebSocket)
+    // -----------------------------------------------------------------------
+
+    /**
+     * Simulates a typical client lifecycle:
+     * create client → set ApiClient → register listener → "connect" →
+     * configure session → send typing → send message → disconnect.
+     *
+     * The WebSocket is mocked so no real network call is made, but we
+     * verify every payload that would go over the wire, in order.
+     */
+    @Test
+    public void testTypicalUsageScenario() throws Exception {
+        // 1. Create client
+        WebMessagingClient scenarioClient = new WebMessagingClient(GenesysCloudRegionWebSocketHosts.us_east_1);
+
+        // 2. Build and set an ApiClient with retry configuration
+        ApiClient.RetryConfiguration retryConfiguration = new ApiClient.RetryConfiguration();
+        retryConfiguration.setMaxRetryTimeSec(30);
+        ApiClient apiClient = ApiClient.Builder.standard()
+                .withRetryConfiguration(retryConfiguration)
+                .withConnectionTimeout(10)
+                .build();
+        scenarioClient.setApiClient(apiClient);
+
+        // 3. Register a session listener to capture events
+        AtomicReference<SessionResponse> capturedSession = new AtomicReference<>();
+        AtomicReference<StructuredMessage> capturedMessage = new AtomicReference<>();
+        AtomicBoolean wsConnected = new AtomicBoolean(false);
+        AtomicBoolean wsDisconnected = new AtomicBoolean(false);
+
+        scenarioClient.addSessionListener(new WebMessagingClient.SessionListener() {
+            @Override
+            public void sessionResponse(SessionResponse response, String rawMessage) {
+                capturedSession.set(response);
+            }
+            @Override
+            public void structuredMessage(StructuredMessage message, String rawMessage) {
+                capturedMessage.set(message);
+            }
+            @Override public void presignedUrlResponse(PresignedUrlResponse r, String raw) {}
+            @Override public void uploadSuccessEvent(UploadSuccessEvent e, String raw) {}
+            @Override public void uploadFailureEvent(UploadFailureEvent e, String raw) {}
+            @Override public void connectionClosedEvent(ConnectionClosedEvent e, String raw) {}
+            @Override public void sessionExpiredEvent(SessionExpiredEvent e, String raw) {}
+            @Override public void sessionClearedEvent(SessionClearedEvent e, String raw) {}
+            @Override public void jwtResponse(JwtResponse r, String raw) {}
+            @Override public void getConfigurationResponse(GetConfigurationResponse r, String raw) {}
+            @Override public void unexpectedMessage(BaseMessage m, String raw) {}
+            @Override
+            public void webSocketConnected() {
+                wsConnected.set(true);
+            }
+            @Override
+            public void webSocketDisconnected(int statusCode, String reason) {
+                wsDisconnected.set(true);
+            }
+            @Override public void webSocketError(String reason) {}
+        });
+
+        // 4. Simulate the WebSocket being connected (normally done by connect())
+        WebSocket mockWs = mock(WebSocket.class);
+        when(mockWs.sendText(anyString(), anyBoolean()))
+                .thenReturn(CompletableFuture.completedFuture(mockWs));
+        when(mockWs.sendClose(anyInt(), anyString()))
+                .thenReturn(CompletableFuture.completedFuture(mockWs));
+        setField(scenarioClient, "webSocket", mockWs);
+
+        // 5. Configure session
+        String deploymentId = "my-deployment-id";
+        String origin = "example.com";
+        boolean configured = scenarioClient.configureSession(deploymentId, origin);
+        assertTrue(configured, "configureSession should succeed");
+
+        // Verify the configure payload
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(mockWs).sendText(captor.capture(), eq(true));
+        String configurePayload = captor.getValue();
+        assertTrue(configurePayload.contains("\"action\":\"configureSession\""));
+        assertTrue(configurePayload.contains("\"deploymentId\":\"my-deployment-id\""));
+
+        // 6. Send typing indicator
+        reset(mockWs);
+        when(mockWs.sendText(anyString(), anyBoolean()))
+                .thenReturn(CompletableFuture.completedFuture(mockWs));
+        setField(scenarioClient, "token", "session-token");
+
+        scenarioClient.sendTypingEvent();
+
+        captor = ArgumentCaptor.forClass(String.class);
+        verify(mockWs).sendText(captor.capture(), eq(true));
+        String typingPayload = captor.getValue();
+        assertTrue(typingPayload.contains("\"eventType\":\"Typing\""));
+        assertTrue(typingPayload.contains("\"type\":\"On\""));
+
+        // 7. Send a message
+        reset(mockWs);
+        when(mockWs.sendText(anyString(), anyBoolean()))
+                .thenReturn(CompletableFuture.completedFuture(mockWs));
+
+        scenarioClient.sendMessage("quick, to the batmobile !");
+
+        captor = ArgumentCaptor.forClass(String.class);
+        verify(mockWs).sendText(captor.capture(), eq(true));
+        String messagePayload = captor.getValue();
+        assertTrue(messagePayload.contains("\"text\":\"quick, to the batmobile !\""));
+        assertTrue(messagePayload.contains("\"action\":\"onMessage\""));
+        assertTrue(messagePayload.contains("\"type\":\"Text\""));
+
+        // 8. Disconnect
+        when(mockWs.sendClose(anyInt(), anyString()))
+                .thenReturn(CompletableFuture.completedFuture(mockWs));
+        scenarioClient.disconnect();
+        verify(mockWs).sendClose(eq(1000), eq("Guest client disconnect"));
+    }
+
+    // -----------------------------------------------------------------------
+    // Helper
+    // -----------------------------------------------------------------------
+
+    private WebMessagingClient.SessionListener createNoOpListener() {
+        return new WebMessagingClient.SessionListener() {
+            public void sessionResponse(SessionResponse r, String raw) {}
+            public void structuredMessage(StructuredMessage m, String raw) {}
+            public void presignedUrlResponse(PresignedUrlResponse r, String raw) {}
+            public void uploadSuccessEvent(UploadSuccessEvent e, String raw) {}
+            public void uploadFailureEvent(UploadFailureEvent e, String raw) {}
+            public void connectionClosedEvent(ConnectionClosedEvent e, String raw) {}
+            public void sessionExpiredEvent(SessionExpiredEvent e, String raw) {}
+            public void sessionClearedEvent(SessionClearedEvent e, String raw) {}
+            public void jwtResponse(JwtResponse r, String raw) {}
+            public void getConfigurationResponse(GetConfigurationResponse r, String raw) {}
+            public void unexpectedMessage(BaseMessage m, String raw) {}
+            public void webSocketConnected() {}
+            public void webSocketDisconnected(int code, String reason) {}
+            public void webSocketError(String reason) {}
+        };
+    }
+}

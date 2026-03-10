@@ -9,6 +9,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -35,6 +38,7 @@ import java.util.Map;
  */
 public class WebMessagingClient {
 
+    private static final Logger logger = LoggerFactory.getLogger(WebMessagingClient.class);
 		private static String DEFAULT_APP_NAME;
 
 
@@ -58,7 +62,7 @@ public class WebMessagingClient {
 				DEFAULT_APP_NAME = props.getProperty("props.name") + "-" + SDK_VERSION;
 			} catch (IOException | NullPointerException e) {
 			// Fallback version if properties file cannot be read
-			DEFAULT_APP_NAME = "WebMessagingSDK-1.0.0";
+			DEFAULT_APP_NAME = "WebMessagingSDK-Default-1.0.1";
 			}
 		}
 
@@ -334,10 +338,11 @@ public class WebMessagingClient {
      *
      * @param deploymentId The ID of the Web Messaging deployment
      * @param origin       Represents the origin of the request. You can restrict access in Messenger Deployments
-     */
-    public void configureSession(String deploymentId, String origin) {
-        configureSession(deploymentId, UUID.randomUUID().toString(), origin, UUID.randomUUID().toString(), Optional.empty());
-    }
+			* @return boolean false if JSON processing failed
+			*/
+			public boolean configureSession(String deploymentId, String origin) {
+				return configureSession(deploymentId, UUID.randomUUID().toString(), origin, UUID.randomUUID().toString(), Optional.empty());
+			}
 
     /**
     * Configures a session using the provided session token. This can be used to reconnect to active sessions.
@@ -345,11 +350,11 @@ public class WebMessagingClient {
     * @param deploymentId The ID of the Web Messaging deployment
     * @param token        The session token
     * @param origin       Represents the origin of the request. You can restrict access in Messenger Deployments
-    * @param startNew     true if you want to start a new session for your currently read-only session (after a Presence event of type {@link EventPresenceType#DISCONNECT})
-    *
-    */
-    public void configureSession(String deploymentId, String token, String origin, String tracingId, Optional<Boolean> startNew) {
-        try {
+		* @param startNew     true if you want to start a new session for your currently read-only session (after a Presence event of type {@link EventPresenceType#DISCONNECT})
+		* @return boolean false if JSON processing failed
+		*/
+		public boolean configureSession(String deploymentId, String token, String origin, String tracingId, Optional<Boolean> startNew) {
+				try {
             this.token = token;
             this.deploymentId = deploymentId;
             if (apiClient == null) {
@@ -366,9 +371,11 @@ public class WebMessagingClient {
             String payload = objectMapper.writeValueAsString(configureSessionRequest);
 
             webSocket.sendText(payload, true);
+					return true;
         } catch (JsonProcessingException e) {
-            // no-op
-        }
+					logger.error("Failed to serialize configureSession request for deployment {}: {}", deploymentId, e.getMessage(), e);
+					return false;
+				}
     }
 
     /**
@@ -377,9 +384,10 @@ public class WebMessagingClient {
      * @param deploymentId The ID of the Web Messaging deployment
      * @param origin       Represents the origin of the request. You can restrict access in Messenger Deployments
      * @param data         The session OAuthParams for configuring Authenticated Session
+			* @return boolean false if JSON processing failed
      */
-    public void configureAuthenticatedSession(String deploymentId, String origin, OAuthParams data) {
-        configureAuthenticatedSession(deploymentId, UUID.randomUUID().toString(), origin, data,
+    public boolean configureAuthenticatedSession(String deploymentId, String origin, OAuthParams data) {
+        return configureAuthenticatedSession(deploymentId, UUID.randomUUID().toString(), origin, data,
                 UUID.randomUUID().toString(), Optional.empty());
     }
 
@@ -390,8 +398,9 @@ public class WebMessagingClient {
      * @param token        The session token
      * @param origin       Represents the origin of the request. You can restrict access in Messenger Deployments
      * @param data         The session OAuthParams for configuring Authenticated Session
+		 * @return boolean false if JSON processing failed
      */
-    public void configureAuthenticatedSession(String deploymentId, String token, String origin, OAuthParams data,
+    public boolean configureAuthenticatedSession(String deploymentId, String token, String origin, OAuthParams data,
                                               String tracingId, Optional<Boolean> startNew) {
         try {
             this.token = token;
@@ -411,8 +420,10 @@ public class WebMessagingClient {
             String payload = objectMapper.writeValueAsString(configureAuthenticatedSessionRequest);
 
             webSocket.sendText(payload, true);
+						return true;
         } catch (JsonProcessingException e) {
-            // no-op
+					logger.error("Failed to serialize configureAuthenticatedSession request for deployment {}: {}", deploymentId, e.getMessage(), e);
+					return false;
         }
     }
 
@@ -438,8 +449,8 @@ public class WebMessagingClient {
 
             webSocket.sendText(payload, true);
         } catch (JsonProcessingException e) {
-            // no-op
-        }
+					logger.error("Failed to serialize getSupportedContentConfiguration request for deployment {}: {}", deploymentId, e.getMessage(), e);
+					}
     }
 
     /**
@@ -471,7 +482,7 @@ public class WebMessagingClient {
 
             webSocket.sendText(payload, true);
         } catch (JsonProcessingException e) {
-            // no-op
+					logger.error("Failed to serialize ping request: {}", e.getMessage(), e);
         }
     }
 
@@ -517,7 +528,7 @@ public class WebMessagingClient {
 
             webSocket.sendText(payload, true);
         } catch (JsonProcessingException e) {
-            // no-op
+					logger.error("Failed to serialize sendMessage request: {}", e.getMessage(), e);
         }
     }
 
@@ -554,7 +565,7 @@ public class WebMessagingClient {
             String payload = objectMapper.writeValueAsString(sendMessageRequest);
             webSocket.sendText(payload, true);
         } catch (JsonProcessingException e) {
-            // no-op
+					logger.error("Failed to serialize sendPresenceEvent request (type={}): {}", type, e.getMessage(), e);
         }
     }
 
@@ -612,8 +623,8 @@ public class WebMessagingClient {
             String payload = objectMapper.writeValueAsString(sendMessageRequest);
             webSocket.sendText(payload, true);
         } catch (JsonProcessingException e) {
-            // no-op
-        }
+					logger.error("Failed to serialize sendTypingEvent request: {}", e.getMessage(), e);
+				}
     }
 
     /**
@@ -639,8 +650,8 @@ public class WebMessagingClient {
             String payload = objectMapper.writeValueAsString(generateUploadUrlRequest);
             webSocket.sendText(payload, true);
         } catch (JsonProcessingException e) {
-            // no-op
-        }
+					logger.error("Failed to serialize attachment upload request for file {}: {}", fileName, e.getMessage(), e);
+				}
     }
 
     /**
@@ -664,8 +675,8 @@ public class WebMessagingClient {
             String payload = objectMapper.writeValueAsString(generateDownloadUrlRequest);
             webSocket.sendText(payload, true);
         } catch (JsonProcessingException e) {
-            // no-op
-        }
+					logger.error("Failed to serialize getAttachment request for attachment {}: {}", attachmentId, e.getMessage(), e);
+				}
     }
 
 		/**
@@ -689,8 +700,8 @@ public class WebMessagingClient {
             String payload = objectMapper.writeValueAsString(deleteAttachmentRequest);
             webSocket.sendText(payload, true);
         } catch (JsonProcessingException e) {
-            // no-op
-        }
+					logger.error("Failed to serialize deleteAttachment request for attachment {}: {}", attachmentId, e.getMessage(), e);
+				}
     }
 
 		public void getJwt() {
@@ -706,8 +717,8 @@ public class WebMessagingClient {
             String payload = objectMapper.writeValueAsString(getJwtRequest);
             webSocket.sendText(payload, true);
         } catch (JsonProcessingException e) {
-            // no-op
-        }
+					logger.error("Failed to serialize getJwt request: {}", e.getMessage(), e);
+				}
     }
 
     /**
