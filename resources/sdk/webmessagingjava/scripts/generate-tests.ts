@@ -1,6 +1,10 @@
 import fs from 'fs-extra';
 import path from 'path';
 
+function sanitize(value: unknown): string {
+	return String(value).replace(/[\r\n]/g, '');
+}
+
 /**
  * Generates all test files for the Web Messaging Java SDK.
  *
@@ -40,7 +44,7 @@ export class GenerateTests {
 			for (const [templateFile, outputFile] of Object.entries(staticTests)) {
 				const templatePath = path.join(templateDir, templateFile);
 				if (!fs.existsSync(templatePath)) {
-					console.warn(`Template not found, skipping: ${templatePath}`);
+					console.warn('Template not found, skipping: %s', sanitize(templatePath));
 					continue;
 				}
 				let content = fs.readFileSync(templatePath, 'utf-8');
@@ -48,7 +52,7 @@ export class GenerateTests {
 				content = content.replace(/\{\{modelPackage\}\}/g, this.modelPackage);
 				const outputPath = path.join(sdkTestDir, outputFile);
 				fs.writeFileSync(outputPath, content);
-				console.log(`Generated static test: ${outputPath}`);
+				console.log('Generated static test: %s', sanitize(outputPath));
 			}
 
 			// --- 2. Model tests ---
@@ -57,7 +61,7 @@ export class GenerateTests {
 			fs.ensureDirSync(modelTestDir);
 
 			if (!fs.existsSync(modelSrcDir)) {
-				console.warn(`Model source directory not found: ${modelSrcDir}`);
+				console.warn('Model source directory not found: %s', sanitize(modelSrcDir));
 			} else {
 				const modelFiles = fs.readdirSync(modelSrcDir)
 					.filter((f: string) => f.endsWith('.java') && !f.endsWith('Deserializer.java'));
@@ -82,13 +86,13 @@ export class GenerateTests {
 					else pojoCount++;
 				}
 
-				console.log(`Generated ${enumCount} enum tests and ${pojoCount} POJO tests in ${modelTestDir}`);
+				console.log('Generated %d enum tests and %d POJO tests in %s', enumCount, pojoCount, sanitize(modelTestDir));
 			}
 
 			console.log('Test generation complete.');
 		} catch (err) {
 			process.exitCode = 1;
-			console.log(err);
+			console.log('Test generation failed: %s', sanitize(err));
 		}
 	}
 
