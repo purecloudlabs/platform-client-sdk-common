@@ -30,10 +30,13 @@ func init() {
 
 func Cmd{{classVarName}}() *cobra.Command { {{#operation}}
 	{{#queryParams}}utils.AddFlag({{operationId}}Cmd.Flags(), "{{{dataType}}}", "{{paramName}}", "{{#defaultValue}}{{{.}}}{{/defaultValue}}{{^defaultValue}}{{/defaultValue}}", "{{{description}}}{{#required}} - REQUIRED{{/required}}{{#allowableValues}} Valid values: {{#values}}{{.}}{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}}")
-	{{#hasMore}}{{/hasMore}}{{/queryParams}}{{operationId}}Cmd.SetUsageTemplate(fmt.Sprintf("%s\nOperation:\n  %s %s\n%s\n%s", {{operationId}}Cmd.UsageTemplate(), "{{httpMethod}}", "{{path}}", utils.FormatPermissions([]string{ {{#permissions}}"{{.}}", {{/permissions}} }), utils.GenerateDevCentreLink("{{httpMethod}}", "{{#vendorExtensions}}{{x-purecloud-category}}{{/vendorExtensions}}", "{{path}}")))
+	{{#hasMore}}{{/hasMore}}{{/queryParams}}{{#headerParams}}utils.AddFlag({{operationId}}Cmd.Flags(), "{{{dataType}}}", "{{paramName}}", "{{#defaultValue}}{{{.}}}{{/defaultValue}}{{^defaultValue}}{{/defaultValue}}", "{{{description}}}{{#required}} - REQUIRED{{/required}}{{#allowableValues}} Valid values: {{#values}}{{.}}{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}}")
+	{{#hasMore}}{{/hasMore}}{{/headerParams}}{{operationId}}Cmd.SetUsageTemplate(fmt.Sprintf("%s\nOperation:\n  %s %s\n%s\n%s", {{operationId}}Cmd.UsageTemplate(), "{{httpMethod}}", "{{path}}", utils.FormatPermissions([]string{ {{#permissions}}"{{.}}", {{/permissions}} }), utils.GenerateDevCentreLink("{{httpMethod}}", "{{#vendorExtensions}}{{x-purecloud-category}}{{/vendorExtensions}}", "{{path}}")))
 	utils.AddFileFlagIfUpsert({{operationId}}Cmd.Flags(), "{{httpMethod}}", `{{#bodyParam}}{{{jsonSchema}}}{{/bodyParam}}`)
 	{{#queryParams}}{{#required}}{{operationId}}Cmd.MarkFlagRequired("{{paramName}}")
 	{{/required}}{{/queryParams}}
+	{{#headerParams}}{{#required}}{{operationId}}Cmd.MarkFlagRequired("{{paramName}}")
+	{{/required}}{{/headerParams}}
 	{{#responses}}{{#-first}}utils.AddPaginateFlagsIfListingResponse({{operationId}}Cmd.Flags(), "{{httpMethod}}", `{{{jsonSchema}}}`){{/-first}}{{/responses}}
 	{{classVarName}}Cmd.AddCommand({{operationId}}Cmd)
 	{{/operation}}
@@ -87,9 +90,34 @@ var {{operationId}}Cmd = &cobra.Command{
 			urlString = strings.Replace(urlString, "varType", "type", -1)
 		}
 
+		headerParams := make(map[string]string)
+		// to determine the Content-Type header
+		localVarHttpContentTypes := []string{ {{^consumes}}"application/json", {{/consumes}}{{#consumes}}"{{mediaType}}", {{/consumes}} }
+		// set Content-Type header
+		localVarHttpContentType := utils.SelectHeaderContentType(localVarHttpContentTypes)
+		if localVarHttpContentType != "" {
+			headerParams["Content-Type"] = localVarHttpContentType
+		}
+		// to determine the Accept header
+		localVarHttpHeaderAccepts := []string{
+			{{#produces}}"{{mediaType}}",
+	{{/produces}}	}
+		// set Accept header
+		localVarHttpHeaderAccept := utils.SelectHeaderAccept(localVarHttpHeaderAccepts)
+		if localVarHttpHeaderAccept != "" {
+			headerParams["Accept"] = localVarHttpHeaderAccept
+		}{{#hasHeaderParams}}
+
+{{#headerParams}}		// header params "{{baseName}}"
+		{{paramName}} := utils.GetFlag(cmd.Flags(), "{{{dataType}}}", "{{paramName}}")
+		if {{paramName}} != "" {
+			headerParams["{{baseName}}"] = {{paramName}}
+		}
+{{/headerParams}}{{/hasHeaderParams}}
+
 		const opId = "{{operationId}}"
 		const httpMethod = "{{httpMethod}}"
-		retryFunc := CommandService.DetermineAction(httpMethod, urlString, cmd, opId)
+		retryFunc := CommandService.DetermineAction(httpMethod, urlString, headerParams, cmd, opId)
 		// TODO read from config file
 		retryConfig := &retry.RetryConfiguration{
 			RetryWaitMin: 5 * time.Second,
