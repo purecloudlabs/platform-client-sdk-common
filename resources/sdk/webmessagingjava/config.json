@@ -14,7 +14,7 @@
 		"swagger": {
 			"internalSwaggerPath": "https://api.inindca.com/api/v2/docs/swaggerall",
 			"oldSwaggerPath": "${SDK_REPO}/swagger.json",
-			"newSwaggerPath": "/Users/larustue/depots/shyrka/swagger/swagger.json",
+			"newSwaggerPath": "https://s3.amazonaws.com/inin-prod-use1-purecloud-shared/webmessaging/swagger/swagger-latest.json",
 			"saveNewSwaggerPath": "${SDK_REPO}/swagger.json"
 		},
 		"swaggerCodegen": {
@@ -29,7 +29,7 @@
 		"releaseNoteSummaryTemplatePath": "${COMMON_ROOT}/resources/templates/githubSdkReleaseNoteSummary.md",
 		"debugConfig": false,
 		"enableLoggerColor": false,
-		"mavenSettingsFilePath": "/Users/larustue/.m2/settings.xml",
+		"mavenSettingsFilePath": "/var/build/settings.xml",
 		"mavenTarget": "deploy",
 		"apiHealthCheckUrl": "https://api.mypurecloud.com/api/v2/health/check"
 	},
