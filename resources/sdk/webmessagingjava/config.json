@@ -22,6 +22,7 @@
 			"codegenLanguage": "webmessagingjava",
 			"jarPath": "${WORKSPACE}/openapi-generator/modules/openapi-generator-cli/target/openapi-generator-cli.jar",
 			"configFile": "${SDK_TEMP}/config.json",
+			"generateModelTests": true,
 			"extraGeneratorOptions": []
 		},
 		"releaseNoteTemplatePath": "${COMMON_ROOT}/resources/templates/githubSdkReleaseNotes.md",
@@ -69,6 +70,15 @@
 		"build": {
 			"preRunScripts": [],
 			"compileScripts": [
+				{
+					"type": "tsx",
+					"path": "generate-tests.ts",
+					"args": [
+						"${SDK_REPO}/build/src",
+						"${COMMON_ROOT}/resources/sdk/webmessagingjava/templates"
+					],
+					"failOnError": true
+				},
 				{
 					"type": "shell",
 					"path": "compile.sh",

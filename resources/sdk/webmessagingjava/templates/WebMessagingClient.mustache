@@ -9,6 +9,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -35,6 +38,7 @@ import java.util.Map;
  */
 public class WebMessagingClient {
 
+    private static final Logger logger = LoggerFactory.getLogger(WebMessagingClient.class);
 		private static String DEFAULT_APP_NAME;
 
 
@@ -58,7 +62,7 @@ public class WebMessagingClient {
 				DEFAULT_APP_NAME = props.getProperty("props.name") + "-" + SDK_VERSION;
 			} catch (IOException | NullPointerException e) {
 			// Fallback version if properties file cannot be read
-			DEFAULT_APP_NAME = "WebMessagingSDK-1.0.0";
+			DEFAULT_APP_NAME = "WebMessagingSDK-Default-1.0.1";
 			}
 		}
 
@@ -334,10 +338,11 @@ public class WebMessagingClient {
      *
      * @param deploymentId The ID of the Web Messaging deployment
      * @param origin       Represents the origin of the request. You can restrict access in Messenger Deployments
-     */
-    public void configureSession(String deploymentId, String origin) {
-        configureSession(deploymentId, UUID.randomUUID().toString(), origin, UUID.randomUUID().toString(), Optional.empty());
-    }
+			* @return CompletableFuture&lt;WebSocket&gt; that completes when the message is sent, or fails if JSON processing failed
+			*/
+			public CompletableFuture<WebSocket> configureSession(String deploymentId, String origin) {
+				return configureSession(deploymentId, UUID.randomUUID().toString(), origin, UUID.randomUUID().toString(), Optional.empty());
+			}
 
     /**
     * Configures a session using the provided session token. This can be used to reconnect to active sessions.
@@ -345,11 +350,11 @@ public class WebMessagingClient {
     * @param deploymentId The ID of the Web Messaging deployment
     * @param token        The session token
     * @param origin       Represents the origin of the request. You can restrict access in Messenger Deployments
-    * @param startNew     true if you want to start a new session for your currently read-only session (after a Presence event of type {@link EventPresenceType#DISCONNECT})
-    *
-    */
-    public void configureSession(String deploymentId, String token, String origin, String tracingId, Optional<Boolean> startNew) {
-        try {
+		* @param startNew     true if you want to start a new session for your currently read-only session (after a Presence event of type {@link EventPresenceType#DISCONNECT})
+		* @return CompletableFuture&lt;WebSocket&gt; that completes when the message is sent, or fails if JSON processing failed
+		*/
+		public CompletableFuture<WebSocket> configureSession(String deploymentId, String token, String origin, String tracingId, Optional<Boolean> startNew) {
+				try {
             this.token = token;
             this.deploymentId = deploymentId;
             if (apiClient == null) {
@@ -365,10 +370,11 @@ public class WebMessagingClient {
             startNew.ifPresent(boolValue -> configureSessionRequest.setStartNew(boolValue));
             String payload = objectMapper.writeValueAsString(configureSessionRequest);
 
-            webSocket.sendText(payload, true);
+            return webSocket.sendText(payload, true);
         } catch (JsonProcessingException e) {
-            // no-op
-        }
+					logger.error("Failed to serialize configureSession request for deployment {}: {}", deploymentId, e.getMessage(), e);
+					return CompletableFuture.failedFuture(e);
+				}
     }
 
     /**
@@ -377,9 +383,10 @@ public class WebMessagingClient {
      * @param deploymentId The ID of the Web Messaging deployment
      * @param origin       Represents the origin of the request. You can restrict access in Messenger Deployments
      * @param data         The session OAuthParams for configuring Authenticated Session
+			* @return CompletableFuture&lt;WebSocket&gt; that completes when the message is sent, or fails if JSON processing failed
      */
-    public void configureAuthenticatedSession(String deploymentId, String origin, OAuthParams data) {
-        configureAuthenticatedSession(deploymentId, UUID.randomUUID().toString(), origin, data,
+    public CompletableFuture<WebSocket> configureAuthenticatedSession(String deploymentId, String origin, OAuthParams data) {
+        return configureAuthenticatedSession(deploymentId, UUID.randomUUID().toString(), origin, data,
                 UUID.randomUUID().toString(), Optional.empty());
     }
 
@@ -390,8 +397,9 @@ public class WebMessagingClient {
      * @param token        The session token
      * @param origin       Represents the origin of the request. You can restrict access in Messenger Deployments
      * @param data         The session OAuthParams for configuring Authenticated Session
+		 * @return CompletableFuture&lt;WebSocket&gt; that completes when the message is sent, or fails if JSON processing failed
      */
-    public void configureAuthenticatedSession(String deploymentId, String token, String origin, OAuthParams data,
+    public CompletableFuture<WebSocket> configureAuthenticatedSession(String deploymentId, String token, String origin, OAuthParams data,
                                               String tracingId, Optional<Boolean> startNew) {
         try {
             this.token = token;
@@ -410,17 +418,18 @@ public class WebMessagingClient {
             configureAuthenticatedSessionRequest.setData(data);
             String payload = objectMapper.writeValueAsString(configureAuthenticatedSessionRequest);
 
-            webSocket.sendText(payload, true);
+            return webSocket.sendText(payload, true);
         } catch (JsonProcessingException e) {
-            // no-op
+					logger.error("Failed to serialize configureAuthenticatedSession request for deployment {}: {}", deploymentId, e.getMessage(), e);
+					return CompletableFuture.failedFuture(e);
         }
     }
 
-    public void getSupportedContentConfiguration(String deploymentId, String token, String origin) {
-        getSupportedContentConfiguration(deploymentId, token, origin, UUID.randomUUID().toString());
+    public CompletableFuture<WebSocket> getSupportedContentConfiguration(String deploymentId, String token, String origin) {
+        return getSupportedContentConfiguration(deploymentId, token, origin, UUID.randomUUID().toString());
     }
 
-    public void getSupportedContentConfiguration(String deploymentId, String token, String origin, String tracingId) {
+    public CompletableFuture<WebSocket> getSupportedContentConfiguration(String deploymentId, String token, String origin, String tracingId) {
         try {
             this.token = token;
             this.deploymentId = deploymentId;
@@ -436,10 +445,11 @@ public class WebMessagingClient {
 						getConfigurationRequest.setTracingId(tracingId);
             String payload = objectMapper.writeValueAsString(getConfigurationRequest);
 
-            webSocket.sendText(payload, true);
+            return webSocket.sendText(payload, true);
         } catch (JsonProcessingException e) {
-            // no-op
-        }
+					logger.error("Failed to serialize getSupportedContentConfiguration request for deployment {}: {}", deploymentId, e.getMessage(), e);
+					return CompletableFuture.failedFuture(e);
+					}
     }
 
     /**
@@ -449,14 +459,14 @@ public class WebMessagingClient {
         webSocket.sendClose(1000, "Guest client disconnect");
     }
 
-		public void ping() {
-        ping(UUID.randomUUID().toString());
+		public CompletableFuture<WebSocket> ping() {
+        return ping(UUID.randomUUID().toString());
     }
 
     /**
      * Sends a message that will cause a response to ensure the connection is active
      */
-    public void ping(String tracingId) {
+    public CompletableFuture<WebSocket> ping(String tracingId) {
         try {
             // Create echo notification
             SendEchoRequest sendEchoRequest = new SendEchoRequest();
@@ -469,9 +479,10 @@ public class WebMessagingClient {
             sendEchoRequest.setMessage(incomingNormalizedMessage);
             String payload = objectMapper.writeValueAsString(sendEchoRequest);
 
-            webSocket.sendText(payload, true);
+            return webSocket.sendText(payload, true);
         } catch (JsonProcessingException e) {
-            // no-op
+					logger.error("Failed to serialize ping request: {}", e.getMessage(), e);
+					return CompletableFuture.failedFuture(e);
         }
     }
 
@@ -481,8 +492,8 @@ public class WebMessagingClient {
      * @param message       The text to send
      * @param attachmentIds The Id of the attachments being sent with the message
      */
-    public void sendMessage(String message, String... attachmentIds) {
-        sendMessage(message, null, UUID.randomUUID().toString(), attachmentIds);
+    public CompletableFuture<WebSocket> sendMessage(String message, String... attachmentIds) {
+        return sendMessage(message, null, UUID.randomUUID().toString(), attachmentIds);
     }
 
     /**
@@ -492,7 +503,7 @@ public class WebMessagingClient {
      * @param customAttributes Key Value Pair that allows custom data to be sent with a message
      * @param attachmentIds    The Id of the attachments being sent with the message
      */
-    public void sendMessage(String message, Map<String, String> customAttributes, String tracingId, String... attachmentIds) {
+    public CompletableFuture<WebSocket> sendMessage(String message, Map<String, String> customAttributes, String tracingId, String... attachmentIds) {
         try {
             SendMessageRequest sendMessageRequest = new SendMessageRequest();
             sendMessageRequest.token(this.token);
@@ -515,9 +526,10 @@ public class WebMessagingClient {
             }
             String payload = objectMapper.writeValueAsString(sendMessageRequest);
 
-            webSocket.sendText(payload, true);
+            return webSocket.sendText(payload, true);
         } catch (JsonProcessingException e) {
-            // no-op
+					logger.error("Failed to serialize sendMessage request: {}", e.getMessage(), e);
+					return CompletableFuture.failedFuture(e);
         }
     }
 
@@ -527,8 +539,8 @@ public class WebMessagingClient {
      * @see EventPresence
      * @see EventPresenceType
      */
-    public void sendPresenceEvent(EventPresenceType type ) {
-        sendPresenceEvent(type, UUID.randomUUID().toString());
+    public CompletableFuture<WebSocket> sendPresenceEvent(EventPresenceType type ) {
+        return sendPresenceEvent(type, UUID.randomUUID().toString());
     }
 
     /**
@@ -537,7 +549,7 @@ public class WebMessagingClient {
      * @see EventPresence
      * @see EventPresenceType
      */
-    public void sendPresenceEvent(EventPresenceType type, String tracingId) {
+    public CompletableFuture<WebSocket> sendPresenceEvent(EventPresenceType type, String tracingId) {
         try {
             SendMessageRequest sendMessageRequest = new SendMessageRequest();
             sendMessageRequest.token(this.token);
@@ -552,9 +564,10 @@ public class WebMessagingClient {
             )
 					  .tracingId(tracingId);
             String payload = objectMapper.writeValueAsString(sendMessageRequest);
-            webSocket.sendText(payload, true);
+            return webSocket.sendText(payload, true);
         } catch (JsonProcessingException e) {
-            // no-op
+					logger.error("Failed to serialize sendPresenceEvent request (type={}): {}", type, e.getMessage(), e);
+					return CompletableFuture.failedFuture(e);
         }
     }
 
@@ -564,8 +577,8 @@ public class WebMessagingClient {
      * @see EventPresence
      * @see #sendPresenceEventJoin()
      */
-    public void sendPresenceEvent() {
-        sendPresenceEventJoin();
+    public CompletableFuture<WebSocket> sendPresenceEvent() {
+        return sendPresenceEventJoin();
     }
 
 
@@ -574,8 +587,8 @@ public class WebMessagingClient {
      *
      * @see EventPresence
      */
-    public void sendPresenceEventJoin() {
-        sendPresenceEvent(EventPresenceType.JOIN);
+    public CompletableFuture<WebSocket> sendPresenceEventJoin() {
+        return sendPresenceEvent(EventPresenceType.JOIN);
     }
 
     /**
@@ -583,12 +596,12 @@ public class WebMessagingClient {
      *
      * @see EventPresence
      */
-    public void sendPresenceEventEndUserClear() {
-        sendPresenceEvent(EventPresenceType.CLEAR);
+    public CompletableFuture<WebSocket> sendPresenceEventEndUserClear() {
+        return sendPresenceEvent(EventPresenceType.CLEAR);
     }
 
-    public void sendTypingEvent() {
-        sendTypingEvent(UUID.randomUUID().toString());
+    public CompletableFuture<WebSocket> sendTypingEvent() {
+        return sendTypingEvent(UUID.randomUUID().toString());
     }
 
     /**
@@ -596,7 +609,7 @@ public class WebMessagingClient {
      *
      * @see EventTyping
      */
-    public void sendTypingEvent(String tracingId) {
+    public CompletableFuture<WebSocket> sendTypingEvent(String tracingId) {
         try {
             SendMessageRequest sendMessageRequest = new SendMessageRequest();
             sendMessageRequest.token(this.token);
@@ -610,23 +623,24 @@ public class WebMessagingClient {
                     ))
             );
             String payload = objectMapper.writeValueAsString(sendMessageRequest);
-            webSocket.sendText(payload, true);
+            return webSocket.sendText(payload, true);
         } catch (JsonProcessingException e) {
-            // no-op
-        }
+					logger.error("Failed to serialize sendTypingEvent request: {}", e.getMessage(), e);
+					return CompletableFuture.failedFuture(e);
+				}
     }
 
     /**
      * send a request to generate an upload url for an attachment
      */
-    public void attachment(String fileName, int fileSize, String fileType) {
-        attachment(fileName, fileSize, fileType, UUID.randomUUID().toString());
+    public CompletableFuture<WebSocket> attachment(String fileName, int fileSize, String fileType) {
+        return attachment(fileName, fileSize, fileType, UUID.randomUUID().toString());
     }
 
     /**
      * send a request to generate an upload url for an attachment and trace the request using the provided tracingId
      */
-    public void attachment(String fileName, int fileSize, String fileType, String tracingId) {
+    public CompletableFuture<WebSocket> attachment(String fileName, int fileSize, String fileType, String tracingId) {
         try {
             GenerateUploadUrlRequest generateUploadUrlRequest = new GenerateUploadUrlRequest()
                     .token(this.token)
@@ -637,23 +651,24 @@ public class WebMessagingClient {
 										.tracingId(tracingId);
 
             String payload = objectMapper.writeValueAsString(generateUploadUrlRequest);
-            webSocket.sendText(payload, true);
+            return webSocket.sendText(payload, true);
         } catch (JsonProcessingException e) {
-            // no-op
-        }
+					logger.error("Failed to serialize attachment upload request for file {}: {}", fileName, e.getMessage(), e);
+					return CompletableFuture.failedFuture(e);
+				}
     }
 
     /**
      * send a request to generate a download url for an attachment
      */
-    public void getAttachment(String attachmentId) {
-        getAttachment(attachmentId, UUID.randomUUID().toString());
+    public CompletableFuture<WebSocket> getAttachment(String attachmentId) {
+        return getAttachment(attachmentId, UUID.randomUUID().toString());
     }
 
     /**
      * send a request to generate a download url for an attachment and trace the request using the provided tracingId
      */
-    public void getAttachment(String attachmentId, String tracingId) {
+    public CompletableFuture<WebSocket> getAttachment(String attachmentId, String tracingId) {
         try {
             GenerateDownloadUrlRequest generateDownloadUrlRequest = new GenerateDownloadUrlRequest()
               .token(this.token)
@@ -662,23 +677,24 @@ public class WebMessagingClient {
 							.tracingId(tracingId);
 
             String payload = objectMapper.writeValueAsString(generateDownloadUrlRequest);
-            webSocket.sendText(payload, true);
+            return webSocket.sendText(payload, true);
         } catch (JsonProcessingException e) {
-            // no-op
-        }
+					logger.error("Failed to serialize getAttachment request for attachment {}: {}", attachmentId, e.getMessage(), e);
+					return CompletableFuture.failedFuture(e);
+				}
     }
 
 		/**
      * delete an attachment. Must not have been sent and trace the request using the provided tracingId
      */
-    public void deleteAttachment(String attachmentId) {
-        deleteAttachment(attachmentId, UUID.randomUUID().toString());
+    public CompletableFuture<WebSocket> deleteAttachment(String attachmentId) {
+        return deleteAttachment(attachmentId, UUID.randomUUID().toString());
     }
 
 		/**
 		* delete an attachment. Must not have been sent
 		*/
-    public void deleteAttachment(String attachmentId, String tracingId) {
+    public CompletableFuture<WebSocket> deleteAttachment(String attachmentId, String tracingId) {
         try {
             DeleteAttachmentRequest deleteAttachmentRequest = new DeleteAttachmentRequest()
               .token(this.token)
@@ -687,16 +703,17 @@ public class WebMessagingClient {
 							.tracingId(tracingId);
 
             String payload = objectMapper.writeValueAsString(deleteAttachmentRequest);
-            webSocket.sendText(payload, true);
+            return webSocket.sendText(payload, true);
         } catch (JsonProcessingException e) {
-            // no-op
-        }
+					logger.error("Failed to serialize deleteAttachment request for attachment {}: {}", attachmentId, e.getMessage(), e);
+					return CompletableFuture.failedFuture(e);
+				}
     }
 
-		public void getJwt() {
-        getJwt(UUID.randomUUID().toString());
+		public CompletableFuture<WebSocket> getJwt() {
+        return getJwt(UUID.randomUUID().toString());
     }
-    public void getJwt(String tracingId) {
+    public CompletableFuture<WebSocket> getJwt(String tracingId) {
         try {
             GetJwtRequest getJwtRequest = new GetJwtRequest()
               .token(this.token)
@@ -704,10 +721,11 @@ public class WebMessagingClient {
 							.tracingId(tracingId);
 
             String payload = objectMapper.writeValueAsString(getJwtRequest);
-            webSocket.sendText(payload, true);
+            return webSocket.sendText(payload, true);
         } catch (JsonProcessingException e) {
-            // no-op
-        }
+					logger.error("Failed to serialize getJwt request: {}", e.getMessage(), e);
+					return CompletableFuture.failedFuture(e);
+				}
     }
 
     /**

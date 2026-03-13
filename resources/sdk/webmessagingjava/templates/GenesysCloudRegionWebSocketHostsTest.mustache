@@ -1,0 +1,80 @@
+package {{invokerPackage}};
+
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+public class GenesysCloudRegionWebSocketHostsTest {
+
+    @Test
+    public void testWebSocketHostsAreWss() {
+        for (GenesysCloudRegionWebSocketHosts region : GenesysCloudRegionWebSocketHosts.values()) {
+            assertTrue(region.getWebSocketHost().startsWith("wss://"),
+                    region.name() + " should start with wss://");
+        }
+    }
+
+    @Test
+    public void testWebSocketHostsEndWithV1() {
+        for (GenesysCloudRegionWebSocketHosts region : GenesysCloudRegionWebSocketHosts.values()) {
+            assertTrue(region.getWebSocketHost().endsWith("/v1"),
+                    region.name() + " should end with /v1");
+        }
+    }
+
+    @Test
+    public void testUsEast1() {
+        assertEquals("wss://webmessaging.mypurecloud.com/v1",
+                GenesysCloudRegionWebSocketHosts.us_east_1.getWebSocketHost());
+    }
+
+    @Test
+    public void testEuWest1() {
+        assertEquals("wss://webmessaging.mypurecloud.ie/v1",
+                GenesysCloudRegionWebSocketHosts.eu_west_1.getWebSocketHost());
+    }
+
+    @Test
+    public void testAsApiHostFromInstance() {
+        String apiHost = GenesysCloudRegionWebSocketHosts.us_east_1.asApiHost();
+        assertEquals("https://api.mypurecloud.com", apiHost);
+    }
+
+    @Test
+    public void testAsApiHostFromEnum() {
+        String apiHost = GenesysCloudRegionWebSocketHosts.asApiHost(
+                GenesysCloudRegionWebSocketHosts.eu_west_1);
+        assertEquals("https://api.mypurecloud.ie", apiHost);
+    }
+
+    @Test
+    public void testAsApiHostFromString() {
+        String apiHost = GenesysCloudRegionWebSocketHosts.asApiHost(
+                "wss://webmessaging.mypurecloud.de/v1");
+        assertEquals("https://api.mypurecloud.de", apiHost);
+    }
+
+    @Test
+    public void testAsApiHostRemovesWebmessagingPrefix() {
+        for (GenesysCloudRegionWebSocketHosts region : GenesysCloudRegionWebSocketHosts.values()) {
+            String apiHost = region.asApiHost();
+            assertTrue(apiHost.startsWith("https://api."),
+                    region.name() + " API host should start with https://api.");
+            assertFalse(apiHost.contains("/v1"),
+                    region.name() + " API host should not contain /v1");
+            assertFalse(apiHost.contains("wss://"),
+                    region.name() + " API host should not contain wss://");
+        }
+    }
+
+    @Test
+    public void testAllRegionsHaveUniqueHosts() {
+        GenesysCloudRegionWebSocketHosts[] regions = GenesysCloudRegionWebSocketHosts.values();
+        for (int i = 0; i < regions.length; i++) {
+            for (int j = i + 1; j < regions.length; j++) {
+                assertNotEquals(regions[i].getWebSocketHost(), regions[j].getWebSocketHost(),
+                        regions[i].name() + " and " + regions[j].name() + " should have different hosts");
+            }
+        }
+    }
+}

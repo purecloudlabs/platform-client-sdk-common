@@ -1,0 +1,34 @@
+package {{invokerPackage}};
+
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+public class ConfigurationTest {
+
+    @Test
+    public void testGetDefaultApiClientReturnsNonNull() {
+        ApiClient client = Configuration.getDefaultApiClient();
+        assertNotNull(client);
+    }
+
+    @Test
+    public void testGetDefaultApiClientReturnsSameInstance() {
+        ApiClient first = Configuration.getDefaultApiClient();
+        ApiClient second = Configuration.getDefaultApiClient();
+        assertSame(first, second);
+    }
+
+    @Test
+    public void testSetDefaultApiClient() {
+        ApiClient original = Configuration.getDefaultApiClient();
+        try {
+            ApiClient custom = new ApiClient();
+            Configuration.setDefaultApiClient(custom);
+            assertSame(custom, Configuration.getDefaultApiClient());
+        } finally {
+            // Restore original to avoid side effects on other tests
+            Configuration.setDefaultApiClient(original);
+        }
+    }
+}
