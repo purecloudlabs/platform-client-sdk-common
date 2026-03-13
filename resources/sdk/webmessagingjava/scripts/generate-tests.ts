@@ -1,8 +1,21 @@
 import fs from 'fs-extra';
 import path from 'path';
 
-function sanitize(value: unknown): string {
-	return String(value).replace(/[\r\n]/g, '');
+/** Strips CRLF and writes to stdout. */
+function logInfo(msg: string): void {
+	process.stdout.write(msg.replace(/[\r\n]/g, '') + '\n');
+}
+
+/** Strips CRLF and writes to stderr. */
+function logWarn(msg: string): void {
+	process.stderr.write(msg.replace(/[\r\n]/g, '') + '\n');
+}
+
+/** Validates that a class name contains only safe characters (alphanumeric + underscore). */
+function assertSafeClassName(name: string): void {
+	if (!/^\w+$/.test(name)) {
+		throw new Error('Invalid class name: contains unsafe characters');
+	}
 }
 
 /**
@@ -44,7 +57,7 @@ export class GenerateTests {
 			for (const [templateFile, outputFile] of Object.entries(staticTests)) {
 				const templatePath = path.join(templateDir, templateFile);
 				if (!fs.existsSync(templatePath)) {
-					console.warn('Template not found, skipping: %s', sanitize(templatePath));
+					logWarn('Template not found, skipping: ' + templatePath);
 					continue;
 				}
 				let content = fs.readFileSync(templatePath, 'utf-8');
@@ -52,7 +65,7 @@ export class GenerateTests {
 				content = content.replace(/\{\{modelPackage\}\}/g, this.modelPackage);
 				const outputPath = path.join(sdkTestDir, outputFile);
 				fs.writeFileSync(outputPath, content);
-				console.log('Generated static test: %s', sanitize(outputPath));
+				logInfo('Generated static test: ' + outputPath);
 			}
 
 			// --- 2. Model tests ---
@@ -61,7 +74,7 @@ export class GenerateTests {
 			fs.ensureDirSync(modelTestDir);
 
 			if (!fs.existsSync(modelSrcDir)) {
-				console.warn('Model source directory not found: %s', sanitize(modelSrcDir));
+				logWarn('Model source directory not found: ' + modelSrcDir);
 			} else {
 				const modelFiles = fs.readdirSync(modelSrcDir)
 					.filter((f: string) => f.endsWith('.java') && !f.endsWith('Deserializer.java'));
@@ -71,9 +84,10 @@ export class GenerateTests {
 
 				for (const modelFile of modelFiles) {
 					const className = modelFile.replace('.java', '');
+					assertSafeClassName(className);
 					const srcContent = fs.readFileSync(path.join(modelSrcDir, modelFile), 'utf-8');
 					// Match only top-level enum declarations (not inner enums inside classes)
-					const isEnum = new RegExp(`^public\\s+enum\\s+${className}\\b`, 'm').test(srcContent);
+					const isEnum = srcContent.split('\n').some((line) => /^public\s+enum\s+\w+\b/.test(line) && line.includes(className));
 
 					const testContent = isEnum
 						? this.generateEnumTest(className)
@@ -86,13 +100,13 @@ export class GenerateTests {
 					else pojoCount++;
 				}
 
-				console.log('Generated %d enum tests and %d POJO tests in %s', enumCount, pojoCount, sanitize(modelTestDir));
+				logInfo('Generated ' + enumCount + ' enum tests and ' + pojoCount + ' POJO tests in ' + modelTestDir);
 			}
 
 			console.log('Test generation complete.');
 		} catch (err) {
 			process.exitCode = 1;
-			console.log('Test generation failed: %s', sanitize(err));
+			logWarn('Test generation failed: ' + String(err));
 		}
 	}
 
@@ -165,15 +179,13 @@ public class ${className}Test {
 	 */
 	private generatePojoTest(className: string, srcContent: string): string {
 		// Extract fluent setter names: methods that return the class type and take one arg
-		// Pattern: public ClassName fieldName(Type arg) {
-		const setterRegex = new RegExp(
-			`public\\s+${className}\\s+(\\w+)\\s*\\([^)]+\\)\\s*\\{`,
-			'g'
-		);
+		// className is validated as alphanumeric by assertSafeClassName before reaching here
 		const setters: string[] = [];
-		let match;
-		while ((match = setterRegex.exec(srcContent)) !== null) {
-			setters.push(match[1]);
+		for (const line of srcContent.split('\n')) {
+			const match = /public\s+(\w+)\s+(\w+)\s*\([^)]+\)\s*\{/.exec(line);
+			if (match && match[1] === className) {
+				setters.push(match[2]);
+			}
 		}
 
 		let setterTests = '';
