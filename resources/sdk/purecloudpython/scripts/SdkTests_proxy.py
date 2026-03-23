@@ -79,7 +79,7 @@ class SdkTests_proxy(unittest.TestCase):
 		body = PureCloudPlatformClientV2.CreateUser()
 		body.name = SdkTests_proxy.userName
 		body.email = SdkTests_proxy.userEmail
-		body.password = '%s!@#$1234asdfASDF' % (uuid.uuid4())
+		body.password = '%s!@#$!@#$&?&?123412345656asdfasdfghghASDFASDFGHGH' % (uuid.uuid4())
 		print(f"Creating user with name: {body.name}, email: {body.email}")
 		  		
 		user = users_api.post_users(body)

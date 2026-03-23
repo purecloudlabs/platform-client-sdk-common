@@ -76,7 +76,7 @@ class SdkTests {
     fun createUser() {
         try {
             val newUser = CreateUser()
-            newUser.name(userName).email(userEmail!!).password(UUID.randomUUID().toString() + "!@#$1234asdfASDF")
+            newUser.name(userName).email(userEmail!!).password(UUID.randomUUID().toString() + "!@#$!@#$&?&?123412345656asdfasdfghghASDFASDFGHGH")
             val user = usersApi!!.postUsers(newUser)
             userId = user!!.id
             Assert.assertEquals(user.name, userName)
