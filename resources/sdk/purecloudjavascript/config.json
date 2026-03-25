@@ -29,7 +29,7 @@
     "enableLoggerColor": false,
     "packageName": "purecloud-platform-client-v2",
     "moduleName": "platformClient",
-    "enableCustomHeaders": false,
+    "enableCustomHeaders": true,
     "apiHealthCheckUrl": "https://api.mypurecloud.com/api/v2/health/check"
   },
     "stageSettings": {
