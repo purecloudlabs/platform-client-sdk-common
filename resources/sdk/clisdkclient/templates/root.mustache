@@ -17,7 +17,7 @@ import (
 	"fmt"
 	"strings"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"time"
 	"net/http"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/cmd/dummy_command"
@@ -90,7 +90,7 @@ func retrieveLatestVersion(url string) (error, string) {
 	if res.Body != nil {
 		defer res.Body.Close()
 	}
-	body, readErr := ioutil.ReadAll(res.Body)
+	body, readErr := io.ReadAll(res.Body)
 	if readErr != nil {
 		return readErr, ""
 	}
