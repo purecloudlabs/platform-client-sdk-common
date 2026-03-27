@@ -684,5 +684,15 @@
         "get": {
 			"name": "getfordoc"
 		}
+    },
+	"/api/v2/workforcemanagement/businessunits/{businessUnitId}/activityplans/{activityPlanId}/occurrences/deletions/jobs/{jobId}": {
+        "get": {
+			"name": "getforoccurrences"
+		}
+    },
+	"/api/v2/workforcemanagement/businessunits/{businessUnitId}/activityplans/{activityPlanId}/occurrences/deletions/jobs": {
+        "post": {
+			"name": "createforoccurrences"
+		}
     }
 }
