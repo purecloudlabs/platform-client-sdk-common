@@ -694,5 +694,10 @@
         "post": {
 			"name": "createforoccurrences"
 		}
+    },
+    "/api/v2/routing/skillexpressions": {
+        "delete": {
+            "name": "deleteall"
+        }
     }
 }
