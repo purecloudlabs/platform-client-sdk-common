@@ -191,6 +191,8 @@ namespace {{packageName}}.Tests
                         {
                             var presence = (NotificationData<PresenceEventUserPresence>)data;
 
+                            Console.WriteLine($"Presence Notification received with PresenceDefinition ID {presence.EventBody.PresenceDefinition.Id}");
+
                             // Check to see what we got
                             if (presence.EventBody.PresenceDefinition.Id == availablePresenceId) availableReceived = true;
                             if (presence.EventBody.PresenceDefinition.Id == busyPresenceId) busyReceived = true;
@@ -215,7 +217,18 @@ namespace {{packageName}}.Tests
             handler.AddSubscription($"v2.users.{userId}.presence", typeof(PresenceEventUserPresence));
 
             // Change presences
+            var tForDelay1 = Task.Run(async delegate {
+                await Task.Delay(1000);
+                return true;
+            });
+            tForDelay1.Wait();
             presenceApi.PatchUserPresence(userId, "PURECLOUD", new UserPresence() { PresenceDefinition = new PresenceDefinition(busyPresenceId) });
+
+            var tForDelay2 = Task.Run(async delegate {
+                await Task.Delay(2000);
+                return true;
+            });
+            tForDelay2.Wait();
             presenceApi.PatchUserPresence(userId, "PURECLOUD", new UserPresence() { PresenceDefinition = new PresenceDefinition(availablePresenceId) });
 
             // The getter for Result will block until the task has completed
