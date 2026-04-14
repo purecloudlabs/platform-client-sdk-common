@@ -699,5 +699,10 @@
         "delete": {
             "name": "deleteall"
         }
+    },
+    "/api/v2/knowledge/sources/files": {
+        "get": {
+            "name": "listallsources"
+        }
     }
 }
