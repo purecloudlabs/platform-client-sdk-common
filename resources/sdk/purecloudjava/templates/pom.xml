@@ -372,7 +372,7 @@
     <nv-websocket-client-version>2.14</nv-websocket-client-version>
     <guava-version>33.6.0-jre</guava-version>
     <mockito.version>5.23.0</mockito.version>
-    <commons-configuration-version>2.13.0</commons-configuration-version>
+    <commons-configuration-version>2.14.0</commons-configuration-version>
     <io-netty-version>4.2.12.Final</io-netty-version>
 
     <name>${props.name}</name>
