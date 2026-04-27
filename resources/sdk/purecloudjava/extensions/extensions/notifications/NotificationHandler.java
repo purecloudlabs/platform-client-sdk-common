@@ -28,6 +28,7 @@ public class NotificationHandler extends Object {
     private Map<String, NotificationListener<?>> typeMap = new HashMap<>();
     private WebSocketListener webSocketListener = null;
     private ObjectMapper objectMapper = null;
+
     private int socketTimeout = 0;
 
     public WebSocket getWebSocket() {
@@ -108,6 +109,7 @@ public class NotificationHandler extends Object {
         private NotificationsApi notificationsApi;
         private ObjectMapper objectMapper;
         private String proxyHost;
+        
         private int socketTimeout = 0;
 
         public static Builder standard() {
