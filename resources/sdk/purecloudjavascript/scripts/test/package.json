@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@peculiar/x509": "^1.12.3",
-    "axios": "^1.15.0",
+    "axios": "^1.15.2",
     "node-forge": "^1.4.0"
   }
 }
