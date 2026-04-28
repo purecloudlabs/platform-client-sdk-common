@@ -12,11 +12,13 @@ public enum GenesysCloudRegionWebSocketHosts {
     eu_west_2("wss://webmessaging.euw2.pure.cloud/v1"),
     ap_south_1("wss://webmessaging.aps1.pure.cloud/v1"),
     us_east_2("wss://webmessaging.use2.us-gov-pure.cloud/v1"),
+    sa_east_1("wss://webmessaging.sae1.pure.cloud/v1"),
     me_central_1("wss://webmessaging.mec1.pure.cloud/v1"),
     ap_northeast_3("wss://webmessaging.apne3.pure.cloud/v1"),
     eu_central_2("wss://webmessaging.euc2.pure.cloud/v1"),
     mx_central_1("wss://webmessaging.mxc1.pure.cloud/v1"),
-    ap_southeast_1("wss://webmessaging.apse1.pure.cloud/v1");
+    ap_southeast_1("wss://webmessaging.apse1.pure.cloud/v1"),
+    eusc_de_east_1("wss://webmessaging.edee1.eusc-pure.cloud/v1");
 
     private String webSocketHost;
     GenesysCloudRegionWebSocketHosts(String host) {
