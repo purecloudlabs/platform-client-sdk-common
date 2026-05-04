@@ -17,14 +17,15 @@ fi
 echo "Upgrading PIP"
 python3.10 -m pip install --upgrade --user pip
 
-echo "Installing Twine and Wheel"
-python3.10 -m pip install twine wheel setuptools --user --upgrade
+echo "Installing Twine"
+python3.10 -m pip install twine --user --upgrade
 
 echo "Creating the distribution package"
-python3.10 setup.py sdist
+python3.10 -m pip install build
+python3.10 -m build
 
 echo "Running twine check"
 python3.10 -m twine check dist/*
 
 echo "uploading to the pypi server"
-python3.10 -m twine upload --repository $INDEX_SERVER dist/*
+python3.10 -m twine upload --verbose --repository $INDEX_SERVER dist/*

@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "{{packageName}}"
+version = "{{packageVersion}}"
+authors = [
+    {name = "{{packageAuthor}}", email = "{{packageAuthorEmail}}"},
+]
+description = "{{packageTitle}}"
+readme = "README.md"
+requires-python = ">=3.10"
+keywords = ["Swagger {{packageKeywords}}"]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python"
+]
+license = {file = "License.txt"}
+dependencies = [
+    "certifi>=2026.4.22",
+    "urllib3>=2.6.3",
+    "python-dateutil>=2.9.0.post0",
+    "watchdog>=6.0.0"
+]
+
+[project.urls]
+Homepage = "{{packageUrl}}"
+
+[tool.setuptools]
+include-package-data = true
