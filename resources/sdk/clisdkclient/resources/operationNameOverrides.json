@@ -704,5 +704,10 @@
         "get": {
             "name": "listallsources"
         }
+    },
+    "/api/v2/conversations/{conversationId}/summaries/{summaryId}": {
+        "get": {
+            "name": "getforsummary"
+        }
     }
 }
