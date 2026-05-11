@@ -808,9 +808,9 @@ class ApiClient {
         return new Promise((resolve, reject) => {
             // Abort if org and provider are not set together
             if (opts.org && !opts.provider) {
-                reject(new Error('opts.provider must be set if opts.org is set'));
+                return reject(new Error('opts.provider must be set if opts.org is set'));
             } else if (opts.provider && !opts.org) {
-            	reject(new Error('opts.org must be set if opts.provider is set'));
+            	return reject(new Error('opts.org must be set if opts.provider is set'));
             }
 
             // Abort on auth error
