@@ -11,7 +11,7 @@ cp $SDK_REPO/LICENSE $BUILD_DIR/License.txt
 
 # Compile module
 cd $BUILD_DIR
-python3.10 -m pip install build
+python3.10 -m pip install build --user
 python3.10 -m build --sdist --wheel --outdir build
 
 # Run tests

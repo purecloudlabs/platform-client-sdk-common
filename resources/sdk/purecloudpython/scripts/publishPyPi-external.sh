@@ -19,7 +19,7 @@ echo "Installing Twine"
 python3.10 -m pip install twine --user --upgrade
 
 echo "Creating the distribution package"
-python3.10 -m pip install build
+python3.10 -m pip install build --user
 python3.10 -m build
 
 echo "Running twine check"
