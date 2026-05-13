@@ -709,5 +709,20 @@
         "get": {
             "name": "getforsummary"
         }
+    },
+    "/api/v2/conversations/{conversationId}/communications/{communicationId}/agentchecklists/{agentChecklistId}/jobs": {
+        "post": {
+            "name": "createforchecklist"
+        }
+    },
+    "/api/v2/conversations/{conversationId}/communications/{communicationId}/agentchecklists/{agentChecklistId}": {
+        "post": {
+            "name": "activatechecklist"
+        }
+    },
+    "/api/v2/organizations/pairings/{pairingId}": {
+        "post": {
+            "name": "completepairing"
+        }
     }
 }
