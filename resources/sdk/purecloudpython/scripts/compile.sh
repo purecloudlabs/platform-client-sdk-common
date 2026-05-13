@@ -13,7 +13,7 @@ cp $SDK_REPO/LICENSE $BUILD_DIR/License.txt
 cd $BUILD_DIR
 echo "Upgrading PIP"
 python3.10 -m pip install --upgrade --user pip
-ENV PIP_ROOT_USER_ACTION=ignore
+export PIP_ROOT_USER_ACTION=ignore
 echo "Installing Build"
 python3.10 -m pip install build --user
 echo "Building"

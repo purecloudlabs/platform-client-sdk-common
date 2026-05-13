@@ -14,6 +14,7 @@ fi
 
 echo "Upgrading PIP"
 python3.10 -m pip install --upgrade --user pip
+export PIP_ROOT_USER_ACTION=ignore
 
 echo "Installing Twine"
 python3.10 -m pip install twine --user --upgrade
