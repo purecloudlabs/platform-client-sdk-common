@@ -16,7 +16,6 @@
     "sdk_js": "tsx sdkBuilder.ts --sdk purecloudjavascript",
     "sdk_go": "tsx sdkBuilder.ts --sdk purecloudgo",
     "sdk_ios": "tsx sdkBuilder.ts --sdk purecloudios",
-    "sdk_js_chat": "tsx sdkBuilder.ts --sdk purecloudjavascript-guest",
     "sdk_java": "tsx sdkBuilder.ts --sdk purecloudjava",
     "sdk_dotnet": "tsx sdkBuilder.ts --sdk pureclouddotnet",
     "sdk_python": "tsx sdkBuilder.ts --sdk purecloudpython",
