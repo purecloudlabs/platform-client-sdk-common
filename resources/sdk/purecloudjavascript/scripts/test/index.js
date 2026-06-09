@@ -57,7 +57,7 @@ describe('JS SDK for Node', function () {
 			.postUsers({
 				name: USER_NAME,
 				email: USER_EMAIL,
-				password: guid() + '!@#$1234asdfASDF',
+				password: guid() + '!@#$!@#$&?&?123412345656asdfasdfghghASDFASDFGHGH',
 			})
 			.then((data) => {
 				USER_ID = data.body.id;

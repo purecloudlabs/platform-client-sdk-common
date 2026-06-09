@@ -3,12 +3,13 @@ package restclient
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/config"
 
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/mypurecloud/platform-client-sdk-cli/build/gc/mocks"
@@ -165,7 +166,11 @@ func TestLowLevelRestClient(t *testing.T) {
 		setRestClientDoMock(t, tc)
 
 		//First checking the low level API call
-		results, err := restClient.callAPI(tc.targetVerb, tc.targetPath, "")
+		headerParams := make(map[string]string)
+		headerParams["Content-Type"] = "application/json"
+		headerParams["Accept"] = "application/json"
+
+		results, err := restClient.callAPI(tc.targetVerb, tc.targetPath, headerParams, "")
 
 		//Testing to see if we got an http status code error.  If we got an http status code error we should get an HttpStatusError struct and the status code should match the status code on the response
 		//Later on checks like this will be important when we add
@@ -209,18 +214,22 @@ func assertResponses(t *testing.T, tests []apiClientTest, mockConfig *mocks.Mock
 		var results string
 		var err error
 
+		headerParams := make(map[string]string)
+		headerParams["Content-Type"] = "application/json"
+		headerParams["Accept"] = "application/json"
+
 		//Calling the higher levl API functions
 		switch tc.targetVerb {
 		case http.MethodGet:
-			results, err = restClient.Get(tc.targetPath)
+			results, err = restClient.Get(tc.targetPath, headerParams)
 		case http.MethodPost:
-			results, err = restClient.Post(tc.targetPath, tc.targetBody)
+			results, err = restClient.Post(tc.targetPath, headerParams, tc.targetBody)
 		case http.MethodPut:
-			results, err = restClient.Put(tc.targetPath, tc.targetBody)
+			results, err = restClient.Put(tc.targetPath, headerParams, tc.targetBody)
 		case http.MethodPatch:
-			results, err = restClient.Patch(tc.targetPath, tc.targetBody)
+			results, err = restClient.Patch(tc.targetPath, headerParams, tc.targetBody)
 		case http.MethodDelete:
-			results, err = restClient.Delete(tc.targetPath)
+			results, err = restClient.Delete(tc.targetPath, headerParams)
 		}
 
 		//Rechecking the error codes for the higher level RestClient functions
@@ -352,7 +361,7 @@ func setRestClientDoMockForAuthorize(t *testing.T, mockConfig mocks.MockClientCo
 		`, accessToken)
 
 		stringReader := strings.NewReader(responseString)
-		stringReadCloser := ioutil.NopCloser(stringReader)
+		stringReadCloser := io.NopCloser(stringReader)
 		response := &http.Response{
 			Status:     "200 OK",
 			StatusCode: 200,
@@ -384,7 +393,7 @@ func setRestClientDoMock(t *testing.T, tc apiClientTest) {
 
 		//Setting up the response body
 		stringReader := strings.NewReader(tc.expectedResponse)
-		stringReadCloser := ioutil.NopCloser(stringReader)
+		stringReadCloser := io.NopCloser(stringReader)
 		response := &http.Response{
 			StatusCode: tc.targetStatusCode,
 			Body:       stringReadCloser,

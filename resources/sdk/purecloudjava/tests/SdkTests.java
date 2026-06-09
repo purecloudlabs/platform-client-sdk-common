@@ -108,7 +108,7 @@ public class SdkTests {
     public void createUser() {
         try {
             CreateUser newUser = new CreateUser();
-            newUser.name(userName).email(userEmail).password(UUID.randomUUID() + "!@#$1234asdfASDF");
+            newUser.name(userName).email(userEmail).password(UUID.randomUUID() + "!@#$!@#$&?&?123412345656asdfasdfghghASDFASDFGHGH");
             User user = usersApi.postUsers(newUser);
             userId = user.getId();
             Assert.assertEquals(user.getName(), userName);
@@ -212,7 +212,7 @@ public class SdkTests {
     @Test(priority = 7)
     public void getUser() {
         try {
-            User user = usersApi.getUser(userId, Collections.singletonList("profileSkills"), null, null);
+            User user = usersApi.getUser(userId, Collections.singletonList("profileSkills"), null, null, null);
 
             Assert.assertEquals(user.getId(), userId);
             Assert.assertEquals(user.getName(), userName);
@@ -274,7 +274,7 @@ public class SdkTests {
             apiClient.addPreRequestHook(preHook);
             apiClient.addPostResponseHook(postHook);
 
-            User user = usersApi.getUser(userId, Collections.singletonList("profileSkills"), null, null);
+            User user = usersApi.getUser(userId, Collections.singletonList("profileSkills"), null, null, null);
 
             apiClient.removePreRequestHook(preHook);
             apiClient.removePostResponseHook(postHook);

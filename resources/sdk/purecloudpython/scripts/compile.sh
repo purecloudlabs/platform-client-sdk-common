@@ -9,12 +9,15 @@ echo "TESTS_DIR=$TESTS_DIR"
 # Copy license
 cp $SDK_REPO/LICENSE $BUILD_DIR/License.txt
 
-# Copy python config file
-cp $TESTS_DIR/setup.cfg $BUILD_DIR/setup.cfg
-
 # Compile module
 cd $BUILD_DIR
-python3.10 setup.py build
+echo "Upgrading PIP"
+python3.10 -m pip install --upgrade --user pip
+export PIP_ROOT_USER_ACTION=ignore
+echo "Installing Build"
+python3.10 -m pip install build --user
+echo "Building"
+python3.10 -m build --sdist --wheel --outdir build
 
 # Run tests
 echo "Running tests"

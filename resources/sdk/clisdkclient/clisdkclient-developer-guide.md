@@ -115,13 +115,13 @@ clisdkclient/
 | Requirement | Details |
 |-------------|---------|
 | OS | Linux / macOS / Windows WSL2 |
-| Language | **Go (>= 1.23.0)** |
+| Language | **Go (>= 1.24.1)** |
 | **Java** | **Required for OpenAPI Generator (JAR execution)** |
 | **Node.js** | **Required for post-process scripts (TypeScript-based)** |
 | **curl** | **Required for Swagger downloads** |
 
 ### Required Tools
-- **Go 1.23.0+** for building the generated CLI
+- **Go 1.24.1+** for building the generated CLI
 - **Java 8+** for OpenAPI Generator execution
 - **Node.js + npm** for pre/post-processing stages
 - **Make** (or compatible shell) for running automated tasks
@@ -130,7 +130,7 @@ clisdkclient/
 
 ### Setup Instructions
 ```sh
-# Install Go 1.23.0+ and Node.js (ensure both are in PATH)
+# Install Go 1.24.1+ and Node.js (ensure both are in PATH)
 # Install Java 8+ for OpenAPI Generator
 # Install curl for Swagger downloads
 
@@ -148,7 +148,7 @@ cd platform-client-sdk-common
 
 | Tool/Library | Purpose |
 |--------------|---------|
-| **Go 1.23.0** | Language for generated CLI SDK |
+| **Go 1.24.1** | Language for generated CLI SDK |
 | **Mustache** | Template engine for SDK code generation |
 | **Node.js / TypeScript** | Used for scripting pre-/post-processors |
 | **Swagger (OpenAPI)** | Source specification for all API command generation |

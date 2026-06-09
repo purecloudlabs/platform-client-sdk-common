@@ -17,6 +17,12 @@ public class {{classname}} {{#parent}}extends {{{parent}}}{{/parent}} {{#seriali
     }
   }
 
+  public {{classname}}(Boolean initWithEmptyList) {
+    if (initWithEmptyList == true) { {{#vars}}{{#isArray}}
+      {{name}} = {{{defaultValue}}};{{/isArray}}{{/vars}}
+    }
+  }
+
   {{#vars}}{{^isReadOnly}}
   /**{{#description}}
    * {{{description}}}{{/description}}{{#minimum}}

@@ -8,7 +8,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
+	"io/fs"
 	"math/big"
 	"net/http"
 	"os"
@@ -268,20 +269,28 @@ func ConvertFile(fileName string) string {
 	// defer the closing of our jsonFile so that we can parse it later on
 	defer jsonFile.Close()
 
-	fileContent, _ := ioutil.ReadAll(jsonFile)
+	fileContent, _ := io.ReadAll(jsonFile)
 	return convertToJSON(string(fileContent))
 }
 
 func readDirectory(dirName string) []string {
-	files, err := ioutil.ReadDir(dirName)
+	entries, err := os.ReadDir(dirName)
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("Error reading %s: ", dirName), err)
 	}
-	if len(files) == 0 {
+	if len(entries) == 0 {
 		logger.Fatal(fmt.Sprintf("Error reading %s: no files in directory\n", dirName))
 	}
 
 	var data []string
+	files := make([]fs.FileInfo, 0, len(entries))
+	for _, entry := range entries {
+		info, err := entry.Info()
+		if err != nil {
+			logger.Fatal(fmt.Sprintf("Error reading file"), err)
+		}
+		files = append(files, info)
+	}
 
 	for _, file := range files {
 		fileName := dirName + file.Name()
@@ -383,4 +392,35 @@ func convertToJSON(data string) string {
 func isJSON(str string) bool {
 	var js json.RawMessage
 	return json.Unmarshal([]byte(str), &js) == nil
+}
+
+// SelectHeaderContentType selects the header content type
+func SelectHeaderContentType(contentTypes []string) string {
+	if len(contentTypes) == 0 {
+		return ""
+	}
+	if contains(contentTypes, "application/json") {
+		return "application/json"
+	}
+	return contentTypes[0] // use the first content type specified in 'consumes'
+}
+
+// SelectHeaderAccept selects the header accept
+func SelectHeaderAccept(accepts []string) string {
+	if len(accepts) == 0 {
+		return ""
+	}
+	if contains(accepts, "application/json") {
+		return "application/json"
+	}
+	return strings.Join(accepts, ",")
+}
+
+func contains(source []string, containvalue string) bool {
+	for _, a := range source {
+		if strings.ToLower(a) == strings.ToLower(containvalue) {
+			return true
+		}
+	}
+	return false
 }

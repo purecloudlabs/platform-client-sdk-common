@@ -64,7 +64,7 @@ class SdkTests(unittest.TestCase):
 		body = PureCloudPlatformClientV2.CreateUser()
 		body.name = SdkTests.userName
 		body.email = SdkTests.userEmail
-		body.password = '%s!@#$1234asdfASDF' % (uuid.uuid4())
+		body.password = '%s!@#$!@#$&?&?123412345656asdfasdfghghASDFASDFGHGH' % (uuid.uuid4())
 
 		user = SdkTests.users_api.post_users(body)
 

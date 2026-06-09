@@ -4,7 +4,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"testing"
@@ -37,7 +37,7 @@ func TestExampleUsersApi_GetUsers_OnProxy(t *testing.T) {
 	usersAPI := NewUsersApiWithConfig(config)
 
 	// Invoke API
-	_, response, err := usersAPI.GetUsers(100, 1, make([]string, 0), make([]string, 0), "", make([]string, 0), "", "")
+	_, response, err := usersAPI.GetUsers(100, 1, make([]string, 0), make([]string, 0), "", make([]string, 0), "", make([]string, 0), "")
 	if err != nil {
 		fmt.Printf("Error calling GetUsers: %v\n", err)
 	} else {
@@ -73,7 +73,7 @@ func TestExampleUsersApi_GetUsers_WithDefaultProxyAgent(t *testing.T) {
 	usersAPI := NewUsersApiWithConfig(config)
 
 	// Invoke API
-	_, response, err := usersAPI.GetUsers(100, 1, make([]string, 0), make([]string, 0), "", make([]string, 0), "", "")
+	_, response, err := usersAPI.GetUsers(100, 1, make([]string, 0), make([]string, 0), "", make([]string, 0), "", make([]string, 0), "")
 	if err != nil {
 		fmt.Printf("Error calling GetUsers: %v\n", err)
 	} else {
@@ -107,7 +107,7 @@ func TestExampleUsersApi_GetUsers_CustomClient(t *testing.T) {
 	usersAPI := NewUsersApiWithConfig(config)
 
 	// Invoke API
-	_, response, err := usersAPI.GetUsers(100, 1, make([]string, 0), make([]string, 0), "", make([]string, 0), "", "")
+	_, response, err := usersAPI.GetUsers(100, 1, make([]string, 0), make([]string, 0), "", make([]string, 0), "", make([]string, 0), "")
 	if err != nil {
 		fmt.Printf("Error calling GetUsers: %v\n", err)
 	} else {
@@ -187,7 +187,7 @@ func getIssuerCertificate() (*x509.Certificate, error) {
 
 // loadCACertificate loads the CA certificate from file
 func loadCACertificate(caCertPath string) (*x509.Certificate, error) {
-	pemData, err := ioutil.ReadFile(caCertPath)
+	pemData, err := os.ReadFile(caCertPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read CA certificate: %v", err)
 	}
@@ -246,7 +246,7 @@ func checkCRL(cert *x509.Certificate) (bool, error) {
 		}
 		defer resp.Body.Close()
 
-		crlBytes, err := ioutil.ReadAll(resp.Body)
+		crlBytes, err := io.ReadAll(resp.Body)
 		if err != nil {
 			continue
 		}

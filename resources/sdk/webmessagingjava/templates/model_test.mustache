@@ -1,0 +1,138 @@
+package {{package}};
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+{{#models}}
+{{#model}}
+{{#isEnum}}
+/**
+ * Tests for {{classname}} enum.
+ */
+public class {{classname}}Test {
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Test
+    public void testFromStringNull() {
+        assertNull({{classname}}.fromString(null));
+    }
+
+    @Test
+    public void testFromStringUnknownReturnsFallback() {
+        {{classname}} result = {{classname}}.fromString("NonExistentValue_XYZ");
+        assertEquals({{classname}}.values()[0], result);
+    }
+
+    @Test
+    public void testAllValuesHaveNonNullToString() {
+        for ({{classname}} value : {{classname}}.values()) {
+            assertNotNull(value.toString(), "toString() should not be null for " + value.name());
+            assertFalse(value.toString().isEmpty(), "toString() should not be empty for " + value.name());
+        }
+    }
+
+    @Test
+    public void testFromStringCaseInsensitive() {
+        for ({{classname}} value : {{classname}}.values()) {
+            assertEquals(value, {{classname}}.fromString(value.toString().toLowerCase()),
+                    "fromString should be case-insensitive for " + value.name());
+        }
+    }
+
+    @Test
+    public void testJsonRoundTrip() throws Exception {
+        for ({{classname}} value : {{classname}}.values()) {
+            String json = objectMapper.writeValueAsString(value);
+            {{classname}} deserialized = objectMapper.readValue(json, {{classname}}.class);
+            assertEquals(value, deserialized, "Round-trip failed for " + value.name());
+        }
+    }
+
+    @Test
+    public void testJsonDeserializationUnknownValue() throws Exception {
+        {{classname}} result = objectMapper.readValue("\"SomethingUnknown_XYZ\"", {{classname}}.class);
+        assertEquals({{classname}}.values()[0], result);
+    }
+}
+{{/isEnum}}
+{{^isEnum}}
+/**
+ * Tests for {{classname}} model.
+ */
+public class {{classname}}Test {
+
+    private {{classname}} instance;
+    private ObjectMapper objectMapper;
+
+    @BeforeEach
+    public void setUp() {
+        instance = new {{classname}}();
+        objectMapper = new ObjectMapper();
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper.configure(com.fasterxml.jackson.databind.SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+    }
+
+    @Test
+    public void testConstruction() {
+        assertNotNull(instance);
+    }
+
+    @Test
+    public void testEqualsSameInstance() {
+        assertEquals(instance, instance);
+    }
+
+    @Test
+    public void testEqualsNull() {
+        assertNotEquals(instance, null);
+    }
+
+    @Test
+    public void testEqualsDifferentType() {
+        assertNotEquals(instance, "a string");
+    }
+
+    @Test
+    public void testEqualsEmptyInstances() {
+        {{classname}} a = new {{classname}}();
+        {{classname}} b = new {{classname}}();
+        assertEquals(a, b);
+    }
+
+    @Test
+    public void testHashCodeConsistentWithEquals() {
+        {{classname}} a = new {{classname}}();
+        {{classname}} b = new {{classname}}();
+        assertEquals(a.hashCode(), b.hashCode());
+    }
+
+    @Test
+    public void testToStringContainsClassName() {
+        String str = instance.toString();
+        assertTrue(str.contains("class {{classname}}"));
+    }
+
+    @Test
+    public void testJsonRoundTrip() throws Exception {
+        String json = objectMapper.writeValueAsString(instance);
+        {{classname}} deserialized = objectMapper.readValue(json, {{classname}}.class);
+        assertEquals(instance, deserialized);
+    }
+{{#vars}}{{^isReadOnly}}
+
+    @Test
+    public void testFluentSetter_{{name}}() {
+        {{classname}} result = instance.{{name}}({{{defaultValue}}});
+        assertSame(instance, result, "Fluent setter for {{name}} should return the same instance");
+    }
+{{/isReadOnly}}
+{{/vars}}
+}
+{{/isEnum}}
+{{/model}}
+{{/models}}
