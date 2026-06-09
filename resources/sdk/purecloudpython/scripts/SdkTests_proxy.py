@@ -113,8 +113,13 @@ class SdkTests_proxy(unittest.TestCase):
 			'euw2.pure.cloud': PureCloudPlatformClientV2.PureCloudRegionHosts.eu_west_2,
 			'aps1.pure.cloud': PureCloudPlatformClientV2.PureCloudRegionHosts.ap_south_1,
 			'use2.us-gov-pure.cloud': PureCloudPlatformClientV2.PureCloudRegionHosts.us_east_2,
+			'sae1.pure.cloud': PureCloudPlatformClientV2.PureCloudRegionHosts.sa_east_1,
+			'mec1.pure.cloud': PureCloudPlatformClientV2.PureCloudRegionHosts.me_central_1,
+			'apne3.pure.cloud': PureCloudPlatformClientV2.PureCloudRegionHosts.ap_northeast_3,
+			'euc2.pure.cloud': PureCloudPlatformClientV2.PureCloudRegionHosts.eu_central_2,
 			'mxc1.pure.cloud': PureCloudPlatformClientV2.PureCloudRegionHosts.mx_central_1,
-			'apse1.pure.cloud': PureCloudPlatformClientV2.PureCloudRegionHosts.ap_southeast_1
+			'apse1.pure.cloud': PureCloudPlatformClientV2.PureCloudRegionHosts.ap_southeast_1,
+			'edee1.eusc-pure.cloud': PureCloudPlatformClientV2.PureCloudRegionHosts.eusc_de_east_1
 		}.get(x,x)
 		print(f"=== EXITING purecloudregiontest() with result: {result} ===")
 		return result

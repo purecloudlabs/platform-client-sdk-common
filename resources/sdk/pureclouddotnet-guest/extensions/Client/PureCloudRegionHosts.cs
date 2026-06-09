@@ -45,6 +45,8 @@ namespace {{=it.packageName}}.Client
         mx_central_1,
         [Description("https://api.apse1.pure.cloud")]
         ap_southeast_1,
+        [Description("https://api.edee1.eusc-pure.cloud")]
+        eusc_de_east_1,
     }
 
     public static class EnumExtensionMethods

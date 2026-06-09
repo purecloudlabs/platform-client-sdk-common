@@ -219,10 +219,20 @@ function setEnvironment() {
 			return platformClient.PureCloudRegionHosts.ap_south_1;
 		case 'use2.us-gov-pure.cloud':
 			return platformClient.PureCloudRegionHosts.us_east_2;
+		case 'sae1.pure.cloud':
+			return platformClient.PureCloudRegionHosts.sa_east_1;
+		case 'mec1.pure.cloud':
+			return platformClient.PureCloudRegionHosts.me_central_1;
+		case 'apne3.pure.cloud':
+			return platformClient.PureCloudRegionHosts.ap_northeast_3;
+		case 'euc2.pure.cloud':
+			return platformClient.PureCloudRegionHosts.eu_central_2;
 		case 'mxc1.pure.cloud':
 			return platformClient.PureCloudRegionHosts.mx_central_1;
 		case 'apse1.pure.cloud':
 			return platformClient.PureCloudRegionHosts.ap_southeast_1;
+		case 'edee1.eusc-pure.cloud':
+			return platformClient.PureCloudRegionHosts.eusc_de_east_1;
 		default:
 			console.log('Value does not exist in PureCloudRegionHosts defaulting to PURECLOUD ENVIRONMENT value');
 			return PURECLOUD_ENVIRONMENT;

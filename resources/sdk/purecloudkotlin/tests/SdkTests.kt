@@ -211,6 +211,13 @@ class SdkTests {
             "euw2.pure.cloud" -> PureCloudRegionHosts.eu_west_2
             "aps1.pure.cloud" -> PureCloudRegionHosts.ap_south_1
             "use2.us-gov-pure.cloud" -> PureCloudRegionHosts.us_east_2
+            "sae1.pure.cloud" -> PureCloudRegionHosts.sa_east_1
+            "mec1.pure.cloud" -> PureCloudRegionHosts.me_central_1
+            "apne3.pure.cloud" -> PureCloudRegionHosts.ap_northeast_3
+            "euc2.pure.cloud" -> PureCloudRegionHosts.eu_central_2
+            "mxc1.pure.cloud" -> PureCloudRegionHosts.mx_central_1
+            "apse1.pure.cloud" -> PureCloudRegionHosts.ap_southeast_1
+            "edee1.eusc-pure.cloud" -> PureCloudRegionHosts.eusc_de_east_1
             else -> {
                 println("Not in PureCloudRegionHosts using string value")
                 null
