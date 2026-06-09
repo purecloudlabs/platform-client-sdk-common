@@ -13,11 +13,6 @@ updates:
       - dependency-name: "org.testng:testng"
 
   - package-ecosystem: "maven"
-    directory: "resources/sdk/purecloudjava-guest/templates/"
-    schedule:
-      interval: "daily"
-
-  - package-ecosystem: "maven"
     directory: "resources/sdk/webmessagingjava/templates/"
     schedule:
       interval: "daily"
