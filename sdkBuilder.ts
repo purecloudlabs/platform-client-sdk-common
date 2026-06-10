@@ -4,7 +4,7 @@ import { existsSync }  from 'fs';
 import { Builder } from './modules/builder/builder'
 import log from './modules/log/logger';
 
-const sdkLanguageRegex = /^(purecloudjava|purecloudjava-guest|purecloudjavascript|purecloudjavascript-guest|pureclouddotnet|pureclouddotnet-guest|purecloudpython|purecloudios|purecloudswift4|purecloudgo|purecloudkotlin|clisdkclient|webmessagingjava)$/i;
+const sdkLanguageRegex = /^(purecloudjava|purecloudjavascript|pureclouddotnet|purecloudpython|purecloudios|purecloudswift4|purecloudgo|purecloudkotlin|clisdkclient|webmessagingjava)$/i;
 
 export class SdkBuilder {
 	constructor() {
