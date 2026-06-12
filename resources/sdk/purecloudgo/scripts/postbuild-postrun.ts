@@ -1,18 +1,20 @@
 import fs from 'fs-extra';
 import path from 'path';
+import { log } from '../../../../modules/log/logger';
 
 export class PostBuildPostRun {
-
-	public init() {
+	public init(): void {
 		try {
+			log.debug('PostBuildPostRun initialization started');
+
 			const repoPath = process.argv[2];
 			const buildDir = path.join(repoPath, 'build');
 
-			console.log('repoPath', repoPath);
-			console.log('buildDir', buildDir);
+			log.debug(`repoPath: ${repoPath}`);
+			log.debug(`buildDir: ${buildDir}`);
 
 			const dir = fs.opendirSync(repoPath);
-			let dirent;
+			let dirent: fs.Dirent | null;
 			while ((dirent = dir.readSync()) !== null) {
 				if (dirent.isDirectory() && dirent.name !== 'build' && !dirent.name.startsWith("."))
 					fs.removeSync(path.join(repoPath, dirent.name))
@@ -21,15 +23,16 @@ export class PostBuildPostRun {
 
 			fs.copySync(buildDir, repoPath);
 			fs.removeSync(buildDir);
-		} catch (err) {
+			log.debug('PostBuildPostRun completed');
+		} catch (err: unknown) {
 			process.exitCode = 1;
-			console.log(err);
+			log.error(`PostBuildPostRun exception: ${err}`);
 		}
-
-	};
+	}
 }
 
 // Call the method directly
+log.debug('Starting PostBuildPostRun script execution');
 const postBuildPostRun = new PostBuildPostRun();
 postBuildPostRun.init();
-
+log.debug('PostBuildPostRun script execution completed');

@@ -3,7 +3,7 @@ import child_process from 'child_process';
 import { Swagger } from '../../../../modules/types/swagger';
 import { ResourceDefinitions } from './resourceDefinitions';
 import childProcess from 'child_process';
-import log from '../../../../modules/log/logger';
+import { log } from '../../../../modules/log/logger';
 const maxFileBufferSize = 1024 * 1024 * 1024;
 
 

@@ -1,11 +1,12 @@
 import fs from 'fs-extra';
 import path from 'path';
-import log from '../../../../modules/log/logger';
+import { log } from '../../../../modules/log/logger';
 
 export class PostBuildPostRun {
-	init() {
+	public init(): void {
 		try {
 			log.debug('PostBuildPostRun initialization started');
+
 			const repoPath = process.argv[2];
 			const buildDir = path.join(repoPath, 'build');
 
@@ -37,14 +38,14 @@ export class PostBuildPostRun {
 			log.debug('Build directory removed successfully');
 			
 			log.debug('PostBuildPostRun completed successfully');
-		} catch (err) {
+		} catch (err: unknown) {
 			log.error(`PostBuildPostRun failed: ${err instanceof Error ? err.message : err}`);
 			process.exitCode = 1;
-			console.log(err);
+			log.error(`PostBuildPostRun exception: ${err}`);
 		}
 	}
-	;
 }
+
 // Call the method directly
 log.debug('Starting PostBuildPostRun script execution');
 const postBuildPostRun = new PostBuildPostRun();

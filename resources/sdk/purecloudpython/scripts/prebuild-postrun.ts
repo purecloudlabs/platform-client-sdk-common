@@ -1,12 +1,16 @@
 import fs from 'fs-extra';
-export class PreBuildPostRun {
-	init() {
-		try {
-			var swaggerCodegenConfigFilePath = process.argv[2];
-			var version = fs.readJsonSync(process.argv[3]);
-			var packageName = process.argv[4];
+import { log } from '../../../../modules/log/logger';
 
-			var config = {
+export class PreBuildPostRun {
+	public init(): void {
+		try {
+			log.debug('PreBuildPostRun initialization started');
+			
+			let swaggerCodegenConfigFilePath = process.argv[2];
+			let version = fs.readJsonSync(process.argv[3]);
+			let packageName = process.argv[4];
+
+			let config = {
 				packageName: packageName || 'PureCloudPlatformApiSdk',
 				packageVersion: version.displayFull,
 				packageTitle: 'PureCloud Platform API SDK',
@@ -20,15 +24,16 @@ export class PreBuildPostRun {
 			};
 
 			fs.writeFileSync(swaggerCodegenConfigFilePath, JSON.stringify(config, null, 2));
-			console.log(`Config file written to ${swaggerCodegenConfigFilePath}`);
-		} catch (err) {
+			log.debug(`Config file written to ${swaggerCodegenConfigFilePath}`);
+		} catch (err: unknown) {
 			process.exitCode = 1;
-			console.log(err);
+			log.error(`PreBuildPostRun exception: ${err}`);
 		}
 	}
-	;
 }
+
 // Call the method directly
+log.debug('Starting PreBuildPostRun script execution');
 const preBuildPostRun = new PreBuildPostRun();
 preBuildPostRun.init();
-
+log.debug('PreBuildPostRun script execution completed');

@@ -1,113 +1,90 @@
 import _ from 'lodash';
 import fs from 'fs-extra';
 import { spawn, SpawnOptions } from 'child_process';
-import log from '../log/logger';
+import { log } from '../log/logger';
+import axios, { AxiosError, AxiosResponse } from 'axios';
+import { Endpoints } from "@octokit/types";
 
-
-export default class Git {
+export class BuilderGit {
 
 	public authToken: string = undefined;
 
-	private defaultWidth: number = 0;
-
-	clone(repo: string, branch: string, target: string): Promise<string> {
+	public async clone(repo: string, branch: string, target: string): Promise<string> {
 		log.info(`Starting git clone operation`);
 		log.debug(`Clone parameters - repo: ${repo ? '[REDACTED]' : 'undefined'}, branch: ${branch || 'default'}, target: ${target}`);
-		return new Promise<string>((resolve, reject) => {
-			try {
-				// Skip cloning if no repo was provided
-				if (!repo || repo === '') {
-					log.info('Repo was undefined. Skipping clone.');
-					log.debug(`Creating target directory: ${target}`);
-					// Ensure repo dir exists anyway; we still need to build the SDK
-					fs.ensureDirSync(target);
-					log.debug('Target directory created successfully');
-					resolve('');
-					return;
-				}
-
-				log.debug('Injecting auth token into repository URL');
-				repo = this.injectAuthToken(repo, this.authToken);
-				let args = [];
-				args.push('clone');
-				args.push('--quiet');
-				args.push('--progress');
-				if (branch) {
-					log.debug(`Using specific branch: ${branch}`);
-					args.push('--branch');
-					args.push(branch);
-				} else {
-					log.debug('Using default branch');
-				}
-				args.push('--depth');
-				args.push('1');
-				args.push(repo);
-				args.push(target);
-				log.debug(`Clone command prepared with ${args.length} arguments`);
-
-
-
-				log.info('Executing git clone command');
-				this.spawnProcess(args, undefined)
-					.then(() => {
-						log.info(`Git clone completed successfully to ${target}`);
-						resolve('Cloning successful.');
-					})
-					.catch((err) => {
-						log.error(`Git clone failed: ${err.message}`);
-						reject(err);
-					});
-			} catch (err) {
-				log.error(`Git clone operation failed with exception: ${err.message}`);
-				reject(err);
+		try {
+			// Skip cloning if no repo was provided
+			if (!repo || repo === '') {
+				log.info('Repo was undefined. Skipping clone.');
+				log.debug(`Creating target directory: ${target}`);
+				// Ensure repo dir exists anyway; we still need to build the SDK
+				fs.ensureDirSync(target);
+				log.debug('Target directory created successfully');
+				return '';
 			}
-		});
+
+			log.debug('Injecting auth token into repository URL');
+			repo = this.injectAuthToken(repo, this.authToken);
+			let args = [];
+			args.push('clone');
+			args.push('--quiet');
+			args.push('--progress');
+			if (branch) {
+				log.debug(`Using specific branch: ${branch}`);
+				args.push('--branch');
+				args.push(branch);
+			} else {
+				log.debug('Using default branch');
+			}
+			args.push('--depth');
+			args.push('1');
+			args.push(repo);
+			args.push(target);
+			log.debug(`Clone command prepared with ${args.length} arguments`);
+
+			log.info('Executing git clone command');
+			await this.spawnProcess(args, undefined);
+			log.info(`Git clone completed successfully to ${target}`);
+			return 'Cloning successful.';
+		} catch (err: unknown) {
+			log.error(`Git clone operation failed with exception: ${err instanceof Error ? err.message : String(err)}`);
+			throw err;
+		}
 	}
 
-	saveChanges(repo: string, localDir: string, message: string): Promise<string> {
+	public async saveChanges(repo: string, localDir: string, message: string): Promise<void> {
 		log.info('Starting git save changes operation');
 		log.debug(`Save parameters - repo: ${repo ? '[REDACTED]' : 'undefined'}, localDir: ${localDir}, message: ${message || 'automated commit'}`);
-		return new Promise<string>((resolve, reject) => {
-
-			try {
-				// Skip commit if no repo was provided
-				if (!repo || repo === '') {
-					log.info('Repo was undefined. Skipping commit/push.');
-					resolve("");
-					return;
-				}
-
-				log.debug('Injecting auth token for push operation');
-				repo = this.injectAuthToken(repo, this.authToken);
-				log.info('Starting git add operation');
-				this.spawnProcess(['add', '-A'], localDir)
-					.then(() => {
-						log.info('Git add completed, starting commit operation');
-						let commitArgs = ['commit', '-m', message ? message : 'automated commit'];
-						log.debug(`Commit message: ${message || 'automated commit'}`);
-						return this.spawnProcess(commitArgs, localDir);
-					})
-					.then(() => {
-						log.info('Commit completed, starting push operation');
-						return this.spawnProcess(['push', `--repo=${repo}`], localDir);
-					})
-					.then(() => {
-						log.info('Git save changes completed successfully');
-						resolve("");
-					})
-					.catch((err) => {
-						log.error(`Git save changes failed: ${err.message}`);
-						reject(err);
-					});
-			} catch (err) {
-				log.error(`Git save changes operation failed with exception: ${err.message}`);
-				reject(err);
+		try {
+			// Skip commit if no repo was provided
+			if (!repo || repo === '') {
+				log.info('Repo was undefined. Skipping commit/push.');
+				return;
 			}
-		});
+
+			log.debug('Injecting auth token for push operation');
+			repo = this.injectAuthToken(repo, this.authToken);
+
+			log.info('Starting git add operation');
+			await this.spawnProcess(['add', '-A'], localDir);
+
+			log.info('Git add completed, starting commit operation');
+			let commitArgs = ['commit', '-m', message ? message : 'automated commit'];
+			log.debug(`Commit message: ${message || 'automated commit'}`);
+			await this.spawnProcess(commitArgs, localDir);
+
+			log.info('Commit completed, starting push operation');
+			await this.spawnProcess(['push', `--repo=${repo}`], localDir);
+
+			log.info('Git save changes completed successfully');
+			return;
+		} catch (err: unknown) {
+			log.error(`Git save changes operation failed with exception: ${err instanceof Error ? err.message : String(err)}`);
+			throw err;
+		}
 	}
 
-
-	injectAuthToken(repo, authToken) {
+	private injectAuthToken(repo: string, authToken?: string): string {
 		log.debug('Processing auth token injection');
 		if (authToken) {
 			log.debug(`Auth token provided, injecting into repository URL`);
@@ -132,7 +109,7 @@ export default class Git {
 		return repo;
 	}
 
-	private spawnProcess(args: string[], localDir: string | undefined): Promise<void> {
+	private async spawnProcess(args: string[], localDir: string | undefined): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
 			try {
 				log.debug(`Spawning git process: git ${args.join(' ')}`);
@@ -163,10 +140,95 @@ export default class Git {
 						reject(new Error(`Git operation exited with code ${code}`));
 					}
 				});
-			} catch (err) {
-				log.error(`Failed to spawn git process: ${err.message}`);
+			} catch (err: unknown) {
+				log.error(`Failed to spawn git process: ${err instanceof Error ? err.message : String(err)}`);
 				reject(err);
 			}
 		});
+	}
+}
+
+// Alternative to github-api-promise until update
+
+export interface BuilderGithubConfig {
+	owner: string;
+	repo: string;
+	token: string;
+	host: string;
+	debug: boolean;
+}
+
+function githubGetRepoUrl(githubConfig: BuilderGithubConfig, additionalPath: string): string {
+	let url = githubConfig.host + "/repos/" + githubConfig.owner + "/" + githubConfig.repo + "/";
+	if (additionalPath) url += additionalPath;
+	return url;
+}
+
+function githubLogRequestSuccess(githubConfig: BuilderGithubConfig, res: AxiosResponse, message?: string): void {
+	if (githubConfig.debug != true) {
+		return;
+	}
+	let logMsg: string = "[INFO]" +
+		"[" +
+		res.status +
+		"]" +
+		"[" +
+		res.request ? res.request.method : "Unknown Method" +
+			" " +
+			res.request ? res.request.path : "Unknown Path" +
+			"] " +
+	(message ? message : "");
+
+	log.info(logMsg);
+}
+
+function githubLogRequestError(githubConfig: BuilderGithubConfig, err: AxiosError): void {
+	if (axios.isAxiosError(err)) {
+		let logMsg: string = "[ERROR]" +
+			"[" +
+			(err.response ? err.response.status : "Unknown Status Code") +
+			"]" +
+			"[" +
+			(err.request ? err.request.method : "Unknown Method") +
+			" " +
+			(err.request ? err.request.path : "Unknown Path") +
+			"] " +
+			(err.message ? err.message : "Unknown Error Message");
+		log.error(logMsg);
+	} else {
+		log.error("[ERROR] Unknown Error");
+	}
+}
+
+/**
+ * Users with push access to the repository can create a release. Returns 422 if anything is wrong with the values in the body.
+ * @param  {String} githubConfig 	Github config
+ * @param  {JSON} 	body  			A JSON document to send with the request
+ * @return {JSON}           		The release data
+ */
+export async function githubCreateRelease(githubConfig: BuilderGithubConfig, body: any): Promise<Endpoints["POST /repos/{owner}/{repo}/releases"]["response"]["data"]> {
+	try {
+		let gitPostResponse = await
+			axios
+				.post(githubGetRepoUrl(githubConfig, "releases"), body, {
+					headers: {
+						Authorization: `token ${githubConfig.token}`,
+						"User-Agent": "github-api-promise",
+						"Content-Type": "application/json",
+					},
+				});
+
+		githubLogRequestSuccess(githubConfig, gitPostResponse);
+		return gitPostResponse.data;
+	} catch (err: unknown) {
+		if (axios.isAxiosError(err)) {
+			githubLogRequestError(githubConfig, err);
+		} else if (err instanceof Error) {
+			log.error(err.message);
+		} else {
+			log.error(String(err));
+		}
+		let gitReleaseError = err instanceof Error ? err : new Error(String(err));
+		throw gitReleaseError;
 	}
 }

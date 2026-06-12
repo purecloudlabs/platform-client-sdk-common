@@ -3,7 +3,7 @@ import dot from 'dot';
 import pluralize from 'pluralize';
 import { Swagger, Info, Path, TypeResponse, ItemsType, Property, HttpMethod, valueTypes, Parameter, Changes } from '../types/swagger';
 import { Version, Data } from '../types/builderTypes';
-import log from '../log/logger';
+import { log } from '../log/logger';
 
 /* PRIVATE VARS */
 

@@ -1,12 +1,15 @@
-import _ from 'lodash';
-import Winston from 'winston';
+import winston from 'winston';
 import path from 'path';
 import fs from 'fs';
 
-class Logger {
+const logFormat: winston.Logform.Format = winston.format.printf(({ level, message, label, timestamp }) => {
+	return `${timestamp} [${level.toUpperCase()}] ${message}`;
+});
 
-	public log: Winston.LoggerInstance;
-	private static instance: Logger;
+class BuilderLogger {
+
+	public log: winston.Logger;
+	private static instance: BuilderLogger;
 	private defaultWidth: number = 0;
 
 	private constructor() {
@@ -21,85 +24,92 @@ class Logger {
 		
 		const logFilePath = path.join(logDir, logFileName);
 		
-		this.log = new Winston.Logger({
+		this.log = winston.createLogger({
 			level: 'debug',
 			transports: [
-				new Winston.transports.Console({
+				new winston.transports.Console({
 					level: 'debug',
 					handleExceptions: true,
-					json: false,
-					colorize: false,
-					timestamp: () => new Date().toISOString(),
-					formatter: (options) => {
-						const ts = typeof options.timestamp === 'function' ? options.timestamp() : options.timestamp;
-        				return `${ts} [${options.level.toUpperCase()}] ${options.message}`;
-					}
+					format: winston.format.combine(
+						winston.format.timestamp(),
+						logFormat
+					)
 				}),
-				new Winston.transports.File({
+				new winston.transports.File({
 					filename: logFilePath,
 					level: 'debug',
 					handleExceptions: true,
-					json: false,
-					timestamp: () => new Date().toISOString(),
-					formatter: (options) => {
-						const ts = typeof options.timestamp === 'function' ? options.timestamp() : options.timestamp;
-						return `${ts} [${options.level.toUpperCase()}] ${options.message}`;
-					}
+					format: winston.format.combine(
+						winston.format.timestamp(),
+						logFormat
+					)
 				})
 			],
 		});
 	}
 	
-	public static getInstance(): Logger {
-		if (!Logger.instance) {
-			Logger.instance = new Logger();
+	public static getInstance(): BuilderLogger {
+		if (!BuilderLogger.instance) {
+			BuilderLogger.instance = new BuilderLogger();
 		}
-		return Logger.instance;
+		return BuilderLogger.instance;
 	}
 
 	public setLogLevel(level: string): void {
 		level = checkLevel(level);
-		this.log.transports.console.level = level;
+		// Console
+		this.log.transports[0].level = level;
 		this.log.info(`Log level set to ${level}`);
 	}
 
-	public setUseColor(useColor: boolean) {
-		(this.log.transports.console as Winston.ConsoleTransportInstance).colorize = useColor === true;
+	public setUseColor(useColor: boolean): void {
+		// Console
+		if (useColor === true) {
+			(this.log.transports[0] as winston.transports.ConsoleTransportInstance).format = winston.format.combine(
+				winston.format.timestamp(),
+				logFormat,
+				winston.format.colorize({ all: true })
+			);
+		} else {
+			(this.log.transports[0] as winston.transports.ConsoleTransportInstance).format = winston.format.combine(
+				winston.format.timestamp(),
+				logFormat
+			);
+		}
 		this.log.info(`Logger will use color: ${useColor}`);
 	};
 
-
-	public silly(msg: string) {
+	public silly(msg: string): void {
 		const location = this.getCallerInfo();
 		this.log.silly(`${location} ${msg}`);
 	}
 
-	public debug(msg: string) {
+	public debug(msg: string): void {
 		const location = this.getCallerInfo();
 		this.log.debug(`${location} ${msg}`);
 	}
 
-	public verbose(msg: string) {
+	public verbose(msg: string): void {
 		const location = this.getCallerInfo();
 		this.log.verbose(`${location} ${msg}`);
 	}
 
-	public info(msg: string) {
+	public info(msg: string): void {
 		const location = this.getCallerInfo();
 		this.log.info(`${location} ${msg}`);
 	}
 
-	public error(msg: string) {
+	public error(msg: string): void {
 		const location = this.getCallerInfo();
 		this.log.error(`${location} ${msg}`);
 	}
 
-	public profile(msg: string) {
+	public profile(msg: string): void {
 		const location = this.getCallerInfo();
 		this.log.profile(`${location} ${msg}`);
 	}
 
-	public warn(msg: string) {
+	public warn(msg: string): void {
 		const location = this.getCallerInfo();
 		this.log.warn(`${location} ${msg}`);
 	}
@@ -129,7 +139,7 @@ class Logger {
 		return `[${fileName}:${functionName}:${lineNumber}]`;
 	}
 
-	public writeBoxedLine(string: string, width: number, padchar: string, level: string) {
+	public writeBoxedLine(string: string, width: number, padchar: string | null, level: string) {
 		level = checkLevel(level);
 		if (!width) width = this.defaultWidth;
 		if (!padchar) padchar = ' ';
@@ -137,42 +147,41 @@ class Logger {
 		let words = string.split(' ');
 		let rows = [];
 		let c = 0;
-		_.forEach(words, function (word, index) {
+		for (let word of words) {
 			if (!rows[c]) rows[c] = '';
 			if (rows[c].length + word.length + 1 > cWidth) {
 				c++;
 				rows[c] = '';
 			}
 			rows[c] += word + ' ';
-		});
+		};
 
 		// Lodash messes with this/self. self is set to the Builder object for some reason.
 		let logObject = this.log;
-		_.forEach(rows, function (row, index) {
+		for (let row of rows) {
 			logObject.log(level, '║ ' + pad(row.trimRight(), cWidth, padchar) + ' ║');
-		});
+		};
 	};
 
-
-	public writeBoxTop(width: number, level: string) {
+	public writeBoxTop(width: number, level: string): void {
 		level = checkLevel(level);
 		if (!width) width = this.defaultWidth;
 		this.log.log(level, '╔' + pad('', width - 2, '═') + '╗');
 	};
 
-	public writeBoxSeparator(width: number, level: string) {
+	public writeBoxSeparator(width: number, level: string): void {
 		level = checkLevel(level);
 		if (!width) width = this.defaultWidth;
 		this.log.log(level, '╟' + pad('', width - 2, '─') + '╢');
 	};
 
-	public writeBoxBottom(width: number, level: string) {
+	public writeBoxBottom(width: number, level: string): void {
 		level = checkLevel(level);
 		if (!width) width = this.defaultWidth;
 		this.log.log(level, '╚' + pad('', width - 2, '═') + '╝');
 	};
 
-	public writeBox(string: string, width: number = 0, level: string = "info") {
+	public writeBox(string: string, width: number = 0, level: string = "info"): void {
 		// default boxes to info
 		level = level ? level : 'info';
 
@@ -184,13 +193,12 @@ class Logger {
 }
 
 // Export singleton instance
-const logger = Logger.getInstance();
-export default logger;
+export const log = BuilderLogger.getInstance();
 
-function pad(value: string, length: number, padchar: string) {
+function pad(value: string, length: number, padchar: string): string {
 	return value.toString().length < length ? pad(value + padchar, length, padchar) : value;
 }
 
-function checkLevel(level: string) {
+function checkLevel(level: string): string {
 	return level ? level : 'debug';
 }

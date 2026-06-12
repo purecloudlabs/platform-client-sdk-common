@@ -1,26 +1,29 @@
 import fs from 'fs-extra';
-import cp from 'child_process';
-import path from 'path';
+import childProcess from 'child_process';
 import Mustache from 'mustache';
+import { log } from '../../../../modules/log/logger';
+
 export class PreBuildPostRun {
-	init() {
+	public init(): void {
 		try {
-			var swaggerCodegenConfigFilePath = process.argv[2];
-			var version = fs.readJsonSync(process.argv[3]);
-			var packageName = process.argv[4];
-			var notificationsTemplatePath = process.argv[5];
-			var notificationsDataPath = process.argv[6];
-			var notificationsOutPath = process.argv[7];
-			var nugetPath = process.argv[8];
+			log.debug('PreBuildPostRun initialization started');
 
-			console.log(`swaggerCodegenConfigFilePath=${swaggerCodegenConfigFilePath}`);
-			console.log(`version=${JSON.stringify(version)}`);
-			console.log(`packageName=${packageName}`);
-			console.log(`notificationsTemplatePath=${notificationsTemplatePath}`);
-			console.log(`notificationsDataPath=${notificationsDataPath}`);
-			console.log(`notificationsOutPath=${notificationsOutPath}`);
+			let swaggerCodegenConfigFilePath = process.argv[2];
+			let version = fs.readJsonSync(process.argv[3]);
+			let packageName = process.argv[4];
+			let notificationsTemplatePath = process.argv[5];
+			let notificationsDataPath = process.argv[6];
+			let notificationsOutPath = process.argv[7];
+			let nugetPath = process.argv[8];
 
-			var config = {
+			log.debug(`swaggerCodegenConfigFilePath=${swaggerCodegenConfigFilePath}`);
+			log.debug(`version=${JSON.stringify(version)}`);
+			log.debug(`packageName=${packageName}`);
+			log.debug(`notificationsTemplatePath=${notificationsTemplatePath}`);
+			log.debug(`notificationsDataPath=${notificationsDataPath}`);
+			log.debug(`notificationsOutPath=${notificationsOutPath}`);
+
+			let config = {
 				packageName: packageName || 'PureCloudPlatform.Client',
 				packageVersion: version.displayFull,
 				packageTitle: 'PureCloud Platform Client SDK',
@@ -33,34 +36,36 @@ export class PreBuildPostRun {
 			};
 
 			fs.writeFileSync(swaggerCodegenConfigFilePath, JSON.stringify(config, null, 2));
-			console.log(`Config file written to ${swaggerCodegenConfigFilePath}`);
+			log.debug(`Config file written to ${swaggerCodegenConfigFilePath}`);
 
 			generateNotificationTopicsFile(notificationsTemplatePath, notificationsDataPath, notificationsOutPath, packageName);
 
-			console.log('downloading nuget...');
-			let data = cp.execFileSync('curl', ['--silent', '-L', 'https://dist.nuget.org/win-x86-commandline/latest/nuget.exe'], {
+			log.debug('downloading nuget...');
+			let data = childProcess.execFileSync('curl', ['--silent', '-L', 'https://dist.nuget.org/win-x86-commandline/latest/nuget.exe'], {
 				encoding: 'binary',
 				maxBuffer: 1024 * 1024 * 10
 			});
 			fs.writeFileSync(nugetPath, data, 'binary');
-		} catch (err) {
+		} catch (err: unknown) {
 			process.exitCode = 1;
-			console.log(err);
+			log.error(`PreBuildPostRun exception: ${err}`);
 		}
 	}
-	;
 }
 
-function generateNotificationTopicsFile(templatePath, dataPath, outPath, namespace) {
-	var notificationsRaw = fs.readFileSync(dataPath, 'utf8');
-	var notifications = JSON.parse(notificationsRaw);
+function generateNotificationTopicsFile(templatePath: string, dataPath: string, outPath: string, namespace: string): void {
+	let notificationsRaw = fs.readFileSync(dataPath, 'utf8');
+	let notifications = JSON.parse(notificationsRaw);
 	notifications.namespace = namespace;
-	var notificationsTemplate = fs.readFileSync(templatePath, 'utf8');
+	let notificationsTemplate = fs.readFileSync(templatePath, 'utf8');
 
-	var notificationsClass = Mustache.render(notificationsTemplate, notifications);
+	let notificationsClass = Mustache.render(notificationsTemplate, notifications);
 	fs.writeFileSync(outPath, notificationsClass, 'utf8');
-	console.log(`File written to ${outPath}`);
+	log.debug(`File written to ${outPath}`);
 }
 
+// Call the method directly
+log.debug('Starting PreBuildPostRun script execution');
 const preBuildPostRun = new PreBuildPostRun();
 preBuildPostRun.init();
+log.debug('PreBuildPostRun script execution completed');

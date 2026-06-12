@@ -6,30 +6,32 @@ import https from 'https';
 import path from 'path';
 import pluralize from 'pluralize';
 import { Config, Script, Haystack, PureCloud } from '../types/config'
-import { LocalConfig, Overrides, Settings, StageSettings, valueOverides } from '../types/localConfig'
+import { LocalConfig, valueOverides } from '../types/localConfig'
 import moment, { Moment } from 'moment-timezone';
 import { Resourcepaths, Version, ApiVersionData, Data, Release } from '../types/builderTypes'
-import { ItemsType, Format } from '../types/swagger'
-import platformClient from 'purecloud-platform-client-v2';
 import yaml from 'js-yaml';
-import SwaggerDiff from '../swagger/swaggerDiff';
-import GitModule from '../git/gitModule';
-import Zip from '../util/zip';
-import { Models } from 'purecloud-platform-client-v2';
-import log from '../log/logger';
-import axios from "axios";
-import { Endpoints } from "@octokit/types";
-
+import { SwaggerDiff } from '../swagger/swaggerDiff';
+import { addNotifications, sanitizeSwagger } from '../swagger/swaggerUtils';
+import { BuilderGit, BuilderGithubConfig, githubCreateRelease } from '../git/gitModule';
+import { BuilderZip } from '../util/zip';
+import { log } from '../log/logger';
 
 const swaggerDiff = new SwaggerDiff();
-const git = new GitModule();
-const zip = new Zip();
+const git = new BuilderGit();
+const zip = new BuilderZip();
 const TIMESTAMP_FORMAT = 'h:mm:ss a';
-const NOTIFICATION_ID_REGEX = /^urn:jsonschema:(.+):v2:(.+)$/i;
 let _this: Builder;
 let newSwaggerTempFile = '';
 
+// Alternative to github-api-promise until update
 
+let githubConfig: BuilderGithubConfig = {
+  owner: "github_username",
+  repo: "repo_name",
+  token: "your_github_token",
+  host: "https://api.github.com",
+  debug: false,
+};
 
 // Quarantine Operations
 const quarantineOperationIds: string[] = ['postGroupImages', 'postUserImages', 'postLocationImages'];
@@ -81,7 +83,7 @@ export class Builder {
 				})
 				.then(() => {
 					log.debug('Builder construct completed successfully');
-					console.log("Builder construct Completed");
+					log.info("Builder construct Completed");
 					resolve("");
 				})
 				.catch((err: Error) => {
@@ -417,19 +419,7 @@ function prebuildImpl(): Promise<string> {
 				})
 				.then(() => {
 					log.debug('Adding notifications to schema');
-					return addNotifications();
-				})
-				.then(() => {
-					log.debug('Processing swagger paths');
-					return processPaths();
-				})
-				.then(() => {
-					log.debug('Processing swagger references');
-					return processRefs();
-				})
-				.then(() => {
-					log.debug('Processing any types in schema');
-					return processAnyTypes();
+					return addNotifications(swaggerDiff, _this.pureCloud, getEnv('EXCLUDE_NOTIFICATIONS') as boolean, getEnv('SDK_REPO') as string, forceInt64Integers, removeEnumDuplicates);
 				})
 				.then(() => {
 					let forceCSVCollectionFormatInTags: string[] = [];
@@ -439,15 +429,8 @@ function prebuildImpl(): Promise<string> {
 							forceCSVCollectionFormatInTags = allSwaggerSettings.forceCSVCollectionFormatOnTags;
 						}
 					}
-					return forceCSVCollectionFormat(forceCSVCollectionFormatInTags);
-				})
-				.then(() => {
-					return quarantineOperations(quarantineOperationIds);
-				})
-				.then(() => {
-					return overrideOperations(overrideOperationIds);
-				})
-				.then(() => {
+					sanitizeSwagger(swaggerDiff, _this.config, forceCSVCollectionFormatInTags, quarantineOperationIds, overrideOperationIds);
+
 					// Save new swagger to temp file for build
 					log.debug(`Writing processed swagger to temp file: ${newSwaggerTempFile}`);
 					log.info(`Writing new swagger file to temp storage path: ${newSwaggerTempFile}`);
@@ -758,9 +741,9 @@ function createRelease(): Promise<string> {
 					prerelease: false,
 				};
 
-				console.log(createReleaseOptions);
+				log.debug(JSON.stringify(createReleaseOptions, null, 2));
 				// Create release
-				return githubCreateRelease(createReleaseOptions);
+				return githubCreateRelease(githubConfig, createReleaseOptions);
 			})
 			.then((release) => {
 				log.info(`Created release #${release}`);
@@ -768,301 +751,6 @@ function createRelease(): Promise<string> {
 			.then(() => resolve(""))
 			.catch((err: Error) => reject(err));
 	});
-}
-
-function addNotifications(): Promise<string> {
-	return new Promise<string>((resolve, reject) => {
-
-		try {
-			// Skip notifications
-			if (getEnv('EXCLUDE_NOTIFICATIONS') === true) {
-				log.info('Not adding notifications to schema');
-				resolve("");
-			}
-
-			// Check PureCloud settings
-			checkAndThrow(_this.pureCloud, 'clientId', 'Environment variable PURECLOUD_CLIENT_ID must be set!');
-			checkAndThrow(_this.pureCloud, 'clientSecret', 'Environment variable PURECLOUD_CLIENT_SECRET must be set!');
-			checkAndThrow(_this.pureCloud, 'environment', 'PureCloud environment was blank!');
-
-			const client = platformClient.ApiClient.instance;
-			client.setEnvironment(_this.pureCloud.environment);
-			let notificationsApi = new platformClient.NotificationsApi();
-
-			client.loginClientCredentialsGrant(_this.pureCloud.clientId, _this.pureCloud.clientSecret)
-				.then(() => {
-					return notificationsApi.getNotificationsAvailabletopics({ 'expand': ['schema'] });
-				})
-				.then((notifications: Models.AvailableTopicEntityListing) => {
-					//let notificationMappings = { notifications: [] };
-
-					type Notification = {
-						topic: string; // Replace 'string' with the appropriate type for the 'topic' property
-						class: string;
-					}
-
-
-					type NotificationMappings = {
-						notifications: Notification[];
-					};
-
-
-					const notificationMappings: NotificationMappings = { notifications: [] };
-
-					// Process schemas
-					log.info(`Processing ${notifications.entities.length} notification schemas...`);
-					_.forEach(notifications.entities, (entity) => {
-						if (!entity.schema) {
-							log.warn(`Notification ${entity.id} does not have a defined schema!`);
-							return;
-						}
-
-						const schemaName = getNotificationClassName(entity.schema.id.toString());
-						log.info(`Notification mapping: ${entity.id} (${schemaName})`);
-						notificationMappings.notifications.push({ topic: entity.id, class: schemaName });
-						extractDefinitons(entity.schema);
-						swaggerDiff.newSwagger.definitions[schemaName] = JSON.parse(JSON.stringify(entity.schema));
-					});
-
-					// Write mappings to file
-					let mappingFilePath = path.resolve(path.join(getEnv('SDK_REPO') as string, 'notificationMappings.json'));
-					log.info(`Writing Notification mappings to ${mappingFilePath}`);
-					fs.writeFileSync(mappingFilePath, JSON.stringify(notificationMappings, null, 2));
-
-					resolve("");
-				})
-				.catch((err: Error) => {
-					reject(err)
-				});
-		} catch (err: unknown) {
-			reject(err);
-		}
-	});
-}
-
-function getNotificationClassName(id: string) {
-	// Normalize to include v2. Architect topics just have to be different and don't have v2...
-	let parts = id.split(':');
-	if (parts[parts.length - 2] !== 'v2') parts.splice(parts.length - 2, 0, 'v2');
-	const normalizedId = parts.join(':');
-
-	// Regex match the URN parts we want
-	let className = '';
-	let matches = NOTIFICATION_ID_REGEX.exec(normalizedId);
-	if (!matches) {
-		log.warn('No regex matches!');
-		log.warn(`id: ${id}`);
-		log.warn(`normalizedId: ${normalizedId}`);
-	}
-	if (matches !== null) {
-		for (let i = 1; i < matches.length; i++) {
-			matches[i].split(':').forEach((part) => {
-				className += part.charAt(0).toUpperCase() + part.slice(1);
-			});
-		}
-	}
-
-	return className;
-}
-
-function processAnyTypes() {
-	const keys = Object.keys(swaggerDiff.newSwagger.definitions);
-	keys.forEach((key, index) => {
-		let obj = swaggerDiff.newSwagger.definitions[key].properties;
-		if (obj) {
-			const keys = Object.keys(swaggerDiff.newSwagger.definitions[key].properties);
-			keys.forEach((key2, index) => {
-				let obj2 = swaggerDiff.newSwagger.definitions[key].properties[key2];
-				if (obj2) {
-					if (obj2.hasOwnProperty("type") && obj2["type"] === "any") {
-						obj2.type = "string" as ItemsType;
-						obj2.format = "date-time" as Format;
-					}
-				}
-			});
-		}
-	});
-}
-
-function forceCSVCollectionFormat(forceCSVCollectionFormatInTags: string[]) {
-	if (forceCSVCollectionFormatInTags && forceCSVCollectionFormatInTags.length > 0) {
-		log.info(`Updating CollectionFormat from multi to csv for operations with tags: ${forceCSVCollectionFormatInTags.toString()}`);
-		const paths = Object.keys(swaggerDiff.newSwagger.paths);
-		for (const path of paths) {
-			const methods = Object.keys(swaggerDiff.newSwagger.paths[path]);
-			for (const method of methods) {
-				let operation = swaggerDiff.newSwagger.paths[path][method];
-				let overrideOperation = false;
-				for (let overrideTag of forceCSVCollectionFormatInTags) {
-					if (operation && operation.tags && operation.tags.includes(overrideTag)) {
-						overrideOperation = true;
-						break;
-					}
-				}
-				if (overrideOperation === true) {
-					if (operation.parameters && operation.parameters.length > 0) {
-						for (let opParameter of operation.parameters) {
-							if (opParameter.in && opParameter.in === "query" && opParameter.type && opParameter.type === "array" && opParameter.collectionFormat && opParameter.collectionFormat === "multi") {
-								opParameter.collectionFormat = "csv";
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	return;
-}
-
-function quarantineOperations(quarantineOperationIds: string[]) {
-	if (quarantineOperationIds && quarantineOperationIds.length > 0) {
-		log.info(`Quarantine for OperationIds: ${quarantineOperationIds.toString()}`);
-		const paths = Object.keys(swaggerDiff.newSwagger.paths);
-		for (const path of paths) {
-			const methods = Object.keys(swaggerDiff.newSwagger.paths[path]);
-			for (const method of methods) {
-				let operation = swaggerDiff.newSwagger.paths[path][method];
-				if (operation && operation.operationId && quarantineOperationIds.includes(operation.operationId)) {
-					// Remove Operation
-					delete swaggerDiff.newSwagger.paths[path][method];
-				}
-			}
-			const remainingMethods = Object.keys(swaggerDiff.newSwagger.paths[path]);
-			if (remainingMethods.length == 0) {
-				delete swaggerDiff.newSwagger.paths[path];
-			}
-		}
-	}
-	return;
-}
-
-function overrideOperations(overrideOperationIds: any) {
-	if (overrideOperationIds && Object.keys(overrideOperationIds).length > 0) {
-		const overridePaths = Object.keys(overrideOperationIds);
-		for (const path of overridePaths) {
-			const overrideMethods = Object.keys(overrideOperationIds[path]);
-			for (const method of overrideMethods) {
-				let newOperationId = overrideOperationIds[path][method];
-				if (swaggerDiff.newSwagger.paths && swaggerDiff.newSwagger.paths[path] && swaggerDiff.newSwagger.paths[path][method]) {
-					let operation = swaggerDiff.newSwagger.paths[path][method];
-					if (operation && operation.operationId) {
-						log.info(`Override OperationId (path: ${path}, method: ${method}): old=${operation.operationId}, new=${newOperationId}`);
-						operation.operationId = newOperationId;
-					}
-					if (operation && operation["x-purecloud-method-name"]) {
-						operation["x-purecloud-method-name"] = newOperationId;
-					}
-				}
-			}
-		}
-	}
-	return;
-}
-
-function processPaths() {
-	const paths = Object.keys(swaggerDiff.newSwagger.paths);
-	for (const path of paths) {
-		if (!path.startsWith("/api/v2") || (path.startsWith("/api/v2/apps") && _this.config.settings.swaggerCodegen.codegenLanguage === "purecloudpython")) {
-			delete swaggerDiff.newSwagger.paths[path]
-		}
-	}
-
-	if (_this.config.settings.swaggerCodegen.codegenLanguage !== "purecloudpython") return
-
-	const definitions = Object.keys(swaggerDiff.newSwagger.definitions);
-	for (const definition of definitions) {
-		if (definition.endsWith("_")) {
-			delete swaggerDiff.newSwagger.definitions[definition]
-		}
-	}
-}
-
-function processRefs() {
-	const keys = Object.keys(swaggerDiff.newSwagger.definitions);
-	keys.forEach((key, index) => {
-		let obj = swaggerDiff.newSwagger.definitions[key].properties;
-		if (obj) {
-			const keys = Object.keys(swaggerDiff.newSwagger.definitions[key].properties);
-			keys.forEach((key2, index) => {
-				let obj2 = swaggerDiff.newSwagger.definitions[key].properties[key2];
-				if (obj2) {
-					if (obj2.hasOwnProperty("$ref") && (obj2.hasOwnProperty("readOnly") || obj2.hasOwnProperty("description"))) {
-						if (obj2.readOnly === true && obj2.hasOwnProperty("description")) {
-							obj2.description = `${obj2.description} readOnly`
-						}
-
-						let refObj = { "$ref": obj2.$ref };
-						obj2.allOf = [refObj];
-						delete obj2.$ref;
-					}
-				}
-			});
-		}
-	});
-}
-
-// Receives AvailableTopic.schema of Type "schema"?: { [key: string]: object; };
-function extractDefinitons(entity: { [key: string]: any }) {
-	try {
-		_.forOwn(entity, (property, key) => {
-			// Rewrite URN refs to JSON refs
-			if (key == '$ref' && !property.startsWith('#')) {
-				entity[key] = '#/definitions/' + getNotificationClassName(property);
-			}
-
-			// Force int64 integers
-			if (forceInt64Integers == true) {
-				if (key == 'type' && property == 'integer') {
-					if (!entity['format']) {
-						entity['format'] = 'int64';
-					}
-				}
-			}
-			// Remove enum duplicates
-			if (removeEnumDuplicates == true) {
-				if (key == 'enum') {
-					if (entity["type"] && entity["type"] == "string") {
-						if (entity["enum"] && entity["enum"].length > 0) {
-							let filteredEnum: string[] = [];
-							let upperCaseEnum: string[] = [];
-							for (let enumValue of entity["enum"]) {
-								if (!upperCaseEnum.includes(enumValue.toUpperCase())) {
-									upperCaseEnum.push(enumValue.toUpperCase());
-									filteredEnum.push(enumValue);
-								} else {
-									log.info(`Duplicate enum value in topic: ${enumValue}. Removing it...`);
-								}
-							}
-							entity["enum"] = filteredEnum;
-						}
-					}
-				}
-			}
-
-			// Recurse on objects
-			if (typeof property !== 'object') return;
-			extractDefinitons(property);
-
-			// Update object to ref
-			if (property.id && typeof property.id === 'string') {
-				let className = getNotificationClassName(property.id);
-
-				// Store definition
-				swaggerDiff.newSwagger.definitions[className] = JSON.parse(JSON.stringify(property));
-
-				// Set reference
-				entity[key] = {
-					type: 'object',
-					$ref: `#/definitions/${className}`,
-				};
-			}
-		});
-	} catch (err: unknown) {
-		if (err instanceof Error) {
-			console.log(err);
-			console.log(err.stack);
-		}
-	}
 }
 
 function loadConfig(configPath: string) {
@@ -1263,93 +951,4 @@ function getFileCount(dir: fs.PathLike) {
 	}
 
 	return files.length;
-}
-
-// Alternative to github-api-promise until update
-
-let githubConfig: any = {
-  owner: "github_username",
-  repo: "repo_name",
-  token: "your_github_token",
-  host: "https://api.github.com",
-  debug: false,
-};
-
-function githubGetRepoUrl(additionalPath: string) {
-	var url = githubConfig.host + "/repos/" + githubConfig.owner + "/" + githubConfig.repo + "/";
-	if (additionalPath) url += additionalPath;
-	return url;
-}
-
-function githubLogRequestSuccess(res: any, message?: string) {
-	if (githubConfig.debug != true) {
-		return;
-	}
-	let logMsg: string = "[INFO]" +
-		"[" +
-		res.statusCode +
-		"]" +
-		"[" +
-		res.req.method +
-		" " +
-		res.req.path +
-		"] " +
-		(message ? message : "");
-
-	console.log(logMsg);
-}
-
-function githubLogRequestError(err: any) {
-	if (err) {
-		let logMsg: string = "[ERROR]" +
-			"[" +
-			(err.res ? err.res.statusCode : "Unknown Status Code") +
-			"]" +
-			"[" +
-			(err.res && err.res.req ? err.res.req.method : "Unknown Method") +
-			" " +
-			(err.res && err.res.req ? err.res.req.path : "Unknown Path") +
-			"] " +
-			(err.message ? err.message : "Unknown Error Message");
-		console.log(logMsg);
-	} else {
-		console.log("[ERROR] Unknown Error");
-	}
-}
-
-/**
- * Users with push access to the repository can create a release. Returns 422 if anything is wrong with the values in the body.
- * @param  {JSON} 	body  		A JSON document to send with the request
- * @return {JSON}           	The release data
- */
-function githubCreateRelease(
-	body: any
-): Promise<
-	Endpoints["POST /repos/{owner}/{repo}/releases"]["response"]["data"]
-> {
-	return new Promise((resolve, reject) => {
-		try {
-			axios
-				.post(githubGetRepoUrl("releases"), body, {
-					headers: {
-						Authorization: `token ${githubConfig.token}`,
-						"User-Agent": "github-api-promise",
-						"Content-Type": "application/json",
-					},
-				})
-				.then(
-					function (res: any) {
-						githubLogRequestSuccess(res);
-						resolve(res.body);
-					},
-					function (err: any) {
-						githubLogRequestError(err);
-						reject(err.message);
-					}
-				);
-		} catch (err) {
-			console.log(err);
-			reject(err.message);
-		}
-	});
 }

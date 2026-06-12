@@ -3,8 +3,8 @@ import fs from 'fs';
 import swaggerDiffImpl from './swaggerDiffImpl';
 import { Swagger, Info, Changes, ProduceElement, ItemsType } from '../types/swagger';
 import { Data, Version } from '../types/builderTypes';
-import log from '../log/logger';
-export default class SwaggerDiff {
+import { log } from '../log/logger';
+export class SwaggerDiff {
 
 	changes: Changes;
 	changeCount: number = 0;

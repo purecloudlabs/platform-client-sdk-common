@@ -1,14 +1,16 @@
 import fs from 'fs-extra';
+import { log } from '../../../../modules/log/logger';
 
 export class PreBuildPostRun {
-	init() {
-
+	public init(): void {
 		try {
-			var swaggerCodegenConfigFilePath = process.argv[2];
-			var version = fs.readJsonSync(process.argv[3]);
-			var artifactId = process.argv[4];
+			log.debug('PreBuildPostRun initialization started');
 
-			var config = {
+			let swaggerCodegenConfigFilePath = process.argv[2];
+			let version = fs.readJsonSync(process.argv[3]);
+			let artifactId = process.argv[4];
+
+			let config = {
 				artifactId: artifactId || 'platform-client',
 				artifactVersion: version.displayFull,
 				apiPackage: 'cloud.genesys.webmessaging.sdk.api',
@@ -24,14 +26,16 @@ export class PreBuildPostRun {
 			};
 
 			fs.writeFileSync(swaggerCodegenConfigFilePath, JSON.stringify(config, null, 2));
-			console.log(`Config file written to ${swaggerCodegenConfigFilePath}`);
-		} catch (err) {
+			log.debug(`Config file written to ${swaggerCodegenConfigFilePath}`);
+		} catch (err: unknown) {
 			process.exitCode = 1;
-			console.log(err);
+			log.error(`PreBuildPostRun exception: ${err}`);
 		}
 	}
-	;
 }
+
 // Call the method directly
+log.debug('Starting PreBuildPostRun script execution');
 const preBuildPostRun = new PreBuildPostRun();
 preBuildPostRun.init();
+log.debug('PreBuildPostRun script execution completed');

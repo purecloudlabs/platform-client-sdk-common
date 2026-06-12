@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import * as readline from 'readline';
-import log from '../../modules/log/logger';
+import { log } from '../../modules/log/logger';
 
 interface APIData {
 	operationId?: string;
@@ -18,11 +18,9 @@ interface Parameter {
 	required: string;
 }
 
-
-export default class CombineApis {
-
-	dataFile: APIData = {};
-	dirent: fs.Dirent;
+export class CombineApis {
+	dataFile: Record<string, APIData> = {};
+	dirent: fs.Dirent | null = null;
 	rl: readline.Interface;
 
 	constructor() {
@@ -40,8 +38,7 @@ export default class CombineApis {
 		});
 	}
 
-	async combineApiDataFiles(docsDir: string, dataFileName: string) {
-
+	public async combineApiDataFiles(docsDir: string, dataFileName: string): Promise<void> {
 		const dir = fs.opendirSync(docsDir);
 		log.debug('Starting combineApiDataFiles');
 		log.debug(`docsDir: ${docsDir}, dataFileName: ${dataFileName}`);
@@ -142,14 +139,14 @@ export default class CombineApis {
 			log.debug(`Output data size: ${outputData.length} characters`);
 			fs.writeFileSync(dataFileName, outputData);
 			log.info('File written successfully');
-			
-		} catch (err) {
+		} catch (err: unknown) {
 			log.error(`Exception occurred: ${err}`);
-			log.error(`Stack trace: ${err.stack}`);
+			if (err instanceof Error) {
+				log.error(`Stack trace: ${err.stack}`);
+			}
 			process.exit(-1);
 		}
 	}
-
 }
 
 const combineApis = new CombineApis();
