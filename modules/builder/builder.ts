@@ -962,7 +962,7 @@ function overrideOperations(overrideOperationIds: any) {
 function processPaths() {
 	const paths = Object.keys(swaggerDiff.newSwagger.paths);
 	for (const path of paths) {
-		if (!path.startsWith("/api/v2") || (path.startsWith("/api/v2/apps") && _this.config.settings.swaggerCodegen.codegenLanguage === "purecloudpython")) {
+		if (!path.startsWith("/api/v2") || (path.startsWith("/api/v2/apps") && !path.startsWith("/api/v2/apps/agentic") && _this.config.settings.swaggerCodegen.codegenLanguage === "purecloudpython")) {
 			delete swaggerDiff.newSwagger.paths[path]
 		}
 	}
