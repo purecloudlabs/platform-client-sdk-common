@@ -32,7 +32,8 @@ let newSwaggerTempFile = '';
 
 
 // Quarantine Operations
-const quarantineOperationIds: string[] = ['postGroupImages', 'postUserImages', 'postLocationImages'];
+const quarantineOperationIds: string[] = ['postGroupImages', 'postUserImages', 'postLocationImages', 'postAgenticVirtualagentSessionTurns', 'postAgenticVirtualagentVersions', 'getAgenticVirtualagentVersion', 'patchAgenticVirtualagentVersion', 'getAgenticVirtualagentVersionJob'];
+const quarantineModels: string[] = ['AgenticVirtualAgentInputValidationEvent', 'AgenticVirtualAgentPythonInputValidationEvent', 'AgenticVirtualAgentStructuredInputValidationEvent', 'AgenticVirtualAgentUnknownInputValidationEvent', 'AgenticVirtualAgentSessionTurnEvents', 'AgenticVirtualAgentSessionTurnResponse', 'AgenticVirtualAgentToolCall', 'AgenticVirtualAgentDataActionToolCall', 'AgenticVirtualAgentExternalA2AServerToolCall', 'AgenticVirtualAgentKnowledgeBaseToolCall', 'AgenticVirtualAgentKnowledgeSettingToolCall', 'AgenticVirtualAgentEventSettings', 'AgenticVirtualAgentEscalationEventSettings', 'AgenticVirtualAgentGuardrailsSettings', 'AgenticVirtualAgentUserExitEventSettings', 'AgenticVirtualAgentVersionDefinition', 'AgenticVirtualAgentVersion', 'UpdateAgenticVirtualAgentVersion', 'CreateAgenticVirtualAgentVersion', 'AgenticVirtualAgentVersionJob', 'AgenticVirtualAgentInputValidation', 'AgenticVirtualAgentPythonInputValidation', 'AgenticVirtualAgentStructuredInputValidation', 'AgenticVirtualAgentTool', 'AgenticVirtualAgentDataActionTool', 'AgenticVirtualAgentExternalA2AServerTool', 'AgenticVirtualAgentKnowledgeBaseTool', 'AgenticVirtualAgentKnowledgeSettingTool', 'AgenticVirtualAgentVersionDefinition'];
 // Override OperationId due to name conflict ("operationId", "x-purecloud-method-name")
 const overrideOperationIds: any = {};
 const aliasOperationIds: any = {
@@ -442,7 +443,7 @@ function prebuildImpl(): Promise<string> {
 					return forceCSVCollectionFormat(forceCSVCollectionFormatInTags);
 				})
 				.then(() => {
-					return quarantineOperations(quarantineOperationIds);
+					return quarantineOperationsAndModels(quarantineOperationIds, quarantineModels);
 				})
 				.then(() => {
 					return overrideOperations(overrideOperationIds);
@@ -914,7 +915,7 @@ function forceCSVCollectionFormat(forceCSVCollectionFormatInTags: string[]) {
 	return;
 }
 
-function quarantineOperations(quarantineOperationIds: string[]) {
+function quarantineOperationsAndModels(quarantineOperationIds: string[], quarantineModels: string[]) {
 	if (quarantineOperationIds && quarantineOperationIds.length > 0) {
 		log.info(`Quarantine for OperationIds: ${quarantineOperationIds.toString()}`);
 		const paths = Object.keys(swaggerDiff.newSwagger.paths);
@@ -930,6 +931,14 @@ function quarantineOperations(quarantineOperationIds: string[]) {
 			const remainingMethods = Object.keys(swaggerDiff.newSwagger.paths[path]);
 			if (remainingMethods.length == 0) {
 				delete swaggerDiff.newSwagger.paths[path];
+			}
+		}
+	}
+	if (quarantineModels && quarantineModels.length > 0) {
+		log.info(`Quarantine for Models: ${quarantineModels.toString()}`);
+		for (const modelName of quarantineModels) {
+			if (swaggerDiff.newSwagger.definitions[modelName]) {
+				delete swaggerDiff.newSwagger.definitions[modelName];
 			}
 		}
 	}
