@@ -9,14 +9,15 @@ echo "ROOT_NAMESPACE=$ROOT_NAMESPACE"
 # CD to build dir
 cd $BUILD_DIR
 
+# DISABLE: mozroots is now deprecated. cert-sync should have been already installed during mono installation
 # Import certs
-if test -f "/etc/pki/tls/certs/ca-bundle.crt"; then
-	echo "Using cert-sync"
-	cert-sync /etc/pki/tls/certs/ca-bundle.crt
-else
-	echo "Using mozroots"
-	mozroots --import --sync
-fi
+# if test -f "/etc/pki/tls/certs/ca-bundle.crt"; then
+# 	echo "Using cert-sync"
+# 	cert-sync /etc/pki/tls/certs/ca-bundle.crt
+# else
+# 	echo "Using mozroots"
+# 	mozroots --import --sync
+# fi
 
 # Install packages
 echo "Installing packages"
