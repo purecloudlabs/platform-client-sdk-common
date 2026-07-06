@@ -51,7 +51,17 @@ public class {{classname}} {
 		}
 
 		@JsonCreator
-		public static {{paramName}}Values fromString(String key) {
+		{{#isInteger}}public static {{paramName}}Values fromInteger(Integer key) {
+			if (key == null) return null;
+
+			for ({{paramName}}Values value : {{paramName}}Values.values()) {
+				if (key == value.toInteger()) {
+					return value;
+				}
+			}
+
+			return {{paramName}}Values.values()[0];
+		}{{/isInteger}}{{^isInteger}}public static {{paramName}}Values fromString(String key) {
 			if (key == null) return null;
 
 			for ({{paramName}}Values value : {{paramName}}Values.values()) {
@@ -61,13 +71,17 @@ public class {{classname}} {
 			}
 
 			return {{paramName}}Values.values()[0];
-		}
+		}{{/isInteger}}
 
 		@Override
 		@JsonValue
 		public String toString() {
 			return String.valueOf(value);
 		}
+		{{#isInteger}}
+		public Integer toInteger() {
+			return Integer.valueOf(value);
+		}{{/isInteger}}
 	}{{/allowableValuesForEnum}}
 	{{/allParams}}
 
@@ -156,7 +170,7 @@ public class {{classname}} {
 		    return this;
 		}{{/isContainer}}{{^isContainer}}
 		public Builder with{{#lambda.titlecase}}{{paramName}}{{/lambda.titlecase}}({{paramName}}Values {{paramName}}) {
-		    request.set{{#lambda.titlecase}}{{paramName}}{{/lambda.titlecase}}({{paramName}}.toString());
+		    request.set{{#lambda.titlecase}}{{paramName}}{{/lambda.titlecase}}({{paramName}}{{#isInteger}}.toInteger(){{/isInteger}}{{^isInteger}}.toString(){{/isInteger}});
 
 		    return this;
 		}{{/isContainer}}{{/allowableValuesForEnum}}
