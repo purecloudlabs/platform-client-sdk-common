@@ -25,6 +25,8 @@ export interface Definition {
     properties?: { [key: string]: Property };
     required?: string[];
     description?: string;
+    discriminator?: string;
+    allOf?: any[];
 }
 
 export interface ChangeItem {

@@ -30,10 +30,12 @@ let _this: Builder;
 let newSwaggerTempFile = '';
 
 
-
 // Quarantine Operations
-const quarantineOperationIds: string[] = ['postGroupImages', 'postUserImages', 'postLocationImages', 'postAgenticVirtualagentSessionTurns', 'postAgenticVirtualagentVersions', 'getAgenticVirtualagentVersion', 'patchAgenticVirtualagentVersion', 'getAgenticVirtualagentVersionJob'];
-const quarantineModels: string[] = ['AgenticVirtualAgentToolOutputInstruction', 'AgenticVirtualAgentPythonOutputInstruction', 'AgenticVirtualAgentStructuredOutputInstruction', 'AgenticVirtualAgentInputValidationEvent', 'AgenticVirtualAgentPythonInputValidationEvent', 'AgenticVirtualAgentStructuredInputValidationEvent', 'AgenticVirtualAgentUnknownInputValidationEvent', 'AgenticVirtualAgentSessionTurnEvents', 'AgenticVirtualAgentSessionTurnResponse', 'AgenticVirtualAgentToolCall', 'AgenticVirtualAgentDataActionToolCall', 'AgenticVirtualAgentExternalA2AServerToolCall', 'AgenticVirtualAgentKnowledgeBaseToolCall', 'AgenticVirtualAgentKnowledgeSettingToolCall', 'AgenticVirtualAgentEventSettings', 'AgenticVirtualAgentEscalationEventSettings', 'AgenticVirtualAgentGuardrailsSettings', 'AgenticVirtualAgentUserExitEventSettings', 'AgenticVirtualAgentVersionDefinition', 'AgenticVirtualAgentVersion', 'UpdateAgenticVirtualAgentVersion', 'CreateAgenticVirtualAgentVersion', 'AgenticVirtualAgentVersionJob', 'AgenticVirtualAgentInputValidation', 'AgenticVirtualAgentPythonInputValidation', 'AgenticVirtualAgentStructuredInputValidation', 'AgenticVirtualAgentTool', 'AgenticVirtualAgentDataActionTool', 'AgenticVirtualAgentExternalA2AServerTool', 'AgenticVirtualAgentKnowledgeBaseTool', 'AgenticVirtualAgentKnowledgeSettingTool', 'AgenticVirtualAgentVersionDefinition'];
+const quarantineOperationIds: string[] = ['postGroupImages', 'postUserImages', 'postLocationImages'];
+const quarantineModels: string[] = [];
+// Keep, Quarantine or Override Discriminator and Polymorphism (possible values: keep, quarantine, override)
+const defaultDiscriminatorManagement: string = 'quarantine';
+const keepDiscriminatorModels: string[] = ['ListValues']
 // Override OperationId due to name conflict ("operationId", "x-purecloud-method-name")
 const overrideOperationIds: any = {};
 const aliasOperationIds: any = {
@@ -444,6 +446,22 @@ function prebuildImpl(): Promise<string> {
 				})
 				.then(() => {
 					return quarantineOperationsAndModels(quarantineOperationIds, quarantineModels);
+				})
+				.then(() => {
+					let discriminatorManagement: string = defaultDiscriminatorManagement;
+					if (_this.config.settings.swagger) {
+						let allSwaggerSettings: any = _this.config.settings.swagger;
+						if (allSwaggerSettings.discriminatorManagement !== null && allSwaggerSettings.discriminatorManagement !== undefined) {
+							if (allSwaggerSettings.discriminatorManagement.toLowerCase() === 'keep') {
+								discriminatorManagement = 'keep';
+							} else if (allSwaggerSettings.discriminatorManagement.toLowerCase() === 'quarantine') {
+								discriminatorManagement = 'quarantine';
+							} else if (allSwaggerSettings.discriminatorManagement.toLowerCase() === 'override') {
+								discriminatorManagement = 'override';
+							}
+						}
+					}
+					return manageDiscriminator(discriminatorManagement, keepDiscriminatorModels);
 				})
 				.then(() => {
 					return overrideOperations(overrideOperationIds);
@@ -915,6 +933,164 @@ function forceCSVCollectionFormat(forceCSVCollectionFormatInTags: string[]) {
 	return;
 }
 
+function manageDiscriminator(discriminatorManagement: string, keepDiscriminatorModels: string[]) {
+	if (discriminatorManagement !== null && discriminatorManagement !== undefined && discriminatorManagement !== 'keep') {
+		let modelsWithDiscriminator: string[] = [];
+		let childDiscriminatorModels: string[] = [];
+		// Find Models with Discriminator
+		if (swaggerDiff.newSwagger.definitions) {
+			for (let modelName in swaggerDiff.newSwagger.definitions) {
+				if (swaggerDiff.newSwagger.definitions[modelName].discriminator) {
+					if (!keepDiscriminatorModels.includes(modelName)) {
+						modelsWithDiscriminator.push(modelName);
+					}
+				}
+			}
+		}
+		// Find Models with a Discriminator based parent model
+		if (modelsWithDiscriminator.length > 0) {
+			// find all models with an indirect dependency on modelsWithDiscriminator
+			let refsWithDiscriminatorModels: string[] = [];
+			for (let discriminatorModelName of modelsWithDiscriminator) {
+				refsWithDiscriminatorModels.push(`#/definitions/${discriminatorModelName}`);
+			}
+			for (let modelName in swaggerDiff.newSwagger.definitions) {
+				if (swaggerDiff.newSwagger.definitions[modelName].allOf) {
+					for (let compositeModel of swaggerDiff.newSwagger.definitions[modelName].allOf) {
+						if (compositeModel['$ref'] && refsWithDiscriminatorModels.includes(compositeModel['$ref'])) {
+							childDiscriminatorModels.push(modelName);
+							break;
+						}
+					}
+				}
+			}
+		}
+		log.info(`Found Discriminator based Models: ${modelsWithDiscriminator.toString()}`);
+		log.info(`Found Discriminator Child Models: ${childDiscriminatorModels.toString()}`);
+		if (modelsWithDiscriminator.length > 0) {
+			// Manage Discriminator
+			if (discriminatorManagement === 'override') {
+				// Override
+				// Remove discrimnator models and their children from Swagger
+				for (let modelName of modelsWithDiscriminator) {
+					if (swaggerDiff.newSwagger.definitions[modelName]) {
+						delete swaggerDiff.newSwagger.definitions[modelName];
+					}
+				}
+				for (let modelName of childDiscriminatorModels) {
+					if (swaggerDiff.newSwagger.definitions[modelName]) {
+						delete swaggerDiff.newSwagger.definitions[modelName];
+					}
+				}
+				// Override references to Discriminator Models with JsonNode (generic object)
+				if (!swaggerDiff.newSwagger.definitions['JsonNode']) {
+					swaggerDiff.newSwagger.definitions['JsonNode'] = { type: ItemsType.Object };
+				}
+				let definitionsAsString = JSON.stringify(swaggerDiff.newSwagger.definitions);
+				let pathsAsString = JSON.stringify(swaggerDiff.newSwagger.paths);
+				for (let modelName of modelsWithDiscriminator) {
+					let regexConvertRef = new RegExp(String.raw`"#\/definitions\/${modelName}"`, "g");
+					definitionsAsString = definitionsAsString.replace(regexConvertRef, '"#/definitions/JsonNode"');
+					pathsAsString = pathsAsString.replace(regexConvertRef, '"#/definitions/JsonNode"');
+				}
+				swaggerDiff.newSwagger.definitions = JSON.parse(definitionsAsString);
+				swaggerDiff.newSwagger.paths = JSON.parse(pathsAsString);
+			} else if (discriminatorManagement === 'quarantine') {
+				// Quarantine
+				// Find models with a direct or indirect reference on modelsWithDiscriminator or childDiscriminatorModels
+				// Init with discriminator based models and their children
+				let modelsToQuarantine: string[] = [];
+				for (let modelName of modelsWithDiscriminator) {
+					modelsToQuarantine.push(modelName);
+				}
+				for (let modelName of childDiscriminatorModels) {
+					modelsToQuarantine.push(modelName);
+				}
+				// Recursive processing to find models
+				let searchModels: string[] = [];
+				for (let modelName of modelsToQuarantine) {
+					searchModels.push(modelName);
+				}
+				let foundModels: string[] = [];
+				let findingCompleted: boolean = false;
+				while (findingCompleted !== true) {
+					for (let modelName in swaggerDiff.newSwagger.definitions) {
+						if (!modelsToQuarantine.includes(modelName)) {
+							let definitionAsString = JSON.stringify(swaggerDiff.newSwagger.definitions[modelName]);
+							for (let defName of searchModels) {
+								if (definitionAsString.includes(`"#/definitions/${defName}"`)) {
+									foundModels.push(modelName);
+									break;
+								}
+							}
+						}
+					}
+					if (foundModels.length === 0) {
+						findingCompleted = true;
+					} else {
+						searchModels = [];
+						for (let defName of foundModels) {
+							searchModels.push(defName);
+							modelsToQuarantine.push(defName);
+						}
+						foundModels = [];
+					}
+				}
+				log.info(`Found Discriminator based Models, children and dependencies: ${modelsToQuarantine.toString()}`);
+
+				// Find operations with a reference to a model involving discriminator directly or indirectly
+				let operationsToQuarantine: string[] = [];
+				if (modelsToQuarantine.length > 0) {
+					const paths = Object.keys(swaggerDiff.newSwagger.paths);
+					for (const path of paths) {
+						const methods = Object.keys(swaggerDiff.newSwagger.paths[path]);
+						for (const method of methods) {
+							let operation = swaggerDiff.newSwagger.paths[path][method];
+							let operationAsString = JSON.stringify(operation);
+							for (let defName of modelsToQuarantine) {
+								if (operationAsString.includes(`"#/definitions/${defName}"`)) {
+									operationsToQuarantine.push(operation.operationId);
+									break;
+								}
+							}
+						}
+					}
+					log.info(`Found Operations referencing Discriminator based Models: ${operationsToQuarantine.toString()}`);
+				}
+
+				// Quarantine (delete) found operations and models
+				// Remove identified models from Swagger
+				if (modelsToQuarantine.length > 0) {
+					for (let modelName of modelsToQuarantine) {
+						if (swaggerDiff.newSwagger.definitions[modelName]) {
+							delete swaggerDiff.newSwagger.definitions[modelName];
+						}
+					}
+				}
+				// Remove identified operations from Swagger
+				if (operationsToQuarantine.length > 0) {
+					const paths = Object.keys(swaggerDiff.newSwagger.paths);
+					for (const path of paths) {
+						const methods = Object.keys(swaggerDiff.newSwagger.paths[path]);
+						for (const method of methods) {
+							let operation = swaggerDiff.newSwagger.paths[path][method];
+							if (operation && operation.operationId && operationsToQuarantine.includes(operation.operationId)) {
+								// Remove Operation
+								delete swaggerDiff.newSwagger.paths[path][method];
+							}
+						}
+						const remainingMethods = Object.keys(swaggerDiff.newSwagger.paths[path]);
+						if (remainingMethods.length == 0) {
+							delete swaggerDiff.newSwagger.paths[path];
+						}
+					}
+				}
+			}
+		}
+	}
+	return;
+}
+
 function quarantineOperationsAndModels(quarantineOperationIds: string[], quarantineModels: string[]) {
 	if (quarantineOperationIds && quarantineOperationIds.length > 0) {
 		log.info(`Quarantine for OperationIds: ${quarantineOperationIds.toString()}`);
@@ -1277,11 +1453,11 @@ function getFileCount(dir: fs.PathLike) {
 // Alternative to github-api-promise until update
 
 let githubConfig: any = {
-  owner: "github_username",
-  repo: "repo_name",
-  token: "your_github_token",
-  host: "https://api.github.com",
-  debug: false,
+	owner: "github_username",
+	repo: "repo_name",
+	token: "your_github_token",
+	host: "https://api.github.com",
+	debug: false,
 };
 
 function githubGetRepoUrl(additionalPath: string) {
