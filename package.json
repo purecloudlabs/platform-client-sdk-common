@@ -53,7 +53,7 @@
     "moment-timezone": "^0.6.0",
     "mustache": "^2.3.0",
     "pluralize": "^3.1.0",
-    "pm2": "^6.0.9",
+    "pm2": "^7.0.3",
     "purecloud-platform-client-v2": "^253.0.0",
     "q": "^1.4.1",
     "semver": "^7.7.3",
