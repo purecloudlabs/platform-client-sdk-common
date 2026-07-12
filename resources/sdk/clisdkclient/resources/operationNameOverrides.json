@@ -724,5 +724,10 @@
         "post": {
             "name": "completepairing"
         }
+    },
+    "/api/v2/users/me/verifiers/totp/{verifierId}": {
+        "post": {
+            "name": "validate"
+        }
     }
 }
