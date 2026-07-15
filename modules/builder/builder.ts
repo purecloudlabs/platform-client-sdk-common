@@ -35,7 +35,7 @@ const quarantineOperationIds: string[] = ['postGroupImages', 'postUserImages', '
 const quarantineModels: string[] = [];
 // Keep, Quarantine or Override Discriminator and Polymorphism (possible values: keep, quarantine, override)
 const defaultDiscriminatorManagement: string = 'quarantine';
-const keepDiscriminatorModels: string[] = ['ListValues']
+const keepDiscriminatorModels: string[] = ['ListValues'];
 // Override OperationId due to name conflict ("operationId", "x-purecloud-method-name")
 const overrideOperationIds: any = {};
 const aliasOperationIds: any = {
@@ -971,7 +971,7 @@ function manageDiscriminator(discriminatorManagement: string, keepDiscriminatorM
 			// Manage Discriminator
 			if (discriminatorManagement === 'override') {
 				// Override
-				// Remove discrimnator models and their children from Swagger
+				// Remove discriminator models and their children from Swagger
 				for (let modelName of modelsWithDiscriminator) {
 					if (swaggerDiff.newSwagger.definitions[modelName]) {
 						delete swaggerDiff.newSwagger.definitions[modelName];
@@ -988,7 +988,8 @@ function manageDiscriminator(discriminatorManagement: string, keepDiscriminatorM
 				}
 				let definitionsAsString = JSON.stringify(swaggerDiff.newSwagger.definitions);
 				let pathsAsString = JSON.stringify(swaggerDiff.newSwagger.paths);
-				for (let modelName of modelsWithDiscriminator) {
+				let modelsToOverride: string[] = [...modelsWithDiscriminator, ...childDiscriminatorModels];
+				for (let modelName of modelsToOverride) {
 					let regexConvertRef = new RegExp(String.raw`"#\/definitions\/${modelName}"`, "g");
 					definitionsAsString = definitionsAsString.replace(regexConvertRef, '"#/definitions/JsonNode"');
 					pathsAsString = pathsAsString.replace(regexConvertRef, '"#/definitions/JsonNode"');
@@ -999,18 +1000,9 @@ function manageDiscriminator(discriminatorManagement: string, keepDiscriminatorM
 				// Quarantine
 				// Find models with a direct or indirect reference on modelsWithDiscriminator or childDiscriminatorModels
 				// Init with discriminator based models and their children
-				let modelsToQuarantine: string[] = [];
-				for (let modelName of modelsWithDiscriminator) {
-					modelsToQuarantine.push(modelName);
-				}
-				for (let modelName of childDiscriminatorModels) {
-					modelsToQuarantine.push(modelName);
-				}
+				let modelsToQuarantine: string[] = [...modelsWithDiscriminator, ...childDiscriminatorModels];
 				// Recursive processing to find models
-				let searchModels: string[] = [];
-				for (let modelName of modelsToQuarantine) {
-					searchModels.push(modelName);
-				}
+				let searchModels: string[] = [...modelsToQuarantine];
 				let foundModels: string[] = [];
 				let findingCompleted: boolean = false;
 				while (findingCompleted !== true) {
