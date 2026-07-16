@@ -1,4 +1,4 @@
-import base64, imp, os, requests, sys, unittest, uuid, time
+import base64, importlib, os, requests, sys, unittest, uuid, time
 from pprint import pprint
 from retry import retry
 

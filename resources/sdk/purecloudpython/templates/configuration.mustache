@@ -135,7 +135,7 @@ class Configuration(object):
         # if live_reload_config set, start the config_updater thread
         if self.live_reload_config:
             run_observer = threading.Thread(target=self._run_observer)
-            run_observer.setDaemon(True)
+            run_observer.daemon = True
             run_observer.start()
 
             self._config_updater()

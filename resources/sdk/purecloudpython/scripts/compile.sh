@@ -29,8 +29,8 @@ python3.10 -m pip install --user -U watchdog
 echo "Install retry..."
 python3.10 -m pip install --user -U retry
 echo "Run unit tests -> SdkTests"
-python3.10 -m unittest SdkTests
+python3.10 -W all -m unittest SdkTests
 echo "Run unit tests mtls"
-python3.10 -m unittest SdkTests_mtls
+python3.10 -W all -m unittest SdkTests_mtls
 echo "Run unit tests proxy"
-python3.10 -m unittest SdkTests_proxy
+python3.10 -W all -m unittest SdkTests_proxy
