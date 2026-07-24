@@ -69,9 +69,11 @@ export default class CombineModels {
 			if (aggregateModels == true) {
 				// Write aggregated output
 				if (aggregateModulo == 1) {
+					console.log(`IOS SDK: single Aggregated Models swift file written (${aggregatedFileNamePrefix}.swift).`);
 					fs.writeFileSync(`${aggregatedFileNamePrefix}.swift`, this.aggregatedModelFiles.get(aggregateModulo.toString()));
 				} else if (aggregateModulo > 1) {
 					for (var indexFile = 1; indexFile <= aggregateModulo; indexFile++) {
+						console.log(`IOS SDK: index: ${indexFile.toString()} - Aggregated Models swift file written (${aggregatedFileNamePrefix}P${indexFile.toString()}.swift).`);
 						fs.writeFileSync(`${aggregatedFileNamePrefix}P${indexFile.toString()}.swift`, this.aggregatedModelFiles.get(indexFile.toString()));
 					}
 				}
