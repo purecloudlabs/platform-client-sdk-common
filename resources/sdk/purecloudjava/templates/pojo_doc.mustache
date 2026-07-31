@@ -10,7 +10,7 @@
 
 | Name | Value |
 | ---- | ----- |{{#allowableValues}}{{#enumVars.0}}
-| {{#isString}}{{#values}}{{#lambda.prefixNumberWithUnderscore}}{{#lambda.replace}}{{#lambda.uppercase}}{{.}}{{/lambda.uppercase}}{{/lambda.replace}}{{/lambda.prefixNumberWithUnderscore}} | &quot;{{.}}&quot; | {{^-last}}
+| {{#isString}}{{#values}}{{#lambda.prefixNumberWithUnderscore}}{{#lambda.replace}}{{#lambda.uppercase}}{{#lambda.replaceEmptyStringWithEmptyLabel}}{{.}}{{/lambda.replaceEmptyStringWithEmptyLabel}}{{/lambda.uppercase}}{{/lambda.replace}}{{/lambda.prefixNumberWithUnderscore}} | &quot;{{.}}&quot; | {{^-last}}
 | {{/-last}}{{#-last}}{{/-last}}{{/values}}{{/isString}}{{^isString}}{{#values}}{{#lambda.replace}}{{#lambda.prefixNumberWithWord}}{{#lambda.uppercase}}{{.}}{{/lambda.uppercase}}{{/lambda.prefixNumberWithWord}}{{/lambda.replace}} | {{.}} | {{^-last}}
 | {{/-last}}{{#-last}}{{/-last}}{{/values}}{{/isString}}{{/enumVars.0}}{{/allowableValues}}
 {{/isEnum}}{{#items.isEnum}}
