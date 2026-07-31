@@ -353,7 +353,7 @@ The other AuthPopupConfiguration's parameters drive one of the several logic imp
 
 ### Login Redirect Uri
 
-**The *redirectUri*, used in *loginImplicitGrant* or *loginPKCEGrant* methods, corresponds to the url that you want your pop-up windowto be redirected to, at the end of the Authentication process.**.  
+**The *redirectUri*, used in *loginImplicitGrant* or *loginPKCEGrant* methods, corresponds to the url that you want your pop-up window to be redirected to, at the end of the Authentication process.**.  
 e.g. `https://my_pop_up_host/auth_popup.html`
 
 **This uri MUST be added to the *Authorized redirect URIs* defined in your OAuth Client.**
@@ -433,21 +433,21 @@ client.loginPKCEGrant(clientId, redirectUri, { state: state })
 
 ### Popup Authentication Logic
 
-When Popup Authentication is enabled (*usePopup: true*), the ApiCLient (invoked using the *loginImplicitGrant* and *loginPKCEGrant* ApiClient's methods) perform the following actions:
+When Popup Authentication is enabled (*usePopup: true*), the ApiClient (invoked using the *loginImplicitGrant* or *loginPKCEGrant* ApiClient's methods) perform the following actions:
 * Standard actions:
   - It checks if an access token is already set at ApiClient's level, or available in local storage (when *setPersistSettings* is enabled)
-  - If a value is available, it tests if the access token is still valid
+  - If a value is available, it tests if the access token is still valid and successfully exists if it is the case.
 * The ApiClient computes a url to pop-up (with its URL Query parameters).
   - By default, the url of the regional Genesys Cloud Login Web page is used for the initial pop-up (e.g. `https://login.mypurecloud.ie/oauth/authorize?client_id=...&redirect_uri=...`).
-  - If *overridePopupUrl* is set, it will be the url used for the initial `window.open` pop-up (i.e. if you want to display an intermediate page in the pop-up window, before redirecting to Genesys Cloud Login Web page)
-* The ApiClient request to open this url in a separate tab or window using `window.open`.
+  - If *overridePopupUrl* is set, it will be the url used for the initial `window.open` pop-up (i.e. if you want to display an intermediate page in the pop-up window, before redirecting to the Genesys Cloud Login Web page)
+* The ApiClient requests to open this url in a separate tab or window using `window.open`.
   - It waits for a "message" window event, sent from the final pop-up page (i.e. the Login Redirect Uri), with the collected authentication info (from URL Query or Hash parameters: *access_token*, *code*, *error*).
   - If it does not receive such message within *popupTimeout*, the method throws a Timeout error and exits.
 
 Finishing process:
-* Upon receiving collected authentication info - if *useWindowReplace* is false (DEFAULT):
+* Upon receiving collected authentication info - if *useWindowReplace* is false (DEFAULT BEHAVIOR):
   - If an *access_token* is received, the ApiClient extracts the access token from the received message, tests its validity and the method successfully returns (i.e. resolves).
-  - If a *code* is received, the ApiClient assumes an OAuth PKCE Grant flow, extracts the code from the received message, invokes the Genesys CLoud oauth/token endpoint to obtain an access token, tests the validity of the token, and the method successfully returns (i.e. resolves).
+  - If a *code* is received, the ApiClient assumes an OAuth PKCE Grant flow, extracts the code from the received message, invokes the Genesys Cloud `oauth/token` endpoint to obtain an access token from the received code and saved code verifier, tests the validity of the token, and the method successfully returns (i.e. resolves).
 * Upon receiving collected authentication info - if *useWindowReplace* is true:
   - By default, the ApiClient will use the current windows.location url, add the collected authentication info as URL Query or Hash parameters, and invoke `window.replace` on this url.
   - If *overrideWindowReplaceUri* is set, the ApiClient will use that url url, add the collected authentication info as URL Query or Hash parameters, and invoke `window.replace` on that url.
