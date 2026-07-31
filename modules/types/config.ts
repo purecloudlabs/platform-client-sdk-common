@@ -22,6 +22,7 @@ export interface Settings {
     logLevel: string;
     resourcePaths: ResourcePaths;
     extensionsDestination: string;
+    samplesDestination?: string;
     swagger: Swagger;
     swaggerCodegen: SwaggerCodegen;
     releaseNoteTemplatePath: string;
@@ -34,6 +35,7 @@ export interface Settings {
 
 export interface ResourcePaths {
     extensions: string;
+    samples?: string;
     templates: string;
     scripts: string;
 }

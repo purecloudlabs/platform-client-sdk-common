@@ -1,5 +1,6 @@
 export interface Resourcepaths {
     extensions: string;
+    samples?: string;
     scripts: string;
     templates: string;
 }
