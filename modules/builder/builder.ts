@@ -222,6 +222,11 @@ export class Builder {
 							? this.config.settings.resourcePaths.extensions
 							: path.join(resourceRoot, 'extensions')
 					),
+					samples: path.resolve(
+						this.config.settings.resourcePaths.samples
+							? this.config.settings.resourcePaths.samples
+							: path.join(resourceRoot, 'samples')
+					),
 					scripts: path.resolve(
 						this.config.settings.resourcePaths.scripts ? this.config.settings.resourcePaths.scripts : path.join(resourceRoot, 'scripts')
 					),
@@ -625,6 +630,19 @@ function buildImpl(): Promise<string> {
 			} else {
 				log.debug('Extensions path not found');
 				log.warn(`Extensions path does not exist! Path: ${_this.resourcePaths.extensions}`);
+			}
+
+			if (_this.config.settings.samplesDestination) {
+				log.debug('Checking for samples to copy...');
+				if (fs.existsSync(_this.resourcePaths.samples)) {
+					fs.ensureDirSync(_this.config.settings.samplesDestination);
+					log.debug(`Copying samples from ${_this.resourcePaths.samples} to ${_this.config.settings.samplesDestination}`);
+					log.info('Copying samples...');
+					fs.copySync(_this.resourcePaths.samples, _this.config.settings.samplesDestination);
+				} else {
+					log.debug('Samples path not found');
+					log.warn(`Samples path does not exist! Path: ${_this.resourcePaths.samples}`);
+				}
 			}
 
 			// Ensure compile scripts fail on error
