@@ -729,5 +729,10 @@
         "post": {
             "name": "validate"
         }
-    }
+    },
+	"/api/v2/socialmedia/topics/{topicId}/dataingestionrules/linkedin/{linkedInIngestionRuleId}": {
+		"patch": {
+			"name": "patch"
+		}
+	}
 }
