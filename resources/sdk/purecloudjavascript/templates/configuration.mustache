@@ -335,7 +335,7 @@ class Configuration {
 	 */
 	setAuthPopupConfiguration(authPopupConfiguration) {
 		this.authPopupConfiguration = this._getDefaultAuthPopupConfiguration();
-		this.authPopupConfiguration = this.mergeWithAuthPopupConfiguration(authPopupConfiguration)
+		this.authPopupConfiguration = this.mergeWithAuthPopupConfiguration(authPopupConfiguration);
 	}
 
 	/**
@@ -357,7 +357,7 @@ class Configuration {
 	 * @param {boolean} authPopupConfiguration.usePopupIdentifier - (optional) Determines if an additional identifier will be leveraged during the Authentication via Popup process.
 	 */
 	updateAuthPopupConfiguration(authPopupConfiguration) {
-		this.authPopupConfiguration = this.mergeWithAuthPopupConfiguration(authPopupConfiguration)
+		this.authPopupConfiguration = this.mergeWithAuthPopupConfiguration(authPopupConfiguration);
 	}
 
 	setEnvironment(env) {
