@@ -325,6 +325,12 @@ To facilitate the enablement of Popup Authentication, and limit the impact of it
 
 ### Introduce Popup Authentication in an existing code
 
+What you'll need to do:
+* You will need to host a new web page (i.e. the page, displayed in the pop-up window, the user is redirected to on successful authentication).
+* You will need to add the url of this page to the list of Authorized Redirect URIs of your OAuth Client.
+* You will need to add a couple of lines in your code, as you can see below (change your redirect url, and enable popup authentication)
+* Don't forget to include ["allow-popups" in the IFrame Sandbox options of your Client App/Interaction Widget integration](https://help.genesys.cloud/articles/set-up-an-interaction-widget-integration/) to allow the window pop-up.
+
 You can enable Popup Authentication with one of the two methods described in the following code.
 
 ```javascript
