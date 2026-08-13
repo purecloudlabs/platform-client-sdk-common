@@ -734,5 +734,15 @@
 		"patch": {
 			"name": "patch"
 		}
-	}
+	},
+    "/api/v2/carrierservices/integrations/locations/crisisnotifications": {
+        "post": {
+            "name": "updatecrisisemails"
+        }
+    },
+    "/api/v2/carrierservices/integrations/locations/{locationId}/crisisnotifications": {
+        "post": {
+            "name": "updatecrisisemailsforlocation"
+        }
+    }
 }
