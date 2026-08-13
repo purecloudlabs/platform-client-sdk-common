@@ -23,7 +23,7 @@ aws s3 cp \
 aws s3 cp \
 	$BUILD_DIR/dist/web-cjs \
 	s3://inin-index-files-prod/developercenter-cdn/javascript/latest \
-	--recursive --acl "public-read"
+	--recursive --acl "public-read" --cache-control max-age=86400
 
 # AMD
 aws s3 cp \
@@ -33,6 +33,6 @@ aws s3 cp \
 aws s3 cp \
 	$BUILD_DIR/dist/web-amd \
 	s3://inin-index-files-prod/developercenter-cdn/javascript/amd/latest \
-	--recursive --acl "public-read"
+	--recursive --acl "public-read" --cache-control max-age=86400
 
 
