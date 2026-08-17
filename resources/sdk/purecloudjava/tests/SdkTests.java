@@ -20,6 +20,8 @@ import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.time.LocalDateTime;
 
 public class SdkTests {
     private String connector;
@@ -173,31 +175,29 @@ public class SdkTests {
                     .withAutoConnect(false)
                     .build();
 
-            // Introduce 2 seconds delay before presence update
+            // Introduce 1 second delay before presence update
             try {
-                Thread.sleep(2000);
+                Thread.sleep(1000);
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
             }
 
+            // IMPORTANT: register expectation before making the REST call
+            listener.expectPresence(busyPresenceId);
+
             // Set presence to busy
+            LocalDateTime currentBusyDT = LocalDateTime.now();
             System.out.println("DEBUG testNotifications(" +
-                this.connector +"): updating user presence to busy");
+                this.connector +"): [" +
+                currentBusyDT + "]: updating user presence to busy");
             presenceApi.patchUserPresence(userId, "PURECLOUD", createUserPresence(busyPresenceId));
 
             // Wait for notification
-            Boolean presenceSet = false;
-            int c = 0;
-            while (!presenceSet && c < 500) {
-                c++;
-                Thread.sleep(10);
-
-                if (busyPresenceId.equals(listener.getPresenceId()))
-                    presenceSet = true;
-            }
+            boolean busyReceived =
+                listener.awaitPresence(5, TimeUnit.SECONDS);
 
             // If presence update was not received, verify current user presence via API
-            if (!presenceSet) {
+            if (!busyReceived) {
                 UserPresence verifyUserPresence = presenceApi.getUserPresence(userId, "PURECLOUD");
                 String currentSystemPresence = "Undefined";
                 if (verifyUserPresence != null && verifyUserPresence.getPresenceDefinition() != null) {
@@ -213,33 +213,37 @@ public class SdkTests {
             }
 
             // Verify
-            Assert.assertEquals(listener.getPresenceId(), busyPresenceId);
+            Assert.assertTrue(
+                busyReceived,
+                "Did not receive BUSY presence notification within 5 seconds");
 
-            // Introduce 2 seconds delay before presence update
+            Assert.assertEquals(
+                    listener.getPresenceId(),
+                    busyPresenceId);
+
+            // Introduce 1 second delay before presence update
             try {
-                Thread.sleep(2000);
+                Thread.sleep(1000);
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
             }
 
+            // IMPORTANT: register expectation before making the REST call
+            listener.expectPresence(availablePresenceId);
+
             // Set presence to available
+            LocalDateTime currentAvailableDT = LocalDateTime.now();
             System.out.println("DEBUG testNotifications(" +
-                this.connector +"): updating user presence to available");
+                this.connector +"): [" +
+                currentAvailableDT + "]: updating user presence to available");
             presenceApi.patchUserPresence(userId, "PURECLOUD", createUserPresence(availablePresenceId));
 
             // Wait for notification
-            presenceSet = false;
-            c = 0;
-            while (!presenceSet && c < 500) {
-                c++;
-                Thread.sleep(10);
-
-                if (availablePresenceId.equals(listener.getPresenceId()))
-                    presenceSet = true;
-            }
+            boolean availableReceived =
+                listener.awaitPresence(5, TimeUnit.SECONDS);
 
             // If presence update was not received, verify current user presence via API
-            if (!presenceSet) {
+            if (!availableReceived) {
                 UserPresence verifyUserPresence = presenceApi.getUserPresence(userId, "PURECLOUD");
                 String currentSystemPresence = "Undefined";
                 if (verifyUserPresence != null && verifyUserPresence.getPresenceDefinition() != null) {
@@ -260,7 +264,13 @@ public class SdkTests {
             notificationHandler.disconnect();
 
             // Verify
-            Assert.assertEquals(listener.getPresenceId(), availablePresenceId);
+            Assert.assertTrue(
+                    availableReceived,
+                    "Did not receive AVAILABLE presence notification within 5 seconds");
+
+            Assert.assertEquals(
+                    listener.getPresenceId(),
+                    availablePresenceId);
         } catch (ApiException ex) {
             handleApiException(ex);
         } catch (Exception ex) {
