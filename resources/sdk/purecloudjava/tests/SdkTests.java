@@ -161,14 +161,28 @@ public class SdkTests {
     @Test(priority = 6)
     public void testNotifications() {
         try {
+            System.out.println("DEBUG testNotifications(" +
+                this.connector +"): starting");
+
             // Set up notification handler
             UserPresenceListener listener = new UserPresenceListener(userId);
+            TestWebSocketListener wslistener = new TestWebSocketListener(this.connector);
             NotificationHandler notificationHandler = NotificationHandler.Builder.standard()
+                    .withWebSocketListener(wslistener)
                     .withNotificationListener(listener)
                     .withAutoConnect(false)
                     .build();
 
+            // Introduce 2 seconds delay before presence update
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            }
+
             // Set presence to busy
+            System.out.println("DEBUG testNotifications(" +
+                this.connector +"): updating user presence to busy");
             presenceApi.patchUserPresence(userId, "PURECLOUD", createUserPresence(busyPresenceId));
 
             // Wait for notification
@@ -182,10 +196,35 @@ public class SdkTests {
                     presenceSet = true;
             }
 
+            // If presence update was not received, verify current user presence via API
+            if (!presenceSet) {
+                UserPresence verifyUserPresence = presenceApi.getUserPresence(userId, "PURECLOUD");
+                String currentSystemPresence = "Undefined";
+                if (verifyUserPresence != null && verifyUserPresence.getPresenceDefinition() != null) {
+                    currentSystemPresence = verifyUserPresence.getPresenceDefinition().getSystemPresence();
+                }
+                String futureSystemPresence = "Undefined";
+                if (verifyUserPresence != null && verifyUserPresence.getFuturePresenceDefinition() != null) {
+                    futureSystemPresence = verifyUserPresence.getFuturePresenceDefinition().getSystemPresence();
+                }
+                System.out.println("DEBUG testNotifications(" +
+                    this.connector +"): verify user presence (busy expected):" +
+                    "presenceDefinition=" + currentSystemPresence + ", futurePresenceDefinition=" + futureSystemPresence);
+            }
+
             // Verify
             Assert.assertEquals(listener.getPresenceId(), busyPresenceId);
 
+            // Introduce 2 seconds delay before presence update
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            }
+
             // Set presence to available
+            System.out.println("DEBUG testNotifications(" +
+                this.connector +"): updating user presence to available");
             presenceApi.patchUserPresence(userId, "PURECLOUD", createUserPresence(availablePresenceId));
 
             // Wait for notification
@@ -198,6 +237,27 @@ public class SdkTests {
                 if (availablePresenceId.equals(listener.getPresenceId()))
                     presenceSet = true;
             }
+
+            // If presence update was not received, verify current user presence via API
+            if (!presenceSet) {
+                UserPresence verifyUserPresence = presenceApi.getUserPresence(userId, "PURECLOUD");
+                String currentSystemPresence = "Undefined";
+                if (verifyUserPresence != null && verifyUserPresence.getPresenceDefinition() != null) {
+                    currentSystemPresence = verifyUserPresence.getPresenceDefinition().getSystemPresence();
+                }
+                String futureSystemPresence = "Undefined";
+                if (verifyUserPresence != null && verifyUserPresence.getFuturePresenceDefinition() != null) {
+                    futureSystemPresence = verifyUserPresence.getFuturePresenceDefinition().getSystemPresence();
+                }
+                System.out.println("DEBUG testNotifications(" +
+                    this.connector +"): verify user presence (available expected):" +
+                    "presenceDefinition=" + currentSystemPresence + ", futurePresenceDefinition=" + futureSystemPresence);
+            }
+
+            // Closing WebSocket
+            System.out.println("DEBUG testNotifications(" +
+                    this.connector +"): closing websocket");
+            notificationHandler.disconnect();
 
             // Verify
             Assert.assertEquals(listener.getPresenceId(), availablePresenceId);
