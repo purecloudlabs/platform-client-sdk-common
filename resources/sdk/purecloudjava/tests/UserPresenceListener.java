@@ -32,8 +32,8 @@ public class UserPresenceListener implements NotificationListener<PresenceEventU
      * Call this BEFORE triggering the API Update Presence operation.
      */
     public void expectPresence(String expectedPresenceId) {
-        this.expectedPresenceId = expectedPresenceId;
         this.presenceLatch = new CountDownLatch(1);
+        this.expectedPresenceId = expectedPresenceId;
     }
 
     /**
