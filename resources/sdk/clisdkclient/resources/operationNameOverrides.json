@@ -744,5 +744,10 @@
         "post": {
             "name": "updatecrisisemailsforlocation"
         }
+    },
+    "/api/v2/settings/webrtc/users/{userId}": {
+        "get": {
+            "name": "getforuser"
+        }
     }
 }
