@@ -1,6 +1,6 @@
 import http from 'http';
 import net from 'net';
-import url from 'url';
+import { URL } from 'url';
 import httpProxy from 'http-proxy';
 import { log } from '../../modules/log/logger.js';
 
@@ -26,10 +26,18 @@ class ProxyServer {
     });
 
     this.server = http.createServer((req, res) => {
-      const { hostname, port } = url.parse(req.url);
+      let reqURL = new URL(req.url);
+      let hostname = reqURL.hostname;
+      let port = reqURL.port;
+      if (!port) {
+        if (reqURL.protocol == 'https:') port = '443';
+        else if (reqURL.protocol == 'http:') port = '80';
+      }
       log.debug(`Incoming request for ${req.url}`);
       log.debug(`Request method: ${req.method}`);
       log.debug(`Request headers: ${JSON.stringify(req.headers, null, 2)}`);
+      log.debug(`Request hostname: ${hostname}`);
+      log.debug(`Request port: ${port}`);
       
       if (hostname && port) {
         const target = `http://${hostname}:${port}`;
@@ -49,9 +57,17 @@ class ProxyServer {
   }
 
   private handleConnectRequest(req: http.IncomingMessage, clientSocket: net.Socket, head: Buffer): void {
-    const { port, hostname } = url.parse(`//${req.url}`, false, true);
+    let reqURL = new URL(req.url.startsWith('http') ? req.url : `https://${req.url}`);
+    let hostname = reqURL.hostname;
+    let port = reqURL.port;
+    if (!port) {
+      if (reqURL.protocol == 'https:') port = '443';
+      else if (reqURL.protocol == 'http:') port = '80';
+    }
     log.debug(`CONNECT request received for ${req.url}`);
     log.debug(`CONNECT request headers: ${JSON.stringify(req.headers, null, 2)}`);
+    log.debug(`CONNECT request hostname: ${hostname}`);
+    log.debug(`CONNECT request port: ${port}`);
 
     if (hostname && port) {
       log.info(`Establishing tunnel to ${hostname}:${port}`);

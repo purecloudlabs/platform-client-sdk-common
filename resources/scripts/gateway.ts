@@ -1,6 +1,6 @@
 import http from 'http';
 import net from 'net';
-import url from 'url';
+import { URL } from 'url';
 import fs from 'fs';
 import https from 'https';
 import httpProxy from 'http-proxy';
@@ -57,13 +57,22 @@ class GatewayServer {
       }
       
       // Parse incoming request URL
-      const targetHost = url.parse(reqURL || '');
-      log('Parsed target host', targetHost);
+      let targetHostPath = null;
+      if (reqURL) {
+        let targetHost: URL;
+        if (reqURL.startsWith('http')) {
+          targetHost = new URL(reqURL);
+        } else {
+          targetHost = new URL(`https://${this.environment}${reqURL}`);
+        }
+        targetHostPath = `${targetHost.pathname}${targetHost.search}`;
+      }
+      log('Parsed target host path', targetHostPath);
 
       const options: https.RequestOptions = {
         hostname: this.environment,
         port: 443, // HTTPS port
-        path: targetHost.path,
+        path: targetHostPath,
         method: req.method,
         headers: {
           ...req.headers,
@@ -114,9 +123,8 @@ class GatewayServer {
       headers: req.headers
     });
 
-    const targetUrl = url.parse(`//${req.url}`, false, true);
     const environment = this.fetchEnvironment("api");
-    log('CONNECT request details', { targetUrl, environment });
+    log('CONNECT request details', { targetUrl: req.url, environment });
 
     const serverSocket = tls.connect(
       {
