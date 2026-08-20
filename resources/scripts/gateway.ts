@@ -3,9 +3,8 @@ import net from 'net';
 import url from 'url';
 import fs from 'fs';
 import https from 'https';
-import pkg from 'http-proxy';
-import * as tls from "tls";
-const { createProxyServer } = pkg;
+import httpProxy from 'http-proxy';
+import tls from "tls";
 
 // Logger function to standardize logging format
 const log = (activity: string, details?: any) => {
@@ -13,13 +12,16 @@ const log = (activity: string, details?: any) => {
     console.log(`[${timestamp}] ${activity}`, details ? details : '');
 };
 
-export default class GatewayServer {
-  public gateway: pkg.httpProxy;
+class GatewayServer {
+	// Properties
+  public gateway: httpProxy<http.IncomingMessage, http.ServerResponse<http.IncomingMessage>>;
   public server: https.Server;
   private environment: string;
+
   constructor() {
     log('Initializing GatewayServer');
-    this.gateway = createProxyServer();
+    this.gateway = httpProxy.createProxyServer();
+    
     this.environment = this.fetchEnvironment("login");
     const domain = 'localhost';
     log('Server configuration', { environment: this.environment, domain });
@@ -99,8 +101,8 @@ export default class GatewayServer {
     log('CONNECT handler registered');
   }
 
-  private fetchEnvironment(path: string):string{
-    const envUrl = path+"."+process.env.PURECLOUD_ENV;
+  private fetchEnvironment(path: string): string{
+    const envUrl = path + "." + process.env.PURECLOUD_ENV;
     log('Environment URL resolved', envUrl);
     return envUrl
   }

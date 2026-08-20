@@ -1,9 +1,9 @@
 import _ from 'lodash';
 import dot from 'dot';
 import pluralize from 'pluralize';
-import { Swagger, Info, Path, TypeResponse, ItemsType, Property, HttpMethod, valueTypes, Parameter, Changes } from '../types/swagger';
-import { Version, Data } from '../types/builderTypes';
-import log from '../log/logger';
+import { Swagger, Info, Path, TypeResponse, ItemsType, Property, HttpMethod, valueTypes, Parameter, Changes } from '../types/swagger.js';
+import { Version, Data } from '../types/builderTypes.js';
+import { log } from '../log/logger.js';
 
 /* PRIVATE VARS */
 

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import * as readline from 'readline';
-import log from '../../modules/log/logger';
+import { log } from '../../modules/log/logger.js';
 
 interface APIData {
 	operationId?: string;

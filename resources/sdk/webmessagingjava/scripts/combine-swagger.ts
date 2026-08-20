@@ -1,6 +1,6 @@
 import fs from 'fs';
 import childProcess from 'child_process';
-import { Swagger , Definition, Property, ProduceElement, ItemsType} from '../../../../modules/types/swagger';
+import { Swagger , Definition, Property, ProduceElement, ItemsType} from '../../../../modules/types/swagger.js';
 
 export class CombineSwagger {
     internalSwagger: Swagger;

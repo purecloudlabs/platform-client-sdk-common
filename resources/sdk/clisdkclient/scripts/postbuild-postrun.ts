@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
-import log from '../../../../modules/log/logger';
+import { log } from '../../../../modules/log/logger.js';
 
 export class PostBuildPostRun {
 	init() {

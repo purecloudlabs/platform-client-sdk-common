@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
-import { Swagger } from '../../../../modules/types/swagger';
-import log from '../../../../modules/log/logger';
+import { Swagger } from '../../../../modules/types/swagger.js';
+import { log } from '../../../../modules/log/logger.js';
 
 export class GenerateOperationIdMappings {
     init() {

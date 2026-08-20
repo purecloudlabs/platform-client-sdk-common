@@ -5,30 +5,35 @@ import fs from 'fs-extra';
 import https from 'https';
 import path from 'path';
 import pluralize from 'pluralize';
-import { Config, Script, Haystack, PureCloud } from '../types/config'
-import { LocalConfig, Overrides, Settings, StageSettings, valueOverides } from '../types/localConfig'
+import { Config, Script, Haystack, PureCloud } from '../types/config.js'
+import { LocalConfig, Overrides, Settings, StageSettings, valueOverides } from '../types/localConfig.js'
 import moment, { Moment } from 'moment-timezone';
-import { Resourcepaths, Version, ApiVersionData, Data, Release } from '../types/builderTypes'
-import { ItemsType, Format } from '../types/swagger'
+import { Resourcepaths, Version, ApiVersionData, Data, Release } from '../types/builderTypes.js'
+import { ItemsType, Format } from '../types/swagger.js'
 import platformClient from 'purecloud-platform-client-v2';
 import yaml from 'js-yaml';
-import SwaggerDiff from '../swagger/swaggerDiff';
-import GitModule from '../git/gitModule';
-import Zip from '../util/zip';
+import SwaggerDiff from '../swagger/swaggerDiff.js';
+import { GitModule, GithubConfig } from '../git/gitModule.js';
+import { zipDir } from '../util/zip.js';
 import { Models } from 'purecloud-platform-client-v2';
-import log from '../log/logger';
-import axios from "axios";
-import { Endpoints } from "@octokit/types";
+import { log } from '../log/logger.js';
 
 
 const swaggerDiff = new SwaggerDiff();
 const git = new GitModule();
-const zip = new Zip();
 const TIMESTAMP_FORMAT = 'h:mm:ss a';
 const NOTIFICATION_ID_REGEX = /^urn:jsonschema:(.+):v2:(.+)$/i;
 let _this: Builder;
 let newSwaggerTempFile = '';
 
+// Alternative to github-api-promise until update
+
+let githubConfig: GithubConfig = {
+	owner: "github_username",
+	repo: "repo_name",
+	host: "https://api.github.com",
+	debug: false,
+};
 
 // Quarantine Operations
 const quarantineOperationIds: string[] = ['postGroupImages', 'postUserImages', 'postLocationImages'];
@@ -55,7 +60,7 @@ let forceInt64Integers = true;
 let removeEnumDuplicates = true;
 
 export class Builder {
-
+	// Properties
 	config: Config;
 	resourcePaths: Resourcepaths;
 	path: string = '';
@@ -673,8 +678,7 @@ function buildImpl(): Promise<string> {
 
 			log.debug('Starting documentation zip operation');
 			log.info('Zipping docs...');
-			zip
-				.zipDir(path.join(outputDir, 'docs'), path.join(getEnv('SDK_TEMP') as string, 'docs.zip'))
+			zipDir(path.join(outputDir, 'docs'), path.join(getEnv('SDK_TEMP') as string, 'docs.zip'))
 				.then(() => {
 					log.debug('Documentation zipped successfully, executing post-run scripts');
 					return executeScripts(_this.config.stageSettings.build.postRunScripts, 'custom build post-run');
@@ -783,7 +787,6 @@ function createRelease(): Promise<string> {
 
 				githubConfig.repo = repoName;
 				githubConfig.owner = repoOwner;
-				githubConfig.token = getEnv('GITHUB_TOKEN') as string;
 
 				const tagName = _this.config.settings.sdkRepo.tagFormat.replace('{version}', _this.version.displayFull);
 				let createReleaseOptions = {
@@ -797,7 +800,7 @@ function createRelease(): Promise<string> {
 
 				console.log(createReleaseOptions);
 				// Create release
-				return githubCreateRelease(createReleaseOptions);
+				return git.githubCreateRelease(githubConfig, createReleaseOptions);
 			})
 			.then((release) => {
 				log.info(`Created release #${release}`);
@@ -1460,91 +1463,4 @@ function getFileCount(dir: fs.PathLike) {
 	return files.length;
 }
 
-// Alternative to github-api-promise until update
 
-let githubConfig: any = {
-	owner: "github_username",
-	repo: "repo_name",
-	token: "your_github_token",
-	host: "https://api.github.com",
-	debug: false,
-};
-
-function githubGetRepoUrl(additionalPath: string) {
-	var url = githubConfig.host + "/repos/" + githubConfig.owner + "/" + githubConfig.repo + "/";
-	if (additionalPath) url += additionalPath;
-	return url;
-}
-
-function githubLogRequestSuccess(res: any, message?: string) {
-	if (githubConfig.debug != true) {
-		return;
-	}
-	let logMsg: string = "[INFO]" +
-		"[" +
-		res.statusCode +
-		"]" +
-		"[" +
-		res.req.method +
-		" " +
-		res.req.path +
-		"] " +
-		(message ? message : "");
-
-	console.log(logMsg);
-}
-
-function githubLogRequestError(err: any) {
-	if (err) {
-		let logMsg: string = "[ERROR]" +
-			"[" +
-			(err.res ? err.res.statusCode : "Unknown Status Code") +
-			"]" +
-			"[" +
-			(err.res && err.res.req ? err.res.req.method : "Unknown Method") +
-			" " +
-			(err.res && err.res.req ? err.res.req.path : "Unknown Path") +
-			"] " +
-			(err.message ? err.message : "Unknown Error Message");
-		console.log(logMsg);
-	} else {
-		console.log("[ERROR] Unknown Error");
-	}
-}
-
-/**
- * Users with push access to the repository can create a release. Returns 422 if anything is wrong with the values in the body.
- * @param  {JSON} 	body  		A JSON document to send with the request
- * @return {JSON}           	The release data
- */
-function githubCreateRelease(
-	body: any
-): Promise<
-	Endpoints["POST /repos/{owner}/{repo}/releases"]["response"]["data"]
-> {
-	return new Promise((resolve, reject) => {
-		try {
-			axios
-				.post(githubGetRepoUrl("releases"), body, {
-					headers: {
-						Authorization: `token ${githubConfig.token}`,
-						"User-Agent": "github-api-promise",
-						"Content-Type": "application/json",
-					},
-				})
-				.then(
-					function (res: any) {
-						githubLogRequestSuccess(res);
-						resolve(res.body);
-					},
-					function (err: any) {
-						githubLogRequestError(err);
-						reject(err.message);
-					}
-				);
-		} catch (err) {
-			console.log(err);
-			reject(err.message);
-		}
-	});
-}

@@ -1,18 +1,17 @@
 import http from 'http';
 import net from 'net';
 import url from 'url';
-import pkg from 'http-proxy';
-import log from '../../modules/log/logger';
-const { createProxyServer } = pkg;
+import httpProxy from 'http-proxy';
+import { log } from '../../modules/log/logger.js';
 
-export default class ProxyServer {
-
-  public proxy: pkg.httpProxy;
+class ProxyServer {
+	// Properties
+  public proxy: httpProxy<http.IncomingMessage, http.ServerResponse<http.IncomingMessage>>;;
   public server: http.Server;
 
   constructor() {
     log.info('Initializing proxy server...');
-    this.proxy = createProxyServer();
+    this.proxy = httpProxy.createProxyServer();
     
     // Log proxy errors
     this.proxy.on('error', (err, req, res) => {
@@ -49,7 +48,7 @@ export default class ProxyServer {
     log.info('Proxy server initialized successfully');
   }
 
-  private handleConnectRequest(req: http.IncomingMessage, clientSocket: net.Socket, head: Buffer) {
+  private handleConnectRequest(req: http.IncomingMessage, clientSocket: net.Socket, head: Buffer): void {
     const { port, hostname } = url.parse(`//${req.url}`, false, true);
     log.debug(`CONNECT request received for ${req.url}`);
     log.debug(`CONNECT request headers: ${JSON.stringify(req.headers, null, 2)}`);

@@ -1,9 +1,9 @@
 import childProcess from 'child_process';
 import fs from 'fs';
-import swaggerDiffImpl from './swaggerDiffImpl';
-import { Swagger, Info, Changes, ProduceElement, ItemsType } from '../types/swagger';
-import { Data, Version } from '../types/builderTypes';
-import log from '../log/logger';
+import swaggerDiffImpl from './swaggerDiffImpl.js';
+import { Swagger, Info, Changes, ProduceElement, ItemsType } from '../types/swagger.js';
+import { Data, Version } from '../types/builderTypes.js';
+import { log } from '../log/logger.js';
 export default class SwaggerDiff {
 
 	changes: Changes;

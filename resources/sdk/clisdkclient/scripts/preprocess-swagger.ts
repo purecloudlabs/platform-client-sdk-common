@@ -1,9 +1,9 @@
 import fs from 'fs-extra';
 import child_process from 'child_process';
-import { Swagger } from '../../../../modules/types/swagger';
-import { ResourceDefinitions } from './resourceDefinitions';
+import { Swagger } from '../../../../modules/types/swagger.js';
+import { ResourceDefinitions } from './resourceDefinitions.js';
 import childProcess from 'child_process';
-import log from '../../../../modules/log/logger';
+import { log } from '../../../../modules/log/logger.js';
 const maxFileBufferSize = 1024 * 1024 * 1024;
 
 
