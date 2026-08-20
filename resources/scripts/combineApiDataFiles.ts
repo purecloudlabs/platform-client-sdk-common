@@ -18,9 +18,8 @@ interface Parameter {
 	required: string;
 }
 
-
-export default class CombineApis {
-
+class CombineApis {
+	// Properties
 	dataFile: APIData = {};
 	dirent: fs.Dirent;
 	rl: readline.Interface;
@@ -41,7 +40,6 @@ export default class CombineApis {
 	}
 
 	async combineApiDataFiles(docsDir: string, dataFileName: string) {
-
 		const dir = fs.opendirSync(docsDir);
 		log.debug('Starting combineApiDataFiles');
 		log.debug(`docsDir: ${docsDir}, dataFileName: ${dataFileName}`);
@@ -149,7 +147,6 @@ export default class CombineApis {
 			process.exit(-1);
 		}
 	}
-
 }
 
 const combineApis = new CombineApis();
