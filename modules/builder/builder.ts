@@ -5,24 +5,19 @@ import fs from 'fs-extra';
 import https from 'https';
 import path from 'path';
 import pluralize from 'pluralize';
-import { Config, Script, Haystack, PureCloud } from '../types/config.js'
-import { LocalConfig, Overrides, Settings, StageSettings, valueOverides } from '../types/localConfig.js'
-import moment, { Moment } from 'moment-timezone';
-import { Resourcepaths, Version, ApiVersionData, Data, Release } from '../types/builderTypes.js'
-import { ItemsType, Format } from '../types/swagger.js'
-import platformClient from 'purecloud-platform-client-v2';
 import yaml from 'js-yaml';
+import { Config, Script, PureCloud, LocalConfig, valueOverides } from '../types/config.js';
+import { Resourcepaths, Version, ApiVersionData, Data } from '../types/builderTypes.js';
 import SwaggerDiff from '../swagger/swaggerDiff.js';
 import { GitModule, GithubConfig } from '../git/gitModule.js';
 import { zipDir } from '../util/zip.js';
-import { Models } from 'purecloud-platform-client-v2';
 import { log } from '../log/logger.js';
+import { maybeInit, checkAndThrow, getEnv, setEnv, resolveEnvVars, measureDurationFrom, getFileCount } from '../util/utils.js';
+import { swaggerPreprocessing } from '../swagger/swaggerPreprocessing.js';
 
 
 const swaggerDiff = new SwaggerDiff();
 const git = new GitModule();
-const TIMESTAMP_FORMAT = 'h:mm:ss a';
-const NOTIFICATION_ID_REGEX = /^urn:jsonschema:(.+):v2:(.+)$/i;
 let _this: Builder;
 let newSwaggerTempFile = '';
 
@@ -34,30 +29,6 @@ let githubConfig: GithubConfig = {
 	host: "https://api.github.com",
 	debug: false,
 };
-
-// Quarantine Operations
-const quarantineOperationIds: string[] = ['postGroupImages', 'postUserImages', 'postLocationImages'];
-const quarantineModels: string[] = [];
-// Keep, Quarantine or Override Discriminator and Polymorphism (possible values: keep, quarantine, override)
-const defaultDiscriminatorManagement: string = 'quarantine';
-const keepDiscriminatorModels: string[] = ['ListValues'];
-// Override OperationId due to name conflict ("operationId", "x-purecloud-method-name")
-const overrideOperationIds: any = {};
-const aliasOperationIds: any = {
-	"/api/v2/presence/definitions/{definitionId}": {
-		"get": "getDivisionBasedPresenceDefinition",
-		"put": "putDivisionBasedPresenceDefinition",
-		"delete": "deleteDivisionBasedPresenceDefinition"
-	},
-	"/api/v2/presence/definitions": {
-		"get": "getDivisionBasedPresenceDefinitions",
-		"post": "postDivisionBasedPresenceDefinitions"
-	}
-};
-// Override available topics schema properties from type: "integer" to type: "integer", format: "int64"
-let forceInt64Integers = true;
-// Remove duplicates in topics enumerations
-let removeEnumDuplicates = true;
 
 export class Builder {
 	// Properties
@@ -74,7 +45,7 @@ export class Builder {
 	releaseNoteTemplatePath: string = '';
 	releaseNoteSummaryTemplatePath: string = '';
 
-	init(configPath: string, localConfigPath: string): Promise<string> {
+	async init(configPath: string, localConfigPath: string): Promise<string> {
 		return new Promise<string>((resolve, reject) => {
 			log.debug(`Builder initialization started - Config: ${configPath}, LocalConfig: ${localConfigPath}`);
 
@@ -100,7 +71,7 @@ export class Builder {
 		});
 	}
 
-	constructBuilder(configPath: string, localConfigPath: string): Promise<string> {
+	async constructBuilder(configPath: string, localConfigPath: string): Promise<string> {
 		return new Promise<string>((resolve, reject) => {
 			try {
 				log.debug('Starting builder construction');
@@ -143,7 +114,7 @@ export class Builder {
 		});
 	}
 
-	postConstructBuilder(): Promise<string> {
+	async postConstructBuilder(): Promise<string> {
 		return new Promise<string>((resolve, reject) => {
 			try {
 				log.debug('Starting post-construction builder setup');
@@ -265,7 +236,7 @@ export class Builder {
 		});
 	}
 
-	deref(): Promise<string> {
+	async deref(): Promise<string> {
 		return new Promise<string>((resolve, reject) => {
 			log.debug('Starting schema dereferencing');
 			$RefParser.dereference(this.config, (err, schema) => {
@@ -293,93 +264,102 @@ export class Builder {
 		});
 	}
 
-	fullBuild(): Promise<string> {
-		return new Promise<string>((resolve, reject) => {
+	async fullBuild(): Promise<void> {
+		try {
 			log.debug('Full build process initiated');
 			log.info('Full build initiated!');
-			let fullBuildStartTime = moment();
-			this.prebuild()
-				.then(() => {
-					log.debug('Prebuild completed, starting build phase');
-					return this.build();
-				})
-				.then(() => {
-					log.debug('Build completed, starting postbuild phase');
-					return this.postbuild();
-				})
-				.then(() => {
-					log.debug('Full build process completed successfully');
-					log.info(`Full build complete at ${moment().format(TIMESTAMP_FORMAT)} in ${measureDurationFrom(fullBuildStartTime)}`);
-					resolve("");
-				})
-				.catch((err: Error) => {
-					log.error(`Full build process failed: ${err.message}`);
-					log.debug(`Stack trace: ${err.stack}`);
-					reject(err);
-				});
-		});
+			let fullBuildStartTime = Date.now();
+			await this.prebuild();
+
+			log.debug('Prebuild completed, starting build phase');
+			await this.build();
+
+			log.debug('Build completed, starting postbuild phase');
+			await this.postbuild();
+
+			log.debug('Full build process completed successfully');
+			log.info(`Full build complete at ${new Date(Date.now()).toUTCString()} in ${measureDurationFrom(fullBuildStartTime)}`);
+			return;
+
+		} catch (err: unknown) {
+			if (err instanceof Error) {
+				log.error(`Full build process failed: ${err.message}`);
+				log.debug(`Stack trace: ${err.stack}`);
+			} else {
+				log.error(`Full build process failed: ${String(err)}`);
+			}
+			throw err;
+		}
 	}
 
-	prebuild(): Promise<string> {
-		return new Promise<string>((resolve, reject) => {
+	async prebuild(): Promise<void> {
+		try {
 			log.debug('Prebuild stage initiated');
 			log.writeBox('STAGE: pre-build');
-			let prebuildStartTime = moment();
-			prebuildImpl()
-				.then(() => {
-					log.debug('Prebuild implementation completed');
-					log.info(`Pre-build complete at ${moment().format(TIMESTAMP_FORMAT)} in ${measureDurationFrom(prebuildStartTime)}`);
-					resolve("");
-				})
-				.catch((err) => {
-					log.error(`Prebuild stage failed: ${err}`);
-					reject(err);
-				});
-		});
+			let prebuildStartTime = Date.now();
+			await prebuildImpl();
+
+			log.debug('Prebuild implementation completed');
+			log.info(`Pre-build complete at ${new Date(Date.now()).toUTCString()} in ${measureDurationFrom(prebuildStartTime)}`);
+			return;
+
+		} catch (err: unknown) {
+			if (err instanceof Error) {
+				log.error(`Prebuild stage failed: ${err.message}`);
+				log.debug(`Stack trace: ${err.stack}`);
+			} else {
+				log.error(`Prebuild stage failed: ${String(err)}`);
+			}
+			throw err;
+		}
 	}
 
-	build(): Promise<string> {
-		return new Promise<string>((resolve, reject) => {
+	async build(): Promise<void> {
+		try {
 			log.debug('Build stage initiated');
 			log.writeBox('STAGE: build');
-			let buildStartTime = moment();
+			let buildStartTime = Date.now();
+			await buildImpl();
 
-			buildImpl()
-				.then(() => {
-					log.debug('Build implementation completed');
-					log.info(`Build complete at ${moment().format(TIMESTAMP_FORMAT)} in ${measureDurationFrom(buildStartTime)}`);
-					resolve("");
-				})
-				.catch((err: Error) => {
-					log.error(`Build stage failed: ${err.message}`);
-					log.debug(`Stack trace: ${err.stack}`);
-					reject(err);
-				});
-		});
+			log.debug('Build implementation completed');
+			log.info(`Build complete at ${new Date(Date.now()).toUTCString()} in ${measureDurationFrom(buildStartTime)}`);
+			return;
+
+		} catch (err: unknown) {
+			if (err instanceof Error) {
+				log.error(`Build stage failed: ${err.message}`);
+				log.debug(`Stack trace: ${err.stack}`);
+			} else {
+				log.error(`Build stage failed: ${String(err)}`);
+			}
+			throw err;
+		}
 	}
 
-	postbuild(): Promise<string> {
-		return new Promise<string>((resolve, reject) => {
+	async postbuild(): Promise<void> {
+		try {
 			log.debug('Postbuild stage initiated');
 			log.writeBox('STAGE: post-build');
-			let postbuildStartTime = moment();
+			let postbuildStartTime = Date.now();
+			await postbuildImpl();
 
-			postbuildImpl()
-				.then(() => {
-					log.debug('Postbuild implementation completed');
-					log.info(`Post-build complete at ${moment().format(TIMESTAMP_FORMAT)} in ${measureDurationFrom(postbuildStartTime)}`);
-					resolve("");
-				})
-				.catch((err: Error) => {
-					log.error(`Postbuild stage failed: ${err.message}`);
-					log.debug(`Stack trace: ${err.stack}`);
-					reject(err);
-				});
-		});
+			log.debug('Postbuild implementation completed');
+			log.info(`Post-build complete at ${new Date(Date.now()).toUTCString()} in ${measureDurationFrom(postbuildStartTime)}`);
+			return;
+
+		} catch (err: unknown) {
+			if (err instanceof Error) {
+				log.error(`Postbuild stage failed: ${err.message}`);
+				log.debug(`Stack trace: ${err.stack}`);
+			} else {
+				log.error(`Postbuild stage failed: ${String(err)}`);
+			}
+			throw err;
+		}
 	}
 }
 
-function prebuildImpl(): Promise<string> {
+async function prebuildImpl(): Promise<string> {
 	return new Promise<string>((resolve, reject) => {
 		try {
 			log.debug('Starting prebuild implementation');
@@ -388,7 +368,7 @@ function prebuildImpl(): Promise<string> {
 			executeScripts(_this.config.stageSettings.prebuild.preRunScripts, 'custom prebuild pre-run');
 
 			// Clone repo
-			let startTime = moment();
+			let startTime = Date.now();
 			log.debug(`Starting repository clone operation - Repo: ${_this.config.settings.sdkRepo.repo}, Branch: ${_this.config.settings.sdkRepo.branch}, Target: ${getEnv('SDK_REPO')}`);
 			log.info(`Cloning ${_this.config.settings.sdkRepo.repo} (${_this.config.settings.sdkRepo.branch}) to ${getEnv('SDK_REPO')}`);
 			git
@@ -429,52 +409,9 @@ function prebuildImpl(): Promise<string> {
 					}
 				})
 				.then(() => {
-					log.debug('Adding notifications to schema');
-					return addNotifications();
-				})
-				.then(() => {
-					log.debug('Processing swagger paths');
-					return processPaths();
-				})
-				.then(() => {
-					log.debug('Processing swagger references');
-					return processRefs();
-				})
-				.then(() => {
-					log.debug('Processing any types in schema');
-					return processAnyTypes();
-				})
-				.then(() => {
-					let forceCSVCollectionFormatInTags: string[] = [];
-					if (_this.config.settings.swagger) {
-						let allSwaggerSettings: any = _this.config.settings.swagger;
-						if (allSwaggerSettings.forceCSVCollectionFormatOnTags) {
-							forceCSVCollectionFormatInTags = allSwaggerSettings.forceCSVCollectionFormatOnTags;
-						}
-					}
-					return forceCSVCollectionFormat(forceCSVCollectionFormatInTags);
-				})
-				.then(() => {
-					return quarantineOperationsAndModels(quarantineOperationIds, quarantineModels);
-				})
-				.then(() => {
-					let discriminatorManagement: string = defaultDiscriminatorManagement;
-					if (_this.config.settings.swagger) {
-						let allSwaggerSettings: any = _this.config.settings.swagger;
-						if (allSwaggerSettings.discriminatorManagement !== null && allSwaggerSettings.discriminatorManagement !== undefined) {
-							if (allSwaggerSettings.discriminatorManagement.toLowerCase() === 'keep') {
-								discriminatorManagement = 'keep';
-							} else if (allSwaggerSettings.discriminatorManagement.toLowerCase() === 'quarantine') {
-								discriminatorManagement = 'quarantine';
-							} else if (allSwaggerSettings.discriminatorManagement.toLowerCase() === 'override') {
-								discriminatorManagement = 'override';
-							}
-						}
-					}
-					return manageDiscriminator(discriminatorManagement, keepDiscriminatorModels);
-				})
-				.then(() => {
-					return overrideOperations(overrideOperationIds);
+					// Swagger Preprocessing
+					log.debug('Preprocessing Swagger');
+					return swaggerPreprocessing(_this, swaggerDiff.newSwagger);
 				})
 				.then(() => {
 					// Save new swagger to temp file for build
@@ -590,7 +527,7 @@ function prebuildImpl(): Promise<string> {
 	});
 }
 
-function buildImpl(): Promise<string> {
+async function buildImpl(): Promise<string> {
 	return new Promise<string>((resolve, reject) => {
 		try {
 			log.debug('Starting build implementation');
@@ -699,7 +636,7 @@ function buildImpl(): Promise<string> {
 	});
 }
 
-function postbuildImpl(): Promise<string> {
+async function postbuildImpl(): Promise<string> {
 	return new Promise<string>((resolve, reject) => {
 		try {
 			log.debug('Starting postbuild implementation');
@@ -810,459 +747,6 @@ function createRelease(): Promise<string> {
 	});
 }
 
-function addNotifications(): Promise<string> {
-	return new Promise<string>((resolve, reject) => {
-
-		try {
-			// Skip notifications
-			if (getEnv('EXCLUDE_NOTIFICATIONS') === true) {
-				log.info('Not adding notifications to schema');
-				resolve("");
-			}
-
-			// Check PureCloud settings
-			checkAndThrow(_this.pureCloud, 'clientId', 'Environment variable PURECLOUD_CLIENT_ID must be set!');
-			checkAndThrow(_this.pureCloud, 'clientSecret', 'Environment variable PURECLOUD_CLIENT_SECRET must be set!');
-			checkAndThrow(_this.pureCloud, 'environment', 'PureCloud environment was blank!');
-
-			const client = platformClient.ApiClient.instance;
-			client.setEnvironment(_this.pureCloud.environment);
-			let notificationsApi = new platformClient.NotificationsApi();
-
-			client.loginClientCredentialsGrant(_this.pureCloud.clientId, _this.pureCloud.clientSecret)
-				.then(() => {
-					return notificationsApi.getNotificationsAvailabletopics({ 'expand': ['schema'] });
-				})
-				.then((notifications: Models.AvailableTopicEntityListing) => {
-					//let notificationMappings = { notifications: [] };
-
-					type Notification = {
-						topic: string; // Replace 'string' with the appropriate type for the 'topic' property
-						class: string;
-					}
-
-
-					type NotificationMappings = {
-						notifications: Notification[];
-					};
-
-
-					const notificationMappings: NotificationMappings = { notifications: [] };
-
-					// Process schemas
-					log.info(`Processing ${notifications.entities.length} notification schemas...`);
-					_.forEach(notifications.entities, (entity) => {
-						if (!entity.schema) {
-							log.warn(`Notification ${entity.id} does not have a defined schema!`);
-							return;
-						}
-
-						const schemaName = getNotificationClassName(entity.schema.id.toString());
-						log.info(`Notification mapping: ${entity.id} (${schemaName})`);
-						notificationMappings.notifications.push({ topic: entity.id, class: schemaName });
-						extractDefinitons(entity.schema);
-						swaggerDiff.newSwagger.definitions[schemaName] = JSON.parse(JSON.stringify(entity.schema));
-					});
-
-					// Write mappings to file
-					let mappingFilePath = path.resolve(path.join(getEnv('SDK_REPO') as string, 'notificationMappings.json'));
-					log.info(`Writing Notification mappings to ${mappingFilePath}`);
-					fs.writeFileSync(mappingFilePath, JSON.stringify(notificationMappings, null, 2));
-
-					resolve("");
-				})
-				.catch((err: Error) => {
-					reject(err)
-				});
-		} catch (err: unknown) {
-			reject(err);
-		}
-	});
-}
-
-function getNotificationClassName(id: string) {
-	// Normalize to include v2. Architect topics just have to be different and don't have v2...
-	let parts = id.split(':');
-	if (parts[parts.length - 2] !== 'v2') parts.splice(parts.length - 2, 0, 'v2');
-	const normalizedId = parts.join(':');
-
-	// Regex match the URN parts we want
-	let className = '';
-	let matches = NOTIFICATION_ID_REGEX.exec(normalizedId);
-	if (!matches) {
-		log.warn('No regex matches!');
-		log.warn(`id: ${id}`);
-		log.warn(`normalizedId: ${normalizedId}`);
-	}
-	if (matches !== null) {
-		for (let i = 1; i < matches.length; i++) {
-			matches[i].split(':').forEach((part) => {
-				className += part.charAt(0).toUpperCase() + part.slice(1);
-			});
-		}
-	}
-
-	return className;
-}
-
-function processAnyTypes() {
-	const keys = Object.keys(swaggerDiff.newSwagger.definitions);
-	keys.forEach((key, index) => {
-		let obj = swaggerDiff.newSwagger.definitions[key].properties;
-		if (obj) {
-			const keys = Object.keys(swaggerDiff.newSwagger.definitions[key].properties);
-			keys.forEach((key2, index) => {
-				let obj2 = swaggerDiff.newSwagger.definitions[key].properties[key2];
-				if (obj2) {
-					if (obj2.hasOwnProperty("type") && obj2["type"] === "any") {
-						obj2.type = "string" as ItemsType;
-						obj2.format = "date-time" as Format;
-					}
-				}
-			});
-		}
-	});
-}
-
-function forceCSVCollectionFormat(forceCSVCollectionFormatInTags: string[]) {
-	if (forceCSVCollectionFormatInTags && forceCSVCollectionFormatInTags.length > 0) {
-		log.info(`Updating CollectionFormat from multi to csv for operations with tags: ${forceCSVCollectionFormatInTags.toString()}`);
-		const paths = Object.keys(swaggerDiff.newSwagger.paths);
-		for (const path of paths) {
-			const methods = Object.keys(swaggerDiff.newSwagger.paths[path]);
-			for (const method of methods) {
-				let operation = swaggerDiff.newSwagger.paths[path][method];
-				let overrideOperation = false;
-				for (let overrideTag of forceCSVCollectionFormatInTags) {
-					if (operation && operation.tags && operation.tags.includes(overrideTag)) {
-						overrideOperation = true;
-						break;
-					}
-				}
-				if (overrideOperation === true) {
-					if (operation.parameters && operation.parameters.length > 0) {
-						for (let opParameter of operation.parameters) {
-							if (opParameter.in && opParameter.in === "query" && opParameter.type && opParameter.type === "array" && opParameter.collectionFormat && opParameter.collectionFormat === "multi") {
-								opParameter.collectionFormat = "csv";
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	return;
-}
-
-function manageDiscriminator(discriminatorManagement: string, keepDiscriminatorModels: string[]) {
-	if (discriminatorManagement !== null && discriminatorManagement !== undefined && discriminatorManagement !== 'keep') {
-		let modelsWithDiscriminator: string[] = [];
-		let childDiscriminatorModels: string[] = [];
-		// Find Models with Discriminator
-		if (swaggerDiff.newSwagger.definitions) {
-			for (let modelName in swaggerDiff.newSwagger.definitions) {
-				if (swaggerDiff.newSwagger.definitions[modelName].discriminator) {
-					if (!keepDiscriminatorModels.includes(modelName)) {
-						modelsWithDiscriminator.push(modelName);
-					}
-				}
-			}
-		}
-		// Find Models with a Discriminator based parent model
-		if (modelsWithDiscriminator.length > 0) {
-			// find all models with an indirect dependency on modelsWithDiscriminator
-			let refsWithDiscriminatorModels: string[] = [];
-			for (let discriminatorModelName of modelsWithDiscriminator) {
-				refsWithDiscriminatorModels.push(`#/definitions/${discriminatorModelName}`);
-			}
-			for (let modelName in swaggerDiff.newSwagger.definitions) {
-				if (swaggerDiff.newSwagger.definitions[modelName].allOf) {
-					for (let compositeModel of swaggerDiff.newSwagger.definitions[modelName].allOf) {
-						if (compositeModel['$ref'] && refsWithDiscriminatorModels.includes(compositeModel['$ref'])) {
-							childDiscriminatorModels.push(modelName);
-							break;
-						}
-					}
-				}
-			}
-		}
-		log.info(`Found Discriminator based Models: ${modelsWithDiscriminator.toString()}`);
-		log.info(`Found Discriminator Child Models: ${childDiscriminatorModels.toString()}`);
-		if (modelsWithDiscriminator.length > 0) {
-			// Manage Discriminator
-			if (discriminatorManagement === 'override') {
-				// Override
-				// Remove discriminator models and their children from Swagger
-				for (let modelName of modelsWithDiscriminator) {
-					if (swaggerDiff.newSwagger.definitions[modelName]) {
-						delete swaggerDiff.newSwagger.definitions[modelName];
-					}
-				}
-				for (let modelName of childDiscriminatorModels) {
-					if (swaggerDiff.newSwagger.definitions[modelName]) {
-						delete swaggerDiff.newSwagger.definitions[modelName];
-					}
-				}
-				// Override references to Discriminator Models with JsonNode (generic object)
-				if (!swaggerDiff.newSwagger.definitions['JsonNode']) {
-					swaggerDiff.newSwagger.definitions['JsonNode'] = { type: ItemsType.Object };
-				}
-				let definitionsAsString = JSON.stringify(swaggerDiff.newSwagger.definitions);
-				let pathsAsString = JSON.stringify(swaggerDiff.newSwagger.paths);
-				let modelsToOverride: string[] = [...modelsWithDiscriminator, ...childDiscriminatorModels];
-				for (let modelName of modelsToOverride) {
-					let regexConvertRef = new RegExp(String.raw`"#\/definitions\/${modelName}"`, "g");
-					definitionsAsString = definitionsAsString.replace(regexConvertRef, '"#/definitions/JsonNode"');
-					pathsAsString = pathsAsString.replace(regexConvertRef, '"#/definitions/JsonNode"');
-				}
-				swaggerDiff.newSwagger.definitions = JSON.parse(definitionsAsString);
-				swaggerDiff.newSwagger.paths = JSON.parse(pathsAsString);
-			} else if (discriminatorManagement === 'quarantine') {
-				// Quarantine
-				// Find models with a direct or indirect reference on modelsWithDiscriminator or childDiscriminatorModels
-				// Init with discriminator based models and their children
-				let modelsToQuarantine: string[] = [...modelsWithDiscriminator, ...childDiscriminatorModels];
-				// Recursive processing to find models
-				let searchModels: string[] = [...modelsToQuarantine];
-				let foundModels: string[] = [];
-				let findingCompleted: boolean = false;
-				while (findingCompleted !== true) {
-					for (let modelName in swaggerDiff.newSwagger.definitions) {
-						if (!modelsToQuarantine.includes(modelName)) {
-							let definitionAsString = JSON.stringify(swaggerDiff.newSwagger.definitions[modelName]);
-							for (let defName of searchModels) {
-								if (definitionAsString.includes(`"#/definitions/${defName}"`)) {
-									foundModels.push(modelName);
-									break;
-								}
-							}
-						}
-					}
-					if (foundModels.length === 0) {
-						findingCompleted = true;
-					} else {
-						searchModels = [];
-						for (let defName of foundModels) {
-							searchModels.push(defName);
-							modelsToQuarantine.push(defName);
-						}
-						foundModels = [];
-					}
-				}
-				log.info(`Found Discriminator based Models, children and dependencies: ${modelsToQuarantine.toString()}`);
-
-				// Find operations with a reference to a model involving discriminator directly or indirectly
-				let operationsToQuarantine: string[] = [];
-				if (modelsToQuarantine.length > 0) {
-					const paths = Object.keys(swaggerDiff.newSwagger.paths);
-					for (const path of paths) {
-						const methods = Object.keys(swaggerDiff.newSwagger.paths[path]);
-						for (const method of methods) {
-							let operation = swaggerDiff.newSwagger.paths[path][method];
-							let operationAsString = JSON.stringify(operation);
-							for (let defName of modelsToQuarantine) {
-								if (operationAsString.includes(`"#/definitions/${defName}"`)) {
-									operationsToQuarantine.push(operation.operationId);
-									break;
-								}
-							}
-						}
-					}
-					log.info(`Found Operations referencing Discriminator based Models: ${operationsToQuarantine.toString()}`);
-				}
-
-				// Quarantine (delete) found operations and models
-				// Remove identified models from Swagger
-				if (modelsToQuarantine.length > 0) {
-					for (let modelName of modelsToQuarantine) {
-						if (swaggerDiff.newSwagger.definitions[modelName]) {
-							delete swaggerDiff.newSwagger.definitions[modelName];
-						}
-					}
-				}
-				// Remove identified operations from Swagger
-				if (operationsToQuarantine.length > 0) {
-					const paths = Object.keys(swaggerDiff.newSwagger.paths);
-					for (const path of paths) {
-						const methods = Object.keys(swaggerDiff.newSwagger.paths[path]);
-						for (const method of methods) {
-							let operation = swaggerDiff.newSwagger.paths[path][method];
-							if (operation && operation.operationId && operationsToQuarantine.includes(operation.operationId)) {
-								// Remove Operation
-								delete swaggerDiff.newSwagger.paths[path][method];
-							}
-						}
-						const remainingMethods = Object.keys(swaggerDiff.newSwagger.paths[path]);
-						if (remainingMethods.length == 0) {
-							delete swaggerDiff.newSwagger.paths[path];
-						}
-					}
-				}
-			}
-		}
-	}
-	return;
-}
-
-function quarantineOperationsAndModels(quarantineOperationIds: string[], quarantineModels: string[]) {
-	if (quarantineOperationIds && quarantineOperationIds.length > 0) {
-		log.info(`Quarantine for OperationIds: ${quarantineOperationIds.toString()}`);
-		const paths = Object.keys(swaggerDiff.newSwagger.paths);
-		for (const path of paths) {
-			const methods = Object.keys(swaggerDiff.newSwagger.paths[path]);
-			for (const method of methods) {
-				let operation = swaggerDiff.newSwagger.paths[path][method];
-				if (operation && operation.operationId && quarantineOperationIds.includes(operation.operationId)) {
-					// Remove Operation
-					delete swaggerDiff.newSwagger.paths[path][method];
-				}
-			}
-			const remainingMethods = Object.keys(swaggerDiff.newSwagger.paths[path]);
-			if (remainingMethods.length == 0) {
-				delete swaggerDiff.newSwagger.paths[path];
-			}
-		}
-	}
-	if (quarantineModels && quarantineModels.length > 0) {
-		log.info(`Quarantine for Models: ${quarantineModels.toString()}`);
-		for (const modelName of quarantineModels) {
-			if (swaggerDiff.newSwagger.definitions[modelName]) {
-				delete swaggerDiff.newSwagger.definitions[modelName];
-			}
-		}
-	}
-	return;
-}
-
-function overrideOperations(overrideOperationIds: any) {
-	if (overrideOperationIds && Object.keys(overrideOperationIds).length > 0) {
-		const overridePaths = Object.keys(overrideOperationIds);
-		for (const path of overridePaths) {
-			const overrideMethods = Object.keys(overrideOperationIds[path]);
-			for (const method of overrideMethods) {
-				let newOperationId = overrideOperationIds[path][method];
-				if (swaggerDiff.newSwagger.paths && swaggerDiff.newSwagger.paths[path] && swaggerDiff.newSwagger.paths[path][method]) {
-					let operation = swaggerDiff.newSwagger.paths[path][method];
-					if (operation && operation.operationId) {
-						log.info(`Override OperationId (path: ${path}, method: ${method}): old=${operation.operationId}, new=${newOperationId}`);
-						operation.operationId = newOperationId;
-					}
-					if (operation && operation["x-purecloud-method-name"]) {
-						operation["x-purecloud-method-name"] = newOperationId;
-					}
-				}
-			}
-		}
-	}
-	return;
-}
-
-function processPaths() {
-	const paths = Object.keys(swaggerDiff.newSwagger.paths);
-	for (const path of paths) {
-		if (!path.startsWith("/api/v2") || (path.startsWith("/api/v2/apps") && !path.startsWith("/api/v2/apps/agentic") && _this.config.settings.swaggerCodegen.codegenLanguage === "purecloudpython")) {
-			delete swaggerDiff.newSwagger.paths[path]
-		}
-	}
-
-	if (_this.config.settings.swaggerCodegen.codegenLanguage !== "purecloudpython") return
-
-	const definitions = Object.keys(swaggerDiff.newSwagger.definitions);
-	for (const definition of definitions) {
-		if (definition.endsWith("_")) {
-			delete swaggerDiff.newSwagger.definitions[definition]
-		}
-	}
-}
-
-function processRefs() {
-	const keys = Object.keys(swaggerDiff.newSwagger.definitions);
-	keys.forEach((key, index) => {
-		let obj = swaggerDiff.newSwagger.definitions[key].properties;
-		if (obj) {
-			const keys = Object.keys(swaggerDiff.newSwagger.definitions[key].properties);
-			keys.forEach((key2, index) => {
-				let obj2 = swaggerDiff.newSwagger.definitions[key].properties[key2];
-				if (obj2) {
-					if (obj2.hasOwnProperty("$ref") && (obj2.hasOwnProperty("readOnly") || obj2.hasOwnProperty("description"))) {
-						if (obj2.readOnly === true && obj2.hasOwnProperty("description")) {
-							obj2.description = `${obj2.description} readOnly`
-						}
-
-						let refObj = { "$ref": obj2.$ref };
-						obj2.allOf = [refObj];
-						delete obj2.$ref;
-					}
-				}
-			});
-		}
-	});
-}
-
-// Receives AvailableTopic.schema of Type "schema"?: { [key: string]: object; };
-function extractDefinitons(entity: { [key: string]: any }) {
-	try {
-		_.forOwn(entity, (property, key) => {
-			// Rewrite URN refs to JSON refs
-			if (key == '$ref' && !property.startsWith('#')) {
-				entity[key] = '#/definitions/' + getNotificationClassName(property);
-			}
-
-			// Force int64 integers
-			if (forceInt64Integers == true) {
-				if (key == 'type' && property == 'integer') {
-					if (!entity['format']) {
-						entity['format'] = 'int64';
-					}
-				}
-			}
-			// Remove enum duplicates
-			if (removeEnumDuplicates == true) {
-				if (key == 'enum') {
-					if (entity["type"] && entity["type"] == "string") {
-						if (entity["enum"] && entity["enum"].length > 0) {
-							let filteredEnum: string[] = [];
-							let upperCaseEnum: string[] = [];
-							for (let enumValue of entity["enum"]) {
-								if (!upperCaseEnum.includes(enumValue.toUpperCase())) {
-									upperCaseEnum.push(enumValue.toUpperCase());
-									filteredEnum.push(enumValue);
-								} else {
-									log.info(`Duplicate enum value in topic: ${enumValue}. Removing it...`);
-								}
-							}
-							entity["enum"] = filteredEnum;
-						}
-					}
-				}
-			}
-
-			// Recurse on objects
-			if (typeof property !== 'object') return;
-			extractDefinitons(property);
-
-			// Update object to ref
-			if (property.id && typeof property.id === 'string') {
-				let className = getNotificationClassName(property.id);
-
-				// Store definition
-				swaggerDiff.newSwagger.definitions[className] = JSON.parse(JSON.stringify(property));
-
-				// Set reference
-				entity[key] = {
-					type: 'object',
-					$ref: `#/definitions/${className}`,
-				};
-			}
-		});
-	} catch (err: unknown) {
-		if (err instanceof Error) {
-			console.log(err);
-			console.log(err.stack);
-		}
-	}
-}
-
 function loadConfig(configPath: string) {
 	configPath = path.resolve(configPath);
 	let extension = path.parse(configPath).ext.toLowerCase();
@@ -1287,9 +771,9 @@ function executeScripts(scripts: Script[], phase: string) {
 	});
 }
 
-function executeScript(script: Script) {
+function executeScript(script: Script): Number {
 	let code: Buffer;
-	let startTime = moment();
+	let startTime = Date.now();
 	let bufferCode: Number;
 
 	log.debug(`Executing script - Type: ${script.type}, Path: ${script.path}, Args: ${script.args ? script.args.join(' ') : 'none'}`);
@@ -1328,7 +812,8 @@ function executeScript(script: Script) {
 			}
 			default: {
 				log.warn(`UNSUPPORTED SCRIPT TYPE: ${script.type}`);
-				return 1;
+				bufferCode = 1;
+				return bufferCode;
 			}
 		}
 
@@ -1358,7 +843,7 @@ function executeScript(script: Script) {
 	}
 }
 
-function getScriptPath(script: Script) {
+function getScriptPath(script: Script): string {
 	let scriptPath = script.path;
 	if (!path.parse(scriptPath).dir)
 		scriptPath = path.join('./resources/sdk', _this.config.settings.swaggerCodegen.resourceLanguage, 'scripts', script.path);
@@ -1371,96 +856,3 @@ function getScriptPath(script: Script) {
 
 	return scriptPath;
 }
-
-
-function maybeInit(haystack: Builder | Haystack, needle: string, defaultValue: Haystack, warning: string = "Haystack was undefined!"): void {
-	if (!haystack) {
-		log.warn(warning);
-		return;
-	}
-	if (!haystack[needle]) {
-		haystack[needle] = defaultValue;
-	}
-}
-
-function checkAndThrow(haystack: Builder | Haystack, needle: string, message: string = `${needle} must be set!`): void {
-	if (!haystack[needle] || haystack[needle] === '') {
-		throw new Error(message);
-	}
-}
-
-function getEnv(
-	varname: string,
-	defaultValue: string = '',
-	isdefaultValue: boolean = false
-): string | boolean {
-	varname = varname.trim();
-	const envVar = process.env[varname];
-	log.silly(`ENV: ${varname}->${envVar}`);
-
-	if (!envVar && defaultValue !== '') {
-		if (isdefaultValue === true) {
-			log.info(`Using default value for ${varname}: ${defaultValue}`);
-		} else {
-			log.warn(`Using override for ${varname}: ${defaultValue}`);
-		}
-		return defaultValue;
-	}
-
-	if (envVar) {
-		if (envVar.toLowerCase() === 'true') {
-			return true;
-		} else if (envVar.toLowerCase() === 'false') {
-			return false;
-		} else {
-			return envVar;
-		}
-	}
-
-	return defaultValue;
-}
-
-function setEnv(varname: string, value: any) {
-	let values = [value];
-	resolveEnvVars(values);
-	varname = varname.trim();
-	log.silly(`ENV: ${varname}=${values[0]}`);
-	process.env[varname] = values[0];
-}
-
-//recursive for config, localconfig, enVars, Settings
-function resolveEnvVars(config: { [key: string]: any }) {
-	_.forOwn(config, function (value, key) {
-		if (typeof value == 'string') {
-			config[key] = value.replace(/\$\{(.+?)\}/gi, function (match, p1, offset, string) {
-				return getEnv(p1) as string;
-			});
-		} else {
-			resolveEnvVars(value);
-		}
-	});
-}
-
-function measureDurationFrom(startTime: Moment, endTime: Moment = moment()) {
-	if (!startTime) return 'no time';
-
-	return moment.duration(endTime.diff(startTime)).humanize();
-}
-
-function getFileCount(dir: fs.PathLike) {
-	if (!fs.existsSync(dir)) {
-		log.silly(`Directory doesn't exist: ${dir}`);
-		return 0;
-	}
-	let files = fs.readdirSync(dir);
-	log.silly(`There are ${files.length} files in ${dir}`);
-
-	if (files.length == 1 && files[0] === '.DS_Store') {
-		log.silly("...and it's named .DS_Store   ಠ_ಠ");
-		return 0;
-	}
-
-	return files.length;
-}
-
-

@@ -1,8 +1,8 @@
-import childProcess from 'child_process';
 import fs from 'fs';
 import swaggerDiffImpl from './swaggerDiffImpl.js';
 import { Swagger, Info, Changes, ProduceElement, ItemsType } from '../types/swagger.js';
 import { Data, Version } from '../types/builderTypes.js';
+import { downloadFile } from '../util/http.js';
 import { log } from '../log/logger.js';
 export default class SwaggerDiff {
 
@@ -308,24 +308,6 @@ export default class SwaggerDiff {
 		return swaggerV2;
 	}
 
-}
-
-function downloadFile(url) {
-	var i = 0;
-	while (i < 10) {
-		i++;
-		log.info(`Downloading file: ${url}`);
-		// Source: https://www.npmjs.com/package/download-file-sync
-		var file = childProcess.execFileSync('curl', ['--silent', '-L', url], { encoding: 'utf8', maxBuffer: 1024 * 1024 * 1024 });
-		if (!file || file === '') {
-			log.info(`File was empty! sleeping for 5 seconds. Retries left: ${10 - i}`);
-			childProcess.execFileSync('curl', ['--silent', 'https://httpbin.org/delay/10'], { encoding: 'utf8' });
-		} else {
-			return file;
-		}
-	}
-	log.warn('Failed to get contents for file!');
-	return null;
 }
 
 function getEnv(varname, defaultValue, isDefaultValue) {

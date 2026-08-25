@@ -1,4 +1,4 @@
-import { ZipArchive } from "archiver";
+import { ZipArchive } from 'archiver';
 import fs from 'fs';
 
 export async function zipDir(inputDir: string, outputPath: string): Promise < string > {
@@ -18,7 +18,7 @@ export async function zipDir(inputDir: string, outputPath: string): Promise < st
 			});
 
 			archive.on('error', function (err) {
-				console.log(`Zip zipDir archive operation failed with exception: ${err.message}`);
+				console.log(`zipDir archive operation failed with exception: ${err.message}`);
 				reject(err);
 			});
 
@@ -26,7 +26,7 @@ export async function zipDir(inputDir: string, outputPath: string): Promise < st
 			archive.directory(inputDir, '/');
 			archive.finalize();
 		} catch (err: unknown) {
-			console.log(`Zip zipDir operation failed with exception: ${err instanceof Error ? err.message : String(err)}`);
+			console.log(`zipDir operation failed with exception: ${err instanceof Error ? err.message : String(err)}`);
 			reject(err);
 		}
 	});

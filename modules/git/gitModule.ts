@@ -2,8 +2,8 @@ import _ from 'lodash';
 import fs from 'fs-extra';
 import { spawn, SpawnOptions } from 'child_process';
 import { log } from '../log/logger.js';
-import axios, { AxiosError, AxiosResponse } from 'axios';
 import { Endpoints } from "@octokit/types";
+import { postGithubApiPromise, BuilderHttpError } from '../util/http.js';
 
 // Alternative to github-api-promise until update
 
@@ -164,20 +164,12 @@ export class GitModule {
 	 */
 	public async githubCreateRelease(githubConfig: GithubConfig, body: any): Promise<Endpoints["POST /repos/{owner}/{repo}/releases"]["response"]["data"]> {
 		try {
-			let gitPostResponse = await
-				axios
-					.post(githubGetRepoUrl(githubConfig, "releases"), body, {
-						headers: {
-							Authorization: `token ${this.authToken}`,
-							"User-Agent": "github-api-promise",
-							"Content-Type": "application/json",
-						}
-					});
-
-			githubLogRequestSuccess(githubConfig, gitPostResponse);
-			return gitPostResponse.data;
+			let gitUrl = githubGetRepoUrl(githubConfig, "releases");
+			let gitPostResponse = await postGithubApiPromise(gitUrl, this.authToken ?? '', body);
+			githubLogRequestSuccess(githubConfig, JSON.stringify(gitPostResponse));
+			return gitPostResponse;
 		} catch (err: unknown) {
-			if (axios.isAxiosError(err)) {
+			if (err instanceof BuilderHttpError) {
 				githubLogRequestError(githubConfig, err);
 			} else if (err instanceof Error) {
 				log.error(err.message);
@@ -198,26 +190,21 @@ function githubGetRepoUrl(githubConfig: GithubConfig, additionalPath: string) {
 	return url;
 }
 
-function githubLogRequestSuccess(githubConfig: GithubConfig, res: AxiosResponse, message?: string) {
+function githubLogRequestSuccess(githubConfig: GithubConfig, message?: string) {
 	if (githubConfig.debug != true) {
 		return;
 	}
 	let logMsg: string = "[INFO]" +
 		"[" +
-		res.status +
+		"SUCCESS" +
 		"]" +
-		"[" +
-		res.request ? res.request.method : "Unknown Method" +
-			" " +
-			res.request ? res.request.path : "Unknown Path" +
-			"] " +
 	(message ? message : "");
 
 	log.info(logMsg);
 }
 
-function githubLogRequestError(githubConfig: GithubConfig, err: AxiosError): void {
-	if (axios.isAxiosError(err)) {
+function githubLogRequestError(githubConfig: GithubConfig, err: BuilderHttpError): void {
+	if (err instanceof BuilderHttpError) {
 		let logMsg: string = "[ERROR]" +
 			"[" +
 			(err.response ? err.response.status : "Unknown Status Code") +
@@ -225,9 +212,9 @@ function githubLogRequestError(githubConfig: GithubConfig, err: AxiosError): voi
 			"[" +
 			(err.request ? err.request.method : "Unknown Method") +
 			" " +
-			(err.request ? err.request.path : "Unknown Path") +
+			(err.request ? err.request.url : "Unknown url") +
 			"] " +
-			(err.message ? err.message : "Unknown Error Message");
+			(err.responseText ? err.responseText : "Unknown Error Message");
 		log.error(logMsg);
 	} else {
 		log.error("[ERROR] Unknown Error");

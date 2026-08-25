@@ -5,9 +5,21 @@ export interface Config {
     stageSettings: StageSettings;
 }
 
+export interface LocalConfig {
+    envVars: EnvVars;
+    overrides: Overrides;
+}
+
+export interface Overrides {
+    settings: Settings;
+    stageSettings: StageSettings;
+}
+
 interface EnvVars {
     [key: string]: Record<string, string | number | boolean> | string;
 }
+
+export type valueOverides = Overrides | Settings | StageSettings | Postbuild | Script[] | Prebuild | Build | string | boolean | Array<ArgClass | string | boolean>;
 
 export interface PureCloud {
     EXCLUDE_NOTIFICATIONS?: boolean;

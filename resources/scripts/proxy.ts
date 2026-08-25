@@ -26,7 +26,7 @@ class ProxyServer {
     });
 
     this.server = http.createServer((req, res) => {
-      let reqURL = new URL(req.url);
+      let reqURL = new URL(req.url ?? '');
       let hostname = reqURL.hostname;
       let port = reqURL.port;
       if (!port) {
@@ -57,7 +57,7 @@ class ProxyServer {
   }
 
   private handleConnectRequest(req: http.IncomingMessage, clientSocket: net.Socket, head: Buffer): void {
-    let reqURL = new URL(req.url.startsWith('http') ? req.url : `https://${req.url}`);
+    let reqURL = new URL(req.url && req.url.startsWith('http') ? req.url : `https://${req.url}`);
     let hostname = reqURL.hostname;
     let port = reqURL.port;
     if (!port) {
