@@ -20,8 +20,8 @@ interface Parameter {
 
 class CombineApis {
 	// Properties
-	dataFile: APIData = {};
-	dirent: fs.Dirent;
+	dataFile: Record<string, APIData> = {};
+	dirent: fs.Dirent | null = null;
 	rl: readline.Interface;
 
 	constructor() {
@@ -141,9 +141,11 @@ class CombineApis {
 			fs.writeFileSync(dataFileName, outputData);
 			log.info('File written successfully');
 			
-		} catch (err) {
+		} catch (err: unknown) {
 			log.error(`Exception occurred: ${err}`);
-			log.error(`Stack trace: ${err.stack}`);
+			if (err instanceof Error) {
+				log.error(`Stack trace: ${err.stack}`);
+			}
 			process.exit(-1);
 		}
 	}

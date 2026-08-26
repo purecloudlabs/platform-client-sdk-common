@@ -15,7 +15,6 @@ export interface Version {
     displayFull?: string;
 };
 
-
 export interface PureCloud {
     EXCLUDE_NOTIFICATIONS?: boolean;
     clientId: string;
@@ -23,7 +22,7 @@ export interface PureCloud {
     environment: string;
 }
 
-export interface ApiVersionData {
+export interface ApiVersionData extends Record<string, string> {
     name: string;
     BuildTime: string;
     BuildVersion: string;
@@ -50,7 +49,6 @@ export interface Parameter {
     type: string;
     required: string;
 }
-
 
 export interface Release {
     url: string;
@@ -146,4 +144,3 @@ export interface Release {
         rocket: number;
     };
 }
-

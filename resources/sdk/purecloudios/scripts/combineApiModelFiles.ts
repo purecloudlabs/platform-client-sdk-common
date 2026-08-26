@@ -12,8 +12,8 @@ function basicHashModulo(inputStr: string, modulo: number): number {
 
 export default class CombineModels {
 
-	aggregatedModelFiles: Map<string, string>;
-	dirent: fs.Dirent;
+	aggregatedModelFiles: Map<string, string> = new Map<string, string>();
+	dirent: fs.Dirent | null = null;
 
 	combineApiModelFiles(modelsDir: string, aggregatedFileNamePrefix: string, aggregateModels: boolean, aggregateModulo: number) {
 		// aggregateModulo: 1 (1 single model file), > 1 (compute hash/modulo per model and distribute in x model files)

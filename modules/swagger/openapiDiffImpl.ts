@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import dot from 'dot';
-import { Swagger, Info, Path, TypeResponse, ItemsType, Property, HttpMethod, valueTypes, Parameter, Changes } from '../types/swagger.js';
+import { OpenApiSpec, Info, Path, TypeResponse, ItemsType, Property, HttpMethod, valueTypes, Parameter, Changes } from '../types/swagger.js';
 import { log } from '../log/logger.js';
 
 /* PRIVATE VARS */
@@ -36,49 +36,48 @@ Array.prototype.pushApply = function <T>(arr: T[]): void {
 	this.push(...arr);
 };
 
-class SwaggerDiffImpl {
+class OpenApiDiffImpl {
 
 	changes: Changes;
 	changeCount: number = 0;
-	swaggerInfo: Info;
-	oldSwagger: Swagger;
-	newSwagger: Swagger;
+	openapiInfo: Info;
+	oldOpenApi: OpenApiSpec;
+	newOpenApi: OpenApiSpec;
 
 	useSdkVersioning: boolean = false;
 
 	constructor() {
 		dot.templateSettings.strip = false;
 	}
-
-	public diff(oldSwagger: Swagger, newSwagger: Swagger): void {
+	
+	public diff(oldOpenApi: OpenApiSpec, newOpenApi: OpenApiSpec): void {
 		log.info('Starting swagger diff implementation');
-		log.debug(`Old swagger paths: ${Object.keys(oldSwagger?.paths || {}).length}`);
-		log.debug(`New swagger paths: ${Object.keys(newSwagger?.paths || {}).length}`);
-		log.debug(`Old swagger definitions: ${Object.keys(oldSwagger?.definitions || {}).length}`);
-		log.debug(`New swagger definitions: ${Object.keys(newSwagger?.definitions || {}).length}`);
+		log.debug(`Old swagger paths: ${Object.keys(oldOpenApi?.paths || {}).length}`);
+		log.debug(`New swagger paths: ${Object.keys(newOpenApi?.paths || {}).length}`);
+		log.debug(`Old swagger definitions: ${Object.keys(oldOpenApi?.components?.schemas || {}).length}`);
+		log.debug(`New swagger definitions: ${Object.keys(newOpenApi?.components?.schemas || {}).length}`);
 
 		// Set data
-		this.oldSwagger = oldSwagger;
-		this.newSwagger = newSwagger;
-		this.swaggerInfo = newSwagger.info;
-		this.swaggerInfo.specificationVersion = newSwagger.swagger;
-		this.swaggerInfo.host = newSwagger.host;
+		this.oldOpenApi = oldOpenApi;
+		this.newOpenApi = newOpenApi;
+		this.openapiInfo = newOpenApi.info;
+		this.openapiInfo.specificationVersion = newOpenApi.openapi;
 		this.changes = {};
 		this.changeCount = 0;
 		
 		// Diff
 		log.info('Checking operations for changes');
-		checkOperations(oldSwagger, newSwagger);
+		checkOperations(oldOpenApi, newOpenApi);
 		log.info('Checking models for changes');
-		checkModels(oldSwagger, newSwagger);
+		checkModels(oldOpenApi, newOpenApi);
 
-		log.info(`Swagger diff implementation complete. Found ${this.changeCount} changes.`);
+		log.info(`OpenApiSpec diff implementation complete. Found ${this.changeCount} changes.`);
 	};
 
 }
 
-// Create an instance of SwaggerDiffImpl and export it.
-const _this: SwaggerDiffImpl = new SwaggerDiffImpl();
+// Create an instance of OpenApiDiffImpl and export it.
+const _this: OpenApiDiffImpl = new OpenApiDiffImpl();
 export default _this;
 
 // Check if the 'window' object is available and add the instance to it if so.
@@ -129,20 +128,20 @@ function checkForChange(id: string, key: string, location: string, impact: strin
 		addChange(id, key ? key : property, location, impact, oldPropertyValue, newPropertyValue, description);
 }
 
-function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
-	if (!oldSwagger) {
+function checkOperations(oldOpenApi: OpenApiSpec, newOpenApi: OpenApiSpec) {
+	if (!oldOpenApi) {
 		log.warn('No old swagger provided, skipping operation checks');
 		return;
 	}
 	log.debug('Starting operation comparison');
-	const oldPathCount = Object.keys(oldSwagger.paths || {}).length;
-	const newPathCount = Object.keys(newSwagger.paths || {}).length;
+	const oldPathCount = Object.keys(oldOpenApi.paths || {}).length;
+	const newPathCount = Object.keys(newOpenApi.paths || {}).length;
 	log.debug(`Comparing ${oldPathCount} old paths with ${newPathCount} new paths`);
 	
 	// Check for removed paths
 	log.debug('Checking for removed paths');
-	_.forEach(oldSwagger.paths, function (oldPath: Path, pathKey) {
-		var newPath = newSwagger.paths[pathKey];
+	_.forEach(oldOpenApi.paths, function (oldPath: Path, pathKey) {
+		var newPath = newOpenApi.paths[pathKey];
 		if (!newPath) {
 			log.debug(`Path removed: ${pathKey}`);
 			addChange(pathKey, pathKey, LOCATION_PATH, IMPACT_MAJOR, pathKey, undefined, undefined);
@@ -151,8 +150,8 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 
 	// Check for changed and added paths
 	log.debug('Checking for changed and added paths');
-	_.forEach(newSwagger.paths, function (newPath: Path, pathKey) {
-		var oldPath = oldSwagger.paths[pathKey];
+	_.forEach(newOpenApi.paths, function (newPath: Path, pathKey) {
+		var oldPath = oldOpenApi.paths[pathKey];
 		if (!oldPath) {
 			log.debug(`New path added: ${pathKey}`);
 			// Add note about the new path itself
@@ -410,20 +409,20 @@ function getSchemaType(schema: Property) {
 	return '_undefined_';
 }
 
-function checkModels(oldSwagger: Swagger, newSwagger: Swagger) {
-	if (!oldSwagger) {
+function checkModels(oldOpenApi: OpenApiSpec, newOpenApi: OpenApiSpec) {
+	if (!oldOpenApi) {
 		log.warn('No old swagger provided, skipping model checks');
 		return;
 	}
 	log.debug('Starting model comparison');
-	const oldModelCount = Object.keys(oldSwagger.definitions || {}).length;
-	const newModelCount = Object.keys(newSwagger.definitions || {}).length;
+	const oldModelCount = Object.keys(oldOpenApi.components.schemas || {}).length;
+	const newModelCount = Object.keys(newOpenApi.components.schemas || {}).length;
 	log.debug(`Comparing ${oldModelCount} old models with ${newModelCount} new models`);
 	
 	// Check for removed models
 	log.debug('Checking for removed models');
-	_.forEach(oldSwagger.definitions, function (oldModel, modelKey) {
-		var newModel = newSwagger.definitions[modelKey];
+	_.forEach(oldOpenApi.components.schemas, function (oldModel, modelKey) {
+		var newModel = newOpenApi.components.schemas[modelKey];
 		if (!newModel) {
 			log.debug(`Model removed: ${modelKey}`);
 			addChange(modelKey, modelKey, LOCATION_MODEL, IMPACT_MAJOR, modelKey, undefined, undefined);
@@ -432,13 +431,13 @@ function checkModels(oldSwagger: Swagger, newSwagger: Swagger) {
 
 	// Check for changed and added models
 	log.debug('Checking for changed and added models');
-	_.forEach(newSwagger.definitions, function (newModel, modelKey) {
+	_.forEach(newOpenApi.components.schemas, function (newModel, modelKey) {
 		// ArrayNode and JsonNode were removed in API-5692
 		if (!newModel.properties || modelKey === 'ArrayNode' || modelKey == 'JsonNode') {
 			log.debug(`Skipping model ${modelKey} (no properties or excluded type)`);
 			return;
 		}
-		var oldModel = oldSwagger.definitions[modelKey];
+		var oldModel = oldOpenApi.components.schemas[modelKey];
 		if (!oldModel) {
 			log.debug(`New model added: ${modelKey}`);
 			// Add note about the new model

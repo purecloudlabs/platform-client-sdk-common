@@ -51,7 +51,7 @@ export class PreBuildPostRun {
 	;
 }
 
-function generateNotificationTopicsFile(templatePath, dataPath, outPath, namespace) {
+function generateNotificationTopicsFile(templatePath: string, dataPath: string, outPath: string, namespace: string) {
 	var notificationsRaw = fs.readFileSync(dataPath, 'utf8');
 	var notifications = JSON.parse(notificationsRaw);
 	notifications.namespace = namespace;

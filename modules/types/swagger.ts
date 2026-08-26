@@ -1,3 +1,5 @@
+// Swagger Specification
+
 export interface Swagger {
     swagger: string;
     info: Info;
@@ -72,7 +74,7 @@ export interface Property {
 }
 
 export interface AllOf {
-    $ref: string;
+    "$ref": string;
 }
 
 export interface PropertyProperties {
@@ -209,7 +211,7 @@ export interface Info {
     termsOfService?: string;
     contact: Contact;
     license?: License;
-    swagger?: string;
+    specificationVersion?: string;
     host?: string;
 }
 
@@ -224,7 +226,7 @@ export interface License {
     url: string;
 }
 
-export interface Path {
+export interface Path extends Record<string, Post | Get | Put | Delete | Head | Patch | undefined> {
     post?: Post;
     get?: Get;
     put?: Put;
@@ -233,12 +235,39 @@ export interface Path {
     patch?: Patch;
 }
 
+export function GetOperationFromPath(oPath: Path, method: string): Post | Get | Put | Delete | Head | Patch | null {
+    switch (method) {
+        case 'post':
+            if (oPath.post) return oPath.post;
+            break;
+        case 'get':
+            if (oPath.get) return oPath.get;
+            break;
+        case 'put':
+            if (oPath.put) return oPath.put;
+            break;
+        case 'delete':
+            if (oPath.delete) return oPath.delete;
+            break;
+        case 'head':
+            if (oPath.head) return oPath.head;
+            break;
+        case 'patch':
+            if (oPath.patch) return oPath.patch;
+            break;
+        default:
+            break;
+    }
+    return null;
+}
+
 export type Parameter = DeleteParameter | GetParameter | PostParameter | PutParameter | PatchParameter | HeadParameter;
 
 
 
 export enum CollectionFormat {
     Multi = "multi",
+    Csv = "csv"
 }
 
 export enum In {
@@ -557,4 +586,26 @@ export interface Tag {
     name: string;
     description: string;
     externalDocs?: ExternalDocs;
+}
+
+// OpenApi v3 Specification
+
+export interface OpenApiSpec {
+    openapi: string;
+    info: Info;
+    tags: Tag[];
+    servers: Server[];
+    externalDocs: ExternalDocs;
+    paths: { [key: string]: Path };
+    components: Components;
+}
+
+export interface Components {
+    schemas: { [key: string]: Definition };
+    securitySchemes: SecurityDefinitions;
+}
+
+export interface Server {
+    url: string;
+    description: string;
 }

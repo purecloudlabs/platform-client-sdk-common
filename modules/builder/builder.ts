@@ -8,17 +8,18 @@ import pluralize from 'pluralize';
 import yaml from 'js-yaml';
 import { Config, Script, PureCloud, LocalConfig, valueOverides } from '../types/config.js';
 import { Resourcepaths, Version, ApiVersionData, Data } from '../types/builderTypes.js';
-import SwaggerDiff from '../swagger/swaggerDiff.js';
+import { Swagger, OpenApiSpec } from '../types/swagger.js';
+import SpecificationDiff from '../swagger/specificationDiff.js';
 import { GitModule, GithubConfig } from '../git/gitModule.js';
 import { zipDir } from '../util/zip.js';
 import { log } from '../log/logger.js';
 import { maybeInit, checkAndThrow, getEnv, setEnv, resolveEnvVars, measureDurationFrom, getFileCount } from '../util/utils.js';
-import { swaggerPreprocessing } from '../swagger/swaggerPreprocessing.js';
+import { swaggerPreprocessing } from '../swagger/swaggerUtils.js';
+import { openapiPreprocessing } from '../swagger/openapiUtils.js';
 
 
-const swaggerDiff = new SwaggerDiff();
+const specificationDiff = new SpecificationDiff();
 const git = new GitModule();
-let _this: Builder;
 let newSwaggerTempFile = '';
 
 // Alternative to github-api-promise until update
@@ -32,242 +33,245 @@ let githubConfig: GithubConfig = {
 
 export class Builder {
 	// Properties
-	config: Config;
-	resourcePaths: Resourcepaths;
+	config: Config = {} as Config;
+	resourcePaths: Resourcepaths = {} as Resourcepaths;
 	path: string = '';
-	version: Version;
+	version: Version = {} as Version;
 	isNewVersion: boolean = false;
 	releaseNotes: string = '';
-	apiVersionData: ApiVersionData;
+	apiVersionData: ApiVersionData = {} as ApiVersionData;
 	releaseNoteSummary: string = '';
-	localConfig: LocalConfig;
-	pureCloud: PureCloud;
+	localConfig: LocalConfig = {} as LocalConfig;
+	pureCloud: PureCloud = {} as PureCloud;
 	releaseNoteTemplatePath: string = '';
 	releaseNoteSummaryTemplatePath: string = '';
 
-	async init(configPath: string, localConfigPath: string): Promise<string> {
-		return new Promise<string>((resolve, reject) => {
-			log.debug(`Builder initialization started - Config: ${configPath}, LocalConfig: ${localConfigPath}`);
+	async init(configPath: string, localConfigPath: string): Promise<void> {
+		try {
+			log.info(`Builder initialization started - Config: ${configPath}, LocalConfig: ${localConfigPath}`);
+			this.constructBuilder(configPath, localConfigPath);
 
-			this.constructBuilder(configPath, localConfigPath)
-				.then(() => {
-					log.debug('Builder construction completed, starting deref');
-					return this.deref();
-				})
-				.then(() => {
-					log.debug('Deref completed, starting post-construction');
-					return this.postConstructBuilder();
-				})
-				.then(() => {
-					log.debug('Builder construct completed successfully');
-					console.log("Builder construct Completed");
-					resolve("");
-				})
-				.catch((err: Error) => {
-					log.error(`Builder initialization failed: ${err.message}`);
-					log.debug(`Stack trace: ${err.stack}`);
-					reject(err);
-				});
-		});
+			log.debug('Builder construction completed, starting deref');
+			await this.deref();
+
+			log.debug('Deref completed, starting post-construction');
+			this.postConstructBuilder();
+
+			log.info('Builder construct completed successfully');
+			log.debug(`Final Builder Config (${this.config.name ?? ''}) - settings: ${JSON.stringify(this.config.settings ?? {}, null, 4)}`);
+			log.debug(`Final Builder Config (${this.config.name ?? ''}) - stageSettings: ${JSON.stringify(this.config.stageSettings ?? {}, null, 4)}`);
+			return;
+		} catch (err: unknown) {
+			if (err instanceof Error) {
+				log.error(`Builder initialization failed: ${err.message}`);
+				log.debug(`Stack trace: ${err.stack}`);
+			} else {
+				log.error(`Builder initialization failed: ${err}`);
+			}
+			throw err;
+		}
 	}
 
-	async constructBuilder(configPath: string, localConfigPath: string): Promise<string> {
-		return new Promise<string>((resolve, reject) => {
-			try {
-				log.debug('Starting builder construction');
-				log.writeBox('Constructing Builder');
+	constructBuilder(configPath: string, localConfigPath: string): void {
+		try {
+			log.debug('Starting builder construction');
+			log.writeBox('Constructing Builder');
 
-				// Load config files
-				log.debug(`Checking config file existence: ${configPath}`);
-				if (fs.existsSync(configPath)) {
-					log.debug('Loading main config file');
-					this.config = loadConfig(configPath);
-					log.debug('Main config loaded successfully');
-				}
-				else {
-					log.error(`Config file not found: ${configPath}`);
-					throw new Error(`Config file doesn't exist! Path: ${configPath}`);
-				}
-
-				log.debug(`Checking local config file existence: ${localConfigPath}`);
-				if (fs.existsSync(localConfigPath)) {
-					log.debug('Loading local config file');
-					this.localConfig = loadConfig(localConfigPath);
-					log.debug('Local config loaded successfully');
-				} else {
-					log.debug('Local config file not found, using empty config');
-					this.localConfig = {} as LocalConfig;
-					log.warn(`No local config provided. Path: ${localConfigPath}`);
-				}
-
-				// Apply overrides
-				log.debug('Applying configuration overrides');
-				log.info('Applying overrides...');
-				applyOverrides(this.config, this.localConfig.overrides);
-				log.debug('Configuration overrides applied successfully');
-				resolve("");
+			// Load config files
+			log.debug(`Checking config file existence: ${configPath}`);
+			if (configPath && fs.existsSync(configPath)) {
+				log.debug('Loading main config file');
+				this.config = loadConfig(configPath);
+				log.debug('Main config loaded successfully');
 			}
-			catch (err) {
-				log.error(`Builder construction failed: ${err}`);
-				reject(err)
+			else {
+				log.error(`Config file not found: ${configPath}`);
+				throw new Error(`Config file doesn't exist! Path: ${configPath}`);
 			}
-		});
+
+			log.debug(`Checking local config file existence: ${localConfigPath}`);
+			if (localConfigPath && fs.existsSync(localConfigPath)) {
+				log.debug('Loading local config file');
+				this.localConfig = loadConfig(localConfigPath);
+				log.debug('Local config loaded successfully');
+			} else {
+				log.debug('Local config file not found, using empty config');
+				this.localConfig = {} as LocalConfig;
+				log.warn(`No local config provided. Path: ${localConfigPath}`);
+			}
+
+			// Apply overrides
+			log.debug('Applying configuration overrides');
+			log.info('Applying overrides...');
+			applyOverrides(this.config, this.localConfig.overrides);
+
+			log.debug('Configuration overrides applied successfully');
+			return;
+		}
+		catch (err: unknown) {
+			log.error(`Builder construction failed: ${err}`);
+			throw err;
+		}
 	}
 
-	async postConstructBuilder(): Promise<string> {
-		return new Promise<string>((resolve, reject) => {
-			try {
-				log.debug('Starting post-construction builder setup');
-				_this = this;
+	postConstructBuilder(): void {
+		try {
+			log.debug('Starting post-construction builder setup');
 
-				// https://github.com/winstonjs/winston#logging-levels
-				// silly > debug > verbose > info > warn > error
-				if (this.config.settings.logLevel) {
-					log.debug(`Setting log level: ${this.config.settings.logLevel}`);
-					log.setLogLevel(this.config.settings.logLevel);
-				}
+			// https://github.com/winstonjs/winston#logging-levels
+			// silly > debug > verbose > info > warn > error
+			if (this.config.settings.logLevel) {
+				log.debug(`Setting log level: ${this.config.settings.logLevel}`);
+				log.setLogLevel(this.config.settings.logLevel);
+			}
 
-				// Checketh thyself before thou wrecketh thyself
-				maybeInit(this, 'config', {}, "1 config");
-				maybeInit(this, 'localConfig', {}, "1 localConfig");
-				maybeInit(this.config, 'settings', {}, "1 settings");
-				maybeInit(this.config.settings, 'swagger', {}, "settings");
-				maybeInit(this.config.settings, 'sdkRepo', { repo: undefined, branch: undefined }, "sdkReposettings");
-				maybeInit(this.config.settings, 'swaggerCodegen', {}, "swaggerCodegensettings");
-				maybeInit(this.config.settings.swaggerCodegen, 'generateApiTests', false, "stageSettings");
-				maybeInit(this.config.settings.swaggerCodegen, 'generateModelTests', false, "generateModelTests");
-				maybeInit(this.config.settings, 'resourcePaths', {}, "generateModelTests");
-				maybeInit(this.config, 'stageSettings', {}, "1stageSettings");
-				maybeInit(this.config.stageSettings, 'prebuild', {}, "1stageSettings");
-				maybeInit(this.config.stageSettings, 'build', {}, "1build");
-				maybeInit(this.config.stageSettings, 'postbuild', {}, "1postbuild");
-				maybeInit(this.config.settings.sdkRepo, 'tagFormat', '{version}', "1tagFormat");
+			// Checketh thyself before thou wrecketh thyself
+			if (!this.config) this.config = {} as Config;
+			if (!this.localConfig) this.localConfig = {} as LocalConfig;
+			maybeInit(this.config, 'settings', {}, "1 settings");
+			maybeInit(this.config.settings, 'swagger', {}, "settings");
+			maybeInit(this.config.settings, 'sdkRepo', { repo: undefined, branch: undefined }, "sdkReposettings");
+			maybeInit(this.config.settings, 'swaggerCodegen', {}, "swaggerCodegensettings");
+			maybeInit(this.config.settings.swaggerCodegen, 'generateApiTests', false, "stageSettings");
+			maybeInit(this.config.settings.swaggerCodegen, 'generateModelTests', false, "generateModelTests");
+			maybeInit(this.config.settings, 'resourcePaths', {}, "generateModelTests");
+			maybeInit(this.config, 'stageSettings', {}, "1stageSettings");
+			maybeInit(this.config.stageSettings, 'prebuild', {}, "1stageSettings");
+			maybeInit(this.config.stageSettings, 'build', {}, "1build");
+			maybeInit(this.config.stageSettings, 'postbuild', {}, "1postbuild");
+			maybeInit(this.config.settings.sdkRepo, 'tagFormat', '{version}', "1tagFormat");
+			maybeInit(this.config.settings.swaggerCodegen, 'sdkPathLanguage', '', "1sdkPathLanguage");
+			maybeInit(this.config.settings.swaggerCodegen, 'isOpenApiCustomGenerator', false, "1customGenerator");
 
-				// Check for required settings
-				checkAndThrow(this.config.settings.swagger, 'oldSwaggerPath', "1oldSwaggerPath");
-				checkAndThrow(this.config.settings.swagger, 'newSwaggerPath', "1newSwaggerPath");
-				checkAndThrow(this.config.settings, 'swaggerCodegen', "1sss");
-				checkAndThrow(this.config.settings.swaggerCodegen, 'codegenLanguage', "1codegenLanguage");
-				checkAndThrow(this.config.settings.swaggerCodegen, 'resourceLanguage', "1resourceLanguage");
-				checkAndThrow(this.config.settings.swaggerCodegen, 'configFile', "1configFile");
+			// Check for required settings
+			checkAndThrow(this.config.settings.swagger, 'oldSwaggerPath', "1oldSwaggerPath");
+			checkAndThrow(this.config.settings.swagger, 'newSwaggerPath', "1newSwaggerPath");
+			checkAndThrow(this.config.settings, 'swaggerCodegen', "1sss");
+			checkAndThrow(this.config.settings.swaggerCodegen, 'codegenLanguage', "1codegenLanguage");
+			checkAndThrow(this.config.settings.swaggerCodegen, 'resourceLanguage', "1resourceLanguage");
+			checkAndThrow(this.config.settings.swaggerCodegen, 'configFile', "1configFile");
 
-				// Normalize sdkRepo
-				if (typeof this.config.settings.sdkRepo === 'string') {
-					this.config.settings.sdkRepo = {
-						repo: this.config.settings.sdkRepo,
-						branch: '',
-						tagFormat: ''
-					};
-				}
-
-				// Set env vars
-				log.debug('Setting up environment variables');
-				const commonRoot = path.resolve('./');
-				const sdkRepo = path.resolve(path.join('./output', this.config.settings.swaggerCodegen.codegenLanguage));
-				const sdkTemp = path.resolve(path.join('./temp', this.config.settings.swaggerCodegen.codegenLanguage));
-
-				log.debug(`Environment paths - CommonRoot: ${commonRoot}, SdkRepo: ${sdkRepo}, SdkTemp: ${sdkTemp}`);
-				setEnv('COMMON_ROOT', commonRoot);
-				setEnv('SDK_REPO', sdkRepo);
-				log.debug('Removing existing SDK_REPO directory');
-				fs.removeSync(getEnv('SDK_REPO') as string);
-				setEnv('SDK_TEMP', sdkTemp);
-				log.debug('Emptying SDK_TEMP directory');
-				fs.emptyDirSync(getEnv('SDK_TEMP') as string);
-
-				// Load env vars from config
-				_.forOwn(this.config.envVars, (value, key) => setEnv(key, value));
-				_.forOwn(this.localConfig.envVars, (group, groupKey) => {
-					if (group) _.forOwn(group, (value, key) => setEnv(key, value));
-				});
-
-				// Resolve env vars in config
-				resolveEnvVars(this.config);
-				resolveEnvVars(this.localConfig);
-				if (this.config.settings.debugConfig === true) {
-					log.debug('Local config file: \n' + JSON.stringify(this.localConfig, null, 2));
-					log.debug('Config file: \n' + JSON.stringify(this.config, null, 2));
-				}
-
-				// Initialize instance settings
-				log.setUseColor(this.config.settings.enableLoggerColor === true);
-				let resourceRoot = `./resources/sdk/${this.config.settings.swaggerCodegen.resourceLanguage}/`;
-				this.resourcePaths = {
-					extensions: path.resolve(
-						this.config.settings.resourcePaths.extensions
-							? this.config.settings.resourcePaths.extensions
-							: path.join(resourceRoot, 'extensions')
-					),
-					samples: path.resolve(
-						this.config.settings.resourcePaths.samples
-							? this.config.settings.resourcePaths.samples
-							: path.join(resourceRoot, 'samples')
-					),
-					scripts: path.resolve(
-						this.config.settings.resourcePaths.scripts ? this.config.settings.resourcePaths.scripts : path.join(resourceRoot, 'scripts')
-					),
-					templates: path.resolve(
-						this.config.settings.resourcePaths.templates ? this.config.settings.resourcePaths.templates : path.join(resourceRoot, 'templates')
-					),
+			// Normalize sdkRepo
+			if (typeof this.config.settings.sdkRepo === 'string') {
+				this.config.settings.sdkRepo = {
+					repo: this.config.settings.sdkRepo,
+					branch: '',
+					tagFormat: ''
 				};
-				newSwaggerTempFile = path.join(getEnv('SDK_TEMP') as string, 'newSwagger.json');
-				this.pureCloud = {
-					clientId: getEnv('PURECLOUD_CLIENT_ID') as string,
-					clientSecret: getEnv('PURECLOUD_CLIENT_SECRET') as string,
-					environment: getEnv('PURECLOUD_ENVIRONMENT', 'mypurecloud.com', true) as string,
-				};
-				this.releaseNoteTemplatePath = this.config.settings.releaseNoteTemplatePath
-					? this.config.settings.releaseNoteTemplatePath
-					: './resources/templates/releaseNoteDetail.md';
-				this.releaseNoteSummaryTemplatePath = this.config.settings.releaseNoteSummaryTemplatePath
-					? this.config.settings.releaseNoteSummaryTemplatePath
-					: './resources/templates/releaseNoteSummary.md';
+			}
 
-				// Initialize other things
-				log.debug('Setting up Git authentication');
-				git.authToken = getEnv('GITHUB_TOKEN') as string;
-				log.debug('Post-construction setup completed successfully');
-				resolve("");
+			// Set env vars
+			log.debug('Setting up environment variables');
+			const commonRoot = path.resolve('./');
+			let sdkRepo: string, sdkTemp: string;
+			if (!this.config.settings.swaggerCodegen.sdkPathLanguage) {
+				// No swaggerCodegen.sdkPathLanguage - use swaggerCodegen.codegenLanguage
+				sdkRepo = path.resolve(path.join('./output', this.config.settings.swaggerCodegen.codegenLanguage));
+				sdkTemp = path.resolve(path.join('./temp', this.config.settings.swaggerCodegen.codegenLanguage));
+			} else {
+				sdkRepo = path.resolve(path.join('./output', this.config.settings.swaggerCodegen.sdkPathLanguage));
+				sdkTemp = path.resolve(path.join('./temp', this.config.settings.swaggerCodegen.sdkPathLanguage));
 			}
-			catch (err) {
-				log.error(`Post-construction setup failed: ${err}`);
-				reject(err)
+
+			log.debug(`Environment paths - CommonRoot: ${commonRoot}, SdkRepo: ${sdkRepo}, SdkTemp: ${sdkTemp}`);
+			setEnv('COMMON_ROOT', commonRoot);
+			setEnv('SDK_REPO', sdkRepo);
+			log.debug('Removing existing SDK_REPO directory');
+			fs.removeSync(getEnv('SDK_REPO') as string);
+			setEnv('SDK_TEMP', sdkTemp);
+			log.debug('Emptying SDK_TEMP directory');
+			fs.emptyDirSync(getEnv('SDK_TEMP') as string);
+
+			// Load env vars from config
+			_.forOwn(this.config.envVars, (value, key) => setEnv(key, value));
+			_.forOwn(this.localConfig.envVars, (group, groupKey) => {
+				if (group) _.forOwn(group, (value, key) => setEnv(key, value));
+			});
+
+			// Resolve env vars in config
+			resolveEnvVars(this.config);
+			resolveEnvVars(this.localConfig);
+			if (this.config.settings.debugConfig === true) {
+				log.debug('Local config file: \n' + JSON.stringify(this.localConfig, null, 2));
+				log.debug('Config file: \n' + JSON.stringify(this.config, null, 2));
 			}
-		});
+
+			// Initialize instance settings
+			log.setUseColor(this.config.settings.enableLoggerColor === true);
+			let resourceRoot = `./resources/sdk/${this.config.settings.swaggerCodegen.resourceLanguage}/`;
+			this.resourcePaths = {
+				extensions: path.resolve(
+					this.config.settings.resourcePaths.extensions
+						? this.config.settings.resourcePaths.extensions
+						: path.join(resourceRoot, 'extensions')
+				),
+				samples: path.resolve(
+					this.config.settings.resourcePaths.samples
+						? this.config.settings.resourcePaths.samples
+						: path.join(resourceRoot, 'samples')
+				),
+				scripts: path.resolve(
+					this.config.settings.resourcePaths.scripts ? this.config.settings.resourcePaths.scripts : path.join(resourceRoot, 'scripts')
+				),
+				templates: path.resolve(
+					this.config.settings.resourcePaths.templates ? this.config.settings.resourcePaths.templates : path.join(resourceRoot, 'templates')
+				),
+			};
+			newSwaggerTempFile = path.join(getEnv('SDK_TEMP') as string, 'newSwagger.json');
+			this.pureCloud = {
+				clientId: getEnv('PURECLOUD_CLIENT_ID') as string,
+				clientSecret: getEnv('PURECLOUD_CLIENT_SECRET') as string,
+				environment: getEnv('PURECLOUD_ENVIRONMENT', 'mypurecloud.com', true) as string,
+			};
+			this.releaseNoteTemplatePath = this.config.settings.releaseNoteTemplatePath
+				? this.config.settings.releaseNoteTemplatePath
+				: './resources/templates/releaseNoteDetail.md';
+			this.releaseNoteSummaryTemplatePath = this.config.settings.releaseNoteSummaryTemplatePath
+				? this.config.settings.releaseNoteSummaryTemplatePath
+				: './resources/templates/releaseNoteSummary.md';
+
+			// Initialize other things
+			log.debug('Setting up Git authentication');
+			git.authToken = getEnv('GITHUB_TOKEN') as string;
+			log.debug('Post-construction setup completed successfully');
+			return;
+		}
+		catch (err: unknown) {
+			log.error(`Post-construction setup failed: ${err}`);
+			throw err;
+		}
 	}
 
-	async deref(): Promise<string> {
-		return new Promise<string>((resolve, reject) => {
-			log.debug('Starting schema dereferencing');
-			$RefParser.dereference(this.config, (err, schema) => {
-				if (err) {
-					log.error(`Main config dereferencing failed: ${err}`);
-					reject(err);
-				}
-				else {
-					log.debug('Main config dereferencing completed');
-					this.config = schema as typeof this.config;
-				}
-			})
-
-			$RefParser.dereference(this.localConfig, (err, schema) => {
-				if (err) {
-					log.error(`Local config dereferencing failed: ${err}`);
-					reject(err);
-				}
-				else {
-					log.debug('Local config dereferencing completed');
-					this.localConfig = schema as typeof this.localConfig;
-					resolve("");
-				}
-			})
+	async deref(): Promise<void> {
+		log.debug('Starting schema dereferencing');
+		await $RefParser.dereference(this.config, (err, schema) => {
+			if (err) {
+				log.error(`Main config dereferencing failed: ${err}`);
+				throw err;
+			}
+			else {
+				log.debug('Main config dereferencing completed');
+				this.config = schema as typeof this.config;
+			}
 		});
+
+		await $RefParser.dereference(this.localConfig, (err, schema) => {
+			if (err) {
+				log.error(`Local config dereferencing failed: ${err}`);
+				throw err;
+			}
+			else {
+				log.debug('Local config dereferencing completed');
+				this.localConfig = schema as typeof this.localConfig;
+			}
+		});
+
+		return;
 	}
 
 	async fullBuild(): Promise<void> {
 		try {
-			log.debug('Full build process initiated');
-			log.info('Full build initiated!');
+			log.info('Full build process initiated');
 			let fullBuildStartTime = Date.now();
 			await this.prebuild();
 
@@ -297,7 +301,7 @@ export class Builder {
 			log.debug('Prebuild stage initiated');
 			log.writeBox('STAGE: pre-build');
 			let prebuildStartTime = Date.now();
-			await prebuildImpl();
+			await prebuildImpl(this);
 
 			log.debug('Prebuild implementation completed');
 			log.info(`Pre-build complete at ${new Date(Date.now()).toUTCString()} in ${measureDurationFrom(prebuildStartTime)}`);
@@ -319,7 +323,7 @@ export class Builder {
 			log.debug('Build stage initiated');
 			log.writeBox('STAGE: build');
 			let buildStartTime = Date.now();
-			await buildImpl();
+			await buildImpl(this);
 
 			log.debug('Build implementation completed');
 			log.info(`Build complete at ${new Date(Date.now()).toUTCString()} in ${measureDurationFrom(buildStartTime)}`);
@@ -341,7 +345,7 @@ export class Builder {
 			log.debug('Postbuild stage initiated');
 			log.writeBox('STAGE: post-build');
 			let postbuildStartTime = Date.now();
-			await postbuildImpl();
+			await postbuildImpl(this);
 
 			log.debug('Postbuild implementation completed');
 			log.info(`Post-build complete at ${new Date(Date.now()).toUTCString()} in ${measureDurationFrom(postbuildStartTime)}`);
@@ -359,311 +363,244 @@ export class Builder {
 	}
 }
 
-async function prebuildImpl(): Promise<string> {
-	return new Promise<string>((resolve, reject) => {
-		try {
-			log.debug('Starting prebuild implementation');
-			// Pre-run scripts
-			log.debug('Executing prebuild pre-run scripts');
-			executeScripts(_this.config.stageSettings.prebuild.preRunScripts, 'custom prebuild pre-run');
+async function prebuildImpl(builder: Builder): Promise<void> {
+	try {
+		log.debug('Starting prebuild implementation');
+		// Pre-run scripts
+		log.debug('Executing prebuild pre-run scripts');
+		executeScripts(builder, builder.config.stageSettings.prebuild.preRunScripts, 'custom prebuild pre-run');
 
-			// Clone repo
-			let startTime = Date.now();
-			log.debug(`Starting repository clone operation - Repo: ${_this.config.settings.sdkRepo.repo}, Branch: ${_this.config.settings.sdkRepo.branch}, Target: ${getEnv('SDK_REPO')}`);
-			log.info(`Cloning ${_this.config.settings.sdkRepo.repo} (${_this.config.settings.sdkRepo.branch}) to ${getEnv('SDK_REPO')}`);
-			git
-				.clone(_this.config.settings.sdkRepo.repo, _this.config.settings.sdkRepo.branch, getEnv('SDK_REPO') as string)
-				.then(function () {
-					log.debug('Repository clone completed successfully');
-					log.debug(`Clone operation completed in ${measureDurationFrom(startTime)}`);
-				})
-				.then(function () {
-					// Diff swagger
-					log.debug('Starting swagger diff operation');
-					log.info('Diffing swagger files...');
-					swaggerDiff.useSdkVersioning = true;
-					// Special treatment for Web Messaging specification (downgrade from OpenAPI v3 to Swagger v2)
-					if (_this.config.settings.swaggerCodegen.codegenLanguage == "webmessagingjava") {
-						log.debug('Enabling OpenAPI v3 to Swagger v2 downgrade for webmessagingjava');
-						swaggerDiff.downgradeToSwaggerV2 = true;
-					}
-					log.debug(`Swagger diff paths - Old: ${_this.config.settings.swagger.oldSwaggerPath}, New: ${_this.config.settings.swagger.newSwaggerPath}, Preview: ${_this.config.settings.swagger.previewSwaggerPath}`);
-					swaggerDiff.getAndDiff(
-						_this.config.settings.swagger.oldSwaggerPath,
-						_this.config.settings.swagger.newSwaggerPath,
-						_this.config.settings.swagger.previewSwaggerPath,
-						_this.config.settings.swagger.saveOldSwaggerPath,
-						_this.config.settings.swagger.saveNewSwaggerPath
-					);
-					log.debug('Swagger diff completed');
-				})
-				.then(() => {
-					// For Jenkins only. 
-					log.debug('Checking for upstream changes validation');
-					if (newSwaggerTempFile.includes('build-platform-sdks-internal-pipeline') && process.argv.includes("build-contains-upstream-changes")) {
-						log.debug(`Validating upstream changes - Change count: ${swaggerDiff.changeCount}`);
-						if (swaggerDiff.changeCount == 0) {
-							log.debug('No swagger changes detected but upstream changes expected');
-							throw new Error('The build contains upstream changes, but the Swagger definition has not changed.');
-						}
-					}
-				})
-				.then(() => {
-					// Swagger Preprocessing
-					log.debug('Preprocessing Swagger');
-					return swaggerPreprocessing(_this, swaggerDiff.newSwagger);
-				})
-				.then(() => {
-					// Save new swagger to temp file for build
-					log.debug(`Writing processed swagger to temp file: ${newSwaggerTempFile}`);
-					log.info(`Writing new swagger file to temp storage path: ${newSwaggerTempFile}`);
-					fs.writeFileSync(newSwaggerTempFile, JSON.stringify(swaggerDiff.newSwagger));
-					log.debug('Swagger file written successfully');
-				})
-				.then(function (): Promise<string> {
-					return new Promise<string>((resolve, reject) => {
+		// Clone repo
+		let startTime = Date.now();
+		log.debug(`Starting repository clone operation - Repo: ${builder.config.settings.sdkRepo.repo}, Branch: ${builder.config.settings.sdkRepo.branch}, Target: ${getEnv('SDK_REPO')}`);
+		log.info(`Cloning ${builder.config.settings.sdkRepo.repo} (${builder.config.settings.sdkRepo.branch}) to ${getEnv('SDK_REPO')}`);
 
-						_this.version = {
-							major: 0,
-							minor: 0,
-							point: 0,
-							prerelease: 'UNKNOWN',
-							apiVersion: 0,
-						};
+		await git.clone(builder.config.settings.sdkRepo.repo, builder.config.settings.sdkRepo.branch, getEnv('SDK_REPO') as string);
 
-						if (_this.config.settings.versionFile) {
-							if (fs.existsSync(_this.config.settings.versionFile)) {
-								_this.version = JSON.parse(fs.readFileSync(_this.config.settings.versionFile, 'utf8'));
-							} else {
-								log.warn(`Version file not found: ${_this.config.settings.versionFile}`);
-							}
-						} else {
-							log.warn('Version file not specified! Defaulting to 0.0.0-UNKNOWN');
-						}
+		log.debug('Repository clone completed successfully');
+		log.debug(`Clone operation completed in ${measureDurationFrom(startTime)}`);
 
-						// Increment version in config
-						let oldVersion = swaggerDiff.stringifyVersion(_this.version, true);
-						log.debug(`Previous version: ${oldVersion}`);
-						swaggerDiff.incrementVersion(_this.version);
-						let newVersion = swaggerDiff.stringifyVersion(_this.version, true);
+		// Diff swagger
+		log.debug('Starting swagger diff operation');
+		log.info('Diffing swagger files...');
+		specificationDiff.useSdkVersioning = true;
+		// Special treatment for Web Messaging specification (downgrade from OpenAPI v3 to Swagger v2)
+		if (builder.config.settings.swaggerCodegen.codegenLanguage == "webmessagingjava") {
+			log.debug('Enabling OpenAPI v3 to Swagger v2 downgrade for webmessagingjava');
+			specificationDiff.downgradeToSwaggerV2 = true;
+		}
+		log.debug(`Swagger diff paths - Old: ${builder.config.settings.swagger.oldSwaggerPath}, New: ${builder.config.settings.swagger.newSwaggerPath}, Preview: ${builder.config.settings.swagger.previewSwaggerPath}`);
+		specificationDiff.getAndDiff(
+			builder.config.settings.swagger.oldSwaggerPath,
+			builder.config.settings.swagger.newSwaggerPath,
+			builder.config.settings.swagger.previewSwaggerPath,
+			builder.config.settings.swagger.saveOldSwaggerPath,
+			builder.config.settings.swagger.saveNewSwaggerPath
+		);
+		log.debug('Swagger diff completed');
 
-						// Determine if new version
-						_this.isNewVersion = getEnv('BRANCH_NAME') !== 'master' ? false : oldVersion !== newVersion;
-						setEnv('SDK_NEW_VERSION', _this.isNewVersion);
-						if (_this.isNewVersion === true) log.info(`New version: ${_this.version.displayFull}`);
-						else log.warn('Version was not incremented');
-
-						// Write new version to file
-						if (_this.isNewVersion === true && _this.config.settings.versionFile) {
-							fs.writeFileSync(_this.config.settings.versionFile, JSON.stringify(_this.version, null, 2));
-						}
-
-						// Get API version from health check endpoint
-						let resString = '';
-						log.info(`Getting API version from ${_this.config.settings.apiHealthCheckUrl}`);
-						https.get(_this.config.settings.apiHealthCheckUrl, function (res) {
-							res.on('data', function (chunk) {
-								resString += chunk;
-							});
-							res.on('end', function () {
-								resolve(JSON.parse(resString));
-							});
-							res.on('error', function (err) {
-								reject(err);
-							});
-						});
-					});
-
-				})
-				.then(function (apiVersionData: string) {
-					// Sanitize and store API version data
-					let apiVersionDataClean = {} as ApiVersionData;
-					_.forIn(apiVersionData, function (value, key) {
-						apiVersionDataClean[key.replace(/\W+/g, '')] = value;
-					});
-					_this.apiVersionData = apiVersionDataClean;
-					log.debug(`API version data: ${JSON.stringify(apiVersionDataClean, null, 2)}`);
-
-
-					// Get extra release note data
-
-
-					const data: Data = {
-						extraNotes: getEnv('RELEASE_NOTES') as string,
-						hasExtraNotes: false,
-						apiVersionData: _this.apiVersionData,
-					};
-
-					data.hasExtraNotes = data.extraNotes !== undefined;
-
-					// Get release notes
-					log.info('Generating release notes...');
-					_this.releaseNotes = swaggerDiff.generateReleaseNotes(_this.releaseNoteTemplatePath, data);
-					_this.releaseNoteSummary = swaggerDiff.generateReleaseNotes(_this.releaseNoteSummaryTemplatePath, data);
-
-					let releaseNotePath = path.join(getEnv('SDK_REPO') as string, 'releaseNotes.md');
-					log.info(`Writing release notes to ${releaseNotePath}`);
-					fs.writeFileSync(releaseNotePath, _this.releaseNotes);
-				})
-				.then(() => {
-					log.debug('Executing prebuild post-run scripts');
-					return executeScripts(_this.config.stageSettings.prebuild.postRunScripts, 'custom prebuild post-run');
-				})
-				.then(() => {
-					log.debug('Prebuild implementation completed successfully');
-					resolve("");
-				})
-				.catch((err: Error) => {
-					log.error(`Prebuild implementation failed: ${err.message}`);
-					log.debug(`Stack trace: ${err.stack}`);
-					reject(err);
-				});
-		} catch (err) {
-			log.error(`Prebuild implementation caught exception: ${err}`);
-			reject(err);
+		// For Jenkins only. 
+		log.debug('Checking for upstream changes validation');
+		if (newSwaggerTempFile.includes('build-platform-sdks-internal-pipeline') && process.argv.includes("build-contains-upstream-changes")) {
+			log.debug(`Validating upstream changes - Change count: ${specificationDiff.changeCount}`);
+			if (specificationDiff.changeCount == 0) {
+				log.debug('No swagger changes detected but upstream changes expected');
+				throw new Error('The build contains upstream changes, but the Swagger definition has not changed.');
+			}
 		}
 
-		// return deferred.promise;
-	});
+		// Swagger Preprocessing
+		log.debug('Preprocessing Swagger');
+		if (specificationDiff.isSwagger === true) {
+			await swaggerPreprocessing(builder, specificationDiff.newSpecification as Swagger);
+		} else {
+			await openapiPreprocessing(builder, specificationDiff.newSpecification as OpenApiSpec);
+		}
+
+		// Save new swagger to temp file for build
+		log.debug(`Writing processed swagger to temp file: ${newSwaggerTempFile}`);
+		log.info(`Writing new swagger file to temp storage path: ${newSwaggerTempFile}`);
+		fs.writeFileSync(newSwaggerTempFile, JSON.stringify(specificationDiff.newSpecification));
+		log.debug('Swagger file written successfully');
+
+		// Compute ApiVersionData/BuilderVersion
+		let apiVersionData: ApiVersionData = await computeVersion(builder);;
+
+		// Sanitize and store API version data
+		let apiVersionDataClean = {} as ApiVersionData;
+		_.forIn(apiVersionData, function (value, key) {
+			apiVersionDataClean[key.replace(/\W+/g, '')] = value;
+		});
+		builder.apiVersionData = apiVersionDataClean;
+		log.debug(`API version data: ${JSON.stringify(apiVersionDataClean, null, 2)}`);
+		// Get extra release note data
+		const data: Data = {
+			extraNotes: getEnv('RELEASE_NOTES') as string,
+			hasExtraNotes: false,
+			apiVersionData: builder.apiVersionData,
+		};
+		data.hasExtraNotes = data.extraNotes !== undefined;
+		// Get release notes
+		log.info('Generating release notes...');
+		builder.releaseNotes = specificationDiff.generateReleaseNotes(builder.releaseNoteTemplatePath, data);
+		builder.releaseNoteSummary = specificationDiff.generateReleaseNotes(builder.releaseNoteSummaryTemplatePath, data);
+		let releaseNotePath = path.join(getEnv('SDK_REPO') as string, 'releaseNotes.md');
+		log.info(`Writing release notes to ${releaseNotePath}`);
+		fs.writeFileSync(releaseNotePath, builder.releaseNotes);
+
+		log.debug('Executing prebuild post-run scripts');
+		executeScripts(builder, builder.config.stageSettings.prebuild.postRunScripts, 'custom prebuild post-run');
+
+		log.debug('Prebuild implementation completed successfully');
+		return;
+	} catch (err: unknown) {
+		if (err instanceof Error) {
+			log.error(`Prebuild implementation failed: ${err.message}`);
+			log.debug(`Stack trace: ${err.stack}`);
+		} else {
+			log.error(`Prebuild implementation failed: ${err}`);
+		}
+		throw err;
+	}
 }
 
-async function buildImpl(): Promise<string> {
-	return new Promise<string>((resolve, reject) => {
-		try {
-			log.debug('Starting build implementation');
-			// Pre-run scripts
-			log.debug('Executing build pre-run scripts');
-			executeScripts(_this.config.stageSettings.build.preRunScripts, 'custom build pre-run');
+async function buildImpl(builder: Builder): Promise<void> {
+	try {
+		log.debug('Starting build implementation');
+		// Pre-run scripts
+		log.debug('Executing build pre-run scripts');
+		executeScripts(builder, builder.config.stageSettings.build.preRunScripts, 'custom build pre-run');
 
-			let outputDir = path.join(getEnv('SDK_REPO') as string, 'build');
-			log.debug(`Setting up build output directory: ${outputDir}`);
-			fs.emptyDirSync(outputDir);
+		let outputDir = path.join(getEnv('SDK_REPO') as string, 'build');
+		log.debug(`Setting up build output directory: ${outputDir}`);
+		fs.emptyDirSync(outputDir);
 
-			let command = '';
-			// Java command and options
-			command += 'java ';
-			command += `-DapiTests=${_this.config.settings.swaggerCodegen.generateApiTests} `;
-			command += `-DmodelTests=${_this.config.settings.swaggerCodegen.generateModelTests} `;
-			command += `${getEnv('JAVA_OPTS', '')} -XX:MaxMetaspaceSize=256M -Xmx2g -DloggerPath=conf/log4j.properties `;
-			// Swagger-codegen jar file
-			command += `-jar ${_this.config.settings.swaggerCodegen.jarPath} `;
-			// Swagger-codegen options
-			command += 'generate ';
-			command += `-i ${newSwaggerTempFile} `;
-			command += `-g ${_this.config.settings.swaggerCodegen.codegenLanguage} `;
-			command += `-o ${outputDir} `;
-			command += `-c ${_this.config.settings.swaggerCodegen.configFile} `;
-			command += '--skip-validate-spec ';
-			// Don't append empty templates directory
-			if (getFileCount(_this.resourcePaths.templates) > 0) command += `-t ${_this.resourcePaths.templates} `;
+		let command = '';
+		// Java command and options
+		command += 'java ';
+		command += `-DapiTests=${builder.config.settings.swaggerCodegen.generateApiTests} `;
+		command += `-DmodelTests=${builder.config.settings.swaggerCodegen.generateModelTests} `;
+		command += `${getEnv('JAVA_OPTS', '')} -XX:MaxMetaspaceSize=256M -Xmx2g -DloggerPath=conf/log4j.properties `;
+		// Swagger-codegen jar file
+		if (builder.config.settings.swaggerCodegen.isOpenApiCustomGenerator === true) {
+			// To run custom language/generator with openapi-generator
+			// the jarPath will include both plugin for the custom language/generator and the openapi-generator jar file
+			command += `-cp ${builder.config.settings.swaggerCodegen.jarPath} org.openapitools.codegen.OpenAPIGenerator `;
+		} else {
+			// To run swagger-generator (legacy), or to run language/generator provided with openapi-generator (supported/included)
+			command += `-jar ${builder.config.settings.swaggerCodegen.jarPath} `;
+		}
+		
+		// Swagger-codegen options
+		command += 'generate ';
+		command += `-i ${newSwaggerTempFile} `;
+		command += `-g ${builder.config.settings.swaggerCodegen.codegenLanguage} `;
+		command += `-o ${outputDir} `;
+		command += `-c ${builder.config.settings.swaggerCodegen.configFile} `;
+		command += '--skip-validate-spec ';
+		// Don't append empty templates directory
+		if (getFileCount(builder.resourcePaths.templates) > 0) command += `-t ${builder.resourcePaths.templates} `;
 
-			_.forEach(_this.config.settings.swaggerCodegen.extraGeneratorOptions, (option) => (command += ' ' + option));
+		_.forEach(builder.config.settings.swaggerCodegen.extraGeneratorOptions, (option) => (command += ' ' + option));
 
-			log.debug(`Executing swagger-codegen command: ${command}`);
-			log.info('Running swagger-codegen...');
-			let code = childProcess.execSync(command, { stdio: 'inherit' });
-			log.debug('Swagger-codegen execution completed');
+		log.debug(`Executing swagger-codegen command: ${command}`);
+		log.info('Running swagger-codegen...');
+		let code = childProcess.execSync(command, { stdio: 'inherit' });
+		log.debug('Swagger-codegen execution completed');
 
-			log.debug('Checking for extensions to copy...');
-			if (fs.existsSync(_this.resourcePaths.extensions)) {
-				log.debug(`Copying extensions from ${_this.resourcePaths.extensions} to ${_this.config.settings.extensionsDestination}`);
-				log.info('Copying extensions...');
-				fs.copySync(_this.resourcePaths.extensions, _this.config.settings.extensionsDestination);
+		log.debug('Checking for extensions to copy...');
+		if (fs.existsSync(builder.resourcePaths.extensions)) {
+			log.debug(`Copying extensions from ${builder.resourcePaths.extensions} to ${builder.config.settings.extensionsDestination}`);
+			log.info('Copying extensions...');
+			fs.copySync(builder.resourcePaths.extensions, builder.config.settings.extensionsDestination);
+		} else {
+			log.debug('Extensions path not found');
+			log.warn(`Extensions path does not exist! Path: ${builder.resourcePaths.extensions}`);
+		}
+
+		if (builder.config.settings.samplesDestination) {
+			log.debug('Checking for samples to copy...');
+			if (builder.resourcePaths.samples && fs.existsSync(builder.resourcePaths.samples)) {
+				fs.ensureDirSync(builder.config.settings.samplesDestination);
+				log.debug(`Copying samples from ${builder.resourcePaths.samples} to ${builder.config.settings.samplesDestination}`);
+				log.info('Copying samples...');
+				fs.copySync(builder.resourcePaths.samples, builder.config.settings.samplesDestination);
 			} else {
-				log.debug('Extensions path not found');
-				log.warn(`Extensions path does not exist! Path: ${_this.resourcePaths.extensions}`);
+				log.debug('Samples path not found');
+				log.warn(`Samples path does not exist! Path: ${builder.resourcePaths.samples}`);
 			}
-
-			if (_this.config.settings.samplesDestination) {
-				log.debug('Checking for samples to copy...');
-				if (fs.existsSync(_this.resourcePaths.samples)) {
-					fs.ensureDirSync(_this.config.settings.samplesDestination);
-					log.debug(`Copying samples from ${_this.resourcePaths.samples} to ${_this.config.settings.samplesDestination}`);
-					log.info('Copying samples...');
-					fs.copySync(_this.resourcePaths.samples, _this.config.settings.samplesDestination);
-				} else {
-					log.debug('Samples path not found');
-					log.warn(`Samples path does not exist! Path: ${_this.resourcePaths.samples}`);
-				}
-			}
-
-			// Ensure compile scripts fail on error
-			_.forEach(_this.config.stageSettings.build.compileScripts, function (script) {
-				script.failOnError = true;
-			});
-
-			// Run compile scripts
-			log.debug('Executing compile scripts');
-			executeScripts(_this.config.stageSettings.build.compileScripts, 'compile');
-
-			// Copy readme from build to docs and repo root
-			log.debug('Starting readme copy operations');
-			log.info('Copying readme...');
-			fs.ensureDirSync(path.join(getEnv('SDK_REPO') as string, 'build/docs'));
-			fs.createReadStream(path.join(getEnv('SDK_REPO') as string, 'build/README.md')).pipe(
-				fs.createWriteStream(path.join(getEnv('SDK_REPO') as string, 'build/docs/index.md'))
-			);
-			fs.createReadStream(path.join(getEnv('SDK_REPO') as string, 'build/README.md')).pipe(
-				fs.createWriteStream(path.join(getEnv('SDK_REPO') as string, 'README.md'))
-			);
-
-			//Copy the release notes from the build directory to the docs directory
-			log.info('Copying releaseNotes.md...');
-			fs.createReadStream(path.join(getEnv('SDK_REPO') as string, 'releaseNotes.md')).pipe(
-				fs.createWriteStream(path.join(getEnv('SDK_REPO') as string, 'build/docs/releaseNotes.md'))
-			);
-
-			log.debug('Starting documentation zip operation');
-			log.info('Zipping docs...');
-			zipDir(path.join(outputDir, 'docs'), path.join(getEnv('SDK_TEMP') as string, 'docs.zip'))
-				.then(() => {
-					log.debug('Documentation zipped successfully, executing post-run scripts');
-					return executeScripts(_this.config.stageSettings.build.postRunScripts, 'custom build post-run');
-				})
-				.then(() => {
-					log.debug('Build implementation completed successfully');
-					resolve("");
-				})
-				.catch((err: Error) => {
-					log.error(`Build implementation failed: ${err.message}`);
-					log.debug(`Stack trace: ${err.stack}`);
-					reject(err);
-				});
-		} catch (err: unknown) {
-			log.error(`Build implementation caught exception: ${err}`);
-			reject(err);
 		}
-	});
+
+		// Ensure compile scripts fail on error
+		_.forEach(builder.config.stageSettings.build.compileScripts, function (script) {
+			script.failOnError = true;
+		});
+
+		// Run compile scripts
+		log.debug('Executing compile scripts');
+		executeScripts(builder, builder.config.stageSettings.build.compileScripts, 'compile');
+
+		// Copy readme from build to docs and repo root
+		log.debug('Starting readme copy operations');
+		log.info('Copying readme...');
+		fs.ensureDirSync(path.join(getEnv('SDK_REPO') as string, 'build/docs'));
+		fs.createReadStream(path.join(getEnv('SDK_REPO') as string, 'build/README.md')).pipe(
+			fs.createWriteStream(path.join(getEnv('SDK_REPO') as string, 'build/docs/index.md'))
+		);
+		fs.createReadStream(path.join(getEnv('SDK_REPO') as string, 'build/README.md')).pipe(
+			fs.createWriteStream(path.join(getEnv('SDK_REPO') as string, 'README.md'))
+		);
+
+		//Copy the release notes from the build directory to the docs directory
+		log.info('Copying releaseNotes.md...');
+		fs.createReadStream(path.join(getEnv('SDK_REPO') as string, 'releaseNotes.md')).pipe(
+			fs.createWriteStream(path.join(getEnv('SDK_REPO') as string, 'build/docs/releaseNotes.md'))
+		);
+
+		log.debug('Starting documentation zip operation');
+		log.info('Zipping docs...');
+		await zipDir(path.join(outputDir, 'docs'), path.join(getEnv('SDK_TEMP') as string, 'docs.zip'));
+
+		log.debug('Documentation zipped successfully, executing post-run scripts');
+		executeScripts(builder, builder.config.stageSettings.build.postRunScripts, 'custom build post-run');
+
+		log.debug('Build implementation completed successfully');
+		return;
+	} catch (err: unknown) {
+		if (err instanceof Error) {
+			log.error(`Build implementation failed: ${err.message}`);
+			log.debug(`Stack trace: ${err.stack}`);
+		} else {
+			log.error(`Build implementation failed: ${err}`);
+		}
+		throw err;
+	}
 }
 
-async function postbuildImpl(): Promise<string> {
-	return new Promise<string>((resolve, reject) => {
-		try {
-			log.debug('Starting postbuild implementation');
-			// Pre-run scripts
-			log.debug('Executing postbuild pre-run scripts');
-			executeScripts(_this.config.stageSettings.postbuild.preRunScripts, 'custom postbuild pre-run');
+async function postbuildImpl(builder: Builder): Promise<void> {
+	try {
+		log.debug('Starting postbuild implementation');
+		// Pre-run scripts
+		log.debug('Executing postbuild pre-run scripts');
+		executeScripts(builder, builder.config.stageSettings.postbuild.preRunScripts, 'custom postbuild pre-run');
 
-			log.debug('Creating release');
-			createRelease()
-				.then(() => {
-					log.debug('Release created, executing postbuild post-run scripts');
-					return executeScripts(_this.config.stageSettings.postbuild.postRunScripts, 'custom postbuild post-run');
-				})
-				.then(() => {
-					log.debug('Postbuild implementation completed successfully');
-					resolve("");
-				})
-				.catch((err: Error) => {
-					log.error(`Postbuild implementation failed: ${err.message}`);
-					log.debug(`Stack trace: ${err.stack}`);
-					reject(err);
-				});
-		} catch (err) {
-			log.error(`Postbuild implementation caught exception: ${err}`);
-			reject(err);
+		log.debug('Creating release');
+		await createRelease(builder);
+
+		log.debug('Release created, executing postbuild post-run scripts');
+		executeScripts(builder, builder.config.stageSettings.postbuild.postRunScripts, 'custom postbuild post-run');
+
+		log.debug('Postbuild implementation completed successfully');
+		return;
+	} catch (err: unknown) {
+		if (err instanceof Error) {
+			log.error(`Postbuild implementation failed: ${err.message}`);
+			log.debug(`Stack trace: ${err.stack}`);
+		} else {
+			log.error(`Postbuild implementation failed: ${err}`);
 		}
-	});
+		throw err;
+	}
 }
 
 /* PRIVATE FUNCTIONS */
@@ -686,65 +623,58 @@ function applyOverrides(original: Config, overrides: valueOverides) {
 	});
 }
 
-function createRelease(): Promise<string> {
-	return new Promise<string>((resolve, reject) => {
-
-		if (!_this.config.settings.sdkRepo.repo || _this.config.settings.sdkRepo.repo === '') {
+async function createRelease(builder: Builder): Promise<void> {
+	try {
+		if (!builder.config.settings.sdkRepo.repo || builder.config.settings.sdkRepo.repo === '') {
 			log.warn('Skipping github release creation! Repo is undefined.');
-			resolve("");
 			return;
 		}
-		if (_this.config.stageSettings.postbuild.gitCommit !== true) {
+		if (builder.config.stageSettings.postbuild.gitCommit !== true) {
 			log.warn('Skipping git commit and github release creation! Set postbuild.gitCommit=true to commit changes.');
-			resolve("");
 			return;
 		}
 
-		if (_this.isNewVersion !== true) {
+		if (builder.isNewVersion !== true) {
 			log.warn('Skipping github release creation! Build did not produce a new version.');
-			resolve("");
 			return;
 		}
 
-		git
-			.saveChanges(_this.config.settings.sdkRepo.repo, getEnv('SDK_REPO') as string, _this.version.displayFull)
-			.then(() => {
-				if (_this.config.stageSettings.postbuild.publishRelease !== true) {
-					log.warn('Skipping github release creation! Set postbuild.publishRelease=true to release.');
-					resolve("");
-				}
+		await git.saveChanges(builder.config.settings.sdkRepo.repo, getEnv('SDK_REPO') as string, builder.version.displayFull ?? '');
+	
+		if (builder.config.stageSettings.postbuild.publishRelease !== true) {
+			log.warn('Skipping github release creation! Set postbuild.publishRelease=true to release.');
+			return;
+		}
 
-				// Expected format: https://github.com/grouporuser/reponame
-				let repoParts = _this.config.settings.sdkRepo.repo.split('/');
-				let repoName = repoParts[repoParts.length - 1];
-				let repoOwner = repoParts[repoParts.length - 2];
-				if (repoName.endsWith('.git')) repoName = repoName.substring(0, repoName.length - 4);
-				log.log.debug(`repoName: ${repoName}`);
-				log.log.debug(`repoOwner: ${repoOwner}`);
+		// Expected format: https://github.com/grouporuser/reponame
+		let repoParts = builder.config.settings.sdkRepo.repo.split('/');
+		let repoName = repoParts[repoParts.length - 1];
+		let repoOwner = repoParts[repoParts.length - 2];
+		if (repoName.endsWith('.git')) repoName = repoName.substring(0, repoName.length - 4);
+		log.log.debug(`repoName: ${repoName}`);
+		log.log.debug(`repoOwner: ${repoOwner}`);
 
-				githubConfig.repo = repoName;
-				githubConfig.owner = repoOwner;
+		githubConfig.repo = repoName;
+		githubConfig.owner = repoOwner;
 
-				const tagName = _this.config.settings.sdkRepo.tagFormat.replace('{version}', _this.version.displayFull);
-				let createReleaseOptions = {
-					tag_name: tagName,
-					target_commitish: _this.config.settings.sdkRepo.branch ? _this.config.settings.sdkRepo.branch : 'master',
-					name: tagName,
-					body: `Release notes for version ${tagName}\n${_this.releaseNoteSummary}`,
-					draft: false,
-					prerelease: false,
-				};
+		const tagName = (builder.config.settings.sdkRepo.tagFormat ?? '').replace('{version}', builder.version.displayFull ?? '');
+		let createReleaseOptions = {
+			tag_name: tagName,
+			target_commitish: builder.config.settings.sdkRepo.branch ? builder.config.settings.sdkRepo.branch : 'master',
+			name: tagName,
+			body: `Release notes for version ${tagName}\n${builder.releaseNoteSummary}`,
+			draft: false,
+			prerelease: false,
+		};
 
-				console.log(createReleaseOptions);
-				// Create release
-				return git.githubCreateRelease(githubConfig, createReleaseOptions);
-			})
-			.then((release) => {
-				log.info(`Created release #${release}`);
-			})
-			.then(() => resolve(""))
-			.catch((err: Error) => reject(err));
-	});
+		console.log(createReleaseOptions);
+		// Create release
+		let release = await git.githubCreateRelease(githubConfig, createReleaseOptions);
+		log.info(`Created release #${release}`);
+		return;
+	} catch (err: unknown) {
+		throw err;
+	}
 }
 
 function loadConfig(configPath: string) {
@@ -762,19 +692,19 @@ function loadConfig(configPath: string) {
 	}
 }
 
-function executeScripts(scripts: Script[], phase: string) {
+function executeScripts(builder: Builder, scripts: Script[], phase: string) {
 	if (!scripts) return;
 	let scriptCount = scripts ? scripts.length : 0;
 	log.info(`Executing ${scriptCount} ${phase ? phase.trim() + ' ' : ''}${pluralize('scripts', scriptCount)}...`);
 	_.forEach(scripts, function (script) {
-		executeScript(script);
+		executeScript(builder, script);
 	});
 }
 
-function executeScript(script: Script): Number {
+function executeScript(builder: Builder, script: Script): Number {
 	let code: Buffer;
 	let startTime = Date.now();
-	let bufferCode: Number;
+	let bufferCode: Number = -1;
 
 	log.debug(`Executing script - Type: ${script.type}, Path: ${script.path}, Args: ${script.args ? script.args.join(' ') : 'none'}`);
 	try {
@@ -785,20 +715,20 @@ function executeScript(script: Script): Number {
 			options['cwd'] = path.resolve(script.cwd);
 		}
 
-		if (script.appendIsNewReleaseArg === true) args.push(_this.isNewVersion.toString());
+		if (script.appendIsNewReleaseArg === true) args.push(builder.isNewVersion.toString());
 
-		if (script.appendVersionArg === true) args.push(_this.version.displayFull);
+		if (builder.version.displayFull && script.appendVersionArg === true) args.push(builder.version.displayFull);
 
 		switch (script.type.toLowerCase()) {
 			case 'tsx': {
-				args.unshift(getScriptPath(script));
+				args.unshift(getScriptPath(builder, script));
 				log.verbose(`Executing node script: ${args.join(' ')}`);
 				code = childProcess.execFileSync('tsx', args, options);
 
 				break;
 			}
 			case 'shell': {
-				args.unshift(getScriptPath(script));
+				args.unshift(getScriptPath(builder, script));
 				args.unshift('-e');
 				log.verbose(`Executing shell script: ${args.join(' ')}`);
 				code = childProcess.execFileSync('sh', args, options);
@@ -806,7 +736,7 @@ function executeScript(script: Script): Number {
 			}
 			case 'command': {
 				log.verbose(`Executing command: ${script.command} ${args.join(' ')}`);
-				code = childProcess.execFileSync(script.command, args, options);
+				code = childProcess.execFileSync(script.command ?? '', args, options);
 
 				break;
 			}
@@ -837,16 +767,17 @@ function executeScript(script: Script): Number {
 			log.error('Script failed with failOnError=true, aborting');
 			throw new Error(`Script failed! Aborting. Script: ${JSON.stringify(script, null, 2)}`);
 		}
+		return bufferCode;
 	} else {
 		log.verbose(completedMessage);
 		return bufferCode;
 	}
 }
 
-function getScriptPath(script: Script): string {
+function getScriptPath(builder: Builder, script: Script): string {
 	let scriptPath = script.path;
 	if (!path.parse(scriptPath).dir)
-		scriptPath = path.join('./resources/sdk', _this.config.settings.swaggerCodegen.resourceLanguage, 'scripts', script.path);
+		scriptPath = path.join('./resources/sdk', builder.config.settings.swaggerCodegen.resourceLanguage, 'scripts', script.path);
 	scriptPath = path.resolve(scriptPath);
 
 	if (!fs.existsSync(scriptPath)) {
@@ -855,4 +786,59 @@ function getScriptPath(script: Script): string {
 	}
 
 	return scriptPath;
+}
+
+async function computeVersion(builder: Builder): Promise<ApiVersionData> {
+	return new Promise<ApiVersionData>((resolve, reject) => {
+		builder.version = {
+			major: 0,
+			minor: 0,
+			point: 0,
+			prerelease: 'UNKNOWN',
+			apiVersion: 0,
+		};
+
+		if (builder.config.settings.versionFile) {
+			if (fs.existsSync(builder.config.settings.versionFile)) {
+				builder.version = JSON.parse(fs.readFileSync(builder.config.settings.versionFile, 'utf8'));
+			} else {
+				log.warn(`Version file not found: ${builder.config.settings.versionFile}`);
+			}
+		} else {
+			log.warn('Version file not specified! Defaulting to 0.0.0-UNKNOWN');
+		}
+
+		// Increment version in config
+		let oldVersion = specificationDiff.stringifyVersion(builder.version, true);
+		log.debug(`Previous version: ${oldVersion}`);
+		specificationDiff.incrementVersion(builder.version);
+		let newVersion = specificationDiff.stringifyVersion(builder.version, true);
+
+		// Determine if new version
+		builder.isNewVersion = getEnv('BRANCH_NAME') !== 'master' ? false : oldVersion !== newVersion;
+		setEnv('SDK_NEW_VERSION', builder.isNewVersion);
+		if (builder.isNewVersion === true) log.info(`New version: ${builder.version.displayFull}`);
+		else log.warn('Version was not incremented');
+
+		// Write new version to file
+		if (builder.isNewVersion === true && builder.config.settings.versionFile) {
+			fs.writeFileSync(builder.config.settings.versionFile, JSON.stringify(builder.version, null, 2));
+		}
+
+		// Get API version from health check endpoint
+		let resString = '';
+		log.info(`Getting API version from ${builder.config.settings.apiHealthCheckUrl}`);
+		https.get(builder.config.settings.apiHealthCheckUrl, function (res) {
+			res.on('data', function (chunk) {
+				resString += chunk;
+			});
+			res.on('end', function () {
+				resolve(JSON.parse(resString));
+			});
+			res.on('error', function (err) {
+				reject(err);
+			});
+		});
+	});
+
 }

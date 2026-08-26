@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import fs from 'fs-extra';
 import path from 'path';
-import { ItemsType, Format, Swagger } from '../types/swagger.js';
+import { ItemsType, Format, Swagger, CollectionFormat } from '../types/swagger.js';
 import { Builder } from '../builder/builder.js';
 import { gcLoginClientCredentialsGrant, BuilderHttpError, AvailableTopicEntityListing, gcGetNotificationsAvailabletopics } from '../util/http.js';
 import { checkAndThrow, getEnv } from '../util/utils.js';
@@ -33,6 +33,71 @@ let forceInt64Integers = true;
 // Remove duplicates in topics enumerations
 let removeEnumDuplicates = true;
 
+
+// This function will combine the public swagger with the preview swagger
+export function combineSwagger(publicSwagger: Swagger, preview: Swagger): Swagger {
+	log.info('Combining public and preview swagger docs into one');
+
+	// Set new file equal to public file for now
+	let newSpecificationFile = publicSwagger;
+
+	if (!newSpecificationFile.tags) newSpecificationFile.tags = [];
+	// Search for tags that are in the preview swagger but not in the public swagger and add to new new JSON object
+	let publicTagNames = publicSwagger.tags.map((otag) => otag.name);
+	preview.tags.forEach((previewTag) => {
+		if (!publicTagNames.includes(previewTag.name)) {
+			newSpecificationFile.tags.push(previewTag);
+		}
+	});
+
+	if (!newSpecificationFile.securityDefinitions) newSpecificationFile.securityDefinitions = {};
+	// Search for securityDefinitions that are in the preview swagger but not in the public swagger and add to new new JSON object
+	let publicSecurityDefinitionNames = Object.keys(publicSwagger.securityDefinitions ?? {});
+	let previewSecurityDefinitionNames = Object.keys(preview.securityDefinitions ?? {});
+	for (let previewName of previewSecurityDefinitionNames) {
+		if (!publicSecurityDefinitionNames.includes(previewName)) {
+			newSpecificationFile.securityDefinitions[previewName] = preview.securityDefinitions[previewName];
+		}
+	}
+
+	// mark preview paths as preview(similar to marking as deprecated)
+	for (const [key1, value1] of Object.entries(preview.paths)) {
+		for (const [key, value] of Object.entries(value1)) {
+			preview.paths[key1][key]['x-genesys-preview'] = true;
+		}
+	}
+
+	if (!newSpecificationFile.paths) newSpecificationFile.paths = {};
+	// Search for paths in the preview swagger not in the public swagger(should be all paths) and add preview paths to new JSON object
+	let previewPaths = Object.keys(preview.paths);
+	let publicPaths = Object.keys(publicSwagger.paths);
+	for (let previewPath of previewPaths) {
+		if (publicPaths.includes(previewPath)) {
+			// Path does exist in public swagger, add the preview HTTP method to the existing path in the new JSON object
+			for (const [key, value] of Object.entries(preview.paths[previewPath])) {
+				// Only set this preview operation if it is not defined in publicSwager (no override)
+				if (!publicSwagger.paths[previewPath][key]) newSpecificationFile.paths[previewPath][key] = value;
+			}
+		} else {
+			// Path does not exist in public swagger, add the preview path to the new JSON objects paths
+			newSpecificationFile.paths[previewPath] = preview.paths[previewPath];
+		}
+	}
+
+	if (!newSpecificationFile.definitions) newSpecificationFile.definitions = {};
+	// Search for definitions in the preview swagger not in the public swagger and add preview definitions to new JSON object
+	let previewDefinitionNames = Object.keys(preview.definitions);
+	let publicDefinitionNames = Object.keys(publicSwagger.definitions);
+	for (let previewDefinitionName of previewDefinitionNames) {
+		if (!publicDefinitionNames.includes(previewDefinitionName)) {
+			newSpecificationFile.definitions[previewDefinitionName] = preview.definitions[previewDefinitionName];
+		}
+	}
+
+	return newSpecificationFile;
+}
+
+// This function will pre-process the swagger file before submitting it to the generator
 export async function swaggerPreprocessing(builder: Builder, swagger: Swagger) {
     return new Promise<string>((resolve, reject) => {
         try {
@@ -198,9 +263,9 @@ function processAnyTypes(swagger: Swagger) {
 	keys.forEach((key, index) => {
 		let obj = swagger.definitions[key].properties;
 		if (obj) {
-			const keys = Object.keys(swagger.definitions[key].properties);
+			const keys = Object.keys(obj);
 			keys.forEach((key2, index) => {
-				let obj2 = swagger.definitions[key].properties[key2];
+				let obj2 = obj[key2];
 				if (obj2) {
 					if (obj2.hasOwnProperty("type") && obj2["type"] === "any") {
 						obj2.type = "string" as ItemsType;
@@ -228,10 +293,10 @@ function forceCSVCollectionFormat(swagger: Swagger, forceCSVCollectionFormatInTa
 					}
 				}
 				if (overrideOperation === true) {
-					if (operation.parameters && operation.parameters.length > 0) {
+					if (operation && operation.parameters && operation.parameters.length > 0) {
 						for (let opParameter of operation.parameters) {
 							if (opParameter.in && opParameter.in === "query" && opParameter.type && opParameter.type === "array" && opParameter.collectionFormat && opParameter.collectionFormat === "multi") {
-								opParameter.collectionFormat = "csv";
+								opParameter.collectionFormat = CollectionFormat.Csv;
 							}
 						}
 					}
@@ -347,11 +412,13 @@ function manageDiscriminator(swagger: Swagger, discriminatorManagement: string, 
 						const methods = Object.keys(swagger.paths[path]);
 						for (const method of methods) {
 							let operation = swagger.paths[path][method];
-							let operationAsString = JSON.stringify(operation);
-							for (let defName of modelsToQuarantine) {
-								if (operationAsString.includes(`"#/definitions/${defName}"`)) {
-									operationsToQuarantine.push(operation.operationId);
-									break;
+							if (operation) {
+								let operationAsString = JSON.stringify(operation);
+								for (let defName of modelsToQuarantine) {
+									if (operationAsString.includes(`"#/definitions/${defName}"`)) {
+										operationsToQuarantine.push(operation.operationId);
+										break;
+									}
 								}
 							}
 						}
@@ -468,9 +535,9 @@ function processRefs(swagger: Swagger) {
 	keys.forEach((key, index) => {
 		let obj = swagger.definitions[key].properties;
 		if (obj) {
-			const keys = Object.keys(swagger.definitions[key].properties);
+			const keys = Object.keys(obj);
 			keys.forEach((key2, index) => {
-				let obj2 = swagger.definitions[key].properties[key2];
+				let obj2 = obj[key2];
 				if (obj2) {
 					if (obj2.hasOwnProperty("$ref") && (obj2.hasOwnProperty("readOnly") || obj2.hasOwnProperty("description"))) {
 						if (obj2.readOnly === true && obj2.hasOwnProperty("description")) {

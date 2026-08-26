@@ -1,21 +1,22 @@
 import _ from 'lodash';
 import fs from 'fs-extra';
-import { Haystack } from '../types/config.js'
-import { Builder } from '../builder/builder.js'
+import { Haystack, Settings, Swagger, SwaggerCodegen, PureCloud, Config, StageSettings, SDKRepo } from '../types/config.js';
 import { log } from '../log/logger.js';
 
-export function maybeInit(haystack: Builder | Haystack, needle: string, defaultValue: Haystack, warning: string = "Haystack was undefined!"): void {
+export function maybeInit(haystack: Config | Settings | SwaggerCodegen | StageSettings | SDKRepo, needle: string, defaultValue: Haystack | string, warning: string = "Haystack was undefined!"): void {
 	if (!haystack) {
 		log.warn(warning);
 		return;
 	}
-	if (!haystack[needle]) {
-		haystack[needle] = defaultValue;
+	let mapstack = haystack as Record<string, any>;
+	if (!mapstack[needle]) {
+		mapstack[needle] = defaultValue;
 	}
 }
 
-export function checkAndThrow(haystack: Builder | Haystack, needle: string, message: string = `${needle} must be set!`): void {
-	if (!haystack[needle] || haystack[needle] === '') {
+export function checkAndThrow(haystack: Settings | Swagger | SwaggerCodegen | PureCloud, needle: string, message: string = `${needle} must be set!`): void {
+	let mapstack = haystack as Record<string, any>;
+	if (!mapstack[needle]) {
 		throw new Error(message);
 	}
 }

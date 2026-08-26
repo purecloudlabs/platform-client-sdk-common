@@ -16,7 +16,7 @@ class SdkBuilder {
 	}
 
 	public initialize(): void {
-		log.debug('SdkBuilder initializer started');
+		log.info('SdkBuilder initializer started');
 		try {
 			log.debug(`Parsed SDK languages: ${sdkLanguageChoices.join(', ')}`);
 
@@ -59,7 +59,7 @@ class SdkBuilder {
 				return;
 			}
 
-			log.debug('No valid options provided, showing help');
+			log.info('No valid options provided, showing help');
 			program.help();
 		} catch (err: unknown) {
 			log.error(`Error caught in SdkBuilder initializer: ${err}`);
@@ -85,6 +85,10 @@ class SdkBuilder {
 			log.info('SDK Builder script complete');
 		} catch (err: unknown) {
 			log.error(`Build process exception: ${err}`);
+			if (err instanceof Error) {
+				log.error(`Aborting SDK Builder - ${err.name}: ${err.message}`);
+				log.error(`Stack trace: ${err.stack}`);
+			}
 			throw err;
 		}
 	}
@@ -118,25 +122,10 @@ try {
 	let sdkBuilder: SdkBuilder = new SdkBuilder();
 	sdkBuilder.initialize();
 	log.info('SdkBuilder application initialization completed');
-	sdkBuilder.build()
-		.then(() => {
-			log.info('SdkBuilder application building completed');
-		})
-		.catch((err: unknown) => {
-			log.error(`Build process failed: ${err}`);
-			if (err instanceof Error) {
-				log.error(`Aborting SDK Builder - ${err.name}: ${err.message}`);
-				log.error(`Stack trace: ${err.stack}`);
-			}
-			log.error('Exiting SDK Builder with exit code 1');
-			process.exitCode = 1;
-		});
+
+	await sdkBuilder.build();
+	log.info('SdkBuilder application building completed');
 } catch (err: unknown) {
-	log.error(`Build process exception: ${err}`);
-	if (err instanceof Error) {
-		log.error(`Aborting SDK Builder - ${err.name}: ${err.message}`);
-		log.error(`Stack trace: ${err.stack}`);
-	}
 	log.error('Exiting SDK Builder with exit code 1');
 	process.exitCode = 1;
 }
