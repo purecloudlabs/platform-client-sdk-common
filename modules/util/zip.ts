@@ -1,7 +1,7 @@
 import { ZipArchive } from 'archiver';
 import fs from 'fs';
 
-export async function zipDir(inputDir: string, outputPath: string): Promise < string > {
+export async function zipDir(inputDir: string, outputPath: string): Promise<string> {
 	return new Promise<string>((resolve, reject) => {
 		try {
 			let output = fs.createWriteStream(outputPath);

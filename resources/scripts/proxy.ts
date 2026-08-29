@@ -5,14 +5,14 @@ import httpProxy from 'http-proxy';
 import { log } from '../../modules/log/logger.js';
 
 class ProxyServer {
-	// Properties
-  public proxy: httpProxy<http.IncomingMessage, http.ServerResponse<http.IncomingMessage>>;;
+  // Properties
+  public proxy: httpProxy<http.IncomingMessage, http.ServerResponse<http.IncomingMessage>>;
   public server: http.Server;
 
   constructor() {
     log.info('Initializing proxy server...');
     this.proxy = httpProxy.createProxyServer();
-    
+
     // Log proxy errors
     this.proxy.on('error', (err, req, res) => {
       log.error(`Proxy error: ${err.message}`);
@@ -38,7 +38,7 @@ class ProxyServer {
       log.debug(`Request headers: ${JSON.stringify(req.headers, null, 2)}`);
       log.debug(`Request hostname: ${hostname}`);
       log.debug(`Request port: ${port}`);
-      
+
       if (hostname && port) {
         const target = `http://${hostname}:${port}`;
         log.info(`Proxying request to ${target}`);
@@ -79,18 +79,18 @@ class ProxyServer {
           'Proxy-agent: Node.js-Proxy\r\n' +
           '\r\n');
         serverSocket.write(head);
-        
+
         // Setup bidirectional tunnel
         serverSocket.pipe(clientSocket);
         clientSocket.pipe(serverSocket);
         log.debug('Bidirectional tunnel established successfully');
-        
+
         // Log socket events
         serverSocket.on('error', (err) => {
           log.error(`Server socket error: ${err.message}`);
           log.debug(`Server socket error details: ${err.stack}`);
         });
-        
+
         clientSocket.on('error', (err) => {
           log.error(`Client socket error: ${err.message}`);
           log.debug(`Client socket error details: ${err.stack}`);

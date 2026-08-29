@@ -1,9 +1,9 @@
 import fs from 'fs-extra';
 import cp from 'child_process';
-import path from 'path';
 import Mustache from 'mustache';
+
 export class PreBuildPostRun {
-	init() {
+	public init() {
 		try {
 			var swaggerCodegenConfigFilePath = process.argv[2];
 			var version = fs.readJsonSync(process.argv[3]);
@@ -48,7 +48,6 @@ export class PreBuildPostRun {
 			console.log(err);
 		}
 	}
-	;
 }
 
 function generateNotificationTopicsFile(templatePath: string, dataPath: string, outPath: string, namespace: string) {

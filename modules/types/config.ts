@@ -39,8 +39,7 @@ export interface Settings {
     samplesDestination?: string;
     swagger: Swagger;
     swaggerCodegen: SwaggerCodegen;
-    swaggerPreprocessing?: SwaggerPreprocessing;
-    openapiPreprocessing?: OpenApiPreprocessing;
+    specificationPreprocessing?: SpecificationPreprocessing;
     releaseNoteTemplatePath: string;
     releaseNoteSummaryTemplatePath: string;
     debugConfig: boolean;
@@ -82,138 +81,81 @@ export interface SwaggerCodegen {
     isOpenApiCustomGenerator: boolean;
 }
 
-export interface SwaggerPreprocessing {
-    // Update Swagger
-    // - Replace operationId - { "path1": { "get": "new operation id for path1 get", "post": "new operation id for path1 post" }, ... }
-    overrideOperationIds?: any;
-    // - Replace Model name - { "old model name": "new model name", ... }
-    overrideModelNames?: Record<string, string>;
-    // - Replace/Override Model
-    overrideModels?: Record<string, any>;
-    // - Replace/Override Model with primitive type
-    overrideModelsToPrimitiveType?: Record<string, any>;
-    quarantineModelNames?: string[];
-    // Filter Tags (keep and remove==quarantine)
-    keepTags?: string[];
-    quarantineTags?: string[];
-    // Filter OperationIds (keep and remove==quarantine)
-    keepOperationIds?: string[];
-    quarantineOperationIds?: string[];
-    // Filter Security (keep and remove==quarantine) - keyword for no security: NO_AUTH
-    keepSecurities?: string[];
-    quarantineSecurities?: string[];
-    // Filter Consumes (keep and remove==quarantine)
-    keepConsumes?: string[];
-    quarantineConsumes?: string[];
-    // Filter Produces (keep and remove==quarantine)
-    keepProduces?: string[];
-    quarantineProduces?: string[];
-    // Filter Paths (keep and remove==quarantine)
-    keepPaths?: string[];
-    quarantinePaths?: string[];
-    // - Legacy Path update    
-    processPaths?: boolean;
-    // Update collection format to csv in operation with tags
-    forceCSVCollectionFormatInTags?: string[];
-    // Import missing tags
-    importTags?: any[];
-    // Import missing securities
-    importSecurities?: Record<string, any>;
+export interface SpecificationPreprocessing {
+    add: {
+        tags: any[],
+        securities: Record<string, any>
+    };
+    override: {
+        modelNames: Record<string, string>,
+        operationIds: Record<string, Record<string, string>>,
+        modelsToPrimitiveType: Record<string, any>,
+        models: Record<string, any>,
+        operations: Record<string, Record<string, any>>
+    };
+    filter: {
+        keep: {
+            tags: string[],
+            securities: string[],
+            operationIds: string[],
+            paths: string[],
+            consumes: string[],
+            produces: string[]
+        },
+        exclude: {
+            tags: string[],
+            securities: string[],
+            operationIds: string[],
+            paths: string[],
+            consumes: string[],
+            produces: string[]
+        }
+    };
+    removeUnused: boolean;
+    notifications: NotificationsPreprocessing;
+    specific?: SwaggerPreprocessing | OpenApiPreprocessing;
+    addPolymorphismInfo: boolean;
+    analyzeReportBefore: boolean;
+    analyzeReportAfter: boolean;
+}
 
+export interface NotificationsPreprocessing {
     // Add Notifications
-    addNotifications?: boolean;
-    forceInt64Integers?: boolean;
-    notificationsProcessAnyTypes?: boolean;
-    notificationsRemoveEnumDuplicates?: boolean;
-    
-    // Sanitize Swagger
-    processAnyTypes?: boolean;
+    addNotifications: boolean;
+    forceInt64Integers: boolean;
+    replaceTypeAny: boolean;
+    removeEnumDuplicates: boolean;
+}
+
+export interface SwaggerPreprocessing {
+    type: "swagger";
+    // - Legacy Path update    
+    processPaths: boolean;
+    // - Legacy Ref and AnyTypes update 
+    processRefs: boolean;
+    // Update collection format to csv in operation with tags
+    forceCSVCollectionFormatInTags: string[];
     // - Enums (enum duplicates, boolean enum, string boolean enum as parameter)
-    processEnums?: boolean;
+    processEnums: boolean;
     // Add enum names, enum description - x-enum-varnames
     // - Discriminator
-    discriminatorManagement?: string;
-    keepDiscriminatorModels?: string[];
+    discriminatorManagement: string;
+    keepDiscriminatorModels: string[];
     // - Modify OneOf (from x-genesys-one-of) and discriminator related models
-    updateOneOf?: boolean;
-    updateDiscriminator?: boolean;
-    // - Legacy Ref and AnyTypes update 
-    processRefs?: boolean;
-
-    // Filter Swagger
-    removeUnusedTagsAndDefinitions?: boolean;
-
-    // Report
-    reportBeforeSanitize?: boolean;
-    reportAfterSanitize?: boolean;
-
+    updateOneOf: boolean;
 }
 
 export interface OpenApiPreprocessing {
-    // Update Swagger
-    // - Replace operationId - { "path1": { "get": "new operation id for path1 get", "post": "new operation id for path1 post" }, ... }
-    overrideOperationIds?: any;
-    // - Replace Model name - { "old model name": "new model name", ... }
-    overrideModelNames?: Record<string, string>;
-    // - Replace/Override Model
-    overrideModels?: Record<string, any>;
-    // - Replace/Override Model with primitive type
-    overrideModelsToPrimitiveType?: Record<string, any>;
-    quarantineModelNames?: string[];
-    // Filter Tags (keep and remove==quarantine)
-    keepTags?: string[];
-    quarantineTags?: string[];
-    // Filter OperationIds (keep and remove==quarantine)
-    keepOperationIds?: string[];
-    quarantineOperationIds?: string[];
-    // Filter Security (keep and remove==quarantine) - keyword for no security: NO_AUTH
-    keepSecurities?: string[];
-    quarantineSecurities?: string[];
-    // Filter Consumes (keep and remove==quarantine)
-    keepConsumes?: string[];
-    quarantineConsumes?: string[];
-    // Filter Produces (keep and remove==quarantine)
-    keepProduces?: string[];
-    quarantineProduces?: string[];
-    // Filter Paths (keep and remove==quarantine)
-    keepPaths?: string[];
-    quarantinePaths?: string[];
+    type: "openapi";
+    replaceResponseWithArrayRef: boolean;
     // - Legacy Path update    
-    processPaths?: boolean;
+    processPaths: boolean;
     // Update collection format to csv in operation with tags
-    forceCSVCollectionFormatInTags?: string[];
-    // Import missing tags
-    importTags?: any[];
-    // Import missing securities
-    importSecurities?: Record<string, any>;
-
-    // Add Notifications
-    addNotifications?: boolean;
-    forceInt64Integers?: boolean;
-    notificationsProcessAnyTypes?: boolean;
-    notificationsRemoveEnumDuplicates?: boolean;
-    
-    // Sanitize Swagger
-    processAnyTypes?: boolean;
+    forceCSVCollectionFormatInTags: string[];
     // - Enums (enum duplicates, boolean enum, string boolean enum as parameter)
-    processEnums?: boolean;
-    // Add enum names, enum description - x-enum-varnames
-    // - Discriminator
-    discriminatorManagement?: string;
-    keepDiscriminatorModels?: string[];
+    processEnums: boolean;
     // - Modify OneOf (from x-genesys-one-of) and discriminator related models
-    updateOneOf?: boolean;
-    updateDiscriminator?: boolean;
-    // - Legacy Ref and AnyTypes update 
-    processRefs?: boolean;
-
-    // Filter Swagger
-    removeUnusedTagsAndDefinitions?: boolean;
-
-    // Report
-    reportBeforeSanitize?: boolean;
-    reportAfterSanitize?: boolean;
-
+    updateOneOf: boolean;
 }
 
 export interface StageSettings {

@@ -71,7 +71,7 @@ class CombineApis {
 					// Read API data for category
 					const swaggerTagFilePath = path.join(docsDir, this.dirent.name);
 					log.debug(`Reading file: ${swaggerTagFilePath}`);
-					
+
 					let swaggerTagOperations = JSON.parse(fs.readFileSync(swaggerTagFilePath, 'utf8'));
 					const operationKeys = Object.keys(swaggerTagOperations);
 					log.debug(`Found ${operationKeys.length} operations in ${this.dirent.name}`);
@@ -81,7 +81,7 @@ class CombineApis {
 					for (const operationPath of operationKeys) {
 						const operation = swaggerTagOperations[operationPath];
 						const operationId = operation.operationId;
-						
+
 						log.debug(`Processing operation: ${operationPath}, operationId: ${operationId}`);
 						log.debug(`Operation data keys: ${Object.keys(operation).join(', ')}`);
 
@@ -100,12 +100,12 @@ class CombineApis {
 						// Load example content and set on operation data (swagger-codegen uses the value in functionName to write the example file, not the lowercased operationId)
 						const exampleFilePath = path.join(docsDir, this.dataFile[operationId].functionName + '-example.txt');
 						log.debug(`Looking for example file: ${exampleFilePath}`);
-						
+
 						if (!fs.existsSync(exampleFilePath)) {
 							log.warn(`Example file does not exist: ${exampleFilePath}`);
 							continue;
 						}
-						
+
 						log.debug(`Reading example file: ${exampleFilePath}`);
 						this.dataFile[operationId].example = fs.readFileSync(exampleFilePath, 'utf8');
 						log.debug(`Example content length: ${this.dataFile[operationId].example?.length || 0}`);
@@ -113,7 +113,7 @@ class CombineApis {
 						// Delete example file
 						log.debug(`Deleting example file: ${exampleFilePath}`);
 						//TBD fs.unlinkSync(exampleFilePath);
-						
+
 						totalOperationsProcessed++;
 					}
 
@@ -140,7 +140,7 @@ class CombineApis {
 			log.debug(`Output data size: ${outputData.length} characters`);
 			fs.writeFileSync(dataFileName, outputData);
 			log.info('File written successfully');
-			
+
 		} catch (err: unknown) {
 			log.error(`Exception occurred: ${err}`);
 			if (err instanceof Error) {

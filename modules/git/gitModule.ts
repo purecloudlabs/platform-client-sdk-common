@@ -198,7 +198,7 @@ function githubLogRequestSuccess(githubConfig: GithubConfig, message?: string) {
 		"[" +
 		"SUCCESS" +
 		"]" +
-	(message ? message : "");
+		(message ? message : "");
 
 	log.info(logMsg);
 }

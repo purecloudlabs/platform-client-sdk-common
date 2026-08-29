@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
 import child_process from 'child_process';
-import { Swagger } from '../../../../modules/types/swagger.js';
+import { SwaggerSpec } from '../../../../modules/types/swaggerSpec.js';
 import { ResourceDefinitions } from './resourceDefinitions.js';
 import childProcess from 'child_process';
 import { log } from '../../../../modules/log/logger.js';
@@ -27,7 +27,7 @@ export class PreProcessSwagger {
 					previewSwaggerPath=${previewSwaggerPath}`);
 
 				log.debug('Retrieving swagger files');
-				let newSwagger: Swagger = retrieveSwagger(newSwaggerPath, previewSwaggerPath);
+				let newSwagger: SwaggerSpec = retrieveSwagger(newSwaggerPath, previewSwaggerPath);
 				log.debug('Swagger files retrieved successfully');
 
 				log.debug('Processing swagger references');
@@ -44,7 +44,7 @@ export class PreProcessSwagger {
 				log.debug(`Resource definitions created: definitionCount=${Object.keys(resourceDefinitions).length}`);
 
 				log.debug('Initial processing of definitions');
-				let [superCommands, includedSwaggerPathObjects]: [Set<string>, Swagger["paths"]] = initialProcessOfDefinitions(newSwagger, resourceDefinitions);
+				let [superCommands, includedSwaggerPathObjects]: [Set<string>, SwaggerSpec["paths"]] = initialProcessOfDefinitions(newSwagger, resourceDefinitions);
 				log.debug(`Initial processing completed: superCommandCount=${superCommands.size}, pathCount=${Object.keys(includedSwaggerPathObjects).length}`);
 
 				log.debug('Processing definitions');
@@ -80,7 +80,7 @@ export class PreProcessSwagger {
 }
 
 
-function processRefs(swagger: Swagger) {
+function processRefs(swagger: SwaggerSpec) {
 	const keys = Object.keys(swagger.definitions);
 	keys.forEach((key, index) => {
 		let obj = swagger.definitions[key].properties;
@@ -114,7 +114,7 @@ function firstIndexOfCapital(str) {
 	return -1;
 }
 
-function processDefinitions(includedSwaggerPathObjects: Swagger["paths"], resourceDefinitions: ResourceDefinitions, newSwagger: Swagger) {
+function processDefinitions(includedSwaggerPathObjects: SwaggerSpec["paths"], resourceDefinitions: ResourceDefinitions, newSwagger: SwaggerSpec) {
 	let paths = {};
 	for (const path of Object.keys(includedSwaggerPathObjects)) {
 		// Override tags if possible
@@ -172,9 +172,9 @@ function processDefinitions(includedSwaggerPathObjects: Swagger["paths"], resour
 	return paths;
 }
 
-function initialProcessOfDefinitions(newSwagger: Swagger, resourceDefinitions: ResourceDefinitions): [Set<string>, Swagger["paths"]] {
+function initialProcessOfDefinitions(newSwagger: SwaggerSpec, resourceDefinitions: ResourceDefinitions): [Set<string>, SwaggerSpec["paths"]] {
 	let superCommands = new Set<string>();
-	let includedSwaggerPathObjects: Swagger["paths"] = {};
+	let includedSwaggerPathObjects: SwaggerSpec["paths"] = {};
 	for (const path of Object.keys(newSwagger['paths'])) {
 		if (Object.keys(resourceDefinitions).includes(path)) {
 			includedSwaggerPathObjects[path] = newSwagger['paths'][path];
@@ -341,7 +341,7 @@ function retrieveSwagger(newSwaggerPath: string, previewSwaggerPath: string) {
 }
 
 // This function will combine the public swagger with the preview swagger
-function combineSwagger(publicSwagger: Swagger, preview: Swagger) {
+function combineSwagger(publicSwagger: SwaggerSpec, preview: SwaggerSpec) {
 	// Set new file equal to public file for now
 	let newSwaggerFile = publicSwagger;
 

@@ -1,8 +1,7 @@
 import fs from 'fs-extra';
 import path from 'path';
 
-export class PostBuildPostRun {
-
+class PostBuildPostRun {
 	public init() {
 		try {
 			const repoPath = process.argv[2];
@@ -25,11 +24,9 @@ export class PostBuildPostRun {
 			process.exitCode = 1;
 			console.log(err);
 		}
-
-	};
+	}
 }
 
 // Call the method directly
 const postBuildPostRun = new PostBuildPostRun();
 postBuildPostRun.init();
-

@@ -8,12 +8,12 @@ import tls from "tls";
 
 // Logger function to standardize logging format
 const log = (activity: string, details?: any) => {
-    const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] ${activity}`, details ? details : '');
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] ${activity}`, details ? details : '');
 };
 
 class GatewayServer {
-	// Properties
+  // Properties
   public gateway: httpProxy<http.IncomingMessage, http.ServerResponse<http.IncomingMessage>>;
   public server: https.Server;
   private environment: string;
@@ -21,7 +21,7 @@ class GatewayServer {
   constructor() {
     log('Initializing GatewayServer');
     this.gateway = httpProxy.createProxyServer();
-    
+
     this.environment = this.fetchEnvironment("login");
     const domain = 'localhost';
     log('Server configuration', { environment: this.environment, domain });
@@ -46,16 +46,16 @@ class GatewayServer {
 
       let reqURL: string | undefined;
       if (req.url?.includes('/login') || req.url?.includes('/oauth/token')) {
-          reqURL = req.url.replace(/^\/login/, '')
-          this.environment = this.fetchEnvironment("login");
+        reqURL = req.url.replace(/^\/login/, '')
+        this.environment = this.fetchEnvironment("login");
       } else if (req.url?.includes('/api')) {
-          // Handle API requests - replace '/api/api' with '/api' if it exists
-          reqURL = req.url?.includes('/api/api') ? req.url.replace('/api/api', '/api') : req.url;
-          this.environment = this.fetchEnvironment("api");
+        // Handle API requests - replace '/api/api' with '/api' if it exists
+        reqURL = req.url?.includes('/api/api') ? req.url.replace('/api/api', '/api') : req.url;
+        this.environment = this.fetchEnvironment("api");
       } else {
-          reqURL = req.url || ''
+        reqURL = req.url || ''
       }
-      
+
       // Parse incoming request URL
       let targetHostPath = null;
       if (reqURL) {
@@ -91,7 +91,7 @@ class GatewayServer {
         proxyRes.pipe(res);
         log('Response piped back to client');
       });
-      
+
       proxyReq.on('error', (err) => {
         log('Proxy request error', {
           error: err.message,
@@ -110,7 +110,7 @@ class GatewayServer {
     log('CONNECT handler registered');
   }
 
-  private fetchEnvironment(path: string): string{
+  private fetchEnvironment(path: string): string {
     const envUrl = path + "." + process.env.PURECLOUD_ENV;
     log('Environment URL resolved', envUrl);
     return envUrl
@@ -146,8 +146,8 @@ class GatewayServer {
     );
 
     serverSocket.on('error', (err) => {
-      log('Server socket error', { 
-        message: err.message, 
+      log('Server socket error', {
+        message: err.message,
         environment: environment,
         stack: err.stack
       });

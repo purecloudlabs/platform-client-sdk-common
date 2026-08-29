@@ -1,7 +1,7 @@
 import fs from 'fs-extra';
 
 export class PreBuildPostRun {
-	init() {
+	public init() {
 		try {
 			var swaggerCodegenConfigFilePath = process.argv[2];
 			console.log(swaggerCodegenConfigFilePath)
@@ -36,8 +36,8 @@ export class PreBuildPostRun {
 			console.log(err);
 		}
 	}
-	;
 }
+
 // Call the method directly
 const preBuildPostRun = new PreBuildPostRun();
 preBuildPostRun.init();

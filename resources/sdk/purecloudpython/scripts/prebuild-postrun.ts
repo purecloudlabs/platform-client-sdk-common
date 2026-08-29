@@ -1,6 +1,7 @@
 import fs from 'fs-extra';
-export class PreBuildPostRun {
-	init() {
+
+class PreBuildPostRun {
+	public init() {
 		try {
 			var swaggerCodegenConfigFilePath = process.argv[2];
 			var version = fs.readJsonSync(process.argv[3]);
@@ -26,9 +27,8 @@ export class PreBuildPostRun {
 			console.log(err);
 		}
 	}
-	;
 }
+
 // Call the method directly
 const preBuildPostRun = new PreBuildPostRun();
 preBuildPostRun.init();
-

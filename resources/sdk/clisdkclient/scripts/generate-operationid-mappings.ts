@@ -1,5 +1,5 @@
 import fs from 'fs-extra';
-import { Swagger } from '../../../../modules/types/swagger.js';
+import { SwaggerSpec } from '../../../../modules/types/swaggerSpec.js';
 import { log } from '../../../../modules/log/logger.js';
 
 export class GenerateOperationIdMappings {
@@ -23,8 +23,8 @@ export class GenerateOperationIdMappings {
             }
 
             log.debug('Loading swagger files');
-            const swagger: Swagger = JSON.parse(fs.readFileSync(swaggerPath, 'utf8'))
-            const newSwagger: Swagger = JSON.parse(fs.readFileSync(newSwaggerPath, 'utf8'))
+            const swagger: SwaggerSpec = JSON.parse(fs.readFileSync(swaggerPath, 'utf8'))
+            const newSwagger: SwaggerSpec = JSON.parse(fs.readFileSync(newSwaggerPath, 'utf8'))
             log.debug('Swagger files loaded successfully');
 
             log.debug('Generating operation ID mappings');
@@ -52,7 +52,7 @@ export class GenerateOperationIdMappings {
 }
 
 
-function generateOperationIdMappings(swagger: Swagger, newSwagger: Swagger) {
+function generateOperationIdMappings(swagger: SwaggerSpec, newSwagger: SwaggerSpec) {
     log.debug('Starting operation ID mappings generation');
     let operationIdMappings = {}
     let processedCount = 0;

@@ -16,14 +16,14 @@ class Logger {
 		const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 		const logFileName = `app-${timestamp}.log`;
 		const logDir = 'logs';
-		
+
 		// Ensure logs directory exists
 		if (!fs.existsSync(logDir)) {
 			fs.mkdirSync(logDir, { recursive: true });
 		}
-		
+
 		const logFilePath = path.join(logDir, logFileName);
-		
+
 		this.log = winston.createLogger({
 			level: 'debug',
 			transports: [
@@ -47,7 +47,7 @@ class Logger {
 			],
 		});
 	}
-	
+
 	public static getInstance(): Logger {
 		if (!Logger.instance) {
 			Logger.instance = new Logger();
@@ -117,25 +117,25 @@ class Logger {
 	private getCallerInfo(): string {
 		const stack = new Error().stack;
 		if (!stack) return '[unknown]';
-		
+
 		const lines = stack.split('\n');
 		// Skip first 3 lines: Error, getCallerInfo, and the logging method
 		const callerLine = lines[3];
-		
+
 		if (!callerLine) return '[unknown]';
-		
+
 		// Extract file path and line number from stack trace
 		const match = callerLine.match(/\((.+):(\d+):(\d+)\)/) || callerLine.match(/at (.+):(\d+):(\d+)/);
 		if (!match) return '[unknown]';
-		
+
 		const filePath = match[1];
 		const lineNumber = match[2];
 		const fileName = path.basename(filePath);
-		
+
 		// Extract function name if available
 		const functionMatch = callerLine.match(/at\s+([^\s]+)\s+\(/) || callerLine.match(/at\s+([^\s(]+)/);
 		const functionName = functionMatch && functionMatch[1] !== filePath ? functionMatch[1] : 'anonymous';
-		
+
 		return `[${fileName}:${functionName}:${lineNumber}]`;
 	}
 

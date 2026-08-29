@@ -3,8 +3,8 @@ import fs from 'fs-extra';
 import klawSync from 'klaw-sync';
 import path from 'path';
 
-export class ProcessExtensions {
-	init() {
+class ProcessExtensions {
+	public init() {
 
 		try {
 			dot.templateSettings.strip = false;
@@ -37,7 +37,6 @@ export class ProcessExtensions {
 			console.log(err);
 		}
 	}
-	;
 }
 
 // Call the method directly

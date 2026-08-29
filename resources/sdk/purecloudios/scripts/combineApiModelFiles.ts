@@ -10,12 +10,12 @@ function basicHashModulo(inputStr: string, modulo: number): number {
     return hashValue % modulo;
 }
 
-export default class CombineModels {
+class CombineModels {
 
 	aggregatedModelFiles: Map<string, string> = new Map<string, string>();
 	dirent: fs.Dirent | null = null;
 
-	combineApiModelFiles(modelsDir: string, aggregatedFileNamePrefix: string, aggregateModels: boolean, aggregateModulo: number) {
+	public combineApiModelFiles(modelsDir: string, aggregatedFileNamePrefix: string, aggregateModels: boolean, aggregateModulo: number) {
 		// aggregateModulo: 1 (1 single model file), > 1 (compute hash/modulo per model and distribute in x model files)
 
 		if (aggregateModels == true) {
@@ -69,10 +69,10 @@ export default class CombineModels {
 			if (aggregateModels == true) {
 				// Write aggregated output
 				if (aggregateModulo == 1) {
-					fs.writeFileSync(`${aggregatedFileNamePrefix}.swift`, this.aggregatedModelFiles.get(aggregateModulo.toString()));
+					fs.writeFileSync(`${aggregatedFileNamePrefix}.swift`, this.aggregatedModelFiles.get(aggregateModulo.toString()) ?? '');
 				} else if (aggregateModulo > 1) {
 					for (var indexFile = 1; indexFile <= aggregateModulo; indexFile++) {
-						fs.writeFileSync(`${aggregatedFileNamePrefix}P${indexFile.toString()}.swift`, this.aggregatedModelFiles.get(indexFile.toString()));
+						fs.writeFileSync(`${aggregatedFileNamePrefix}P${indexFile.toString()}.swift`, this.aggregatedModelFiles.get(indexFile.toString()) ?? '');
 					}
 				}
 			}

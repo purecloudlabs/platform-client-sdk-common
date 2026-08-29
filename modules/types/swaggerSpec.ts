@@ -1,8 +1,10 @@
+import { ChangeItem, Changes } from '../types/builderTypes.js';
+
 // Swagger Specification
 
-export interface Swagger {
+export interface SwaggerSpec {
     swagger: string;
-    info: Info;
+    info: SwaggerInfo;
     host: string;
     tags: Tag[];
     schemes: string[];
@@ -13,6 +15,43 @@ export interface Swagger {
     definitions: { [key: string]: Definition };
     responses: { [key: string]: RestHttpResponse };
     externalDocs: ExternalDocs;
+    basePath?: string;
+}
+
+export interface SwaggerInfo {
+    description: string;
+    version: string;
+    title: string;
+    termsOfService?: string;
+    contact: Contact;
+    license?: License;
+    apiVersion?: string;
+}
+
+export interface Contact {
+    name: string;
+    url: string;
+    email: string;
+}
+
+export interface License {
+    name: string;
+    url: string;
+}
+
+export interface Tag {
+    name: string;
+    description: string;
+    externalDocs?: ExternalDocs;
+}
+
+export interface ExternalDocs {
+    description: string;
+    url: string;
+}
+
+export interface SecurityDefinitions {
+    [key: string]: any;
 }
 
 export enum ProduceElement {
@@ -22,30 +61,67 @@ export enum ProduceElement {
     TextPlain = "text/plain",
 }
 
+export interface RestHttpResponse {
+    description?: string;
+    schema?: any;
+    "x-inin-error-codes"?: { [key: string]: string };
+}
+
+export type RestResponse = RestHttpResponse;
+
+export interface Path extends Record<string, Post | Get | Put | Delete | Head | Patch | undefined> {
+    post?: Post;
+    get?: Get;
+    put?: Put;
+    delete?: Delete;
+    head?: Head;
+    patch?: Patch;
+}
+
+export enum ItemsType {
+    Array = "array",
+    Boolean = "boolean",
+    File = "file",
+    Integer = "integer",
+    Number = "number",
+    Object = "object",
+    Ref = "ref",
+    String = "string",
+    Any = "any",
+}
+
+export enum Format {
+    Date = "date",
+    DateTime = "date-time",
+    Double = "double",
+    Float = "float",
+    Int32 = "int32",
+    Int64 = "int64",
+    Interval = "interval",
+    LocalDateTime = "local-date-time",
+    YearMonth = "year-month",
+    URI = "uri",
+    URL = "url",
+}
+
 export interface Definition {
     type: ItemsType;
     properties?: { [key: string]: Property };
+    additionalProperties?: Property;
     required?: string[];
     description?: string;
     discriminator?: string;
     allOf?: any[];
-}
-
-export interface ChangeItem {
-    parent: string;
-    impact: string;
-    key: string;
-    location: string;
-    oldValue: any;
-    newValue: any;
-    description: string;
-}
-
-// Assuming 'changes' is an object with string keys and arrays of ChangeItem
-export interface Changes {
-    [id: string]: {
-        [impact: string]: ChangeItem[];
-    };
+    anyOf?: any[];
+    oneOf?: any[];
+    "x-discriminator-value"?: string;
+    "x-genesys-polymorphism-type"?: string;
+    "x-genesys-polymorphism-property"?: string;
+    "x-genesys-polymorphism-values"?: string[];
+    "x-genesys-polymorphism-children"?: string[];
+    "x-genesys-polymorphism-children-mapping"?: { [key: string]: string };
+    "x-genesys-polymorphism-parent"?: string;
+    "x-genesys-one-of"?: string[];
 }
 
 export interface Property {
@@ -123,32 +199,6 @@ export interface AdditionalPropertiesClass {
     type: ItemsType;
 }
 
-export enum ItemsType {
-    Array = "array",
-    Boolean = "boolean",
-    File = "file",
-    Integer = "integer",
-    Number = "number",
-    Object = "object",
-    Ref = "ref",
-    String = "string",
-    Any = "any",
-}
-
-export enum Format {
-    Date = "date",
-    DateTime = "date-time",
-    Double = "double",
-    Float = "float",
-    Int32 = "int32",
-    Int64 = "int64",
-    Interval = "interval",
-    LocalDateTime = "local-date-time",
-    YearMonth = "year-month",
-    URI = "uri",
-    URL = "url",
-}
-
 export interface SchemaClass {
     type?: ItemsType;
     $ref?: string;
@@ -199,68 +249,6 @@ export interface XGenesysSearchFields {
     value: string[];
 }
 
-export interface ExternalDocs {
-    description: string;
-    url: string;
-}
-
-export interface Info {
-    description: string;
-    version: string;
-    title: string;
-    termsOfService?: string;
-    contact: Contact;
-    license?: License;
-    specificationVersion?: string;
-    host?: string;
-}
-
-export interface Contact {
-    name: string;
-    url: string;
-    email: string;
-}
-
-export interface License {
-    name: string;
-    url: string;
-}
-
-export interface Path extends Record<string, Post | Get | Put | Delete | Head | Patch | undefined> {
-    post?: Post;
-    get?: Get;
-    put?: Put;
-    delete?: Delete;
-    head?: Head;
-    patch?: Patch;
-}
-
-export function GetOperationFromPath(oPath: Path, method: string): Post | Get | Put | Delete | Head | Patch | null {
-    switch (method) {
-        case 'post':
-            if (oPath.post) return oPath.post;
-            break;
-        case 'get':
-            if (oPath.get) return oPath.get;
-            break;
-        case 'put':
-            if (oPath.put) return oPath.put;
-            break;
-        case 'delete':
-            if (oPath.delete) return oPath.delete;
-            break;
-        case 'head':
-            if (oPath.head) return oPath.head;
-            break;
-        case 'patch':
-            if (oPath.patch) return oPath.patch;
-            break;
-        default:
-            break;
-    }
-    return null;
-}
-
 export type Parameter = DeleteParameter | GetParameter | PostParameter | PutParameter | PatchParameter | HeadParameter;
 
 
@@ -287,17 +275,6 @@ export interface ItemsClass {
     $ref?: string;
 }
 
-export type RestResponse = RestHttpResponse;
-
-export type TypeResponse = RestResponse | RestResponse["schema"]
-
-
-
-export interface RestHttpResponse {
-    description?: string;
-    schema?: any;
-    "x-inin-error-codes"?: { [key: string]: string };
-}
 
 export enum BadCredentials {
     InvalidLoginCredentials = "Invalid login credentials.",
@@ -421,7 +398,7 @@ export interface PostParameter {
 
 export type HttpMethod = Post | Get | Put | Delete | Head | Patch;
 
-export type valueTypes = ItemsType | string | boolean | number | object | File
+export type valueTypes = ItemsType | string | boolean | number | object | File;
 
 export interface Head {
     tags: string[];
@@ -555,16 +532,6 @@ export interface Security {
     [key: string]: string[] | any[];
 }
 
-export interface RestHttpResponse {
-    description?: string;
-    schema?: any;
-    "x-inin-error-codes"?: { [key: string]: string };
-}
-
-export interface SecurityDefinitions {
-    [key: string]: any;
-}
-
 export interface GuestChatJWT {
     type: string;
     name: string;
@@ -582,30 +549,3 @@ export interface Scopes {
     all: string;
 }
 
-export interface Tag {
-    name: string;
-    description: string;
-    externalDocs?: ExternalDocs;
-}
-
-// OpenApi v3 Specification
-
-export interface OpenApiSpec {
-    openapi: string;
-    info: Info;
-    tags: Tag[];
-    servers: Server[];
-    externalDocs: ExternalDocs;
-    paths: { [key: string]: Path };
-    components: Components;
-}
-
-export interface Components {
-    schemas: { [key: string]: Definition };
-    securitySchemes: SecurityDefinitions;
-}
-
-export interface Server {
-    url: string;
-    description: string;
-}

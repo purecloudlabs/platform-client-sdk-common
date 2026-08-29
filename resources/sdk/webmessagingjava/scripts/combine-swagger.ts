@@ -1,10 +1,10 @@
 import fs from 'fs';
 import childProcess from 'child_process';
-import { Swagger , Definition, Property, ProduceElement, ItemsType} from '../../../../modules/types/swagger.js';
+import { SwaggerSpec , Definition, Property, ProduceElement, ItemsType} from '../../../../modules/types/swaggerSpec.js';
 
 export class CombineSwagger {
-    internalSwagger: Swagger;
-    newSwagger: Swagger;
+    internalSwagger: SwaggerSpec;
+    newSwagger: SwaggerSpec;
     existingDefinitions : { [key: string]: Definition }[]=[];
 
     init() {
@@ -86,7 +86,7 @@ export class CombineSwagger {
     }
 
     convertToV2(swaggerV3 : any) {
-        let swaggerV2: Swagger = {
+        let swaggerV2: SwaggerSpec = {
             swagger: '2.0',
             host: '',
             info: {
@@ -237,7 +237,7 @@ export class CombineSwagger {
         }
     }
     
-    processRefs(swagger : Swagger) {
+    processRefs(swagger : SwaggerSpec) {
         const keys = Object.keys(swagger.definitions);
         keys.forEach((key, index) => {
             let obj = swagger.definitions[key].properties;

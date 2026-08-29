@@ -91,20 +91,20 @@ export function getFileCount(dir: fs.PathLike) {
 
 export function measureDurationFrom(startTime: number, endTime: number = Date.now()) {
 	if (!startTime) return 'no time';
-    if (endTime > startTime) return 'negative time';
+	if (endTime > startTime) return 'negative time';
 
-    // ms
-    let timeDiff = endTime - startTime;
-    const time = {
-        day: Math.floor(timeDiff / 86400000),
-        hour: Math.floor(timeDiff / 3600000) % 24,
-        minute: Math.floor(timeDiff / 60000) % 60,
-        second: Math.floor(timeDiff / 1000) % 60
-    };
-    let humanizedTimeDiff = Object.entries(time)
-        .filter(val => val[1] !== 0)
-        .map(([key, val]) => `${val} ${key}${val !== 1 ? 's' : ''}`)
-        .join(', ');
+	// ms
+	let timeDiff = endTime - startTime;
+	const time = {
+		day: Math.floor(timeDiff / 86400000),
+		hour: Math.floor(timeDiff / 3600000) % 24,
+		minute: Math.floor(timeDiff / 60000) % 60,
+		second: Math.floor(timeDiff / 1000) % 60
+	};
+	let humanizedTimeDiff = Object.entries(time)
+		.filter(val => val[1] !== 0)
+		.map(([key, val]) => `${val} ${key}${val !== 1 ? 's' : ''}`)
+		.join(', ');
 
 	return humanizedTimeDiff;
 }

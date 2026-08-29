@@ -1,4 +1,5 @@
 import childProcess from 'child_process';
+import { ApiVersionData } from '../types/builderTypes.js';
 
 const maxFileBufferSize = 1024 * 1024 * 1024;
 const maxBinaryBufferSize = 1024 * 1024 * 10;
@@ -6,7 +7,9 @@ const maxRetryAttempts = 10;
 // Seconds
 const defaultRetryWaitTime = 10;
 
-// Donwloading file (txt or binary) from a remote URL (sync function)
+//
+// Synchronous functions to download a file (txt or binary) from a remote URL (using curl command tool)
+//
 
 function downloadFromUrl(url: string, encoding: 'utf8' | 'binary', maxBuffer: number = maxFileBufferSize, maxRetry: number = maxRetryAttempts, retryWaitTime: number = defaultRetryWaitTime) {
     let i: number = -1;
@@ -26,19 +29,19 @@ function downloadFromUrl(url: string, encoding: 'utf8' | 'binary', maxBuffer: nu
     return null;
 }
 
-export function downloadFile(url: string) {
+export function downloadFile(url: string | null) {
+    if (!url) return null;
     return downloadFromUrl(url, 'utf8', maxFileBufferSize);
 }
 
-export function downloadBinary(url: string) {
+export function downloadBinary(url: string | null) {
+    if (!url) return null;
     return downloadFromUrl(url, 'binary', maxBinaryBufferSize);
 }
 
-// Fetch version, wait with set timeout
-
-async function sleep(millis: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, millis));
-}
+//
+// HTTP related functions, using fetch library
+//
 
 export class BuilderHttpError extends Error {
     request: Request;
@@ -54,10 +57,11 @@ export class BuilderHttpError extends Error {
     }
 }
 
+// Get an authorization token (Client Credentials Grant) from a Genesys Cloud org
 export async function gcLoginClientCredentialsGrant(env: string, clientId: string, clientSecret: string): Promise<string> {
     try {
         let authHeader = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-        let reqBody = new URLSearchParams({ grant_type: 'client_credentials'});
+        let reqBody = new URLSearchParams({ grant_type: 'client_credentials' });
         let request = new Request(`https://login.${env}/oauth/token`, {
             method: "POST",
             body: reqBody.toString(),
@@ -86,6 +90,7 @@ export async function gcLoginClientCredentialsGrant(env: string, clientId: strin
     }
 }
 
+// Get the list of Available Topic Notifications of a Genesys Cloud org
 export interface AvailableTopicEntityListing {
     entities: any[]
 }
@@ -101,7 +106,7 @@ export async function gcGetNotificationsAvailabletopics(env: string, token: stri
         });
         let response = await fetch(request);
         let responseTxtData = await response.text();
-        if (!response.ok){
+        if (!response.ok) {
             throw new BuilderHttpError('Failed to get Notifications topics.', request, response, responseTxtData);
         }
         if (!responseTxtData || !responseTxtData.trim()) {
@@ -118,6 +123,35 @@ export async function gcGetNotificationsAvailabletopics(env: string, token: stri
     }
 }
 
+// Get the api version of a Genesys Cloud org
+export async function gcGetApiVersionData(url: string): Promise<ApiVersionData> {
+    try {
+        let request = new Request(url, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            },
+        });
+        let response = await fetch(request);
+        let responseTxtData = await response.text();
+        if (!response.ok) {
+            throw new BuilderHttpError('Failed to get ApiVersionData.', request, response, responseTxtData);
+        }
+        if (!responseTxtData || !responseTxtData.trim()) {
+            throw new BuilderHttpError('Failed to get ApiVersionData.', request, response, responseTxtData);
+        }
+        let apiVersionData: ApiVersionData = JSON.parse(responseTxtData);
+        if (apiVersionData) {
+            return apiVersionData;
+        } else {
+            throw new BuilderHttpError('Failed to get ApiVersionData.', request, response, responseTxtData);
+        }
+    } catch (err: unknown) {
+        throw err;
+    }
+}
+
+// Post to create a Github release
 export async function postGithubApiPromise(url: string, token: string, body: any) {
     try {
         let request = new Request(url, {

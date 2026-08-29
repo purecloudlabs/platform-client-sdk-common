@@ -2,7 +2,7 @@ import { exec } from 'child_process';
 
 function setupProxy(env: string): void {
   console.log("called pm2")
-  exec('./resources/scripts/connect-proxy.sh start_proxy'+' '+ env, (error, stdout, stderr) => {
+  exec('./resources/scripts/connect-proxy.sh start_proxy' + ' ' + env, (error, stdout, stderr) => {
     if (error) {
       console.error(`Error Starting Proxy: ${error.message}`);
       return;

@@ -4,15 +4,25 @@ import { existsSync } from 'fs';
 import { Builder } from './modules/builder/builder.js'
 import { log } from './modules/log/logger.js';
 
-const sdkLanguageChoices = ['purecloudjava', 'purecloudjavascript', 'pureclouddotnet', 'purecloudpython', 'purecloudios', 'purecloudswift4', 'purecloudgo', 'clisdkclient', 'webmessagingjava'];
+const sdkLanguageChoices = [
+	'purecloudjava',
+	'purecloudjavascript',
+	'pureclouddotnet',
+	'purecloudpython',
+	'purecloudios',
+	'purecloudswift4',
+	'purecloudgo',
+	'clisdkclient',
+	'webmessagingjava'
+];
 
 class SdkBuilder {
-	private _config: string;
-	private _localconfig: string;
+	private _config_path: string;
+	private _localconfig_path: string;
 
 	constructor() {
-		this._config = '';
-		this._localconfig = '';
+		this._config_path = '';
+		this._localconfig_path = '';
 	}
 
 	public initialize(): void {
@@ -47,15 +57,15 @@ class SdkBuilder {
 				log.debug(`Config files determined - Config: ${config}, LocalConfig: ${localconfig}`);
 
 				log.info(`Invoking SDK build for language: ${cmdOptions.sdk}`);
-				this._config = config;
-				this._localconfig = localconfig;
+				this._config_path = config;
+				this._localconfig_path = localconfig;
 				return;
 			}
 
 			if (cmdOptions.config) {
 				log.debug(`Using custom config path - Config: ${cmdOptions.config}, LocalConfig: ${cmdOptions.localconfig}`);
-				this._config = cmdOptions.config;
-				this._localconfig = cmdOptions.localconfig;
+				this._config_path = cmdOptions.config;
+				this._localconfig_path = cmdOptions.localconfig;
 				return;
 			}
 
@@ -73,15 +83,18 @@ class SdkBuilder {
 
 	public async build(): Promise<void> {
 		try {
-			log.info(`Starting build process - Config: ${this._config}, LocalConfig: ${this._localconfig}`);
+			log.info(`Starting build process - Config: ${this._config_path}, LocalConfig: ${this._localconfig_path}`);
 			let b = new Builder();
 			log.debug('Builder instance created');
 
-			await b.init(this._config, this._localconfig);
-			log.info('Builder initialization completed successfully');
+			log.debug('Starting Builder initialization');
+			await b.init(this._config_path, this._localconfig_path);
+			log.debug('Builder initialization completed successfully');
 
+			log.debug('Starting Full build');
 			await b.fullBuild();
-			log.info('Full build completed successfully');
+			log.debug('Full build completed successfully');
+
 			log.info('SDK Builder script complete');
 		} catch (err: unknown) {
 			log.error(`Build process exception: ${err}`);
@@ -94,7 +107,7 @@ class SdkBuilder {
 	}
 }
 
-function jsonOrYaml(filePath : string): string {
+function jsonOrYaml(filePath: string): string {
 	log.debug(`Looking for config file: ${filePath}`);
 	let jsonConfig = `${filePath}.json`;
 	let yamlConfig = `${filePath}.yml`;

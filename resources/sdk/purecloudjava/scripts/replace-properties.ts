@@ -1,8 +1,8 @@
 import fs from 'fs-extra';
 import path from 'path';
 
-export class ReplaceProperties {
-    init() {
+class ReplaceProperties {
+    public init() {
         try {
             var propertiesFilePath = path.resolve(process.argv[2])
             var pomFilePath = path.resolve(process.argv[3])
@@ -18,7 +18,7 @@ export class ReplaceProperties {
         } catch (err) {
             console.log(err)
         }
-    };
+    }
 }
 
 const replaceProperties = new ReplaceProperties();
