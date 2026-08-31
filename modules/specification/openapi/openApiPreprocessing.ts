@@ -16,18 +16,18 @@ const GC_ONE_OF_EXTENSIONS = "x-genesys-one-of";
 export function openapiPreprocessing(builderConfig: Config, openapi: OpenApiSpec, overrideCfg: SpecificationPreprocessing | null) {
 	let cfg = mergeSpecificationPreprocessingCfg(overrideCfg);
 
-	// Extract Polymorphism Info
-	let polymorphismInfo = openapiExtractPolymorphismInfo(openapi, cfg.addPolymorphismInfo);
-
 	// report analyze before
 	if (cfg.analyzeReportBefore === true) {
-		let beforeReport = openapiAnalyzeReport(openapi, polymorphismInfo);
+		let beforeReport = openapiAnalyzeReport(openapi, null);
 		console.log('OpenApi - Printing OpenApi Analyze Report (Before):');
 		console.log(JSON.stringify(beforeReport, null, 4));
 	}
 
 	// spec preprocessing
 	openapiSpecificationPreprocessing(openapi, cfg);
+
+	// Extract Polymorphism Info
+	let polymorphismInfo = openapiExtractPolymorphismInfo(openapi, cfg.addPolymorphismInfo);
 
 	// specific preprocessing
 	openapiSpecificPreprocessing(builderConfig, openapi, cfg, polymorphismInfo);

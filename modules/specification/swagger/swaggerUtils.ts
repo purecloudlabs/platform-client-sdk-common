@@ -679,7 +679,7 @@ export function swaggerRemoveUnusedDefinitions(swagger: SwaggerSpec, polymorphis
 		// Otherwise find references in each definition - add to discoveredDefinitionNames if not part of usedDefinitionNames
 		for (let modelName of definitionsToSearch) {
 			let definition = swagger.definitions[modelName];
-			if (definition.discriminator) {
+			if (polymorphismInfo.parents[modelName]) {
 				// Find Child classes
 				let childClasses: string[] = [];
 				if (polymorphismInfo.parents[modelName].childrenNames) childClasses = polymorphismInfo.parents[modelName].childrenNames;

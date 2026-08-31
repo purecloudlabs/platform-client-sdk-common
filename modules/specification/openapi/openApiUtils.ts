@@ -559,7 +559,7 @@ export function openapiRemoveUnusedSchemas(openapi: OpenApiSpec, polymorphismInf
 		// Otherwise find references in each definition - add to discoveredDefinitionNames if not part of usedDefinitionNames
 		for (let modelName of definitionsToSearch) {
 			let definition = openapi.components.schemas[modelName];
-			if (definition.discriminator && definition.discriminator.propertyName) {
+			if (polymorphismInfo.parents[modelName]) {
 				// Find Child classes
 				let childClasses: string[] = [];
 				if (polymorphismInfo.parents[modelName].childrenNames) childClasses = polymorphismInfo.parents[modelName].childrenNames;

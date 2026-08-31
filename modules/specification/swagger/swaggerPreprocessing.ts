@@ -19,18 +19,18 @@ const DEFAULT_PRODUCES = ["application/json"];
 export function swaggerPreprocessing(builderConfig: Config, swagger: SwaggerSpec, overrideCfg: SpecificationPreprocessing | null) {
 	let cfg = mergeSpecificationPreprocessingCfg(overrideCfg);
 
-	// Extract Polymorphism Info
-	let polymorphismInfo = swaggerExtractPolymorphismInfo(swagger, cfg.addPolymorphismInfo);
-
 	// report analyze before
 	if (cfg.analyzeReportBefore === true) {
-		let beforeReport = swaggerAnalyzeReport(swagger, polymorphismInfo);
+		let beforeReport = swaggerAnalyzeReport(swagger, null);
 		console.log('Swagger - Printing Swagger Analyze Report (Before):');
 		console.log(JSON.stringify(beforeReport, null, 4));
 	}
 
 	// spec preprocessing
 	swaggerSpecificationPreprocessing(swagger, cfg);
+
+	// Extract Polymorphism Info
+	let polymorphismInfo = swaggerExtractPolymorphismInfo(swagger, cfg.addPolymorphismInfo);
 
 	// specific preprocessing
 	swaggerSpecificPreprocessing(builderConfig, swagger, cfg, polymorphismInfo);
