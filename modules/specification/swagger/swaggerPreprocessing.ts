@@ -494,15 +494,17 @@ function forceCSVCollectionFormat(swagger: SwaggerSpec, forceCSVCollectionFormat
 function updateOneOf(swagger: SwaggerSpec) {
     for (let defKey in swagger.definitions) {
         if (swagger.definitions[defKey][GC_ONE_OF_EXTENSIONS]) {
-            swagger.definitions[defKey]["oneOf"] = [];
-            let oneOfElements = swagger.definitions[defKey][GC_ONE_OF_EXTENSIONS];
-            if (oneOfElements && oneOfElements.length > 0) {
-                for (let oneOfElement of oneOfElements) {
-                    swagger.definitions[defKey]["oneOf"].push({
-                        "$ref": `#/definitions/${oneOfElement}`
-                    });
-                }
-            }
+			if (!swagger.definitions[defKey]["oneOf"]) {
+				swagger.definitions[defKey]["oneOf"] = [];
+				let oneOfElements = swagger.definitions[defKey][GC_ONE_OF_EXTENSIONS];
+				if (oneOfElements && oneOfElements.length > 0) {
+					for (let oneOfElement of oneOfElements) {
+						swagger.definitions[defKey]["oneOf"].push({
+							"$ref": `#/definitions/${oneOfElement}`
+						});
+					}
+				}
+			}
         }
     }
 }

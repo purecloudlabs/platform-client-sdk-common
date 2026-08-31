@@ -446,13 +446,15 @@ function forceCSVCollectionFormat(openapi: OpenApiSpec, forceCSVCollectionFormat
 function updateOneOf(openapi: OpenApiSpec) {
 	for (let defKey in openapi.components.schemas) {
 		if (openapi.components.schemas[defKey][GC_ONE_OF_EXTENSIONS]) {
-			openapi.components.schemas[defKey]["oneOf"] = [];
-			let oneOfElements = openapi.components.schemas[defKey][GC_ONE_OF_EXTENSIONS];
-			if (oneOfElements && oneOfElements.length > 0) {
-				for (let oneOfElement of oneOfElements) {
-					openapi.components.schemas[defKey]["oneOf"].push({
-						"$ref": `#/components/schemas/${oneOfElement}`
-					});
+			if (!openapi.components.schemas[defKey]["oneOf"]) {
+				openapi.components.schemas[defKey]["oneOf"] = [];
+				let oneOfElements = openapi.components.schemas[defKey][GC_ONE_OF_EXTENSIONS];
+				if (oneOfElements && oneOfElements.length > 0) {
+					for (let oneOfElement of oneOfElements) {
+						openapi.components.schemas[defKey]["oneOf"].push({
+							"$ref": `#/components/schemas/${oneOfElement}`
+						});
+					}
 				}
 			}
 		}
