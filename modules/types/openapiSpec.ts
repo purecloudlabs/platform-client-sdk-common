@@ -90,6 +90,7 @@ export interface Definition {
     type: ItemsType;
     properties?: { [key: string]: Property };
     additionalProperties?: Property;
+    items?: Property;
     required?: string[];
     description?: string;
     discriminator?: {
@@ -99,11 +100,12 @@ export interface Definition {
     anyOf?: Property[];
     oneOf?: Property[];
     "x-discriminator-value"?: string;
-    "x-genesys-polymorphism-type"?: string;
     "x-genesys-polymorphism-property"?: string;
+    "x-genesys-polymorphism-is-parent"?: boolean;
     "x-genesys-polymorphism-values"?: string[];
     "x-genesys-polymorphism-children"?: string[];
     "x-genesys-polymorphism-children-mapping"?: { [key: string]: string };
+    "x-genesys-polymorphism-is-child"?: boolean;
     "x-genesys-polymorphism-parent"?: string;
     "x-genesys-one-of"?: string[];
 }
@@ -132,6 +134,10 @@ export interface Property {
     oneOf?: Property[];
     properties?: { [key: string]: Property };
     "x-genesys-enum-members"?: GenesysEnumMember[]
+    const?: any;
+    "x-genesys-polymorphism-is-child"?: boolean;
+	"x-genesys-polymorphism-parent"?: string;
+    "x-discriminator-value"?: string;
 }
 
 export interface GenesysEnumMember {

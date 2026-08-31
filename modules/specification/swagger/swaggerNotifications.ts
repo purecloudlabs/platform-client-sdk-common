@@ -72,15 +72,20 @@ export async function swaggerAddNotifications(gcConfig: PureCloud, swagger: Swag
 					swaggerProcessAnyTypes(swagger_notifications, cfg);
 
 					// Only for Swagger and legacy sdk
-					if ((cfg.specific as SwaggerPreprocessing).processRefs === true) {
-						processRefs(swagger_notifications);
-					}
+					// if ((cfg.specific as SwaggerPreprocessing).processRefs === true) {
+					// 	processRefs(swagger_notifications);
+					// }
 
 					// Merge Notification Topics with Swagger
 					if (swagger_notifications.definitions) {
 						for (let modelName in swagger_notifications.definitions) {
 							if (!swagger.definitions[modelName]) swagger.definitions[modelName] = swagger_notifications.definitions[modelName];
 						}
+					}
+
+					// Process Refs for all swagger and notification topics - after swagger diff
+					if ((cfg.specific as SwaggerPreprocessing).processRefs === true) {
+						processRefs(swagger);
 					}
 
 					// Write mappings to file

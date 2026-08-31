@@ -392,10 +392,6 @@ function swaggerSpecificPreprocessing(builderConfig: Config, swagger: SwaggerSpe
 		processPaths(builderConfig, swagger);
 	}
 
-	if (specificCfg.processRefs === true) {
-		processRefs(swagger);
-	}
-
 	if (specificCfg.forceCSVCollectionFormatInTags && specificCfg.forceCSVCollectionFormatInTags.length > 0) {
 		forceCSVCollectionFormat(swagger, specificCfg.forceCSVCollectionFormatInTags);
 	}
@@ -404,13 +400,17 @@ function swaggerSpecificPreprocessing(builderConfig: Config, swagger: SwaggerSpe
 		updateOneOf(swagger);
 	}
 
+	if (specificCfg.discriminatorManagement === 'quarantine') {
+		// quarantinePolymorphism(swagger, specificCfg.keepDiscriminatorModels, polymorphismInfo);
+	}
+
 	if (specificCfg.processEnums === true) {
 		processProperties(swagger);
 	}
 
-	if (specificCfg.discriminatorManagement === 'quarantine') {
-		quarantinePolymorphism(swagger, specificCfg.keepDiscriminatorModels, polymorphismInfo);
-	}
+	// if (specificCfg.processRefs === true) {
+	// 	processRefs(swagger);
+	// }
 
 	return;
 }
@@ -613,6 +613,7 @@ function recursivePropertyUpdate(element: any, isParameter: boolean) {
 
 
 function quarantinePolymorphism(swagger: SwaggerSpec, keepDiscriminatorModels: string[], polymorphismInfo: SwaggerPolymorphismInfo) {
+	// JSM TODO - keep, replace with generic object (do it better/simpler), remove discriminator info from parent class (will treat as standard class in openapi generator)
 	let modelsWithDiscriminator: string[] = [];
 	let childDiscriminatorModels: string[] = [];
 	// Find Models with Discriminator

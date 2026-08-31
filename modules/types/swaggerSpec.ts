@@ -115,11 +115,12 @@ export interface Definition {
     anyOf?: any[];
     oneOf?: any[];
     "x-discriminator-value"?: string;
-    "x-genesys-polymorphism-type"?: string;
     "x-genesys-polymorphism-property"?: string;
+    "x-genesys-polymorphism-is-parent"?: boolean;
     "x-genesys-polymorphism-values"?: string[];
     "x-genesys-polymorphism-children"?: string[];
     "x-genesys-polymorphism-children-mapping"?: { [key: string]: string };
+    "x-genesys-polymorphism-is-child"?: boolean;
     "x-genesys-polymorphism-parent"?: string;
     "x-genesys-one-of"?: string[];
 }
@@ -147,6 +148,9 @@ export interface Property {
     "x-genesys-search-fields"?: XGenesysSearchFields;
     allOf?: AllOf[];
     properties?: PropertyProperties;
+    "x-genesys-polymorphism-is-child"?: boolean;
+	"x-genesys-polymorphism-parent"?: string;
+    "x-discriminator-value"?: string;
 }
 
 export interface AllOf {

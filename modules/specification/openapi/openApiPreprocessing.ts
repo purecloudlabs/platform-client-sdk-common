@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { OpenApiSpec } from '../../types/openapiSpec.js';
+import { ConsumeElement, Definition, ItemsType, OpenApiSpec } from '../../types/openapiSpec.js';
 import { SpecificationPreprocessing, Config, OpenApiPreprocessing } from '../../types/config.js';
 import { log } from '../../log/logger.js';
 import { mergeSpecificationPreprocessingCfg, openapiAnalyzeReport, openapiRemoveUnusedSchemas, openapiExtractPolymorphismInfo, OpenApiPolymorphismInfo } from './openApiUtils.js';
@@ -80,12 +80,12 @@ function openapiSpecificationPreprocessing(openapi: OpenApiSpec, cfg: Specificat
 				delete openapi.components.schemas[originalModelName];
 
 				// Change references
-				let definitionsAsString = JSON.stringify(openapi.components.schemas);
+				let componentsAsString = JSON.stringify(openapi.components);
 				let pathsAsString = JSON.stringify(openapi.paths);
 				let regexConvertRef = new RegExp(String.raw`"#\/components\/schemas\/${originalModelName}"`, "g");
-				definitionsAsString = definitionsAsString.replace(regexConvertRef, `"#/components/schemas/${newModelName}"`);
+				componentsAsString = componentsAsString.replace(regexConvertRef, `"#/components/schemas/${newModelName}"`);
 				pathsAsString = pathsAsString.replace(regexConvertRef, `"#/components/schemas/${newModelName}"`);
-				openapi.components.schemas = JSON.parse(definitionsAsString);
+				openapi.components = JSON.parse(componentsAsString);
 				openapi.paths = JSON.parse(pathsAsString);
 			}
 		}
@@ -110,12 +110,12 @@ function openapiSpecificationPreprocessing(openapi: OpenApiSpec, cfg: Specificat
 				if (cfg.override.modelsToPrimitiveType[originalModelName].format) {
 					primitiveTypeAsString = `${primitiveTypeAsString},"format":"${cfg.override.modelsToPrimitiveType[originalModelName].format}"`;
 				}
-				let definitionsAsString = JSON.stringify(openapi.components.schemas);
+				let componentsAsString = JSON.stringify(openapi.components);
 				let pathsAsString = JSON.stringify(openapi.paths);
 				let regexConvertRef = new RegExp(String.raw`"\$ref":"#\/components\/schemas\/${originalModelName}"`, "g");
-				definitionsAsString = definitionsAsString.replace(regexConvertRef, primitiveTypeAsString);
+				componentsAsString = componentsAsString.replace(regexConvertRef, primitiveTypeAsString);
 				pathsAsString = pathsAsString.replace(regexConvertRef, primitiveTypeAsString);
-				openapi.components.schemas = JSON.parse(definitionsAsString);
+				openapi.components = JSON.parse(componentsAsString);
 				openapi.paths = JSON.parse(pathsAsString);
 			}
 		}
@@ -370,8 +370,7 @@ function openapiSpecificPreprocessing(builderConfig: Config, openapi: OpenApiSpe
 	let specificCfg: OpenApiPreprocessing = cfg.specific as OpenApiPreprocessing;
 
 	if (specificCfg.replaceResponseWithArrayRef === true) {
-		// something
-		// processArrayOfRefResponses(openapi);
+		processArrayOfRefResponses(openapi);
 	}
 	
 	if (specificCfg.processPaths === true) {
@@ -386,11 +385,8 @@ function openapiSpecificPreprocessing(builderConfig: Config, openapi: OpenApiSpe
 		updateOneOf(openapi);
 	}
 
-	// if (specificCfg.replaceXGenesysEnumMembers === true) {
-	// 	// something
-	// }
 	if (specificCfg.processEnums === true) {
-		// processProperties(openapi);
+		processProperties(openapi);
 	}
 
 	return;
@@ -463,116 +459,178 @@ function updateOneOf(openapi: OpenApiSpec) {
 	}
 }
 
-// Gérer x-genesys-enum-members - que ce soit au bon niveau ou un en dessous dans le cas de array/items
-// function processProperties(openapi: OpenApiSpec) {
-// 	for (let pathName in openapi.paths) {
-// 		for (let methodName in openapi.paths[pathName]) {
-// 			let operation = openapi.paths[pathName][methodName];
-// 			if (!operation) continue; // Tpescript strict check
-// 			if (operation.parameters && operation.parameters.length > 0) {
-// 				for (let oParam of operation.parameters) {
-// 					if (oParam.in !== "body") {
-// 						recursivePropertyUpdate(oParam, true);
-// 					} else {
-// 						if (oParam.schema) {
-// 							recursivePropertyUpdate(oParam.schema, false);
-// 						}
-// 					}
-// 				}
-// 			}
-// 			if (operation.responses && Object.keys(operation.responses).length > 0) {
-// 				for (let respStatus in operation.responses) {
-// 					if (respStatus.startsWith('2') || respStatus.startsWith('3')) {
-// 						if (operation.responses[respStatus].schema) {
-// 							recursivePropertyUpdate(operation.responses[respStatus].schema, false);
-// 						}
-// 					}
-// 				}
-// 			}
-// 		}
-// 	}
+function processArrayOfRefResponses(openapi: OpenApiSpec) {
+	// Get list of definitions/schema with a type: array as top level (they were removed in swagger - to reduce number of created classes)
+	let mapModelNames: Record<string, string> = {};
 
-// 	for (let modelName in swagger.definitions) {
-// 		recursivePropertyUpdate(swagger.definitions[modelName], false);
-// 	}
-// }
+	for (let modelName in openapi.components.schemas) {
+		let model = openapi.components.schemas[modelName];
+		if (model.type && model.type === ItemsType.Array) {
+			// prepare transformation
+			let replaceWithAsJson: Definition = {
+				type: model.type
+			};
+			if (model.items) replaceWithAsJson.items = JSON.parse(JSON.stringify(model.items));
+			let replaceWithString: string = JSON.stringify(replaceWithAsJson);
+			// Remove leading { and ending }
+			if (replaceWithString.startsWith('{')) replaceWithString = replaceWithString.slice(1);
+			if (replaceWithString.endsWith('}')) replaceWithString = replaceWithString.slice(0, -1);
+			mapModelNames[modelName] = replaceWithString;
+		}
+	}
 
-// function recursivePropertyUpdate(element: any, isParameter: boolean) {
-// 	if (!element["$ref"] && !element["type"]) {
-// 		if (element["allOf"] && element["allOf"].length > 0) {
-// 			for (let allOfObj of element["allOf"]) {
-// 				recursivePropertyUpdate(allOfObj, isParameter);
-// 			}
-// 		} else if (element["oneOf"]) {
-// 			for (let oneOfObj of element["oneOf"]) {
-// 				recursivePropertyUpdate(oneOfObj, isParameter);
-// 			}
-// 		}
-// 	} else if (element["type"]) {
-// 		if (element["type"] === 'object' && element["properties"] && Object.keys(element["properties"]).length > 0) {
-// 			// ObjOf
-// 			for (let propName in  element["properties"]) {
-// 				recursivePropertyUpdate(element["properties"][propName], isParameter);
-// 			}
-// 		} else if (element["type"] === 'object' && element["additionalProperties"]) {
-// 			// MapOf
-// 			recursivePropertyUpdate(element["additionalProperties"], isParameter);
-// 		} else if (element["type"] === 'array' && element["items"]) {
-// 			// ArrayOf
-// 			recursivePropertyUpdate(element["items"], isParameter);
-// 		} else {
-// 			// string, integer, number, boolean
-// 			let knownTypes = ['string', 'integer', 'number', 'boolean'];
-// 			if (knownTypes.includes(element["type"])) {
-// 				if (element["enum"]) {
-// 					if (element["enum"].length == 0) {
-// 						// Delete empty enum
-// 						delete element["enum"];
-// 					} else if (element["type"] === "boolean") {
-// 						// Delete enum for booleans
-// 						delete element["enum"];
-// 					} else if (isParameter === true && element["type"] === "string" && element["enum"].length == 2 && element["enum"].includes("true") &&  element["enum"].includes("false")) {
-// 						// String enum (as parameter) with true/false - change to boolean
-// 						// For future
-// 						// element["type"] = "boolean";
-// 						// delete element["enum"];
-// 					} else {
-// 						if (element["type"] === "string") {
-// 							let filteredEnum: string[] = [];
-// 							let upperCaseEnum: string[] = [];
-// 							for (let enumValue of element["enum"]) {
-// 								if (!upperCaseEnum.includes(enumValue.toUpperCase())) {
-// 									upperCaseEnum.push(enumValue.toUpperCase());
-// 									filteredEnum.push(enumValue);
-// 								} else {
-// 									log.info(`Duplicate enum value: ${enumValue}. Removing it...`);
-// 								}
-// 							}
-// 							element["enum"] = filteredEnum;
-// 						} else if (element["type"] === "integer" || element["type"] === "number") {
-// 							let filteredEnum: number[] = [];
-// 							for (let enumValue of element["enum"]) {
-// 								if (!filteredEnum.includes(enumValue)) {
-// 									filteredEnum.push(enumValue);
-// 								} else {
-// 									log.info(`Duplicate enum value: ${enumValue}. Removing it...`);
-// 								}
-// 							}
-// 							element["enum"] = filteredEnum;
-// 						}
-// 					}
-// 				}
-// 			}
-// 		}
-// 	}
-// }
+	// Delete array definitions/schemas
+	for (let excludeModelName in mapModelNames) {
+		delete openapi.components.schemas[excludeModelName];
+	}
 
-// processArrayOfRefResponses(openapi);
-	// Response: array of $ref
-	// For Responses with $ref (main schema)
-	// - where $ref is a Definition/Schema of type: array of $ref
-	// - replace response $ref with its array of $ref
+	// Change references in paths and components
+	let componentsAsString = JSON.stringify(openapi.components);
+	let pathsAsString = JSON.stringify(openapi.paths);
+	for (let excludeModelName in mapModelNames) {
+		let regexConvertRef = new RegExp(String.raw`"#\/components\/schemas\/${excludeModelName}"`, "g");
+		componentsAsString = componentsAsString.replace(regexConvertRef, mapModelNames[excludeModelName]);
+		pathsAsString = pathsAsString.replace(regexConvertRef, mapModelNames[excludeModelName]);
+	}
+	openapi.components = JSON.parse(componentsAsString);
+	openapi.paths = JSON.parse(pathsAsString);
+}
 
+function processProperties(openapi: OpenApiSpec) {
+	for (let pathName in openapi.paths) {
+		for (let methodName in openapi.paths[pathName]) {
+			let operation = openapi.paths[pathName][methodName];
+			if (!operation) continue; // Tpescript strict check
+			if (operation.parameters && operation.parameters.length > 0) {
+				for (let oParam of operation.parameters) {
+					if (oParam.schema) {
+						recursivePropertyUpdate(oParam.schema, true);
+					}
+				}
+			}
+			if (operation.requestBody && operation.requestBody.content) {
+				let bodyContents: Record<string, any> = operation.requestBody.content;
+				for (let contentType in bodyContents) {
+					let content: any = bodyContents[contentType];
+					if (content && content.schema) {
+						recursivePropertyUpdate(content.schema, false);
+					}
+				}
+			}
+			if (operation.responses && Object.keys(operation.responses).length > 0) {
+				for (let respStatus in operation.responses) {
+					if (respStatus.startsWith('2') || respStatus.startsWith('3')) {
+						if (operation.responses[respStatus].content) {
+							let responseContents: Record<string, any> = operation.responses[respStatus].content;
+							for (let contentType in responseContents) {
+								let content: any = responseContents[contentType];
+								if (content && content.schema) {
+									recursivePropertyUpdate(content.schema, false);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	for (let modelName in openapi.components.schemas) {
+		recursivePropertyUpdate(openapi.components.schemas[modelName], false);
+	}
+}
+
+function recursivePropertyUpdate(element: any, isParameter: boolean) {
+	// string, integer, number, boolean
+	let primitiveTypes = ['string', 'integer', 'number', 'boolean'];
+
+	if (!element["$ref"] && !element["type"]) {
+		if (element["allOf"] && element["allOf"].length > 0) {
+			for (let allOfObj of element["allOf"]) {
+				recursivePropertyUpdate(allOfObj, isParameter);
+			}
+		} else if (element["oneOf"] && element["oneOf"].length > 0) {
+			for (let oneOfObj of element["oneOf"]) {
+				recursivePropertyUpdate(oneOfObj, isParameter);
+			}
+		} else if (element["anyOf"] && element["anyOf"].length > 0) {
+			for (let anyOfObj of element["anyOf"]) {
+				recursivePropertyUpdate(anyOfObj, isParameter);
+			}
+		}
+	} else if (element["type"]) {
+		if (element["type"] === 'object' && element["properties"] && Object.keys(element["properties"]).length > 0) {
+			// ObjOf
+			for (let propName in  element["properties"]) {
+				recursivePropertyUpdate(element["properties"][propName], isParameter);
+			}
+		} else if (element["type"] === 'object' && element["additionalProperties"]) {
+			// MapOf
+			recursivePropertyUpdate(element["additionalProperties"], isParameter);
+		} else if (element["type"] === 'array' && element["items"]) {
+			// ArrayOf
+			// Fix errors in openapi specification with enum defined at wrong level (or x-genesys-enum-members)
+			if (element["enum"]) {
+				if (element["items"] && element["items"]["type"] && primitiveTypes.includes(element["items"]["type"])) {
+					element["items"]["enum"] = JSON.parse(JSON.stringify(element["enum"]));
+					delete element["enum"];
+				}
+			}
+			if (element["x-genesys-enum-members"]) {
+				if (element["items"] && element["items"]["type"] && primitiveTypes.includes(element["items"]["type"])) {
+					element["items"]["x-genesys-enum-members"] = element["x-genesys-enum-members"].map((oEnum: any) => oEnum.name);
+					delete element["x-genesys-enum-members"];
+				}
+			}
+			recursivePropertyUpdate(element["items"], isParameter);
+		} else {
+			if (primitiveTypes.includes(element["type"])) {
+				if (element["x-genesys-enum-members"]) {
+					element["enum"] = element["x-genesys-enum-members"].map((oEnum: any) => oEnum.name);
+					delete element["x-genesys-enum-members"];
+				}
+				if (element["enum"]) {
+					if (element["enum"].length == 0) {
+						// Delete empty enum
+						delete element["enum"];
+					} else if (element["type"] === "boolean") {
+						// Delete enum for booleans
+						delete element["enum"];
+					} else if (isParameter === true && element["type"] === "string" && element["enum"].length == 2 && element["enum"].includes("true") &&  element["enum"].includes("false")) {
+						// String enum (as parameter) with true/false - change to boolean
+						// For future
+						// element["type"] = "boolean";
+						// delete element["enum"];
+					} else {
+						if (element["type"] === "string") {
+							let filteredEnum: string[] = [];
+							let upperCaseEnum: string[] = [];
+							for (let enumValue of element["enum"]) {
+								if (!upperCaseEnum.includes(enumValue.toUpperCase())) {
+									upperCaseEnum.push(enumValue.toUpperCase());
+									filteredEnum.push(enumValue);
+								} else {
+									log.info(`Duplicate enum value: ${enumValue}. Removing it...`);
+								}
+							}
+							element["enum"] = filteredEnum;
+						} else if (element["type"] === "integer" || element["type"] === "number") {
+							let filteredEnum: number[] = [];
+							for (let enumValue of element["enum"]) {
+								if (!filteredEnum.includes(enumValue)) {
+									filteredEnum.push(enumValue);
+								} else {
+									log.info(`Duplicate enum value: ${enumValue}. Removing it...`);
+								}
+							}
+							element["enum"] = filteredEnum;
+						}
+					}
+				}
+			}
+		}
+	}
+}
 
 
 //#endregion

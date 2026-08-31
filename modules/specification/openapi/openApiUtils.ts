@@ -1,10 +1,9 @@
 import _ from 'lodash';
-import { OpenApiSpec, Components, GenesysEnumMember } from '../../types/openapiSpec.js';
+import { OpenApiSpec, Components, GenesysEnumMember, ItemsType } from '../../types/openapiSpec.js';
 import { NotificationsPreprocessing, SpecificationPreprocessing, OpenApiPreprocessing } from '../../types/config.js';
 import { log } from '../../log/logger.js';
 
 const NO_AUTH_SECURITY = 'NO_AUTH_SECURITY';
-const GC_ONE_OF_EXTENSIONS = "x-genesys-one-of";
 
 // Default (static) configuration for notification topics processing
 let DEFAULT_NOTIFICATIONS_PREPROCESSING_CFG: NotificationsPreprocessing = {
@@ -673,7 +672,7 @@ export function openapiExtractPolymorphismInfo(openapi: OpenApiSpec, addToExtens
 	if (addToExtensions === true) {
 		for (let parentName in result.parents) {
 			let model = openapi.components.schemas[parentName];
-			model["x-genesys-polymorphism-type"] = "parent";
+			model["x-genesys-polymorphism-is-parent"] = true;
 			model["x-genesys-polymorphism-property"] = result.parents[parentName].discriminatorProperty;
 			model["x-genesys-polymorphism-values"] = result.parents[parentName].discriminatorValues;
 			model["x-genesys-polymorphism-children"] = result.parents[parentName].childrenNames;
@@ -682,9 +681,28 @@ export function openapiExtractPolymorphismInfo(openapi: OpenApiSpec, addToExtens
 			for (let childName of result.parents[parentName].childrenNames) {
 				if (openapi.components.schemas[childName]) {
 					let childModel = openapi.components.schemas[childName];
-					childModel["x-genesys-polymorphism-type"] = "child";
+					childModel["x-genesys-polymorphism-is-child"] = true;
 					childModel["x-genesys-polymorphism-property"] = result.parents[parentName].discriminatorProperty;
 					childModel["x-genesys-polymorphism-parent"] = parentName;
+
+					if (childModel["x-discriminator-value"]) {
+						if (childModel.type === ItemsType.Object && childModel.properties) {
+							// if discriminator property does not exist, add (const: value) for discriminator property
+							if (!childModel.properties[result.parents[parentName].discriminatorProperty]) {
+								childModel.properties[result.parents[parentName].discriminatorProperty] = {
+									"const": childModel["x-discriminator-value"],
+									"x-genesys-polymorphism-is-child": true,
+									"x-genesys-polymorphism-parent": parentName,
+									"x-discriminator-value": childModel["x-discriminator-value"]
+								}
+							} else {
+								// otherwise, add information at property level
+								childModel.properties[result.parents[parentName].discriminatorProperty]["x-genesys-polymorphism-is-child"] = true;
+								childModel.properties[result.parents[parentName].discriminatorProperty]["x-genesys-polymorphism-parent"] = parentName;
+								childModel.properties[result.parents[parentName].discriminatorProperty]["x-discriminator-value"] = childModel["x-discriminator-value"];
+							}
+						}
+					}
 				}
 			}
 		}
