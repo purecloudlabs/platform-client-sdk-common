@@ -72,11 +72,25 @@ export class Builder {
 	init(configPath: string, localConfigPath: string): Promise<string> {
 		return new Promise<string>((resolve, reject) => {
 			log.debug(`Builder initialization started - Config: ${configPath}, LocalConfig: ${localConfigPath}`);
+			let cfgOverride = null;
 
 			this.constructBuilder(configPath, localConfigPath)
 				.then(() => {
 					log.debug('Builder construction completed, starting deref');
+					// Hiding/removing this.config.settings.swagger.override before deref
+					// override.models will likely contain swagger refs ("$ref": "...") that interfere with deref
+					if (this.config.settings.swagger && this.config.settings.swagger.override) {
+						cfgOverride = this.config.settings.swagger.override;
+						this.config.settings.swagger.override = {};
+					}
 					return this.deref();
+				})
+				.then(() => {
+					// Restoring this.config.settings.swagger.override after deref
+					if (cfgOverride) {
+						this.config.settings.swagger.override = cfgOverride;
+					}
+					return;
 				})
 				.then(() => {
 					log.debug('Deref completed, starting post-construction');
@@ -430,6 +444,34 @@ function prebuildImpl(): Promise<string> {
 				.then(() => {
 					log.debug('Processing swagger paths');
 					return processPaths();
+				})
+				.then(() => {
+					log.debug('Processing override of models and operations (force add/override)');
+					let overrideModels: Record<string, Definition> = {};
+					let overrideOperations: Record<string, Path> = {};
+					if (_this.config.settings.swagger) {
+						let allSwaggerSettings: any = _this.config.settings.swagger;
+						if (allSwaggerSettings.override && allSwaggerSettings.override.models) {
+							overrideModels = allSwaggerSettings.override.models;
+						}
+						if (allSwaggerSettings.override && allSwaggerSettings.override.operations) {
+							overrideOperations = allSwaggerSettings.override.operations;
+						}
+					}
+					return processOverride(overrideModels, overrideOperations);
+				})
+				.then(() => {
+					log.debug('Update oneOf and add polymorphism info to vendor extensions');
+					if (_this.config.settings.swagger) {
+						let allSwaggerSettings: any = _this.config.settings.swagger;
+						if (allSwaggerSettings.extractPolymorphismInfo !== null && allSwaggerSettings.extractPolymorphismInfo !== undefined) {
+							if (allSwaggerSettings.extractPolymorphismInfo === true) {
+								updateOneOf();
+								return extractPolymorphismInfo();
+							}
+						}
+					}
+					return;
 				})
 				.then(() => {
 					log.debug('Processing swagger references');
@@ -1170,6 +1212,141 @@ function processPaths() {
 			delete swaggerDiff.newSwagger.definitions[definition]
 		}
 	}
+}
+
+function processOverride(overrideModels: Record<string, Definition>, overrideOperations: Record<string, Path>) {
+	// Add/Override model definitions
+	if (overrideModels) {
+		let overrideModelNames: string[] = Object.keys(overrideModels);
+		if (overrideModelNames.length > 0) {
+			for (let modelName of overrideModelNames) {
+				swaggerDiff.newSwagger.definitions[modelName] = JSON.parse(JSON.stringify(overrideModels[modelName]));
+			}
+		}
+	}
+	// Add/Override model operations
+	if (overrideOperations) {
+		let pathNames: string[] = Object.keys(overrideOperations);
+		if (pathNames.length > 0) {
+			for (let pathName of pathNames) {
+				if (!swaggerDiff.newSwagger.paths[pathName]) swaggerDiff.newSwagger.paths[pathName] = {};
+				let httpMethods: string[] = Object.keys(overrideOperations[pathName]);
+				if (httpMethods.length > 0) {
+					for (let method of httpMethods) {
+						swaggerDiff.newSwagger.paths[pathName][method] = JSON.parse(JSON.stringify(overrideOperations[pathName][method]));
+					}
+				}
+			}
+		}
+	}
+}
+
+function updateOneOf() {
+    for (let defKey in swaggerDiff.newSwagger.definitions) {
+        if (swaggerDiff.newSwagger.definitions[defKey]["x-genesys-one-of"]) {
+			if (!swaggerDiff.newSwagger.definitions[defKey]["oneOf"]) {
+				swaggerDiff.newSwagger.definitions[defKey]["oneOf"] = [];
+				let oneOfElements = swaggerDiff.newSwagger.definitions[defKey]["x-genesys-one-of"];
+				if (oneOfElements && oneOfElements.length > 0) {
+					for (let oneOfElement of oneOfElements) {
+						swaggerDiff.newSwagger.definitions[defKey]["oneOf"].push({
+							"$ref": `#/definitions/${oneOfElement}`
+						});
+					}
+				}
+			}
+        }
+    }
+}
+
+function extractPolymorphismInfo() {
+	let result = {
+		parents: {}
+	};
+	let swagger = swaggerDiff.newSwagger;
+
+	for (let modelName in swagger.definitions) {
+		let model = swagger.definitions[modelName];
+		if (model && model.discriminator) {
+			let valuesFromEnum: string[] = [];
+			if (model.properties && model.properties[model.discriminator]) {
+				if (model.properties[model.discriminator].type === 'string' && model.properties[model.discriminator].enum) {
+					valuesFromEnum = model.properties[model.discriminator].enum as string[];
+				}
+			}
+			result.parents[modelName] = {
+				name: modelName,
+				discriminatorProperty: model.discriminator,
+				discriminatorValues: valuesFromEnum,
+				childrenNames: [],
+				childrenNamesMapping: {}
+			}
+		}
+	}
+
+	// Find Children
+	let parentNames = Object.keys(result.parents);
+	for (let modelName in swagger.definitions) {
+		let model = swagger.definitions[modelName];
+		if (model.allOf && model.allOf.length > 0) {
+			for (let obj of model.allOf) {
+				if (obj["$ref"]) {
+					let refName = obj["$ref"].replace("#/definitions/", "");
+					if (parentNames.includes(refName)) {
+						result.parents[refName].childrenNames.push(modelName);
+						if (model["x-discriminator-value"]) {
+							result.parents[refName].childrenNamesMapping[modelName] = model["x-discriminator-value"];
+							if (!result.parents[refName].discriminatorValues.includes(model["x-discriminator-value"])) {
+								result.parents[refName].discriminatorValues.push(model["x-discriminator-value"]);
+							}
+						}
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	// Add info to vendor extensions
+	for (let parentName in result.parents) {
+		let model = swagger.definitions[parentName];
+		model["x-genesys-polymorphism-is-parent"] = true;
+		model["x-genesys-polymorphism-property"] = result.parents[parentName].discriminatorProperty;
+		model["x-genesys-polymorphism-values"] = result.parents[parentName].discriminatorValues;
+		model["x-genesys-polymorphism-children"] = result.parents[parentName].childrenNames;
+		model["x-genesys-polymorphism-children-mapping"] = result.parents[parentName].childrenNamesMapping;
+
+		for (let childName of result.parents[parentName].childrenNames) {
+			if (swagger.definitions[childName]) {
+				let childModel = swagger.definitions[childName];
+				childModel["x-genesys-polymorphism-is-child"] = true;
+				childModel["x-genesys-polymorphism-property"] = result.parents[parentName].discriminatorProperty;
+				childModel["x-genesys-polymorphism-parent"] = parentName;
+
+				if (childModel["x-discriminator-value"]) {
+					if (childModel.type === ItemsType.Object && childModel.properties) {
+						// if discriminator property does not exist, add (const: value) for discriminator property
+						if (!childModel.properties[result.parents[parentName].discriminatorProperty]) {
+							childModel.properties[result.parents[parentName].discriminatorProperty] = {
+								"type": ItemsType.String,
+								"enum": [ childModel["x-discriminator-value"] ],
+								"x-genesys-polymorphism-is-child": true,
+								"x-genesys-polymorphism-parent": parentName,
+								"x-discriminator-value": childModel["x-discriminator-value"]
+							}
+						} else {
+							// otherwise, add information at property level
+							childModel.properties[result.parents[parentName].discriminatorProperty]["x-genesys-polymorphism-is-child"] = true;
+							childModel.properties[result.parents[parentName].discriminatorProperty]["x-genesys-polymorphism-parent"] = parentName;
+							childModel.properties[result.parents[parentName].discriminatorProperty]["x-discriminator-value"] = childModel["x-discriminator-value"];
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return result;
 }
 
 function processRefs() {

@@ -1,38 +1,926 @@
 {
-  "name": "JavaScript SDK",
-  "envVars": {
-  },
-  "settings": {
-    "sdkRepo": {
-      "repo": "https://github.com/MyPureCloud/platform-client-sdk-javascript",
-      "branch": "master"
+    "name": "JavaScript SDK",
+    "envVars": {},
+    "settings": {
+        "sdkRepo": {
+            "repo": "https://github.com/MyPureCloud/platform-client-sdk-javascript",
+            "branch": "master"
+        },
+        "versionFile": "${SDK_REPO}/version.json",
+        "logLevel": "debug",
+        "extensionsDestination": "${SDK_REPO}/build/src/purecloud-platform-client-v2",
+        "samplesDestination": "${SDK_REPO}/build/samples",
+        "swagger": {
+            "oldSwaggerPath": "${SDK_REPO}/swagger.json",
+            "newSwaggerPath": "http://localhost:8080/newSwaggerFiltered.json",
+            "previewSwaggerPath": "",
+            "newSwaggerPath_fullapi": "https://api.mypurecloud.com/api/v2/docs/swagger",
+            "previewSwaggerPath_fullapi": "https://api.mypurecloud.com/api/v2/docs/swaggerpreview",
+            "saveNewSwaggerPath": "${SDK_REPO}/swagger.json",
+            "discriminatorManagement": "keep",
+            "extractPolymorphismInfo": true,
+            "override": {
+                "models": {
+                    "TestJSMRequest": {
+                        "type": "object",
+                        "required": [
+                            "name"
+                        ],
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "description": "name of the TestJSMRequest"
+                            },
+                            "myoneof": {
+                                "$ref": "#/definitions/AgenticVirtualAgentStructuredOutputCondition"
+                            },
+                            "mypolymorphism": {
+                                "$ref": "#/definitions/AgenticVirtualAgentEventSettings"
+                            }
+                        },
+                        "description": "Test JSM Request"
+                    },
+                    "TestJSMResponse": {
+                        "type": "object",
+                        "required": [
+                            "name"
+                        ],
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "description": "name of the TestJSMResponse"
+                            },
+                            "myoneof": {
+                                "$ref": "#/definitions/AgenticVirtualAgentStructuredOutputCondition"
+                            },
+                            "mypolymorphism": {
+                                "$ref": "#/definitions/AgenticVirtualAgentEventSettings"
+                            }
+                        },
+                        "description": "Test JSM Response"
+                    },
+                    "ListValues": {
+                        "type": "object",
+                        "discriminator": "type",
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "description": "Validation type.",
+                                "enum": [
+                                    "Dynamic",
+                                    "Static"
+                                ]
+                            }
+                        }
+                    },
+                    "AgenticVirtualAgentPythonInputValidationEvent": {
+                        "allOf": [
+                            {
+                                "$ref": "#/definitions/AgenticVirtualAgentInputValidationEvent"
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "if": {
+                                        "type": "string",
+                                        "description": "Python condition evaluated for the validation event.",
+                                        "readOnly": true
+                                    },
+                                    "else": {
+                                        "type": "string",
+                                        "description": "Instruction followed when validation fails.",
+                                        "readOnly": true
+                                    }
+                                },
+                                "description": "Python input validation event emitted during a virtual agent preview session turn."
+                            }
+                        ],
+                        "x-discriminator-value": "Python"
+                    },
+                    "AgenticVirtualAgentStructuredInputValidationEvent": {
+                        "allOf": [
+                            {
+                                "$ref": "#/definitions/AgenticVirtualAgentInputValidationEvent"
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "if": {
+                                        "description": "Structured condition evaluated for the validation event.",
+                                        "readOnly": true,
+                                        "$ref": "#/definitions/AgenticVirtualAgentStructuredConditionGroup"
+                                    },
+                                    "else": {
+                                        "type": "string",
+                                        "description": "Instruction followed when validation fails.",
+                                        "readOnly": true
+                                    }
+                                },
+                                "description": "Structured input validation event emitted during a virtual agent preview session turn."
+                            }
+                        ],
+                        "x-discriminator-value": "Structured"
+                    },
+                    "AgenticVirtualAgentUnknownInputValidationEvent": {
+                        "allOf": [
+                            {
+                                "$ref": "#/definitions/AgenticVirtualAgentInputValidationEvent"
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "else": {
+                                        "type": "string",
+                                        "description": "Instruction followed when validation fails.",
+                                        "readOnly": true
+                                    }
+                                },
+                                "description": "Unknown input validation event emitted during a virtual agent preview session turn."
+                            }
+                        ],
+                        "x-discriminator-value": "Unknown"
+                    },
+                    "AgenticVirtualAgentDataActionToolCall": {
+                        "allOf": [
+                            {
+                                "$ref": "#/definitions/AgenticVirtualAgentToolCall"
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "input": {
+                                        "type": "object",
+                                        "description": "Tool input parameters.",
+                                        "readOnly": true,
+                                        "additionalProperties": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "dependencyOnlyInput": {
+                                        "type": "object",
+                                        "description": "Dependency-only input parameters used for reporting purposes only. These inputs are not passed with the underlying tool call at runtime.",
+                                        "readOnly": true,
+                                        "additionalProperties": {
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "description": "Tool call for data action execution."
+                            }
+                        ],
+                        "x-discriminator-value": "DataAction"
+                    },
+                    "AgenticVirtualAgentExternalA2AServerToolCall": {
+                        "allOf": [
+                            {
+                                "$ref": "#/definitions/AgenticVirtualAgentToolCall"
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "input": {
+                                        "description": "Tool input parameters.",
+                                        "readOnly": true,
+                                        "$ref": "#/definitions/AgenticVirtualAgentA2AAgentInput"
+                                    }
+                                },
+                                "description": "Tool call for external A2A server execution."
+                            }
+                        ],
+                        "x-discriminator-value": "ExternalA2AServer"
+                    },
+                    "AgenticVirtualAgentKnowledgeBaseToolCall": {
+                        "allOf": [
+                            {
+                                "$ref": "#/definitions/AgenticVirtualAgentToolCall"
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "dependencyOnlyInput": {
+                                        "type": "object",
+                                        "description": "Dependency-only input parameters used for reporting purposes only. These inputs are not passed with the underlying tool call at runtime.",
+                                        "readOnly": true,
+                                        "additionalProperties": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "input": {
+                                        "description": "Tool input parameters.",
+                                        "readOnly": true,
+                                        "$ref": "#/definitions/AgenticVirtualAgentKnowledgeBaseToolInput"
+                                    }
+                                },
+                                "description": "Tool call for KnowledgeBase lookup."
+                            }
+                        ],
+                        "x-discriminator-value": "KnowledgeBase"
+                    },
+                    "AgenticVirtualAgentKnowledgeSettingToolCall": {
+                        "allOf": [
+                            {
+                                "$ref": "#/definitions/AgenticVirtualAgentToolCall"
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "dependencyOnlyInput": {
+                                        "type": "object",
+                                        "description": "Dependency-only input parameters used for reporting purposes only. These inputs are not passed with the underlying tool call at runtime.",
+                                        "readOnly": true,
+                                        "additionalProperties": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "input": {
+                                        "description": "Tool input parameters.",
+                                        "readOnly": true,
+                                        "$ref": "#/definitions/AgenticVirtualAgentKnowledgeSettingToolInput"
+                                    }
+                                },
+                                "description": "Tool call for KnowledgeSetting lookup."
+                            }
+                        ],
+                        "x-discriminator-value": "KnowledgeSetting"
+                    },
+                    "AgenticVirtualAgentEscalationEventSettings": {
+                        "allOf": [
+                            {
+                                "$ref": "#/definitions/AgenticVirtualAgentEventSettings"
+                            },
+                            {
+                                "type": "object",
+                                "properties": {},
+                                "description": "Escalation event response settings."
+                            }
+                        ],
+                        "x-discriminator-value": "Escalation"
+                    },
+                    "AgenticVirtualAgentGuardrailsSettings": {
+                        "allOf": [
+                            {
+                                "$ref": "#/definitions/AgenticVirtualAgentEventSettings"
+                            },
+                            {
+                                "type": "object",
+                                "required": [
+                                    "violationThreshold",
+                                    "violationThresholdCrossedMessage"
+                                ],
+                                "properties": {
+                                    "message": {
+                                        "type": "string",
+                                        "example": "Sorry I cannot answer that. Is there anything else I can help you with?",
+                                        "description": "Message the virtual agent should return when this event is handled."
+                                    },
+                                    "violationThreshold": {
+                                        "type": "integer",
+                                        "format": "int32",
+                                        "example": 3,
+                                        "description": "Number of guardrail violations allowed before the threshold is crossed."
+                                    },
+                                    "violationThresholdCrossedMessage": {
+                                        "type": "string",
+                                        "example": "Sorry I cannot answer that. Please hold while I transfer you.",
+                                        "description": "Message the virtual agent should return when the guardrail violation threshold is crossed."
+                                    }
+                                },
+                                "description": "Guardrails event response settings."
+                            }
+                        ],
+                        "x-discriminator-value": "Guardrails"
+                    },
+                    "AgenticVirtualAgentUserExitEventSettings": {
+                        "allOf": [
+                            {
+                                "$ref": "#/definitions/AgenticVirtualAgentEventSettings"
+                            },
+                            {
+                                "type": "object",
+                                "properties": {},
+                                "description": "User exit event response settings."
+                            }
+                        ],
+                        "x-discriminator-value": "UserExit"
+                    },
+                    "AgenticVirtualAgentPythonInputValidation": {
+                        "allOf": [
+                            {
+                                "$ref": "#/definitions/AgenticVirtualAgentInputValidation"
+                            },
+                            {
+                                "type": "object",
+                                "required": [
+                                    "else",
+                                    "if",
+                                    "type"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "description": "Validation type discriminator.",
+                                        "enum": [
+                                            "Python"
+                                        ]
+                                    },
+                                    "if": {
+                                        "type": "string",
+                                        "example": "orderId is not None and orderId != ''",
+                                        "description": "Python condition that must evaluate to true before invoking the tool."
+                                    },
+                                    "else": {
+                                        "type": "string",
+                                        "example": "Ask the customer to provide a valid order ID.",
+                                        "description": "Instruction for the virtual agent when the validation condition is not met."
+                                    }
+                                },
+                                "description": "Input validation using a Python expression."
+                            }
+                        ],
+                        "x-discriminator-value": "Python"
+                    },
+                    "AgenticVirtualAgentStructuredInputValidation": {
+                        "allOf": [
+                            {
+                                "$ref": "#/definitions/AgenticVirtualAgentInputValidation"
+                            },
+                            {
+                                "type": "object",
+                                "required": [
+                                    "else",
+                                    "if",
+                                    "type"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "description": "Validation type discriminator.",
+                                        "enum": [
+                                            "Structured"
+                                        ]
+                                    },
+                                    "if": {
+                                        "description": "Structured condition group that must evaluate to true before invoking the tool.",
+                                        "$ref": "#/definitions/AgenticVirtualAgentStructuredConditionGroup"
+                                    },
+                                    "else": {
+                                        "type": "string",
+                                        "example": "Ask the customer to provide a valid order ID.",
+                                        "description": "Instruction for the virtual agent when the validation condition is not met."
+                                    }
+                                },
+                                "description": "Input validation using a structured condition group."
+                            }
+                        ],
+                        "x-discriminator-value": "Structured"
+                    },
+                    "AgenticVirtualAgentDataActionTool": {
+                        "allOf": [
+                            {
+                                "$ref": "#/definitions/AgenticVirtualAgentTool"
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "errors": {
+                                        "type": "array",
+                                        "description": "Error types this tool can raise.",
+                                        "items": {
+                                            "$ref": "#/definitions/AgenticVirtualAgentToolError"
+                                        }
+                                    },
+                                    "inputs": {
+                                        "type": "array",
+                                        "description": "Inputs passed to this data action tool.",
+                                        "items": {
+                                            "$ref": "#/definitions/AgenticVirtualAgentToolInput"
+                                        }
+                                    },
+                                    "output": {
+                                        "type": "string",
+                                        "example": "OrderStatus",
+                                        "description": "Name of the output type this tool returns when it completes successfully."
+                                    },
+                                    "inputValidation": {
+                                        "type": "array",
+                                        "description": "Conditions that must be checked before invoking this tool.",
+                                        "items": {
+                                            "$ref": "#/definitions/AgenticVirtualAgentInputValidation"
+                                        }
+                                    },
+                                    "schemas": {
+                                        "description": "Data action input and output JSON schemas used as schema metadata.",
+                                        "$ref": "#/definitions/AgenticVirtualAgentDataActionSchemas"
+                                    }
+                                },
+                                "description": "Data action tool."
+                            }
+                        ],
+                        "x-discriminator-value": "DataAction"
+                    },
+                    "AgenticVirtualAgentExternalA2AServerTool": {
+                        "allOf": [
+                            {
+                                "$ref": "#/definitions/AgenticVirtualAgentTool"
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "skills": {
+                                        "type": "array",
+                                        "description": "Agent card skills available for this external A2A server tool.",
+                                        "items": {
+                                            "$ref": "#/definitions/AgenticVirtualAgentAgentCardSkill"
+                                        }
+                                    }
+                                },
+                                "description": "External A2A server tool."
+                            }
+                        ],
+                        "x-discriminator-value": "ExternalA2AServer"
+                    },
+                    "AgenticVirtualAgentKnowledgeBaseTool": {
+                        "allOf": [
+                            {
+                                "$ref": "#/definitions/AgenticVirtualAgentTool"
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "inputs": {
+                                        "type": "array",
+                                        "description": "Inputs for this knowledge tool. Knowledge tool inputs are used for gating/preconditions only and are not sent with the underlying tool at runtime.",
+                                        "items": {
+                                            "$ref": "#/definitions/AgenticVirtualAgentToolInput"
+                                        }
+                                    },
+                                    "inputValidation": {
+                                        "type": "array",
+                                        "description": "Conditions that must be checked before invoking this tool.",
+                                        "items": {
+                                            "$ref": "#/definitions/AgenticVirtualAgentInputValidation"
+                                        }
+                                    }
+                                },
+                                "description": "Knowledge base tool."
+                            }
+                        ],
+                        "x-discriminator-value": "KnowledgeBase"
+                    },
+                    "AgenticVirtualAgentKnowledgeSettingTool": {
+                        "allOf": [
+                            {
+                                "$ref": "#/definitions/AgenticVirtualAgentTool"
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "inputs": {
+                                        "type": "array",
+                                        "description": "Inputs for this knowledge tool. Knowledge tool inputs are used for gating/preconditions only and are not sent with the underlying tool at runtime.",
+                                        "items": {
+                                            "$ref": "#/definitions/AgenticVirtualAgentToolInput"
+                                        }
+                                    },
+                                    "inputValidation": {
+                                        "type": "array",
+                                        "description": "Conditions that must be checked before invoking this tool.",
+                                        "items": {
+                                            "$ref": "#/definitions/AgenticVirtualAgentInputValidation"
+                                        }
+                                    }
+                                },
+                                "description": "Knowledge setting tool."
+                            }
+                        ],
+                        "x-discriminator-value": "KnowledgeSetting"
+                    },
+                    "AgenticVirtualAgentPythonOutputInstruction": {
+                        "allOf": [
+                            {
+                                "$ref": "#/definitions/AgenticVirtualAgentToolOutputInstruction"
+                            },
+                            {
+                                "type": "object",
+                                "required": [
+                                    "type",
+                                    "when"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "description": "Output instruction type discriminator.",
+                                        "enum": [
+                                            "Python"
+                                        ]
+                                    },
+                                    "when": {
+                                        "type": "string",
+                                        "example": "result.success is True",
+                                        "description": "Python condition evaluated against the successful tool result to determine when this instruction applies."
+                                    }
+                                },
+                                "description": "Instruction for handling tool output based on a Python condition."
+                            }
+                        ],
+                        "x-discriminator-value": "Python"
+                    },
+                    "AgenticVirtualAgentStructuredOutputInstruction": {
+                        "allOf": [
+                            {
+                                "$ref": "#/definitions/AgenticVirtualAgentToolOutputInstruction"
+                            },
+                            {
+                                "type": "object",
+                                "required": [
+                                    "type",
+                                    "when"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "description": "Output instruction type discriminator.",
+                                        "enum": [
+                                            "Structured"
+                                        ]
+                                    },
+                                    "when": {
+                                        "description": "Structured condition group evaluated against the successful tool result to determine when this instruction applies. Output rules identify the value to evaluate with a mapping path into the tool output type.",
+                                        "$ref": "#/definitions/AgenticVirtualAgentStructuredOutputConditionGroup"
+                                    }
+                                },
+                                "description": "Instruction for handling tool output based on a structured condition group."
+                            }
+                        ],
+                        "x-discriminator-value": "Structured"
+                    },
+                    "DynamicListValues": {
+                        "allOf": [
+                            {
+                                "$ref": "#/definitions/ListValues"
+                            },
+                            {
+                                "type": "object",
+                                "required": [
+                                    "dataActionId",
+                                    "fieldMapping",
+                                    "matchType"
+                                ],
+                                "properties": {
+                                    "dataActionId": {
+                                        "type": "string",
+                                        "description": "The ID of the data action to invoke at runtime to retrieve list values and synonyms."
+                                    },
+                                    "inputs": {
+                                        "type": "array",
+                                        "description": "Array of input mappings for the data action. Maps guide variables to data action input parameters.",
+                                        "items": {
+                                            "$ref": "#/definitions/DataActionInput"
+                                        }
+                                    },
+                                    "fieldMapping": {
+                                        "description": "Maps data action output fields to list values/synonyms.",
+                                        "$ref": "#/definitions/FieldMapping"
+                                    },
+                                    "matchType": {
+                                        "type": "string",
+                                        "description": "Defines how matching should work at runtime. Only 'Exact' matching is supported for dynamic lists.",
+                                        "enum": [
+                                            "Exact",
+                                            "Semantic"
+                                        ]
+                                    }
+                                }
+                            }
+                        ],
+                        "x-discriminator-value": "Dynamic"
+                    },
+                    "StaticListValues": {
+                        "allOf": [
+                            {
+                                "$ref": "#/definitions/ListValues"
+                            },
+                            {
+                                "type": "object",
+                                "required": [
+                                    "items",
+                                    "matchType"
+                                ],
+                                "properties": {
+                                    "items": {
+                                        "type": "array",
+                                        "description": "Array of list items. Each item contains a value and optional synonyms.",
+                                        "items": {
+                                            "$ref": "#/definitions/ListItem"
+                                        }
+                                    },
+                                    "matchType": {
+                                        "type": "string",
+                                        "description": "Defines how matching should work.",
+                                        "enum": [
+                                            "Exact",
+                                            "Semantic"
+                                        ]
+                                    }
+                                }
+                            }
+                        ],
+                        "x-discriminator-value": "Static"
+                    },
+                    "AgenticVirtualAgentStructuredOutputCondition": {
+                        "type": "object",
+                        "description": "A structured tool-output condition.",
+                        "x-genesys-one-of": [
+                            "AgenticVirtualAgentStructuredOutputRule",
+                            "AgenticVirtualAgentStructuredOutputConditionGroup"
+                        ]
+                    },
+                    "AgenticVirtualAgentStructuredCondition": {
+                        "type": "object",
+                        "description": "A structured input validation condition.",
+                        "x-genesys-one-of": [
+                            "AgenticVirtualAgentStructuredRule",
+                            "AgenticVirtualAgentStructuredConditionGroup"
+                        ]
+                    },
+                    "AgenticVirtualAgentStructuredOutputRule": {
+                        "type": "object",
+                        "required": [
+                            "mapping",
+                            "operator"
+                        ],
+                        "properties": {
+                            "mapping": {
+                                "type": "array",
+                                "example": "[\"Order\", \"items\", 0, \"status\"]",
+                                "description": "Path into the tool output type this rule applies to. Each element is a field name (string) or an array index (integer).",
+                                "items": {
+                                    "type": "object"
+                                }
+                            },
+                            "operator": {
+                                "type": "string",
+                                "description": "Operator to apply to the value at the mapped path.",
+                                "enum": [
+                                    "IsNull",
+                                    "IsNotNull",
+                                    "IsEmpty",
+                                    "IsNotEmpty",
+                                    "Equal",
+                                    "NotEqual",
+                                    "LessThan",
+                                    "LessThanOrEqual",
+                                    "GreaterThan",
+                                    "GreaterThanOrEqual",
+                                    "In",
+                                    "NotIn",
+                                    "Contains",
+                                    "DoesntContain",
+                                    "BeginsWith",
+                                    "EndsWith"
+                                ]
+                            },
+                            "value": {
+                                "type": "object",
+                                "example": "Delivered",
+                                "description": "Value to compare against. May be a string, integer, number, boolean, or null. Not required for 'IsNull', 'IsNotNull', 'IsEmpty', or 'IsNotEmpty' operators."
+                            }
+                        },
+                        "description": "A single structured tool-output rule. The mapping is a path into the tool output type."
+                    },
+                    "AgenticVirtualAgentStructuredRule": {
+                        "type": "object",
+                        "required": [
+                            "name",
+                            "operator"
+                        ],
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "example": "orderId",
+                                "description": "Target name of the tool input this rule applies to."
+                            },
+                            "operator": {
+                                "type": "string",
+                                "description": "Operator to apply to the input value.",
+                                "enum": [
+                                    "IsNull",
+                                    "IsNotNull",
+                                    "IsEmpty",
+                                    "IsNotEmpty",
+                                    "Equal",
+                                    "NotEqual",
+                                    "LessThan",
+                                    "LessThanOrEqual",
+                                    "GreaterThan",
+                                    "GreaterThanOrEqual",
+                                    "In",
+                                    "NotIn",
+                                    "Contains",
+                                    "DoesntContain",
+                                    "BeginsWith",
+                                    "EndsWith"
+                                ]
+                            },
+                            "value": {
+                                "type": "object",
+                                "example": "18",
+                                "description": "Value to compare against. May be a string, integer, number, boolean, or null. Not required for 'IsNull' or 'IsNotNull' operators."
+                            }
+                        },
+                        "description": "A single structured input validation rule."
+                    }
+                },
+                "operations": {
+                    "/api/v2/users/testjsm": {
+                        "post": {
+                            "tags": [
+                                "Users"
+                            ],
+                            "summary": "Begin WebAuthn verifier registration",
+                            "description": "Returns the public key credential creation options the client passes to navigator.credentials.create() to start registering a new WebAuthn authenticator.",
+                            "operationId": "postUsersTestjsm",
+                            "consumes": [
+                                "application/json"
+                            ],
+                            "produces": [
+                                "application/json"
+                            ],
+                            "parameters": [
+                                {
+                                    "in": "body",
+                                    "name": "body",
+                                    "required": true,
+                                    "schema": {
+                                        "$ref": "#/definitions/TestJSMRequest"
+                                    }
+                                }
+                            ],
+                            "responses": {
+                                "200": {
+                                    "description": "successful operation",
+                                    "schema": {
+                                        "$ref": "#/definitions/TestJSMResponse"
+                                    }
+                                },
+                                "400": {
+                                    "description": "The request could not be understood by the server due to malformed syntax.",
+                                    "schema": {
+                                        "$ref": "#/definitions/ErrorBody"
+                                    },
+                                    "x-inin-error-codes": {
+                                        "not.a.user": "This request requires a user context. Client credentials cannot be used for requests to this resource.",
+                                        "bad.request": "The request could not be understood by the server due to malformed syntax.",
+                                        "response.entity.too.large": "The response is over the size limit. Reduce pageSize or expand list to reduce response size if applicable",
+                                        "invalid.date": "Dates must be specified as ISO-8601 strings. For example: yyyy-MM-ddTHH:mm:ss.SSSZ",
+                                        "invalid.query.param.value": "Value [%s] is not valid for parameter [%s]. Allowable values are: %s",
+                                        "client.failed.request": "The client did not produce a request with valid end of stream signaling. This can be caused by poor network connection and/or client behavior.",
+                                        "invalid.property": "Value [%s] is not a valid property for object [%s]",
+                                        "constraint.validation": "%s",
+                                        "invalid.value": "Value [%s] is not valid for field type [%s]. Allowable values are: %s"
+                                    }
+                                },
+                                "401": {
+                                    "description": "No authentication bearer token specified in authorization header.",
+                                    "schema": {
+                                        "$ref": "#/definitions/ErrorBody"
+                                    },
+                                    "x-inin-error-codes": {
+                                        "authentication.required": "No authentication bearer token specified in authorization header.",
+                                        "ip.not.authorized": "Requests originating from this IP address are not authorized: [%s]",
+                                        "bad.credentials": "Invalid login credentials."
+                                    }
+                                },
+                                "403": {
+                                    "description": "You are not authorized to perform the requested action.",
+                                    "schema": {
+                                        "$ref": "#/definitions/ErrorBody"
+                                    },
+                                    "x-inin-error-codes": {
+                                        "missing.division.permission": "Unable to perform the requested action. You are missing the following permission '%s' in the provided division(s).",
+                                        "app.not.authorized.for.scope": "App not authorized to use scope %s",
+                                        "missing.permissions": "Unable to perform the requested action. You are missing the following permission(s): %s",
+                                        "not.authorized": "You are not authorized to perform the requested action.",
+                                        "missing.any.permissions": "Unable to perform the requested action. You must have at least one of the following permissions assigned: %s",
+                                        "authz.policy.denied": "Unable to perform the requested action. Your organization's security policies have denied access. Policy ID(s): [%s]",
+                                        "missing.any.division.permissions": "Unable to perform the requested action. You must have at least one of the following permissions assigned: %s in at least one of the following division(s): %s"
+                                    }
+                                },
+                                "404": {
+                                    "description": "The requested resource was not found.",
+                                    "schema": {
+                                        "$ref": "#/definitions/ErrorBody"
+                                    },
+                                    "x-inin-error-codes": {
+                                        "not.found": "The requested resource was not found."
+                                    }
+                                },
+                                "408": {
+                                    "description": "The client did not produce a request within the server timeout limit. This can be caused by a slow network connection and/or large payloads.",
+                                    "schema": {
+                                        "$ref": "#/definitions/ErrorBody"
+                                    },
+                                    "x-inin-error-codes": {
+                                        "client.timeout": "The client did not produce a request within the server timeout limit. This can be caused by a slow network connection and/or large payloads."
+                                    }
+                                },
+                                "409": {
+                                    "description": "The request conflicts with the current state of the target resource.",
+                                    "schema": {
+                                        "$ref": "#/definitions/ErrorBody"
+                                    },
+                                    "x-inin-error-codes": {
+                                        "request.conflict": "The request conflicts with the current state of the target resource."
+                                    }
+                                },
+                                "413": {
+                                    "description": "The request is over the size limit. Maximum bytes: %s",
+                                    "schema": {
+                                        "$ref": "#/definitions/ErrorBody"
+                                    },
+                                    "x-inin-error-codes": {
+                                        "request.entity.too.large": "The request is over the size limit. Maximum bytes: %s"
+                                    }
+                                },
+                                "415": {
+                                    "description": "Unsupported Media Type - Unsupported or incorrect media type, such as an incorrect Content-Type value in the header.",
+                                    "schema": {
+                                        "$ref": "#/definitions/ErrorBody"
+                                    },
+                                    "x-inin-error-codes": {
+                                        "unsupported.media.type": "Unsupported Media Type - Unsupported or incorrect media type, such as an incorrect Content-Type value in the header."
+                                    }
+                                },
+                                "429": {
+                                    "description": "Rate limit exceeded the maximum. Retry the request in [%s] seconds",
+                                    "schema": {
+                                        "$ref": "#/definitions/ErrorBody"
+                                    },
+                                    "x-inin-error-codes": {
+                                        "too.many.requests.retry.after": "Rate limit exceeded the maximum. Retry the request in [%s] seconds",
+                                        "too.many.requests": "Rate limit exceeded the maximum [%s] requests within [%s] seconds"
+                                    }
+                                },
+                                "500": {
+                                    "description": "The server encountered an unexpected condition which prevented it from fulfilling the request.",
+                                    "schema": {
+                                        "$ref": "#/definitions/ErrorBody"
+                                    },
+                                    "x-inin-error-codes": {
+                                        "internal.server.error": "The server encountered an unexpected condition which prevented it from fulfilling the request."
+                                    }
+                                },
+                                "503": {
+                                    "description": "Service Unavailable - The server is currently unavailable (because it is overloaded or down for maintenance).",
+                                    "schema": {
+                                        "$ref": "#/definitions/ErrorBody"
+                                    },
+                                    "x-inin-error-codes": {
+                                        "service.unavailable": "Service Unavailable - The server is currently unavailable (because it is overloaded or down for maintenance)."
+                                    }
+                                },
+                                "504": {
+                                    "description": "The request timed out.",
+                                    "schema": {
+                                        "$ref": "#/definitions/ErrorBody"
+                                    },
+                                    "x-inin-error-codes": {
+                                        "authentication.request.timeout": "Authentication request timeout.",
+                                        "request.timeout": "The request timed out."
+                                    }
+                                }
+                            },
+                            "security": [
+                                {
+                                    "PureCloud OAuth": [
+                                        "users"
+                                    ]
+                                }
+                            ],
+                            "x-purecloud-method-name": "postUsersTestjsm"
+                        }
+                    }
+                }
+            }
+        },
+        "swaggerCodegen": {
+            "resourceLanguage": "purecloudjavascript",
+            "codegenLanguage": "purecloudjavascript",
+            "jarPath": "${WORKSPACE}/openapi-generator/modules/openapi-generator-cli/target/openapi-generator-cli.jar",
+            "configFile": "${SDK_TEMP}/config.json",
+            "extraGeneratorOptions": [
+                "--type-mappings=Duration=string"
+            ]
+        },
+        "releaseNoteTemplatePath": "${COMMON_ROOT}/resources/templates/githubSdkReleaseNotes.md",
+        "releaseNoteSummaryTemplatePath": "${COMMON_ROOT}/resources/templates/githubSdkReleaseNoteSummary.md",
+        "debugConfig": false,
+        "enableLoggerColor": false,
+        "packageName": "purecloud-platform-client-v2",
+        "moduleName": "platformClient",
+        "enableCustomHeaders": true,
+        "apiHealthCheckUrl": "https://api.mypurecloud.com/api/v2/health/check"
     },
-    "versionFile": "${SDK_REPO}/version.json",
-    "logLevel": "debug",
-    "extensionsDestination": "${SDK_REPO}/build/src/purecloud-platform-client-v2",
-    "samplesDestination": "${SDK_REPO}/build/samples",
-    "swagger": {
-      "oldSwaggerPath": "${SDK_REPO}/swagger.json",
-      "newSwaggerPath": "https://api.mypurecloud.com/api/v2/docs/swagger",
-      "previewSwaggerPath": "https://api.mypurecloud.com/api/v2/docs/swaggerpreview",
-      "saveNewSwaggerPath": "${SDK_REPO}/swagger.json"
-    },
-    "swaggerCodegen": {
-      "resourceLanguage": "purecloudjavascript",
-      "codegenLanguage": "purecloudjavascript",
-      "jarPath": "${WORKSPACE}/openapi-generator/modules/openapi-generator-cli/target/openapi-generator-cli.jar",
-      "configFile": "${SDK_TEMP}/config.json",
-      "extraGeneratorOptions": [ "--type-mappings=Duration=string" ]
-    },
-    "releaseNoteTemplatePath": "${COMMON_ROOT}/resources/templates/githubSdkReleaseNotes.md",
-    "releaseNoteSummaryTemplatePath": "${COMMON_ROOT}/resources/templates/githubSdkReleaseNoteSummary.md",
-    "debugConfig": false,
-    "enableLoggerColor": false,
-    "packageName": "purecloud-platform-client-v2",
-    "moduleName": "platformClient",
-    "enableCustomHeaders": true,
-    "apiHealthCheckUrl": "https://api.mypurecloud.com/api/v2/health/check"
-  },
     "stageSettings": {
         "prebuild": {
             "preRunScripts": [],
@@ -59,35 +947,35 @@
                     ],
                     "failOnError": true
                 },
-        {
-          "type": "tsx",
-          "path": "${COMMON_ROOT}/resources/scripts/proxy-npm.ts",
-          "args": [
-            "start",
-            "${PURECLOUD_ENVIRONMENT}"
-          ],
-          "failOnError": true
-        }
+                {
+                    "type": "tsx",
+                    "path": "${COMMON_ROOT}/resources/scripts/proxy-npm.ts",
+                    "args": [
+                        "start",
+                        "${PURECLOUD_ENVIRONMENT}"
+                    ],
+                    "failOnError": true
+                }
             ]
         },
         "build": {
             "preRunScripts": [],
             "compileScripts": [
-              {
-                  "type": "shell",
-                  "path": "compile.sh",
-                  "args": [
-                      "${SDK_REPO}",
-                      "${SDK_REPO}/build",
-                      "${COMMON_ROOT}/sdk/purecloudjavascript",
-                      {
-                          "$ref": "#/settings/moduleName"
-                      },
-                      {
-                          "$ref": "#/settings/packageName"
-                      }
-                  ]
-              }
+                {
+                    "type": "shell",
+                    "path": "compile.sh",
+                    "args": [
+                        "${SDK_REPO}",
+                        "${SDK_REPO}/build",
+                        "${COMMON_ROOT}/sdk/purecloudjavascript",
+                        {
+                            "$ref": "#/settings/moduleName"
+                        },
+                        {
+                            "$ref": "#/settings/packageName"
+                        }
+                    ]
+                }
             ],
             "postRunScripts": [
                 {
@@ -100,21 +988,21 @@
                     "failOnError": true
                 },
                 {
-                  "type": "command",
-                  "command": "npm",
-                  "cwd": "${COMMON_ROOT}/resources/sdk/purecloudjavascript/scripts/test",
-                  "args": [
-                    "run",
-                    "test"
-                  ],
-                  "failOnError": true
+                    "type": "command",
+                    "command": "npm",
+                    "cwd": "${COMMON_ROOT}/resources/sdk/purecloudjavascript/scripts/test",
+                    "args": [
+                        "run",
+                        "test"
+                    ],
+                    "failOnError": true
                 },
                 {
                     "type": "tsx",
                     "path": "${COMMON_ROOT}/resources/scripts/combineApiDataFiles.ts",
                     "args": [
-                      "${SDK_REPO}/build/docs",
-                      "${SDK_REPO}/build/APIData.json"
+                        "${SDK_REPO}/build/docs",
+                        "${SDK_REPO}/build/APIData.json"
                     ],
                     "failOnError": true
                 },
@@ -122,7 +1010,7 @@
                     "type": "tsx",
                     "path": "${COMMON_ROOT}/resources/scripts/proxy-npm.ts",
                     "args": [
-                      "stop"
+                        "stop"
                     ],
                     "failOnError": false
                 }
