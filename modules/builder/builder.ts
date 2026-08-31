@@ -3,7 +3,7 @@ import $RefParser from "@apidevtools/json-schema-ref-parser";
 import fs from 'fs-extra';
 import path from 'path';
 import yaml from 'js-yaml';
-import { Config, PureCloud, LocalConfig, valueOverides } from '../types/config.js';
+import { Config, PureCloud, LocalConfig, valueOverides, SpecificationPreprocessing } from '../types/config.js';
 import { Resourcepaths, Version, ApiVersionData } from '../types/builderTypes.js';
 import { GCApiSpecification } from '../specification/gcApiSpecification.js';
 import { GitModule, GithubConfig } from '../git/gitModule.js';
@@ -47,7 +47,25 @@ export class Builder {
 			this.constructBuilder(configPath, localConfigPath);
 
 			log.debug('Builder construction completed, starting deref');
+			// Need to remove specificationPreprocessing before deref (because of models with $ref)
+			let specificationPreprocessingConfig: SpecificationPreprocessing | null = null;
+			let specificationPreprocessingLocalConfig: SpecificationPreprocessing | null = null;
+			if (this.config?.settings?.specificationPreprocessing) {
+				specificationPreprocessingConfig = this.config.settings.specificationPreprocessing;
+				this.config.settings.specificationPreprocessing = {} as SpecificationPreprocessing;
+			}
+			if (this.localConfig?.overrides?.settings?.specificationPreprocessing) {
+				specificationPreprocessingLocalConfig = this.localConfig.overrides.settings.specificationPreprocessing;
+				this.localConfig.overrides.settings.specificationPreprocessing ={} as SpecificationPreprocessing;
+			}
 			await this.deref();
+			// Need to add specificationPreprocessing before deref (because of models with $ref)
+			if (this.config.settings) {
+				if (specificationPreprocessingConfig) this.config.settings.specificationPreprocessing = specificationPreprocessingConfig;
+			}
+			if (this.config.localConfig && this.localConfig.overrides && this.localConfig.overrides.settings) {
+				if (specificationPreprocessingLocalConfig) this.localConfig.overrides.settings.specificationPreprocessing = specificationPreprocessingLocalConfig;
+			}
 
 			log.debug('Deref completed, starting post-construction');
 			this.postConstructBuilder();

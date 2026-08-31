@@ -44,8 +44,7 @@ export class GCApiSpecification {
 	public getAndPreprocess(builderConfig: Config,
 		oldSpecificationPath: string, newSpecificationPath: string, previewSpecificationPath: string,
 		saveOldSwaggerPath: string, saveNewSwaggerPath: string,
-		overrideCfg: SpecificationPreprocessing | null,
-		apiVersionData: ApiVersionData) {
+		overrideCfg: SpecificationPreprocessing | null) {
 
 		log.info('Starting specification preprocessing');
 		log.debug(`Parameters: oldPath=${oldSpecificationPath}, newPath=${newSpecificationPath}, previewPath=${previewSpecificationPath}`);
@@ -142,8 +141,6 @@ export class GCApiSpecification {
 		log.debug(`New swagger loaded successfully, length: ${JSON.stringify(this.newSpecification).length}`);
 		log.debug(`New swagger info: ${this.newSpecification?.info?.title || 'Unknown'} v${this.newSpecification?.info?.version || 'Unknown'}`);
 
-		// Store Api Version
-		this.newSpecification.info.apiVersion = apiVersionData.BuildVersion;
 		// Specification Preprocessing
 		if (this.isSwagger === true) {
 			log.debug('Preprocessing Swagger');
@@ -176,7 +173,7 @@ export class GCApiSpecification {
 		log.info(`Swagger preprocessing completed.`);
 	};
 
-	public diff(apiVersionData: ApiVersionData) {
+	public diff() {
 		// Diff swaggers
 		log.info('Starting specification diff comparison');
 
@@ -187,7 +184,7 @@ export class GCApiSpecification {
 			// Diff
 			log.debug('Executing specification diff implementation');
 			let diffImpl = this.diffImpl as SwaggerDiffImpl;
-			let retval = diffImpl.diff(this.oldSpecification as SwaggerSpec, this.newSpecification as SwaggerSpec, apiVersionData);
+			let retval = diffImpl.diff(this.oldSpecification as SwaggerSpec, this.newSpecification as SwaggerSpec);
 
 			// Set vars from diff impl
 			log.debug('Retrieving results from diff implementation');
@@ -203,7 +200,7 @@ export class GCApiSpecification {
 			// Diff
 			log.debug('Executing specification diff implementation');
 			let diffImpl = this.diffImpl as OpenApiDiffImpl;
-			let retval = diffImpl.diff(this.oldSpecification as OpenApiSpec, this.newSpecification as OpenApiSpec, apiVersionData);
+			let retval = diffImpl.diff(this.oldSpecification as OpenApiSpec, this.newSpecification as OpenApiSpec);
 
 			// Set vars from diff impl
 			log.debug('Retrieving results from diff implementation');

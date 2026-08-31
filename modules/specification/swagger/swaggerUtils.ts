@@ -57,7 +57,7 @@ let DEFAULT_SPECIFICATION_PREPROCESSING_CFG: SpecificationPreprocessing = {
 			produces: []
 		}
 	},
-	removeUnused: false,
+	removeUnused: true,
 	notifications: DEFAULT_NOTIFICATIONS_PREPROCESSING_CFG,
 	specific: DEFAULT_SWAGGER_PREPROCESSING_CFG,
 	addPolymorphismInfo: true,
@@ -784,23 +784,6 @@ export function swaggerExtractPolymorphismInfo(swagger: SwaggerSpec, addToExtens
 				}
 			}
 		}
-	}
-
-	if (addToExtensions === true) {
-		let displayInfo: any = {};
-		displayInfo.parents = result.parents;
-		displayInfo.definitions = {};
-		for (let parentName in result.parents) {
-			displayInfo.definitions[parentName] = JSON.parse(JSON.stringify(swagger.definitions[parentName]));
-			if (result.parents[parentName].childrenNames) {
-				for (let childName of result.parents[parentName].childrenNames) {
-					displayInfo.definitions[childName] = JSON.parse(JSON.stringify(swagger.definitions[childName]));
-				}
-			}
-		}
-		console.log("JSM AAAAAAAAAA");
-		console.log(JSON.stringify(displayInfo, null, 4));
-		console.log("JSM AAAAAAAAAA");
 	}
 
 	// Add info to vendor extensions if requested

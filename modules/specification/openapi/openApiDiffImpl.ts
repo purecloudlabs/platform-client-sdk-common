@@ -53,7 +53,7 @@ export class OpenApiDiffImpl {
 		dot.templateSettings.strip = false;
 	}
 
-	public diff(oldOpenApi: OpenApiSpec, newOpenApi: OpenApiSpec, apiVersionData: ApiVersionData): void {
+	public diff(oldOpenApi: OpenApiSpec, newOpenApi: OpenApiSpec): void {
 		log.info('Starting swagger diff implementation');
 		log.debug(`Old swagger paths: ${Object.keys(oldOpenApi?.paths || {}).length}`);
 		log.debug(`New swagger paths: ${Object.keys(newOpenApi?.paths || {}).length}`);
@@ -63,7 +63,6 @@ export class OpenApiDiffImpl {
 		// Set data
 		this.oldOpenApi = oldOpenApi;
 		this.newOpenApi = newOpenApi;
-		this.newApiVersion = apiVersionData.BuildVersion;
 		this.openapiInfo = newOpenApi.info;
 		this.openapiVersion = newOpenApi.openapi;
 		this.changes = {};

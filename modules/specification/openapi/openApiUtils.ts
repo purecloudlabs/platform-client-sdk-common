@@ -55,7 +55,7 @@ let DEFAULT_SPECIFICATION_PREPROCESSING_CFG: SpecificationPreprocessing = {
 			produces: []
 		}
 	},
-	removeUnused: false,
+	removeUnused: true,
 	notifications: DEFAULT_NOTIFICATIONS_PREPROCESSING_CFG,
 	specific: DEFAULT_OPENAPI_PREPROCESSING_CFG,
 	addPolymorphismInfo: true,

@@ -26,16 +26,6 @@ export async function prebuildImpl(builder: Builder): Promise<void> {
         log.debug('Repository clone completed successfully');
         log.debug(`Clone operation completed in ${measureDurationFrom(startTime)}`);
 
-        // Compute ApiVersionData/BuilderVersion
-        let apiVersionData: ApiVersionData = await computeVersion(builder);
-        // Sanitize and store API version data
-        let apiVersionDataClean = {} as ApiVersionData;
-        _.forIn(apiVersionData, function (value, key) {
-            apiVersionDataClean[key.replace(/\W+/g, '')] = value;
-        });
-        builder.apiVersionData = apiVersionDataClean;
-        log.debug(`API version data: ${JSON.stringify(apiVersionDataClean, null, 2)}`);
-
         // Diff swagger
         log.debug('Starting swagger diff operation');
         log.info('Diffing swagger files...');
@@ -53,17 +43,27 @@ export async function prebuildImpl(builder: Builder): Promise<void> {
             builder.config.settings.swagger.previewSwaggerPath,
             builder.config.settings.swagger.saveOldSwaggerPath,
             builder.config.settings.swagger.saveNewSwaggerPath,
-            builder.config.settings.specificationPreprocessing ?? null,
-            builder.apiVersionData
+            builder.config.settings.specificationPreprocessing ?? null
         );
         log.debug('Swagger preprocessing completed');
 
         log.debug(`Swagger diff paths - Old: ${builder.config.settings.swagger.oldSwaggerPath}, New: ${builder.config.settings.swagger.newSwaggerPath}, Preview: ${builder.config.settings.swagger.previewSwaggerPath}`);
-        builder.gcApiSpecification.diff(
-            builder.apiVersionData
-        );
+        builder.gcApiSpecification.diff();
         log.debug('Swagger diff completed');
 
+        // Compute ApiVersionData/BuilderVersion
+        let apiVersionData: ApiVersionData = await computeVersion(builder);
+        // Sanitize and store API version data
+        let apiVersionDataClean = {} as ApiVersionData;
+        _.forIn(apiVersionData, function (value, key) {
+            apiVersionDataClean[key.replace(/\W+/g, '')] = value;
+        })
+        // Store Api Version
+        if (builder.gcApiSpecification.diffImpl) builder.gcApiSpecification.diffImpl.newApiVersion = builder.apiVersionData.BuildVersion;
+        builder.gcApiSpecification.newSpecification.info.apiVersion = builder.apiVersionData.BuildVersion;
+        builder.apiVersionData = apiVersionDataClean;
+        log.debug(`API version data: ${JSON.stringify(apiVersionDataClean, null, 2)}`);
+        
         // For Jenkins only. 
         log.debug('Checking for upstream changes validation');
         if (builder.newSwaggerTempFile.includes('build-platform-sdks-internal-pipeline') && process.argv.includes("build-contains-upstream-changes")) {

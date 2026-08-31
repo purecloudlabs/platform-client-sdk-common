@@ -53,7 +53,7 @@ export class SwaggerDiffImpl {
 		dot.templateSettings.strip = false;
 	}
 
-	public diff(oldSwagger: SwaggerSpec, newSwagger: SwaggerSpec, apiVersionData: ApiVersionData): void {
+	public diff(oldSwagger: SwaggerSpec, newSwagger: SwaggerSpec): void {
 		log.info('Starting swagger diff implementation');
 		log.debug(`Old swagger paths: ${Object.keys(oldSwagger?.paths || {}).length}`);
 		log.debug(`New swagger paths: ${Object.keys(newSwagger?.paths || {}).length}`);
@@ -63,7 +63,6 @@ export class SwaggerDiffImpl {
 		// Set data
 		this.oldSwagger = oldSwagger;
 		this.newSwagger = newSwagger;
-		this.newApiVersion = apiVersionData.BuildVersion;
 		this.swaggerInfo = newSwagger.info;
 		this.swaggerVersion = newSwagger.swagger;
 		this.changes = {};
