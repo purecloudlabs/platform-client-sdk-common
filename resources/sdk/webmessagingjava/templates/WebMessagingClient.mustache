@@ -51,6 +51,11 @@ public class WebMessagingClient {
     private final ArrayList<SessionListener> sessionListeners = new ArrayList<>();
     private ApiClient apiClient;
 
+    // Buffer used to reassemble WebSocket text messages that the server/proxy delivers in multiple
+    // fragments. java.net.http.WebSocket may invoke onText several times for a single logical message,
+    // with the final fragment flagged by last == true. See onText(...) in connect(...).
+    private final StringBuilder textMessageBuffer = new StringBuilder();
+
     private AllowedMedia allowedMediaInbound;
 
 		static {
@@ -265,14 +270,7 @@ public class WebMessagingClient {
         Listener listener = new Listener() {
             @Override
             public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
-                // Deserialize message
-                BaseMessage baseResponse = deserialize(data.toString(), BaseMessage.class);
-
-                // Call session event callback
-                if (baseResponse != null) {
-                    onSessionEvent(data.toString(), baseResponse);
-                }
-
+                handleTextFragment(data, last);
                 return Listener.super.onText(webSocket, data, last);
             }
 
@@ -726,6 +724,38 @@ public class WebMessagingClient {
 					logger.error("Failed to serialize getJwt request: {}", e.getMessage(), e);
 					return CompletableFuture.failedFuture(e);
 				}
+    }
+
+    /**
+     * Handles a WebSocket text frame, reassembling messages delivered across multiple fragments.
+     *
+     * <p>{@link java.net.http.WebSocket} may deliver a single logical text message over several
+     * {@code onText} invocations; the final fragment is flagged with {@code last == true}. Fragments
+     * are accumulated in {@link #textMessageBuffer} and only deserialized once the message is complete,
+     * otherwise a partial fragment fails JSON parsing and the message is silently dropped.
+     *
+     * <p>Package-private for unit testing of the fragment-reassembly logic.
+     *
+     * @param data a text fragment
+     * @param last {@code true} if this is the last fragment of the message
+     */
+    void handleTextFragment(CharSequence data, boolean last) {
+        textMessageBuffer.append(data);
+
+        if (!last) {
+            return;
+        }
+
+        String message = textMessageBuffer.toString();
+        textMessageBuffer.setLength(0);
+
+        // Deserialize message
+        BaseMessage baseResponse = deserialize(message, BaseMessage.class);
+
+        // Call session event callback
+        if (baseResponse != null) {
+            onSessionEvent(message, baseResponse);
+        }
     }
 
     /**
