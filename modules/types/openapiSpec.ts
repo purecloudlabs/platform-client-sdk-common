@@ -138,6 +138,11 @@ export interface Property {
     "x-genesys-polymorphism-is-child"?: boolean;
 	"x-genesys-polymorphism-parent"?: string;
     "x-discriminator-value"?: string;
+    "x-genesys-polymorphism-property"?: string;
+    "x-genesys-polymorphism-is-parent"?: boolean;
+    "x-genesys-polymorphism-values"?: string[];
+    "x-genesys-polymorphism-children"?: string[];
+    "x-genesys-polymorphism-children-mapping"?: { [key: string]: string };
 }
 
 export interface GenesysEnumMember {

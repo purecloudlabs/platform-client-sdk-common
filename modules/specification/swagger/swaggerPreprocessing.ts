@@ -30,6 +30,8 @@ export function swaggerPreprocessing(builderConfig: Config, swagger: SwaggerSpec
 	swaggerSpecificationPreprocessing(swagger, cfg);
 
 	// Extract Polymorphism Info
+	// - must be performed after swaggerSpecificationPreprocessing
+	// - so that the swagger also includes models or operations imported from config
 	let polymorphismInfo = swaggerExtractPolymorphismInfo(swagger, cfg.addPolymorphismInfo);
 
 	// specific preprocessing
@@ -401,16 +403,12 @@ function swaggerSpecificPreprocessing(builderConfig: Config, swagger: SwaggerSpe
 	}
 
 	if (specificCfg.discriminatorManagement === 'quarantine') {
-		// quarantinePolymorphism(swagger, specificCfg.keepDiscriminatorModels, polymorphismInfo);
+		quarantinePolymorphism(swagger, polymorphismInfo);
 	}
 
 	if (specificCfg.processEnums === true) {
 		processProperties(swagger);
 	}
-
-	// if (specificCfg.processRefs === true) {
-	// 	processRefs(swagger);
-	// }
 
 	return;
 }
@@ -612,131 +610,16 @@ function recursivePropertyUpdate(element: any, isParameter: boolean) {
     }
 }
 
-
-
-function quarantinePolymorphism(swagger: SwaggerSpec, keepDiscriminatorModels: string[], polymorphismInfo: SwaggerPolymorphismInfo) {
-	// JSM TODO - keep, replace with generic object (do it better/simpler), remove discriminator info from parent class (will treat as standard class in openapi generator)
-	let modelsWithDiscriminator: string[] = [];
-	let childDiscriminatorModels: string[] = [];
-	// Find Models with Discriminator
-	if (swagger.definitions) {
-		for (let modelName in swagger.definitions) {
-			if (swagger.definitions[modelName].discriminator) {
-				if (!keepDiscriminatorModels.includes(modelName)) {
-					modelsWithDiscriminator.push(modelName);
-				}
+function quarantinePolymorphism(swagger: SwaggerSpec, polymorphismInfo: SwaggerPolymorphismInfo) {
+	if (polymorphismInfo && polymorphismInfo.parents) {
+		for (let parentName in polymorphismInfo.parents) {
+			if (swagger.definitions[parentName] && swagger.definitions[parentName].discriminator) {
+				// delete discriminator info - the parser will consider the parent class as a standard class
+				delete swagger.definitions[parentName].discriminator;
 			}
 		}
 	}
-	// Find Models with a Discriminator based parent model
-	if (modelsWithDiscriminator.length > 0) {
-		// find all models with an indirect dependency on modelsWithDiscriminator
-		let refsWithDiscriminatorModels: string[] = [];
-		for (let discriminatorModelName of modelsWithDiscriminator) {
-			refsWithDiscriminatorModels.push(`#/definitions/${discriminatorModelName}`);
-		}
-		for (let modelName in swagger.definitions) {
-			if (swagger.definitions[modelName].allOf) {
-				for (let compositeModel of swagger.definitions[modelName].allOf) {
-					if (compositeModel['$ref'] && refsWithDiscriminatorModels.includes(compositeModel['$ref'])) {
-						childDiscriminatorModels.push(modelName);
-						break;
-					}
-				}
-			}
-		}
-	}
-	log.info(`Found Discriminator based Models: ${modelsWithDiscriminator.toString()}`);
-	log.info(`Found Discriminator Child Models: ${childDiscriminatorModels.toString()}`);
-	if (modelsWithDiscriminator.length > 0) {
-		// Manage Discriminator
-		
-		// Quarantine
-		// Find models with a direct or indirect reference on modelsWithDiscriminator or childDiscriminatorModels
-		// Init with discriminator based models and their children
-		let modelsToQuarantine: string[] = [...modelsWithDiscriminator, ...childDiscriminatorModels];
-		// Recursive processing to find models
-		let searchModels: string[] = [...modelsToQuarantine];
-		let foundModels: string[] = [];
-		let findingCompleted: boolean = false;
-		while (findingCompleted !== true) {
-			for (let modelName in swagger.definitions) {
-				if (!modelsToQuarantine.includes(modelName)) {
-					let definitionAsString = JSON.stringify(swagger.definitions[modelName]);
-					for (let defName of searchModels) {
-						if (definitionAsString.includes(`"#/definitions/${defName}"`)) {
-							foundModels.push(modelName);
-							break;
-						}
-					}
-				}
-			}
-			if (foundModels.length === 0) {
-				findingCompleted = true;
-			} else {
-				searchModels = [];
-				for (let defName of foundModels) {
-					searchModels.push(defName);
-					modelsToQuarantine.push(defName);
-				}
-				foundModels = [];
-			}
-		}
-		log.info(`Found Discriminator based Models, children and dependencies: ${modelsToQuarantine.toString()}`);
-
-		// Find operations with a reference to a model involving discriminator directly or indirectly
-		let operationsToQuarantine: string[] = [];
-		if (modelsToQuarantine.length > 0) {
-			const paths = Object.keys(swagger.paths);
-			for (const path of paths) {
-				const methods = Object.keys(swagger.paths[path]);
-				for (const method of methods) {
-					let operation = swagger.paths[path][method];
-					if (operation) {
-						let operationAsString = JSON.stringify(operation);
-						for (let defName of modelsToQuarantine) {
-							if (operationAsString.includes(`"#/definitions/${defName}"`)) {
-								operationsToQuarantine.push(operation.operationId);
-								break;
-							}
-						}
-					}
-				}
-			}
-			log.info(`Found Operations referencing Discriminator based Models: ${operationsToQuarantine.toString()}`);
-		}
-
-		// Quarantine (delete) found operations and models
-		// Remove identified models from Swagger
-		if (modelsToQuarantine.length > 0) {
-			for (let modelName of modelsToQuarantine) {
-				if (swagger.definitions[modelName]) {
-					delete swagger.definitions[modelName];
-				}
-			}
-		}
-		// Remove identified operations from Swagger
-		if (operationsToQuarantine.length > 0) {
-			const paths = Object.keys(swagger.paths);
-			for (const path of paths) {
-				const methods = Object.keys(swagger.paths[path]);
-				for (const method of methods) {
-					let operation = swagger.paths[path][method];
-					if (operation && operation.operationId && operationsToQuarantine.includes(operation.operationId)) {
-						// Remove Operation
-						delete swagger.paths[path][method];
-					}
-				}
-				const remainingMethods = Object.keys(swagger.paths[path]);
-				if (remainingMethods.length == 0) {
-					delete swagger.paths[path];
-				}
-			}
-		}
-	}
-	return;
 }
-
 
 //#endregion
 

@@ -10,13 +10,13 @@ import { Data, Version, Changes, ApiVersionData } from '../types/builderTypes.js
 import { downloadFile } from '../util/http.js';
 import { getEnv } from '../util/utils.js';
 import { log } from '../log/logger.js';
-import { combineSwagger, convertToSwagger } from './swagger/swaggerUtils.js';
-import { swaggerPreprocessing } from './swagger/swaggerPreprocessing.js';
+import { combineSwagger, convertToSwagger, mergeSpecificationPreprocessingCfg } from './swagger/swaggerUtils.js';
+import { swaggerPreprocessing, processRefs } from './swagger/swaggerPreprocessing.js';
 import { swaggerAddNotifications } from './swagger/swaggerNotifications.js';
 import { openapiAddNotifications } from './openapi/openApiNotifications.js';
 import { combineOpenApi } from './openapi/openApiUtils.js';
 import { openapiPreprocessing } from './openapi/openApiPreprocessing.js';
-import { SpecificationPreprocessing, Config, PureCloud } from '../types/config.js';
+import { SpecificationPreprocessing, Config, PureCloud, SwaggerPreprocessing } from '../types/config.js';
 
 /* PRIVATE VARS */
 
@@ -224,6 +224,17 @@ export class GCApiSpecification {
 		} else {
 			log.debug('Notifications Preprocessing OpenApi');
 			await openapiAddNotifications(gcConfig, this.newSpecification as OpenApiSpec, overrideCfg ?? null);
+		}
+	}
+
+	public legacySwaggerRefsProcessing(overrideCfg: SpecificationPreprocessing | null) {
+		if (this.isSwagger === true) {
+			let cfg = mergeSpecificationPreprocessingCfg(overrideCfg);
+			if ((cfg.specific as SwaggerPreprocessing).processRefs === true) {
+				log.debug('Legacy Swagger Refs Processing');
+				// Process Refs for all swagger and notification topics - after swagger diff
+				processRefs(this.newSpecification as SwaggerSpec);
+			}
 		}
 	}
 

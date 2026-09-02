@@ -27,6 +27,8 @@ export function openapiPreprocessing(builderConfig: Config, openapi: OpenApiSpec
 	openapiSpecificationPreprocessing(openapi, cfg);
 
 	// Extract Polymorphism Info
+	// - must be performed after openapiSpecificationPreprocessing
+	// - so that the openapi also includes models or operations imported from config
 	let polymorphismInfo = openapiExtractPolymorphismInfo(openapi, cfg.addPolymorphismInfo);
 
 	// specific preprocessing
@@ -633,7 +635,6 @@ function recursivePropertyUpdate(element: any, isParameter: boolean) {
 		}
 	}
 }
-
 
 //#endregion
 

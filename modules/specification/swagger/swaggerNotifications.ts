@@ -2,12 +2,11 @@ import _ from 'lodash';
 import fs from 'fs-extra';
 import path from 'path';
 import { ItemsType, Format, SwaggerSpec } from '../../types/swaggerSpec.js';
-import { SpecificationPreprocessing, SwaggerPreprocessing, PureCloud } from '../../types/config.js';
+import { SpecificationPreprocessing, PureCloud } from '../../types/config.js';
 import { gcLoginClientCredentialsGrant, BuilderHttpError, AvailableTopicEntityListing, gcGetNotificationsAvailabletopics } from '../../util/http.js';
 import { checkAndThrow, getEnv } from '../../util/utils.js';
 import { log } from '../../log/logger.js';
 import { mergeSpecificationPreprocessingCfg } from './swaggerUtils.js';
-import { processRefs } from './swaggerPreprocessing.js';
 
 const NOTIFICATION_ID_REGEX = /^urn:jsonschema:(.+):v2:(.+)$/i;
 
@@ -71,21 +70,11 @@ export async function swaggerAddNotifications(gcConfig: PureCloud, swagger: Swag
 					// Remove type: any
 					swaggerProcessAnyTypes(swagger_notifications, cfg);
 
-					// Only for Swagger and legacy sdk
-					// if ((cfg.specific as SwaggerPreprocessing).processRefs === true) {
-					// 	processRefs(swagger_notifications);
-					// }
-
 					// Merge Notification Topics with Swagger
 					if (swagger_notifications.definitions) {
 						for (let modelName in swagger_notifications.definitions) {
 							if (!swagger.definitions[modelName]) swagger.definitions[modelName] = swagger_notifications.definitions[modelName];
 						}
-					}
-
-					// Process Refs for all swagger and notification topics - after swagger diff
-					if ((cfg.specific as SwaggerPreprocessing).processRefs === true) {
-						processRefs(swagger);
 					}
 
 					// Write mappings to file

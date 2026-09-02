@@ -47,25 +47,7 @@ export class Builder {
 			this.constructBuilder(configPath, localConfigPath);
 
 			log.debug('Builder construction completed, starting deref');
-			// Need to remove specificationPreprocessing before deref (because of models with $ref)
-			let specificationPreprocessingConfig: SpecificationPreprocessing | null = null;
-			let specificationPreprocessingLocalConfig: SpecificationPreprocessing | null = null;
-			if (this.config?.settings?.specificationPreprocessing) {
-				specificationPreprocessingConfig = this.config.settings.specificationPreprocessing;
-				this.config.settings.specificationPreprocessing = {} as SpecificationPreprocessing;
-			}
-			if (this.localConfig?.overrides?.settings?.specificationPreprocessing) {
-				specificationPreprocessingLocalConfig = this.localConfig.overrides.settings.specificationPreprocessing;
-				this.localConfig.overrides.settings.specificationPreprocessing ={} as SpecificationPreprocessing;
-			}
 			await this.deref();
-			// Need to add specificationPreprocessing before deref (because of models with $ref)
-			if (this.config.settings) {
-				if (specificationPreprocessingConfig) this.config.settings.specificationPreprocessing = specificationPreprocessingConfig;
-			}
-			if (this.config.localConfig && this.localConfig.overrides && this.localConfig.overrides.settings) {
-				if (specificationPreprocessingLocalConfig) this.localConfig.overrides.settings.specificationPreprocessing = specificationPreprocessingLocalConfig;
-			}
 
 			log.debug('Deref completed, starting post-construction');
 			this.postConstructBuilder();
@@ -257,7 +239,21 @@ export class Builder {
 
 	private async deref(): Promise<void> {
 		log.debug('Starting schema dereferencing');
-		await $RefParser.dereference(this.config, (err, schema) => {
+		
+		// The this.config.settings.specificationPreprocessing will likely contain "$ref" keynames (particularly if this.localConfig.overrides.settings.specificationPreprocessing.override.models is set)
+		// In this.config.settings.specificationPreprocessing, they "$key" elements are references to swagger definitions (#/definitions/...)/openapi components schemas(#/components/schemas/...).
+		// These conflict with the $RefParser.dereference processing.
+		// The $RefParser.dereference is meant to dereference the config, with "$ref" elements being references to other config options.
+
+		await $RefParser.dereference(this.config,
+		{
+			dereference: { 
+				excludedPathMatcher: (
+					path: string,
+				) => { return path.includes("settings/specificationPreprocessing"); },
+			}
+		},
+		(err, schema) => {
 			if (err) {
 				log.error(`Main config dereferencing failed: ${err}`);
 				throw err;
@@ -268,7 +264,15 @@ export class Builder {
 			}
 		});
 
-		await $RefParser.dereference(this.localConfig, (err, schema) => {
+		await $RefParser.dereference(this.localConfig,
+		{
+			dereference: { 
+				excludedPathMatcher: (
+					path: string,
+				) => { return path.includes("overrides/settings/specificationPreprocessing"); },
+			}
+		},
+		(err, schema) => {
 			if (err) {
 				log.error(`Local config dereferencing failed: ${err}`);
 				throw err;

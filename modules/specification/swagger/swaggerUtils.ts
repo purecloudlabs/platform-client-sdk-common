@@ -796,6 +796,17 @@ export function swaggerExtractPolymorphismInfo(swagger: SwaggerSpec, addToExtens
 			model["x-genesys-polymorphism-children"] = result.parents[parentName].childrenNames;
 			model["x-genesys-polymorphism-children-mapping"] = result.parents[parentName].childrenNamesMapping;
 
+			// add info at discriminator property level
+			if (model.type === ItemsType.Object && model.properties) {
+				if (model.properties[result.parents[parentName].discriminatorProperty]) {
+					model.properties[result.parents[parentName].discriminatorProperty]["x-genesys-polymorphism-is-parent"] = true;
+					model.properties[result.parents[parentName].discriminatorProperty]["x-genesys-polymorphism-property"] = result.parents[parentName].discriminatorProperty;
+					model.properties[result.parents[parentName].discriminatorProperty]["x-genesys-polymorphism-values"] = result.parents[parentName].discriminatorValues;
+					model.properties[result.parents[parentName].discriminatorProperty]["x-genesys-polymorphism-children"] = result.parents[parentName].childrenNames;
+					model.properties[result.parents[parentName].discriminatorProperty]["x-genesys-polymorphism-children-mapping"] = result.parents[parentName].childrenNamesMapping;
+				}
+			}
+
 			for (let childName of result.parents[parentName].childrenNames) {
 				if (swagger.definitions[childName]) {
 					let childModel = swagger.definitions[childName];
@@ -804,21 +815,26 @@ export function swaggerExtractPolymorphismInfo(swagger: SwaggerSpec, addToExtens
 					childModel["x-genesys-polymorphism-parent"] = parentName;
 
 					if (childModel["x-discriminator-value"]) {
-						if (childModel.type === ItemsType.Object && childModel.properties) {
-							// if discriminator property does not exist, add (const: value) for discriminator property
-							if (!childModel.properties[result.parents[parentName].discriminatorProperty]) {
-								childModel.properties[result.parents[parentName].discriminatorProperty] = {
-									"type": ItemsType.String,
-									"enum": [ childModel["x-discriminator-value"] ],
-									"x-genesys-polymorphism-is-child": true,
-									"x-genesys-polymorphism-parent": parentName,
-									"x-discriminator-value": childModel["x-discriminator-value"]
+						// allOf...
+						if (childModel.allOf && childModel.allOf.length > 0) {
+							for (let allOfObj of childModel.allOf) {
+								if (allOfObj.type === ItemsType.Object && allOfObj.properties) {
+									// if discriminator property does not exist, add (const: value) for discriminator property
+									if (!allOfObj.properties[result.parents[parentName].discriminatorProperty]) {
+										allOfObj.properties[result.parents[parentName].discriminatorProperty] = {
+											"type": ItemsType.String,
+											"enum": [ childModel["x-discriminator-value"] ],
+											"x-genesys-polymorphism-is-child": true,
+											"x-genesys-polymorphism-parent": parentName,
+											"x-discriminator-value": childModel["x-discriminator-value"]
+										}
+									} else {
+										// otherwise, add information at property level
+										allOfObj.properties[result.parents[parentName].discriminatorProperty]["x-genesys-polymorphism-is-child"] = true;
+										allOfObj.properties[result.parents[parentName].discriminatorProperty]["x-genesys-polymorphism-parent"] = parentName;
+										allOfObj.properties[result.parents[parentName].discriminatorProperty]["x-discriminator-value"] = childModel["x-discriminator-value"];
+									}
 								}
-							} else {
-								// otherwise, add information at property level
-								childModel.properties[result.parents[parentName].discriminatorProperty]["x-genesys-polymorphism-is-child"] = true;
-								childModel.properties[result.parents[parentName].discriminatorProperty]["x-genesys-polymorphism-parent"] = parentName;
-								childModel.properties[result.parents[parentName].discriminatorProperty]["x-discriminator-value"] = childModel["x-discriminator-value"];
 							}
 						}
 					}

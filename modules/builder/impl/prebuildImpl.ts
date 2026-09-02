@@ -82,6 +82,11 @@ export async function prebuildImpl(builder: Builder): Promise<void> {
         );
         log.debug('Notification Topics added');
 
+        // Legacy Swagger Refs Processing
+        builder.gcApiSpecification.legacySwaggerRefsProcessing(
+            builder.config.settings.specificationPreprocessing ?? null
+        );
+
         // Save new swagger to temp file for build
         log.debug(`Writing processed swagger to temp file: ${builder.newSwaggerTempFile}`);
         log.info(`Writing new swagger file to temp storage path: ${builder.newSwaggerTempFile}`);
