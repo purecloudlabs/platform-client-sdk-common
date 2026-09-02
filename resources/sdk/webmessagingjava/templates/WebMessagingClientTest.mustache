@@ -506,6 +506,83 @@ public class WebMessagingClientTest {
     }
 
     // -----------------------------------------------------------------------
+    // Incoming message handling / WebSocket fragment reassembly
+    // -----------------------------------------------------------------------
+
+    private static final String SESSION_RESPONSE_JSON =
+            "{\"type\":\"response\",\"class\":\"SessionResponse\",\"code\":200,"
+            + "\"body\":{\"connected\":true,\"newSession\":true,\"readOnly\":false}}";
+
+    /** Registers a listener that captures the SessionResponse and returns the captured reference. */
+    private AtomicReference<SessionResponse> captureSessionResponse(WebMessagingClient c) {
+        AtomicReference<SessionResponse> captured = new AtomicReference<>();
+        c.addSessionListener(new WebMessagingClient.SessionListener() {
+            @Override public void sessionResponse(SessionResponse r, String raw) { captured.set(r); }
+            @Override public void structuredMessage(StructuredMessage m, String raw) {}
+            @Override public void presignedUrlResponse(PresignedUrlResponse r, String raw) {}
+            @Override public void uploadSuccessEvent(UploadSuccessEvent e, String raw) {}
+            @Override public void uploadFailureEvent(UploadFailureEvent e, String raw) {}
+            @Override public void connectionClosedEvent(ConnectionClosedEvent e, String raw) {}
+            @Override public void sessionExpiredEvent(SessionExpiredEvent e, String raw) {}
+            @Override public void sessionClearedEvent(SessionClearedEvent e, String raw) {}
+            @Override public void jwtResponse(JwtResponse r, String raw) {}
+            @Override public void getConfigurationResponse(GetConfigurationResponse r, String raw) {}
+            @Override public void unexpectedMessage(BaseMessage m, String raw) {}
+            @Override public void webSocketConnected() {}
+            @Override public void webSocketDisconnected(int code, String reason) {}
+            @Override public void webSocketError(String reason) {}
+        });
+        return captured;
+    }
+
+    @Test
+    public void testHandleTextSingleFrameDeliversSessionResponse() {
+        AtomicReference<SessionResponse> captured = captureSessionResponse(client);
+
+        // Whole message in a single frame (last == true)
+        client.handleTextFragment(SESSION_RESPONSE_JSON, true);
+
+        assertNotNull(captured.get(), "SessionResponse should be delivered for a single-frame message");
+        assertTrue(captured.get().getConnected());
+    }
+
+    @Test
+    public void testHandleTextFragmentedMessageIsReassembled() {
+        AtomicReference<SessionResponse> captured = captureSessionResponse(client);
+
+        // Same message split across three fragments; only the last has last == true.
+        int third = SESSION_RESPONSE_JSON.length() / 3;
+        String part1 = SESSION_RESPONSE_JSON.substring(0, third);
+        String part2 = SESSION_RESPONSE_JSON.substring(third, third * 2);
+        String part3 = SESSION_RESPONSE_JSON.substring(third * 2);
+
+        client.handleTextFragment(part1, false);
+        assertNull(captured.get(), "No event should fire until the final fragment arrives");
+        client.handleTextFragment(part2, false);
+        assertNull(captured.get(), "No event should fire until the final fragment arrives");
+        client.handleTextFragment(part3, true);
+
+        assertNotNull(captured.get(), "Fragmented SessionResponse should be reassembled and delivered");
+        assertTrue(captured.get().getConnected());
+        assertTrue(captured.get().getNewSession());
+    }
+
+    @Test
+    public void testHandleTextBufferResetBetweenMessages() {
+        AtomicReference<SessionResponse> captured = captureSessionResponse(client);
+
+        // First (fragmented) message
+        client.handleTextFragment(SESSION_RESPONSE_JSON.substring(0, 10), false);
+        client.handleTextFragment(SESSION_RESPONSE_JSON.substring(10), true);
+        assertNotNull(captured.get());
+
+        // Buffer must be reset: a second whole message must parse on its own, not concatenated with the first.
+        captured.set(null);
+        client.handleTextFragment(SESSION_RESPONSE_JSON, true);
+        assertNotNull(captured.get(), "Second message should parse cleanly (buffer reset after last fragment)");
+    }
+
+    // -----------------------------------------------------------------------
     // Helper
     // -----------------------------------------------------------------------
 

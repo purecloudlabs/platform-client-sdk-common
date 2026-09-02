@@ -280,7 +280,7 @@ ${methodDeclaration.description.replace(" \n\n", "")}`
                             if (phrase !== null) {
                                 if (words[word].includes("}")) {
                                     phrase.push(words[word].substring(0, words[word].indexOf("}")))
-                                    doc.description += parsePhrase(phrase, prefix, options.extensions ? this.fileName : this.fileName.split(".")[0]) + words[word].substring(words[word].indexOf("}") + 1)
+                                    doc.description += parsePhrase(phrase, prefix, options.extensions ? fileName : fileName.split(".")[0]) + words[word].substring(words[word].indexOf("}") + 1)
                                     phrase = null
                                 } else {
                                     phrase.push(words[word])
