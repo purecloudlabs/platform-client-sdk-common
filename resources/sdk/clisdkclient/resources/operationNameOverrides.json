@@ -749,5 +749,10 @@
         "get": {
             "name": "getforuser"
         }
+    },
+    "/api/v2/socialmedia/topics/{topicId}/dataingestionrules/youtube/{youTubeIngestionRuleId}": {
+        "patch": {
+            "name": "patch"
+        }
     }
 }
