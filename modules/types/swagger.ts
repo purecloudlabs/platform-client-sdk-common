@@ -21,12 +21,22 @@ export enum ProduceElement {
 }
 
 export interface Definition {
-    type: ItemsType;
+    type?: ItemsType;
     properties?: { [key: string]: Property };
+    additionalProperties?: Property;
     required?: string[];
     description?: string;
     discriminator?: string;
     allOf?: any[];
+    "x-genesys-class-complex"?: boolean;
+    "x-genesys-one-of"?: string[];
+    "x-genesys-is-one-of-parent"?: boolean;
+    "x-genesys-is-one-of-child"?: boolean;
+    "x-genesys-one-of-parent"?: string;
+    "x-discriminator-value"?: string;
+    "x-genesys-is-polymorphism-parent"?: boolean;
+    "x-genesys-is-polymorphism-child"?: boolean;
+    "x-genesys-is-outdated-sdk-version"?: boolean;
 }
 
 export interface ChangeItem {
@@ -69,6 +79,9 @@ export interface Property {
     "x-genesys-search-fields"?: XGenesysSearchFields;
     allOf?: AllOf[];
     properties?: PropertyProperties;
+    "x-genesys-polymorphism-is-child"?: boolean;
+    "x-genesys-polymorphism-parent"?: string;
+    "x-discriminator-value"?: string;
 }
 
 export interface AllOf {

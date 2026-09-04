@@ -234,9 +234,28 @@ declare namespace {{classname}} { {{#operation}}{{^enableCustomHeaders}}{{#hasOp
 {{/apis}}
 
 declare namespace Models { {{#models}}{{#model}}
+	{{^vendorExtensions.x-genesys-class-complex}}
 	export interface {{classname}} { {{#vars}}
 		"{{baseName}}"{{^required}}?{{/required}}: {{{typeScriptType}}};{{/vars}}
 	}
+	{{/vendorExtensions.x-genesys-class-complex}}
+	{{#vendorExtensions.x-genesys-class-complex}}
+	{{#vendorExtensions.x-genesys-is-one-of-parent}}
+	export type {{classname}} = {{#vendorExtensions.x-genesys-one-of}}Models.{{.}} | {{/vendorExtensions.x-genesys-one-of}}Models.{{vendorExtensions.x-genesys-one-of-unknown}};
+	{{/vendorExtensions.x-genesys-is-one-of-parent}}
+	{{#vendorExtensions.x-genesys-is-polymorphism-parent}}
+	export type {{classname}} = Models.{{classname}}Base {{#children}}| Models.{{classname}}{{/children}};
+
+	export interface {{classname}}Base { {{#vars}}
+		"{{baseName}}"{{^required}}?{{/required}}: {{^isDiscriminator}}{{{typeScriptType}}}{{/isDiscriminator}}{{#isDiscriminator}}{{#allowableValues}}{{#values}}"{{.}}" | {{/values}}{{/allowableValues}}string{{/isDiscriminator}};{{/vars}}
+	}
+	{{/vendorExtensions.x-genesys-is-polymorphism-parent}}
+	{{#vendorExtensions.x-genesys-is-polymorphism-child}}
+	export interface {{classname}} extends Models.{{parent}}Base { {{#vars}}
+		"{{baseName}}"{{^required}}?{{/required}}: {{^vendorExtensions.x-genesys-is-polymorphism-discriminator}}{{{typeScriptType}}}{{/vendorExtensions.x-genesys-is-polymorphism-discriminator}}{{#vendorExtensions.x-genesys-is-polymorphism-discriminator}}"{{vendorExtensions.x-discriminator-value}}"{{/vendorExtensions.x-genesys-is-polymorphism-discriminator}};{{/vars}}
+	}
+	{{/vendorExtensions.x-genesys-is-polymorphism-child}}
+	{{/vendorExtensions.x-genesys-class-complex}}
 	{{/model}}{{/models}}
 }
 {{/apiInfo}}

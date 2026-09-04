@@ -9,7 +9,7 @@ import { Config, Script, Haystack, PureCloud } from '../types/config'
 import { LocalConfig, Overrides, Settings, StageSettings, valueOverides } from '../types/localConfig'
 import moment, { Moment } from 'moment-timezone';
 import { Resourcepaths, Version, ApiVersionData, Data, Release } from '../types/builderTypes'
-import { ItemsType, Format } from '../types/swagger'
+import { ItemsType, Format, Definition, Path } from '../types/swagger'
 import platformClient from 'purecloud-platform-client-v2';
 import yaml from 'js-yaml';
 import SwaggerDiff from '../swagger/swaggerDiff';
@@ -77,20 +77,7 @@ export class Builder {
 			this.constructBuilder(configPath, localConfigPath)
 				.then(() => {
 					log.debug('Builder construction completed, starting deref');
-					// Hiding/removing this.config.settings.swagger.override before deref
-					// override.models will likely contain swagger refs ("$ref": "...") that interfere with deref
-					if (this.config.settings.swagger && this.config.settings.swagger.override) {
-						cfgOverride = this.config.settings.swagger.override;
-						this.config.settings.swagger.override = {};
-					}
 					return this.deref();
-				})
-				.then(() => {
-					// Restoring this.config.settings.swagger.override after deref
-					if (cfgOverride) {
-						this.config.settings.swagger.override = cfgOverride;
-					}
-					return;
 				})
 				.then(() => {
 					log.debug('Deref completed, starting post-construction');
@@ -277,7 +264,21 @@ export class Builder {
 	deref(): Promise<string> {
 		return new Promise<string>((resolve, reject) => {
 			log.debug('Starting schema dereferencing');
-			$RefParser.dereference(this.config, (err, schema) => {
+
+			// The this.config.settings.specificationPreprocessing will likely contain "$ref" keynames (particularly if this.localConfig.overrides.settings.specificationPreprocessing.override.models is set)
+			// In this.config.settings.specificationPreprocessing, they "$key" elements are references to swagger definitions (#/definitions/...)/openapi components schemas(#/components/schemas/...).
+			// These conflict with the $RefParser.dereference processing.
+			// The $RefParser.dereference is meant to dereference the config, with "$ref" elements being references to other config options.
+
+			$RefParser.dereference(this.config,
+			{
+				dereference: { 
+					excludedPathMatcher: (
+						path: string,
+					) => { return path.includes("settings/swagger/override"); },
+				}
+			},
+			(err, schema) => {
 				if (err) {
 					log.error(`Main config dereferencing failed: ${err}`);
 					reject(err);
@@ -286,9 +287,17 @@ export class Builder {
 					log.debug('Main config dereferencing completed');
 					this.config = schema as typeof this.config;
 				}
-			})
+			});
 
-			$RefParser.dereference(this.localConfig, (err, schema) => {
+			$RefParser.dereference(this.localConfig,
+			{
+				dereference: { 
+					excludedPathMatcher: (
+						path: string,
+					) => { return path.includes("overrides/settings/swagger/override"); },
+				}
+			},
+			(err, schema) => {
 				if (err) {
 					log.error(`Local config dereferencing failed: ${err}`);
 					reject(err);
@@ -298,7 +307,7 @@ export class Builder {
 					this.localConfig = schema as typeof this.localConfig;
 					resolve("");
 				}
-			})
+			});
 		});
 	}
 
@@ -466,8 +475,8 @@ function prebuildImpl(): Promise<string> {
 						let allSwaggerSettings: any = _this.config.settings.swagger;
 						if (allSwaggerSettings.extractPolymorphismInfo !== null && allSwaggerSettings.extractPolymorphismInfo !== undefined) {
 							if (allSwaggerSettings.extractPolymorphismInfo === true) {
-								updateOneOf();
-								return extractPolymorphismInfo();
+								manageOneOf();
+								managePolymorphism();
 							}
 						}
 					}
@@ -1241,28 +1250,60 @@ function processOverride(overrideModels: Record<string, Definition>, overrideOpe
 	}
 }
 
-function updateOneOf() {
-    for (let defKey in swaggerDiff.newSwagger.definitions) {
-        if (swaggerDiff.newSwagger.definitions[defKey]["x-genesys-one-of"]) {
-			if (!swaggerDiff.newSwagger.definitions[defKey]["oneOf"]) {
-				swaggerDiff.newSwagger.definitions[defKey]["oneOf"] = [];
-				let oneOfElements = swaggerDiff.newSwagger.definitions[defKey]["x-genesys-one-of"];
-				if (oneOfElements && oneOfElements.length > 0) {
-					for (let oneOfElement of oneOfElements) {
-						swaggerDiff.newSwagger.definitions[defKey]["oneOf"].push({
+function manageOneOf() {
+	let oneofInfo = [];
+	let swagger = swaggerDiff.newSwagger;
+
+    for (let defKey in swagger.definitions) {
+        if (swagger.definitions[defKey]["x-genesys-one-of"]) {
+			if (swagger.definitions[defKey]["oneOf"]) delete swagger.definitions[defKey]["oneOf"];
+			swagger.definitions[defKey]["oneOf"] = [];
+			let oneOfElements = swagger.definitions[defKey]["x-genesys-one-of"];
+			if (oneOfElements && oneOfElements.length > 0) {
+				for (let oneOfElement of oneOfElements) {
+					if (swagger.definitions[oneOfElement]) {
+						swagger.definitions[defKey]["oneOf"].push({
 							"$ref": `#/definitions/${oneOfElement}`
 						});
+						swagger.definitions[oneOfElement]["x-genesys-is-one-of-child"] = true;
+						swagger.definitions[oneOfElement]["x-genesys-one-of-parent"] = defKey;
 					}
 				}
+				// Adding new model Unknown - to manage deserialization issue when SDK is older than API (and new oneOf value was introduced)
+				swagger.definitions[defKey + 'Unknown'] = {
+					"type": ItemsType.Object,
+					"description": `Class for unknown/unexpected ${defKey}. This class is used to avoid deserialization issue if a new ${defKey} is added to the API (with an older SDK version).`,
+					"additionalProperties": {
+						"type": ItemsType.Object
+					},
+					"x-genesys-is-one-of-child": true,
+					"x-genesys-one-of-parent": defKey,
+					"x-genesys-is-outdated-sdk-version": true
+				};
+				swagger.definitions[defKey]["x-genesys-one-of-unknown"]= defKey + 'Unknown';
+				// swagger.definitions[defKey]["x-genesys-one-of"].push(defKey + 'Unknown');
+				// swagger.definitions[defKey]["oneOf"].push({
+				// 	"$ref": `#/definitions/${defKey + 'Unknown'}`
+				// });
 			}
+			swagger.definitions[defKey]["x-genesys-class-complex"] = true;
+			swagger.definitions[defKey]["x-genesys-is-one-of-parent"] = true;
+			oneofInfo.push({
+				name: defKey,
+				values: swagger.definitions[defKey]["x-genesys-one-of"],
+				unknown: defKey + 'Unknown'
+			});
         }
     }
+
+	swaggerDiff.newSwagger["x-genesys-one-of-summary"] = oneofInfo;
+
+	return oneofInfo;
 }
 
-function extractPolymorphismInfo() {
-	let result = {
-		parents: {}
-	};
+function managePolymorphism() {
+	let polymorphismInfo = [];
+	let polymorphismMap = {};
 	let swagger = swaggerDiff.newSwagger;
 
 	for (let modelName in swagger.definitions) {
@@ -1274,7 +1315,26 @@ function extractPolymorphismInfo() {
 					valuesFromEnum = model.properties[model.discriminator].enum as string[];
 				}
 			}
-			result.parents[modelName] = {
+			// Adding new model Unknown - to manage deserialization issue when SDK is older than API (and new child was introduced)
+			if (_this.config.settings.swaggerCodegen.codegenLanguage != "purecloudjavascript") {
+				swagger.definitions[modelName + 'Unknown'] = {
+					"allOf": [
+						{
+							"$ref": `#/definitions/${modelName}`
+						},
+						{
+							"type": "object",
+							"properties": {},
+							"description": `Class for unknown/unexpected ${modelName}. This class is used to avoid deserialization issue if a new ${modelName} child is added to the API (with an older SDK version).`
+						}
+					],
+					"x-discriminator-value": "outdated_sdk_version",
+					"x-genesys-is-outdated-sdk-version": true
+				};
+				valuesFromEnum.push('outdated_sdk_version');
+			}
+
+			polymorphismMap[modelName] = {
 				name: modelName,
 				discriminatorProperty: model.discriminator,
 				discriminatorValues: valuesFromEnum,
@@ -1285,7 +1345,7 @@ function extractPolymorphismInfo() {
 	}
 
 	// Find Children
-	let parentNames = Object.keys(result.parents);
+	let parentNames = Object.keys(polymorphismMap);
 	for (let modelName in swagger.definitions) {
 		let model = swagger.definitions[modelName];
 		if (model.allOf && model.allOf.length > 0) {
@@ -1293,11 +1353,19 @@ function extractPolymorphismInfo() {
 				if (obj["$ref"]) {
 					let refName = obj["$ref"].replace("#/definitions/", "");
 					if (parentNames.includes(refName)) {
-						result.parents[refName].childrenNames.push(modelName);
+						polymorphismMap[refName].childrenNames.push(modelName);
 						if (model["x-discriminator-value"]) {
-							result.parents[refName].childrenNamesMapping[modelName] = model["x-discriminator-value"];
-							if (!result.parents[refName].discriminatorValues.includes(model["x-discriminator-value"])) {
-								result.parents[refName].discriminatorValues.push(model["x-discriminator-value"]);
+							polymorphismMap[refName].childrenNamesMapping[modelName] = model["x-discriminator-value"];
+							if (!polymorphismMap[refName].discriminatorValues.includes(model["x-discriminator-value"])) {
+								polymorphismMap[refName].discriminatorValues.push(model["x-discriminator-value"]);
+								// Probably the ListValues model (no property nor enum defined)
+								if (swagger.definitions[refName].properties && swagger.definitions[refName].properties[model.discriminator]) {
+									swagger.definitions[refName].properties[model.discriminator].enum = polymorphismMap[refName].discriminatorValues;
+								} else {
+									if (!swagger.definitions[refName].properties) swagger.definitions[refName].properties = {};
+									swagger.definitions[refName].properties[model.discriminator].type = ItemsType.String;
+									swagger.definitions[refName].properties[model.discriminator].enum = polymorphismMap[refName].discriminatorValues;
+								}
 							}
 						}
 						break;
@@ -1308,37 +1376,44 @@ function extractPolymorphismInfo() {
 	}
 
 	// Add info to vendor extensions
-	for (let parentName in result.parents) {
+	for (let parentName in polymorphismMap) {
 		let model = swagger.definitions[parentName];
-		model["x-genesys-polymorphism-is-parent"] = true;
-		model["x-genesys-polymorphism-property"] = result.parents[parentName].discriminatorProperty;
-		model["x-genesys-polymorphism-values"] = result.parents[parentName].discriminatorValues;
-		model["x-genesys-polymorphism-children"] = result.parents[parentName].childrenNames;
-		model["x-genesys-polymorphism-children-mapping"] = result.parents[parentName].childrenNamesMapping;
+		model["x-genesys-class-complex"] = true;
+		model["x-genesys-is-polymorphism-parent"] = true;
+		model["x-genesys-polymorphism-values"] = polymorphismMap[parentName].discriminatorValues;
+		model["x-genesys-polymorphism-children-mapping"] = polymorphismMap[parentName].childrenNamesMapping;
 
-		for (let childName of result.parents[parentName].childrenNames) {
+		// add info at discriminator property level
+		// if (model.type === ItemsType.Object && model.properties) {
+		// 	if (model.properties[polymorphismMap[parentName].discriminatorProperty]) {
+		// 		model.properties[polymorphismMap[parentName].discriminatorProperty]["x-genesys-polymorphism-values"] = polymorphismMap[parentName].discriminatorValues;
+		// 	}
+		// }
+
+		for (let childName of polymorphismMap[parentName].childrenNames) {
 			if (swagger.definitions[childName]) {
 				let childModel = swagger.definitions[childName];
-				childModel["x-genesys-polymorphism-is-child"] = true;
-				childModel["x-genesys-polymorphism-property"] = result.parents[parentName].discriminatorProperty;
-				childModel["x-genesys-polymorphism-parent"] = parentName;
+				childModel["x-genesys-class-complex"] = true;
+				childModel["x-genesys-is-polymorphism-child"] = true;
 
 				if (childModel["x-discriminator-value"]) {
-					if (childModel.type === ItemsType.Object && childModel.properties) {
-						// if discriminator property does not exist, add (const: value) for discriminator property
-						if (!childModel.properties[result.parents[parentName].discriminatorProperty]) {
-							childModel.properties[result.parents[parentName].discriminatorProperty] = {
-								"type": ItemsType.String,
-								"enum": [ childModel["x-discriminator-value"] ],
-								"x-genesys-polymorphism-is-child": true,
-								"x-genesys-polymorphism-parent": parentName,
-								"x-discriminator-value": childModel["x-discriminator-value"]
+					// allOf...
+					if (childModel.allOf && childModel.allOf.length > 0) {
+						for (let allOfObj of childModel.allOf) {
+							if (allOfObj.type === ItemsType.Object && allOfObj.properties) {
+								// if discriminator property does not exist, add (const: value) for discriminator property
+								if (!allOfObj.properties[polymorphismMap[parentName].discriminatorProperty]) {
+									allOfObj.properties[polymorphismMap[parentName].discriminatorProperty] = {
+										"type": ItemsType.String,
+										"x-genesys-is-polymorphism-discriminator": true,
+										"x-discriminator-value": childModel["x-discriminator-value"]
+									}
+								} else {
+									// otherwise, add information at property level
+									allOfObj.properties[polymorphismMap[parentName].discriminatorProperty]["x-genesys-is-polymorphism-discriminator"] = true;
+									allOfObj.properties[polymorphismMap[parentName].discriminatorProperty]["x-discriminator-value"] = childModel["x-discriminator-value"];
+								}
 							}
-						} else {
-							// otherwise, add information at property level
-							childModel.properties[result.parents[parentName].discriminatorProperty]["x-genesys-polymorphism-is-child"] = true;
-							childModel.properties[result.parents[parentName].discriminatorProperty]["x-genesys-polymorphism-parent"] = parentName;
-							childModel.properties[result.parents[parentName].discriminatorProperty]["x-discriminator-value"] = childModel["x-discriminator-value"];
 						}
 					}
 				}
@@ -1346,7 +1421,24 @@ function extractPolymorphismInfo() {
 		}
 	}
 
-	return result;
+	// Convert Map (polymorphismMap) to an array (polymorphismInfo) to allow parsing in mustache templates
+	for (let parentName in polymorphismMap) {
+		let mapEntry = polymorphismMap[parentName];
+		let arrayEntry = {
+			name: mapEntry.name,
+			discriminatorProperty: mapEntry.discriminatorProperty,
+			discriminatorValues: mapEntry.discriminatorValues,
+			childrenNames: mapEntry.childrenNames,
+			childrenNamesMapping: []
+		}
+		for (let key in mapEntry.childrenNamesMapping) {
+			arrayEntry.childrenNamesMapping.push({ child: key, value: mapEntry.childrenNamesMapping[key] });
+		}
+		polymorphismInfo.push(arrayEntry);
+	}
+	swaggerDiff.newSwagger["x-genesys-polymorphism-summary"] = polymorphismInfo;
+
+	return polymorphismInfo;
 }
 
 function processRefs() {

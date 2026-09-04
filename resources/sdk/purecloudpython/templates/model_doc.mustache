@@ -2,14 +2,27 @@
 
 {{#models}}{{#model}}## {{classname}}
 
+{{#vendorExtensions.x-genesys-is-one-of-parent}}
+{{classname}} is a Union type of {{#vendorExtensions.x-genesys-one-of}}[{{.}}]({{.}}), {{/vendorExtensions.x-genesys-one-of}}and [{{classname}}Unknown]({{classname}}Unknown) (i.e. {{classname}} is one of the classes {{#vendorExtensions.x-genesys-one-of}}[{{.}}]({{.}}), {{/vendorExtensions.x-genesys-one-of}}and [{{classname}}Unknown]({{classname}}Unknown)).
+
+[{{classname}}Unknown]({{classname}}Unknown) is used to prevent deserialization errors - when a new class has been added to the {{classname}} union (i.e. API update) compared to the SDK version.
+{{/vendorExtensions.x-genesys-is-one-of-parent}}
+
+{{#vendorExtensions.x-genesys-is-one-of-child}}{{#vendorExtensions.x-genesys-is-outdated-sdk-version}}
+{{classname}} is used to prevent deserialization errors - when a new class has been added to the [{{vendorExtensions.x-genesys-one-of-parent}}]({{vendorExtensions.x-genesys-one-of-parent}}) union (i.e. API update) compared to the SDK version.
+{{/vendorExtensions.x-genesys-is-outdated-sdk-version}}{{/vendorExtensions.x-genesys-is-one-of-child}}
+
+{{^vendorExtensions.x-genesys-is-one-of-parent}}
 ## Properties
 
 |Name | Type | Description | Notes|
 |------------ | ------------- | ------------- | -------------|
 {{#vars}}
 | **{{name}}** | {{#isPrimitiveType}}{{datatype}}{{/isPrimitiveType}}{{^isPrimitiveType}}[{{datatype}}]({{complexType}}){{/isPrimitiveType}} | {{description}} | {{^required}}[optional] {{/required}}{{#readOnly}}[readonly] {{/readOnly}}{{#defaultValue}}[default to {{defaultValue}}]{{/defaultValue}}|
-{{/vars}}
-
+{{/vars}}{{#vendorExtensions.x-genesys-is-one-of-child}}{{#vendorExtensions.x-genesys-is-outdated-sdk-version}}
+| **is_outdated_sdk_version** | bool | Indicates if the deserialization resulted in this *unknown class* due to an outdated sdk version. |  |
+{{/vendorExtensions.x-genesys-is-outdated-sdk-version}}{{/vendorExtensions.x-genesys-is-one-of-child}}
+{{/vendorExtensions.x-genesys-is-one-of-parent}}
 {{/model}}{{/models}}
 
 _{{packageName}} {{packageVersion}}_

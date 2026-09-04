@@ -12,9 +12,10 @@
     "swagger": {
       "oldSwaggerPath": "${SDK_REPO}/swagger.json",
       "newSwaggerPath": "http://localhost:8080/newSwaggerFiltered.json",
+      "newSwaggerPath_internal": "https://api.inindca.com/api/v2/docs/swaggerall",
+      "newSwaggerPath_public": "https://api.mypurecloud.com/api/v2/docs/swagger",
       "previewSwaggerPath": "",
-      "newSwaggerPath_fullapi": "https://api.mypurecloud.com/api/v2/docs/swagger",
-      "previewSwaggerPath_fullapi": "https://api.mypurecloud.com/api/v2/docs/swaggerpreview",
+      "previewSwaggerPath_public": "https://api.mypurecloud.com/api/v2/docs/swaggerpreview",
       "saveNewSwaggerPath": "${SDK_REPO}/swagger.json",
       "discriminatorManagement": "keep",
       "extractPolymorphismInfo": true,
@@ -728,6 +729,506 @@
               }
             },
             "description": "A single structured input validation rule."
+          },
+          "AgenticVirtualAgentStructuredOutputConditionGroup": {
+            "type": "object",
+            "required": [
+              "group",
+              "rules"
+            ],
+            "properties": {
+              "group": {
+                "type": "string",
+                "description": "Logical operator used to combine the rules in this group.",
+                "enum": [
+                  "And",
+                  "Or"
+                ]
+              },
+              "rules": {
+                "type": "array",
+                "description": "Structured output rules or nested condition groups in this group.",
+                "items": {
+                  "$ref": "#/definitions/AgenticVirtualAgentStructuredOutputCondition"
+                }
+              }
+            },
+            "description": "A group of structured tool-output rules or nested groups."
+          },
+          "AgenticVirtualAgentStructuredConditionGroup": {
+            "type": "object",
+            "required": [
+              "group",
+              "rules"
+            ],
+            "properties": {
+              "group": {
+                "type": "string",
+                "description": "Logical operator used to combine the rules in this group.",
+                "enum": [
+                  "And",
+                  "Or"
+                ]
+              },
+              "rules": {
+                "type": "array",
+                "description": "Structured rules or nested condition groups in this group.",
+                "items": {
+                  "$ref": "#/definitions/AgenticVirtualAgentStructuredCondition"
+                }
+              }
+            },
+            "description": "A group of structured input validation rules or nested groups."
+          },
+          "AgenticVirtualAgentToolError": {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "example": "NotFoundError",
+                "description": "Error type name as defined in the types list."
+              },
+              "instruction": {
+                "type": "string",
+                "example": "Tell the customer an unexpected error has occurred and it is not possible to retry, apologise and confirm that they would like to escalate to a human agent",
+                "description": "Instruction for how the virtual agent should handle this error."
+              }
+            },
+            "description": "Error handling configuration for a tool."
+          },
+          "AgenticVirtualAgentToolInput": {
+            "type": "object",
+            "required": [
+              "source",
+              "targetName",
+              "type"
+            ],
+            "properties": {
+              "targetName": {
+                "type": "string",
+                "example": "orderId",
+                "description": "The unique name that identifies this input parameter within the tool"
+              },
+              "type": {
+                "type": "string",
+                "example": "OrderId",
+                "description": "Input type name. The valid referenced type depends on the input source."
+              },
+              "source": {
+                "type": "string",
+                "description": "Source of the input value.",
+                "enum": [
+                  "User",
+                  "ToolInput",
+                  "ToolOutput",
+                  "External"
+                ]
+              },
+              "required": {
+                "type": "boolean",
+                "description": "Whether this input must be supplied."
+              },
+              "fallbackToUser": {
+                "type": "boolean",
+                "description": "Whether the virtual agent should ask the user for this input value when it is not available from the configured source."
+              },
+              "dependencyOnly": {
+                "type": "boolean",
+                "description": "Whether this input is used for gating/preconditions only and is not sent with the underlying tool at runtime."
+              },
+              "mapping": {
+                "type": "array",
+                "example": "[\"Order\", 0, \"id\"]",
+                "description": "Path used to extract this input from a previous tool output. Only valid when source is 'ToolOutput'. The path starts with a tool output type name, may contain only string property names or integer array indexes, and must resolve to a primitive value.",
+                "items": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Input for a tool."
+          },
+          "AgenticVirtualAgentDataActionSchemas": {
+            "type": "object",
+            "properties": {
+              "inputs": {
+                "type": "object",
+                "description": "Input JSON schema for the selected data action.",
+                "additionalProperties": {
+                  "type": "object"
+                }
+              },
+              "outputs": {
+                "type": "object",
+                "description": "Output JSON schema for the selected data action.",
+                "additionalProperties": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Data action input and output JSON schemas."
+          },
+          "AgenticVirtualAgentAgentCardSkill": {
+            "type": "object",
+            "required": [
+              "description",
+              "id",
+              "name",
+              "tags"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique identifier for the skill."
+              },
+              "name": {
+                "type": "string",
+                "description": "Human-readable name of the skill."
+              },
+              "description": {
+                "type": "string",
+                "description": "Detailed explanation of what the skill does."
+              },
+              "tags": {
+                "type": "array",
+                "description": "Keywords for categorization and discovery.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "examples": {
+                "type": "array",
+                "description": "Sample prompts or use cases.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "inputModes": {
+                "type": "array",
+                "description": "Supported input media types.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "outputModes": {
+                "type": "array",
+                "description": "Supported output media types.",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "A2A agent card skill."
+          },
+          "AgenticVirtualAgentInputValidation": {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "discriminator": "type",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "Validation type discriminator.",
+                "enum": [
+                  "Python",
+                  "Structured"
+                ]
+              }
+            }
+          },
+          "AgenticVirtualAgentA2AAgentInput": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "description": "Input text."
+              }
+            }
+          },
+          "AgenticVirtualAgentKnowledgeBaseToolInput": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "description": "Reformulated user query."
+              },
+              "languageCode": {
+                "type": "string",
+                "example": "en-US",
+                "description": "Language code for generation. Must be an IETF BCP 47 language tag (e.g. en-US, fil-PH)."
+              }
+            },
+            "description": "Input parameters for KnowledgeBase tool."
+          },
+          "AgenticVirtualAgentKnowledgeSettingToolInput": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "description": "Reformulated user query."
+              },
+              "languageCode": {
+                "type": "string",
+                "example": "en-US",
+                "description": "Language code for generation. Must be an IETF BCP 47 language tag (e.g. en-US, fil-PH)."
+              }
+            },
+            "description": "Input parameters for KnowledgeSetting tool."
+          },
+          "DataActionInput": {
+            "type": "object",
+            "required": [
+              "parameterName",
+              "variableName"
+            ],
+            "properties": {
+              "parameterName": {
+                "type": "string",
+                "description": "The name of the data action input parameter to map a guide variable to."
+              },
+              "variableName": {
+                "type": "string",
+                "description": "The guide variable whose value will be passed as the input to the paired data action parameter."
+              }
+            }
+          },
+          "FieldMapping": {
+            "type": "object",
+            "required": [
+              "dataActionValueName"
+            ],
+            "properties": {
+              "dataActionValueName": {
+                "type": "string",
+                "description": "The data action output field name that maps to the list item values."
+              },
+              "dataActionSynonymName": {
+                "type": "string",
+                "description": "The data action output field name that maps to the list item synonyms. Optional if synonyms are not provided by the data action."
+              }
+            }
+          },
+          "ListItem": {
+            "type": "object",
+            "required": [
+              "value"
+            ],
+            "properties": {
+              "value": {
+                "type": "string",
+                "description": "The value returned when this item is selected."
+              },
+              "synonyms": {
+                "type": "array",
+                "description": "Alternative phrases that should match this value. Used only with Exact match type.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "active": {
+                "type": "boolean",
+                "description": "Whether this list item is active and available for selection."
+              },
+              "description": {
+                "type": "string",
+                "description": "Description of this value for semantic matching. Used only with Semantic match type."
+              }
+            }
+          }
+        },
+        "modelsInternal": {
+          "ListValues": {
+            "type": "object",
+            "discriminator": "type",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "Validation type.",
+                "enum": [
+                  "Dynamic",
+                  "Static"
+                ]
+              }
+            }
+          },
+          "DynamicListValues": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/ListValues"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "dataActionId",
+                  "fieldMapping",
+                  "matchType"
+                ],
+                "properties": {
+                  "dataActionId": {
+                    "type": "string",
+                    "description": "The ID of the data action to invoke at runtime to retrieve list values and synonyms."
+                  },
+                  "inputs": {
+                    "type": "array",
+                    "description": "Array of input mappings for the data action. Maps guide variables to data action input parameters.",
+                    "items": {
+                      "$ref": "#/definitions/DataActionInput"
+                    }
+                  },
+                  "fieldMapping": {
+                    "description": "Maps data action output fields to list values/synonyms.",
+                    "$ref": "#/definitions/FieldMapping"
+                  },
+                  "matchType": {
+                    "type": "string",
+                    "description": "Defines how matching should work at runtime. Only 'Exact' matching is supported for dynamic lists.",
+                    "enum": [
+                      "Exact",
+                      "Semantic"
+                    ]
+                  }
+                }
+              }
+            ],
+            "x-discriminator-value": "Dynamic"
+          },
+          "StaticListValues": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/ListValues"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "items",
+                  "matchType"
+                ],
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "description": "Array of list items. Each item contains a value and optional synonyms.",
+                    "items": {
+                      "$ref": "#/definitions/ListItem"
+                    }
+                  },
+                  "matchType": {
+                    "type": "string",
+                    "description": "Defines how matching should work.",
+                    "enum": [
+                      "Exact",
+                      "Semantic"
+                    ]
+                  }
+                }
+              }
+            ],
+            "x-discriminator-value": "Static"
+          },
+          "AgenticVirtualAgentStructuredOutputCondition": {
+            "type": "object",
+            "description": "A structured tool-output condition.",
+            "x-genesys-one-of": [
+              "AgenticVirtualAgentStructuredOutputRule",
+              "AgenticVirtualAgentStructuredOutputConditionGroup"
+            ]
+          },
+          "AgenticVirtualAgentStructuredCondition": {
+            "type": "object",
+            "description": "A structured input validation condition.",
+            "x-genesys-one-of": [
+              "AgenticVirtualAgentStructuredRule",
+              "AgenticVirtualAgentStructuredConditionGroup"
+            ]
+          },
+          "AgenticVirtualAgentStructuredOutputRule": {
+            "type": "object",
+            "required": [
+              "mapping",
+              "operator"
+            ],
+            "properties": {
+              "mapping": {
+                "type": "array",
+                "example": "[\"Order\", \"items\", 0, \"status\"]",
+                "description": "Path into the tool output type this rule applies to. Each element is a field name (string) or an array index (integer).",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "operator": {
+                "type": "string",
+                "description": "Operator to apply to the value at the mapped path.",
+                "enum": [
+                  "IsNull",
+                  "IsNotNull",
+                  "IsEmpty",
+                  "IsNotEmpty",
+                  "Equal",
+                  "NotEqual",
+                  "LessThan",
+                  "LessThanOrEqual",
+                  "GreaterThan",
+                  "GreaterThanOrEqual",
+                  "In",
+                  "NotIn",
+                  "Contains",
+                  "DoesntContain",
+                  "BeginsWith",
+                  "EndsWith"
+                ]
+              },
+              "value": {
+                "type": "object",
+                "example": "Delivered",
+                "description": "Value to compare against. May be a string, integer, number, boolean, or null. Not required for 'IsNull', 'IsNotNull', 'IsEmpty', or 'IsNotEmpty' operators."
+              }
+            },
+            "description": "A single structured tool-output rule. The mapping is a path into the tool output type."
+          },
+          "AgenticVirtualAgentStructuredRule": {
+            "type": "object",
+            "required": [
+              "name",
+              "operator"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "example": "orderId",
+                "description": "Target name of the tool input this rule applies to."
+              },
+              "operator": {
+                "type": "string",
+                "description": "Operator to apply to the input value.",
+                "enum": [
+                  "IsNull",
+                  "IsNotNull",
+                  "IsEmpty",
+                  "IsNotEmpty",
+                  "Equal",
+                  "NotEqual",
+                  "LessThan",
+                  "LessThanOrEqual",
+                  "GreaterThan",
+                  "GreaterThanOrEqual",
+                  "In",
+                  "NotIn",
+                  "Contains",
+                  "DoesntContain",
+                  "BeginsWith",
+                  "EndsWith"
+                ]
+              },
+              "value": {
+                "type": "object",
+                "example": "18",
+                "description": "Value to compare against. May be a string, integer, number, boolean, or null. Not required for 'IsNull' or 'IsNotNull' operators."
+              }
+            },
+            "description": "A single structured input validation rule."
           }
         },
         "operations": {
@@ -908,7 +1409,7 @@
       "jarPath": "${WORKSPACE}/openapi-generator/modules/openapi-generator-cli/target/openapi-generator-cli.jar",
       "configFile": "${SDK_TEMP}/config.json",
       "extraGeneratorOptions": [
-        "--type-mappings=Duration=str"
+        "--type-mappings=Duration=str --global-property debugModels,debugSupportingFiles"
       ]
     },
     "releaseNoteTemplatePath": "${COMMON_ROOT}/resources/templates/githubSdkReleaseNotes.md",
