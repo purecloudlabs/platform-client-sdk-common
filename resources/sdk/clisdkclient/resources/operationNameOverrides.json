@@ -754,5 +754,10 @@
         "patch": {
             "name": "patch"
         }
+    },
+    "/api/v2/organizations/limits/namespaces/{namespaceName}/metrics/settings": {
+        "patch": {
+            "name": "patch"
+        }
     }
 }
