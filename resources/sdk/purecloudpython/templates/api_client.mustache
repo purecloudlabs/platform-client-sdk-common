@@ -1048,8 +1048,8 @@ class ApiClient(object):
         try:
             concrete_type = mapping[discriminator_value]
         except KeyError:
-            # if discriminator_value is unknown, default to outdated_sdk_version
-            concrete_type = mapping['outdated_sdk_version']
+            # if discriminator_value is unknown, default to parent_type
+            concrete_type = parent_type
 
         return self.__deserialize(
             data,
@@ -1061,7 +1061,7 @@ class ApiClient(object):
 
         for candidate in oneof['values']:
             instance = candidate()
-            if instance.matches_json_model(data):
+            if instance.matches_json_data(data):
                 matches.append(candidate)
 
         # Default to unknown

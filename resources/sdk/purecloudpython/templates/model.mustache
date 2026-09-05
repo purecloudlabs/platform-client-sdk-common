@@ -68,23 +68,18 @@ class {{classname}}({{^vendorExtensions.x-genesys-is-polymorphism-child}}object{
                                   and the value is json key in definition.
         """
         self.swagger_types = { {{#vars}}
-            '{{name}}': '{{{datatype}}}'{{^-last}},{{/-last}}{{/vars}}{{#vendorExtensions.x-genesys-is-one-of-child}}{{#vendorExtensions.x-genesys-is-outdated-sdk-version}}
-            'is_outdated_sdk_version': 'bool'{{/vendorExtensions.x-genesys-is-outdated-sdk-version}}{{/vendorExtensions.x-genesys-is-one-of-child}}
+            '{{name}}': '{{{datatype}}}'{{^-last}},{{/-last}}{{/vars}}
         }
 
         self.attribute_map = { {{#vars}}
-            '{{name}}': '{{baseName}}'{{^-last}},{{/-last}}{{/vars}}{{#vendorExtensions.x-genesys-is-one-of-child}}{{#vendorExtensions.x-genesys-is-outdated-sdk-version}}
-            'is_outdated_sdk_version': 'isOutdatedSdkVersion'{{/vendorExtensions.x-genesys-is-outdated-sdk-version}}{{/vendorExtensions.x-genesys-is-one-of-child}}
+            '{{name}}': '{{baseName}}'{{^-last}},{{/-last}}{{/vars}}
         }
 
 {{#vars}}
         self._{{name}} = {{^vendorExtensions.x-genesys-is-polymorphism-discriminator}}{{#defaultValue}}{{{defaultValue}}}{{/defaultValue}}{{^defaultValue}}None{{/defaultValue}}{{/vendorExtensions.x-genesys-is-polymorphism-discriminator}}{{#vendorExtensions.x-genesys-is-polymorphism-discriminator}}'{{vendorExtensions.x-discriminator-value}}'{{/vendorExtensions.x-genesys-is-polymorphism-discriminator}}
-{{/vars}}
-{{#vendorExtensions.x-genesys-is-one-of-child}}{{#vendorExtensions.x-genesys-is-outdated-sdk-version}}
+{{/vars}}{{#vendorExtensions.x-genesys-is-one-of-child}}{{#vendorExtensions.x-genesys-is-outdated-sdk-version}}
         self._is_outdated_sdk_version = True
-{{/vendorExtensions.x-genesys-is-outdated-sdk-version}}{{/vendorExtensions.x-genesys-is-one-of-child}}
 
-{{#vendorExtensions.x-genesys-is-one-of-child}}{{#vendorExtensions.x-genesys-is-outdated-sdk-version}}
     @property
     def is_outdated_sdk_version(self) -> bool:
         """
@@ -94,17 +89,6 @@ class {{classname}}({{^vendorExtensions.x-genesys-is-polymorphism-child}}object{
         :rtype: bool
         """
         return self._is_outdated_sdk_version
-
-    @is_outdated_sdk_version.setter
-    def is_outdated_sdk_version(self, outdated: bool) -> None:
-        """
-        Sets if the model results from an outdated sdk version.
-
-
-        :param outdated: The is_outdated_sdk_version of this model.
-        :type: bool
-        """
-        self._is_outdated_sdk_version = True
 {{/vendorExtensions.x-genesys-is-outdated-sdk-version}}{{/vendorExtensions.x-genesys-is-one-of-child}}
 
 {{#vars}}
@@ -128,6 +112,22 @@ class {{classname}}({{^vendorExtensions.x-genesys-is-polymorphism-child}}object{
         :param {{name}}: The {{name}} of this {{classname}}.
         :type: {{datatype}}
         """
+{{#vendorExtensions.x-genesys-is-polymorphism-discriminator}}
+        if {{name}} != '{{vendorExtensions.x-discriminator-value}}':
+            raise ValueError(
+                "Invalid value '{}' for {} property (required: '{}')".format(
+                    {{name}},
+                    '{{name}}',
+                    '{{vendorExtensions.x-discriminator-value}}'
+                )
+            )
+        self._{{name}} = {{name}}
+{{/vendorExtensions.x-genesys-is-polymorphism-discriminator}}
+{{^vendorExtensions.x-genesys-is-polymorphism-discriminator}}
+{{#isDiscriminator}}
+        self._{{name}} = {{name}}
+{{/isDiscriminator}}
+{{^isDiscriminator}}
         {{#isEnum}}if isinstance({{name}}, int):
             {{name}} = str({{name}})
         allowed_values = [{{#allowableValues}}{{#values}}"{{{this}}}"{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}}]
@@ -157,8 +157,66 @@ class {{classname}}({{^vendorExtensions.x-genesys-is-polymorphism-child}}object{
 
         self._{{name}} = {{name}}
 {{/isEnum}}
+{{/isDiscriminator}}
+{{/vendorExtensions.x-genesys-is-polymorphism-discriminator}}
 
 {{/vars}}
+
+{{#vendorExtensions.x-genesys-is-polymorphism-child}}
+    @property
+    def is_outdated_sdk_version(self) -> bool:
+        """
+        Gets if the model results from an outdated sdk version.
+
+        :return: The is_outdated_sdk_version of this model.
+        :rtype: bool
+        """
+        return False
+
+    @property
+    def sdk_type(self) -> str:
+        """
+        Gets the name of the model or 'OutdatedSdkVersion' (if the model results from an outdated sdk version).
+
+        :return: The name of the model or 'OutdatedSdkVersion'.
+        :rtype: str
+        """
+        return '{{vendorExtensions.x-discriminator-value}}'
+{{/vendorExtensions.x-genesys-is-polymorphism-child}}
+{{#vendorExtensions.x-genesys-is-polymorphism-parent}}
+{{#vars}}{{#isDiscriminator}}{{#isEnum}}
+    @property
+    def is_outdated_sdk_version(self) -> bool:
+        """
+        Gets if the model results from an outdated sdk version.
+
+        :return: The is_outdated_sdk_version of this model.
+        :rtype: bool
+        """
+        allowed_values = [{{#allowableValues}}{{#values}}"{{{this}}}"{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}}]
+        if self._{{name}}.lower() not in map(str.lower, allowed_values):
+            # print("Invalid value for self._{{name}} -> " + self._{{name}})
+            True
+        else:
+            False
+
+    @property
+    def sdk_type(self) -> str:
+        """
+        Gets the name of the model or 'OutdatedSdkVersion' (if the model results from an outdated sdk version).
+
+        :return: The name of the model or 'OutdatedSdkVersion'.
+        :rtype: str
+        """
+        allowed_values = [{{#allowableValues}}{{#values}}"{{{this}}}"{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}}]
+        if self._{{name}}.lower() not in map(str.lower, allowed_values):
+            # print("Invalid value for self._{{name}} -> " + self._{{name}})
+            return 'OutdatedSdkVersion'
+        else:
+            return self._{{name}}
+{{/isEnum}}{{/isDiscriminator}}{{/vars}}
+{{/vendorExtensions.x-genesys-is-polymorphism-parent}}
+
     def to_dict(self):
         """
         Returns the model properties as a dict
@@ -216,7 +274,7 @@ class {{classname}}({{^vendorExtensions.x-genesys-is-polymorphism-child}}object{
         return not self == other
 
     {{#vendorExtensions.x-genesys-is-one-of-child}}{{^vendorExtensions.x-genesys-is-outdated-sdk-version}}
-    def matches_json_model(self, data):
+    def matches_json_data(self, data):
         """
         Returns true if JSON data contains all required properties
         """

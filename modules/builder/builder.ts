@@ -1316,7 +1316,9 @@ function managePolymorphism() {
 				}
 			}
 			// Adding new model Unknown - to manage deserialization issue when SDK is older than API (and new child was introduced)
-			if (_this.config.settings.swaggerCodegen.codegenLanguage != "purecloudjavascript") {
+			if (_this.config.settings.swaggerCodegen.codegenLanguage != "purecloudjavascript" &&
+				_this.config.settings.swaggerCodegen.codegenLanguage != "purecloudpython"
+			) {
 				swagger.definitions[modelName + 'Unknown'] = {
 					"allOf": [
 						{
@@ -1331,7 +1333,8 @@ function managePolymorphism() {
 					"x-discriminator-value": "outdated_sdk_version",
 					"x-genesys-is-outdated-sdk-version": true
 				};
-				valuesFromEnum.push('outdated_sdk_version');
+				// JSM TODO LAST
+				// valuesFromEnum.push('outdated_sdk_version');
 			}
 
 			polymorphismMap[modelName] = {
@@ -1356,15 +1359,18 @@ function managePolymorphism() {
 						polymorphismMap[refName].childrenNames.push(modelName);
 						if (model["x-discriminator-value"]) {
 							polymorphismMap[refName].childrenNamesMapping[modelName] = model["x-discriminator-value"];
-							if (!polymorphismMap[refName].discriminatorValues.includes(model["x-discriminator-value"])) {
-								polymorphismMap[refName].discriminatorValues.push(model["x-discriminator-value"]);
-								// Probably the ListValues model (no property nor enum defined)
-								if (swagger.definitions[refName].properties && swagger.definitions[refName].properties[model.discriminator]) {
-									swagger.definitions[refName].properties[model.discriminator].enum = polymorphismMap[refName].discriminatorValues;
-								} else {
-									if (!swagger.definitions[refName].properties) swagger.definitions[refName].properties = {};
-									swagger.definitions[refName].properties[model.discriminator].type = ItemsType.String;
-									swagger.definitions[refName].properties[model.discriminator].enum = polymorphismMap[refName].discriminatorValues;
+							// JSM TODO LAST
+							if (model["x-discriminator-value"] !== 'outdated_sdk_version') {
+								if (!polymorphismMap[refName].discriminatorValues.includes(model["x-discriminator-value"])) {
+									polymorphismMap[refName].discriminatorValues.push(model["x-discriminator-value"]);
+									// Probably the ListValues model (no property nor enum defined)
+									if (swagger.definitions[refName].properties && swagger.definitions[refName].properties[model.discriminator]) {
+										swagger.definitions[refName].properties[model.discriminator].enum = polymorphismMap[refName].discriminatorValues;
+									} else {
+										if (!swagger.definitions[refName].properties) swagger.definitions[refName].properties = {};
+										swagger.definitions[refName].properties[model.discriminator].type = ItemsType.String;
+										swagger.definitions[refName].properties[model.discriminator].enum = polymorphismMap[refName].discriminatorValues;
+									}
 								}
 							}
 						}
