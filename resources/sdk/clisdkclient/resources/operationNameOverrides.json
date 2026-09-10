@@ -759,5 +759,10 @@
         "patch": {
             "name": "patch"
         }
+    },
+    "/api/v2/screenrecording/redaction/jobs": {
+        "get": {
+            "name": "list"
+        }
     }
 }
