@@ -121,6 +121,37 @@ public class ApiClientRetryTest {
     }
 
     @Test
+    public void invokeTestWith_429_MaxRetriesExceeded() throws IOException {
+        ApiClient.RetryConfiguration retryConfiguration = new ApiClient.RetryConfiguration();
+
+        retryConfiguration.setMaxRetryTimeSec(6);
+        retryConfiguration.setRetryAfterDefaultMs(100);
+        retryConfiguration.setRetryMax(0);
+        retryConfiguration.setMaxRetriesBeforeBackoff(2);
+
+        apiClient = getApiClient(retryConfiguration);
+
+        mockResponse = getMockCloseableHttpResponse(429);
+
+        Header header = mock(Header.class);
+        when(header.getName()).thenReturn("Retry-After");
+        when(header.getValue()).thenReturn("3");
+
+        when(mockResponse.getAllHeaders()).thenReturn(new Header[]{header});
+        doReturn(mockResponse).when(spyClient).execute(any(HttpUriRequest.class));
+
+        try {
+            stopwatch = Stopwatch.createStarted();
+            ApiResponse<ApiClientConnectorResponse> response = apiClient.invoke(getConnectorRequest(), getReturnType());
+        } catch (ApiException ex) {
+            Assert.assertEquals(429, ex.getStatusCode());
+            Assert.assertEquals("Max number of retries exceeded", ex.getMessage());
+            Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) >= 3000 && stopwatch.elapsed(TimeUnit.MILLISECONDS) < 3100, "Since retryMax is 0, after one retry exception is thrown");
+            stopwatch.stop();
+        }
+    }
+
+    @Test
     public void invokeTestWith_502() throws IOException {
         ApiClient.RetryConfiguration retryConfiguration = new ApiClient.RetryConfiguration();
 
