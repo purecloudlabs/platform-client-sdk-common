@@ -11,8 +11,8 @@
     "extensionsDestination": "${SDK_REPO}/build/src/main/java/com/mypurecloud/sdk/v2",
     "swagger": {
       "oldSwaggerPath": "${SDK_REPO}/swagger.json",
-      "newSwaggerPath": "http://localhost:8080/newSwaggerFiltered.json",
-      "newSwaggerPath_internal": "https://api.inindca.com/api/v2/docs/swaggerall",
+      "newSwaggerPath_small": "http://localhost:8080/newSwaggerFiltered.json",
+      "newSwaggerPath": "https://api.inindca.com/api/v2/docs/swaggerall",
       "newSwaggerPath_public": "https://api.mypurecloud.com/api/v2/docs/swagger",
       "previewSwaggerPath": "",
       "previewSwaggerPath_public": "https://api.mypurecloud.com/api/v2/docs/swaggerpreview",
@@ -23,7 +23,7 @@
       "discriminatorManagement": "keep",
       "extractPolymorphismInfo": true,
       "override": {
-        "models": {
+        "modelsDisabled": {
           "TestJSMRequest": {
             "type": "object",
             "required": [
@@ -1042,7 +1042,7 @@
             }
           }
         },
-        "modelsInternal": {
+        "models": {
           "ListValues": {
             "type": "object",
             "discriminator": "type",
@@ -1234,7 +1234,7 @@
             "description": "A single structured input validation rule."
           }
         },
-        "operations": {
+        "operationsDisabled": {
           "/api/v2/users/testjsm": {
             "post": {
               "tags": [
@@ -1411,7 +1411,9 @@
       "codegenLanguage": "purecloudjava",
       "jarPath": "${WORKSPACE}/openapi-generator/modules/openapi-generator-cli/target/openapi-generator-cli.jar",
       "configFile": "${SDK_TEMP}/config.json",
-      "extraGeneratorOptions": []
+      "extraGeneratorOptions": [
+        "--global-property debugModels,debugSupportingFiles"
+      ]
     },
     "releaseNoteTemplatePath": "${COMMON_ROOT}/resources/templates/githubSdkReleaseNotes.md",
     "releaseNoteSummaryTemplatePath": "${COMMON_ROOT}/resources/templates/githubSdkReleaseNoteSummary.md",

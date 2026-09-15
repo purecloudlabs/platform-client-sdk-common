@@ -17,6 +17,75 @@ import com.mypurecloud.sdk.v2.ApiClient;
 {{#serializableModel}}import java.io.Serializable;{{/serializableModel}}
 {{#models}}
 {{#model}}
-{{#isEnum}}{{>modelEnum}}{{/isEnum}}{{^isEnum}}{{>pojo}}{{/isEnum}}
+{{#vendorExtensions.x-genesys-is-one-of-child}}
+import {{package}}.{{vendorExtensions.x-genesys-one-of-parent}};
+import com.fasterxml.jackson.databind.JsonNode;
+{{/vendorExtensions.x-genesys-is-one-of-child}}
+{{#vendorExtensions.x-genesys-is-polymorphism-parent}}
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+{{/vendorExtensions.x-genesys-is-polymorphism-parent}}
+{{#vendorExtensions.x-genesys-is-polymorphism-child}}
+import com.fasterxml.jackson.annotation.JsonIgnore;
+{{/vendorExtensions.x-genesys-is-polymorphism-child}}
+
+{{#vendorExtensions.x-genesys-is-one-of-parent}}
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+/**
+ * {{#description}}{{.}}{{/description}}{{^description}}{{classname}}{{/description}}
+ */{{#description}}
+@ApiModel(description = "{{{description}}}"){{/description}}
+
+public interface {{classname}} extends Serializable {
+
+    public final class {{classname}}Deserializer
+        extends StdDeserializer<{{classname}}> {
+
+        public {{classname}}Deserializer() {
+            super({{classname}}.class);
+        }
+
+        @Override
+        public {{classname}} deserialize(
+                JsonParser parser,
+                DeserializationContext context) throws IOException {
+
+            JsonNode node = parser.getCodec().readTree(parser);
+
+            {{#vendorExtensions.x-genesys-one-of}}
+            boolean is{{.}}Match = {{.}}.matchesJsonData(node);
+            {{/vendorExtensions.x-genesys-one-of}}
+
+            ObjectMapper mapper = (ObjectMapper) parser.getCodec();
+
+            if ({{#vendorExtensions.x-genesys-one-of}}is{{.}}Match{{^-last}} && {{/-last}}{{/vendorExtensions.x-genesys-one-of}}) {
+                return mapper.treeToValue(node, {{vendorExtensions.x-genesys-one-of-unknown}}.class);
+            }
+
+            if ({{#vendorExtensions.x-genesys-one-of}}!is{{.}}Match{{^-last}} && {{/-last}}{{/vendorExtensions.x-genesys-one-of}}) {
+                return mapper.treeToValue(node, {{vendorExtensions.x-genesys-one-of-unknown}}.class);
+            }
+
+            {{#vendorExtensions.x-genesys-one-of}}
+            if (is{{.}}Match) {
+                return mapper.treeToValue(node, {{.}}.class);
+            }
+            {{/vendorExtensions.x-genesys-one-of}}
+
+            return mapper.treeToValue(node, {{vendorExtensions.x-genesys-one-of-unknown}}.class);
+        }
+    }
+
+}
+{{/vendorExtensions.x-genesys-is-one-of-parent}}
+{{^vendorExtensions.x-genesys-is-one-of-parent}}{{#isEnum}}{{>modelEnum}}{{/isEnum}}{{^isEnum}}{{>pojo}}{{/isEnum}}{{/vendorExtensions.x-genesys-is-one-of-parent}}
 {{/model}}
 {{/models}}

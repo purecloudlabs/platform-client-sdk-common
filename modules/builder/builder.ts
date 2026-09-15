@@ -653,7 +653,7 @@ function buildImpl(): Promise<string> {
 			command += 'java ';
 			command += `-DapiTests=${_this.config.settings.swaggerCodegen.generateApiTests} `;
 			command += `-DmodelTests=${_this.config.settings.swaggerCodegen.generateModelTests} `;
-			command += `${getEnv('JAVA_OPTS', '')} -XX:MaxMetaspaceSize=256M -Xmx2g -DloggerPath=conf/log4j.properties `;
+			command += `${getEnv('JAVA_OPTS', '')} -XX:MaxMetaspaceSize=256M -Xmx4g -DloggerPath=conf/log4j.properties `;
 			// Swagger-codegen jar file
 			command += `-jar ${_this.config.settings.swaggerCodegen.jarPath} `;
 			// Swagger-codegen options
@@ -1251,6 +1251,9 @@ function processOverride(overrideModels: Record<string, Definition>, overrideOpe
 }
 
 function manageOneOf() {
+
+	let oneOfDebug = {};
+
 	let oneofInfo = [];
 	let swagger = swaggerDiff.newSwagger;
 
@@ -1268,9 +1271,10 @@ function manageOneOf() {
 						swagger.definitions[oneOfElement]["x-genesys-is-one-of-child"] = true;
 						swagger.definitions[oneOfElement]["x-genesys-one-of-parent"] = defKey;
 					}
+					oneOfDebug[oneOfElement] = swagger.definitions[oneOfElement];
 				}
 				// Adding new model Unknown - to manage deserialization issue when SDK is older than API (and new oneOf value was introduced)
-				swagger.definitions[defKey + 'Unknown'] = {
+				swagger.definitions['Unknown' + defKey] = {
 					"type": ItemsType.Object,
 					"description": `Class for unknown/unexpected ${defKey}. This class is used to avoid deserialization issue if a new ${defKey} is added to the API (with an older SDK version).`,
 					"additionalProperties": {
@@ -1280,10 +1284,11 @@ function manageOneOf() {
 					"x-genesys-one-of-parent": defKey,
 					"x-genesys-is-outdated-sdk-version": true
 				};
-				swagger.definitions[defKey]["x-genesys-one-of-unknown"]= defKey + 'Unknown';
-				// swagger.definitions[defKey]["x-genesys-one-of"].push(defKey + 'Unknown');
+				oneOfDebug['Unknown' + defKey] = swagger.definitions['Unknown' + defKey];
+				swagger.definitions[defKey]["x-genesys-one-of-unknown"]= 'Unknown' + defKey;
+				// swagger.definitions[defKey]["x-genesys-one-of"].push('Unknown' + defKey);
 				// swagger.definitions[defKey]["oneOf"].push({
-				// 	"$ref": `#/definitions/${defKey + 'Unknown'}`
+				// 	"$ref": `#/definitions/${'Unknown' + defKey}`
 				// });
 			}
 			swagger.definitions[defKey]["x-genesys-class-complex"] = true;
@@ -1291,17 +1296,26 @@ function manageOneOf() {
 			oneofInfo.push({
 				name: defKey,
 				values: swagger.definitions[defKey]["x-genesys-one-of"],
-				unknown: defKey + 'Unknown'
+				unknown: 'Unknown' + defKey
 			});
+
+			oneOfDebug[defKey] = swagger.definitions[defKey];
         }
     }
 
 	swaggerDiff.newSwagger["x-genesys-one-of-summary"] = oneofInfo;
+	oneOfDebug["x-genesys-one-of-summary"] = oneofInfo;
+
+	console.log("JSM DEBUG ONE OF");
+	console.log(JSON.stringify(oneOfDebug, null, 4));
 
 	return oneofInfo;
 }
 
 function managePolymorphism() {
+
+	let polymorphismDebug = {};
+
 	let polymorphismInfo = [];
 	let polymorphismMap = {};
 	let swagger = swaggerDiff.newSwagger;
@@ -1313,13 +1327,17 @@ function managePolymorphism() {
 			if (model.properties && model.properties[model.discriminator]) {
 				if (model.properties[model.discriminator].type === 'string' && model.properties[model.discriminator].enum) {
 					valuesFromEnum = model.properties[model.discriminator].enum as string[];
+
+					if (_this.config.settings.swaggerCodegen.codegenLanguage == "purecloudjava") {
+						delete model.properties[model.discriminator].enum;
+					}
 				}
 			}
 			// Adding new model Unknown - to manage deserialization issue when SDK is older than API (and new child was introduced)
-			if (_this.config.settings.swaggerCodegen.codegenLanguage != "purecloudjavascript" &&
-				_this.config.settings.swaggerCodegen.codegenLanguage != "purecloudpython"
-			) {
-				swagger.definitions[modelName + 'Unknown'] = {
+			// if (_this.config.settings.swaggerCodegen.codegenLanguage != "purecloudjavascript" &&
+			// 	_this.config.settings.swaggerCodegen.codegenLanguage != "purecloudpython"
+			if (_this.config.settings.swaggerCodegen.codegenLanguage != "purecloudjavascript") {
+				swagger.definitions['Unknown' + modelName] = {
 					"allOf": [
 						{
 							"$ref": `#/definitions/${modelName}`
@@ -1333,6 +1351,9 @@ function managePolymorphism() {
 					"x-discriminator-value": "outdated_sdk_version",
 					"x-genesys-is-outdated-sdk-version": true
 				};
+				if (_this.config.settings.swaggerCodegen.codegenLanguage == "purecloudjava") {
+					swagger.definitions['Unknown' + modelName]["x-discriminator-value"] = "OutdatedSdkVersion";
+				}
 				// JSM TODO LAST
 				// valuesFromEnum.push('outdated_sdk_version');
 			}
@@ -1342,7 +1363,9 @@ function managePolymorphism() {
 				discriminatorProperty: model.discriminator,
 				discriminatorValues: valuesFromEnum,
 				childrenNames: [],
-				childrenNamesMapping: {}
+				childrenNamesMapping: {},
+				childrenMappingArray: [],
+				unknownChild: 'Unknown' + modelName
 			}
 		}
 	}
@@ -1359,8 +1382,12 @@ function managePolymorphism() {
 						polymorphismMap[refName].childrenNames.push(modelName);
 						if (model["x-discriminator-value"]) {
 							polymorphismMap[refName].childrenNamesMapping[modelName] = model["x-discriminator-value"];
+							polymorphismMap[refName].childrenMappingArray.push({
+								value: model["x-discriminator-value"],
+								name: modelName
+							});
 							// JSM TODO LAST
-							if (model["x-discriminator-value"] !== 'outdated_sdk_version') {
+							if (model["x-discriminator-value"] !== 'outdated_sdk_version' && model["x-discriminator-value"] !== 'OutdatedSdkVersion') {
 								if (!polymorphismMap[refName].discriminatorValues.includes(model["x-discriminator-value"])) {
 									polymorphismMap[refName].discriminatorValues.push(model["x-discriminator-value"]);
 									// Probably the ListValues model (no property nor enum defined)
@@ -1389,6 +1416,9 @@ function managePolymorphism() {
 		model["x-genesys-polymorphism-values"] = polymorphismMap[parentName].discriminatorValues;
 		model["x-genesys-polymorphism-children-mapping"] = polymorphismMap[parentName].childrenNamesMapping;
 
+		model["x-genesys-polymorphism-children-mapping-array"] = polymorphismMap[parentName].childrenMappingArray;
+		model["x-genesys-polymorphism-unknown-child"] = polymorphismMap[parentName].unknownChild;
+
 		// add info at discriminator property level
 		// if (model.type === ItemsType.Object && model.properties) {
 		// 	if (model.properties[polymorphismMap[parentName].discriminatorProperty]) {
@@ -1416,6 +1446,8 @@ function managePolymorphism() {
 									}
 								} else {
 									// otherwise, add information at property level
+									if (allOfObj.properties[polymorphismMap[parentName].discriminatorProperty].enum)
+										delete allOfObj.properties[polymorphismMap[parentName].discriminatorProperty].enum;
 									allOfObj.properties[polymorphismMap[parentName].discriminatorProperty]["x-genesys-is-polymorphism-discriminator"] = true;
 									allOfObj.properties[polymorphismMap[parentName].discriminatorProperty]["x-discriminator-value"] = childModel["x-discriminator-value"];
 								}
@@ -1423,8 +1455,11 @@ function managePolymorphism() {
 						}
 					}
 				}
+				polymorphismDebug[childName] = childModel;
 			}
 		}
+
+		polymorphismDebug[parentName] = model;
 	}
 
 	// Convert Map (polymorphismMap) to an array (polymorphismInfo) to allow parsing in mustache templates
@@ -1443,6 +1478,10 @@ function managePolymorphism() {
 		polymorphismInfo.push(arrayEntry);
 	}
 	swaggerDiff.newSwagger["x-genesys-polymorphism-summary"] = polymorphismInfo;
+	polymorphismDebug["x-genesys-polymorphism-summary"] = polymorphismInfo;
+
+	console.log("JSM DEBUG POLYMORPHISM");
+	console.log(JSON.stringify(polymorphismDebug, null, 4));
 
 	return polymorphismInfo;
 }

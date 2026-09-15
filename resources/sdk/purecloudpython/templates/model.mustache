@@ -45,11 +45,11 @@ from typing import Dict
 {{#vendorExtensions.x-genesys-is-one-of-parent}}
 if TYPE_CHECKING:
     {{#vendorExtensions.x-genesys-one-of}}from . import {{.}}
-    {{/vendorExtensions.x-genesys-one-of}}from . import {{classname}}Unknown
+    {{/vendorExtensions.x-genesys-one-of}}from . import Unknown{{classname}}
 {{/vendorExtensions.x-genesys-is-one-of-parent}}
 
 {{#vendorExtensions.x-genesys-is-one-of-parent}}
-{{classname}} = Union[{{#vendorExtensions.x-genesys-one-of}}type['{{.}}'], {{/vendorExtensions.x-genesys-one-of}}type['{{classname}}Unknown']]
+{{classname}} = Union[{{#vendorExtensions.x-genesys-one-of}}type['{{.}}'], {{/vendorExtensions.x-genesys-one-of}}type['Unknown{{classname}}']]
 {{/vendorExtensions.x-genesys-is-one-of-parent}}
 
 {{^vendorExtensions.x-genesys-is-one-of-parent}}
@@ -83,9 +83,9 @@ class {{classname}}({{^vendorExtensions.x-genesys-is-polymorphism-child}}object{
     @property
     def is_outdated_sdk_version(self) -> bool:
         """
-        Gets if the model results from an outdated sdk version.
+        Gets the is_outdated_sdk_version of this {{classname}}.
 
-        :return: The is_outdated_sdk_version of this model.
+        :return: The is_outdated_sdk_version of this {{classname}}.
         :rtype: bool
         """
         return self._is_outdated_sdk_version
@@ -162,27 +162,6 @@ class {{classname}}({{^vendorExtensions.x-genesys-is-polymorphism-child}}object{
 
 {{/vars}}
 
-{{#vendorExtensions.x-genesys-is-polymorphism-child}}
-    @property
-    def is_outdated_sdk_version(self) -> bool:
-        """
-        Gets if the model results from an outdated sdk version.
-
-        :return: The is_outdated_sdk_version of this model.
-        :rtype: bool
-        """
-        return False
-
-    @property
-    def sdk_type(self) -> str:
-        """
-        Gets the name of the model or 'OutdatedSdkVersion' (if the model results from an outdated sdk version).
-
-        :return: The name of the model or 'OutdatedSdkVersion'.
-        :rtype: str
-        """
-        return '{{vendorExtensions.x-discriminator-value}}'
-{{/vendorExtensions.x-genesys-is-polymorphism-child}}
 {{#vendorExtensions.x-genesys-is-polymorphism-parent}}
 {{#vars}}{{#isDiscriminator}}{{#isEnum}}
     @property
@@ -203,15 +182,15 @@ class {{classname}}({{^vendorExtensions.x-genesys-is-polymorphism-child}}object{
     @property
     def sdk_type(self) -> str:
         """
-        Gets the name of the model or 'OutdatedSdkVersion' (if the model results from an outdated sdk version).
+        Gets the name of the model or 'outdated_sdk_version' (if the model results from an outdated sdk version).
 
-        :return: The name of the model or 'OutdatedSdkVersion'.
+        :return: The name of the model or 'outdated_sdk_version'.
         :rtype: str
         """
         allowed_values = [{{#allowableValues}}{{#values}}"{{{this}}}"{{^-last}}, {{/-last}}{{/values}}{{/allowableValues}}]
         if self._{{name}}.lower() not in map(str.lower, allowed_values):
             # print("Invalid value for self._{{name}} -> " + self._{{name}})
-            return 'OutdatedSdkVersion'
+            return 'outdated_sdk_version'
         else:
             return self._{{name}}
 {{/isEnum}}{{/isDiscriminator}}{{/vars}}

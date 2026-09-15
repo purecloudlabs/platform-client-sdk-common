@@ -1048,8 +1048,8 @@ class ApiClient(object):
         try:
             concrete_type = mapping[discriminator_value]
         except KeyError:
-            # if discriminator_value is unknown, default to parent_type
-            concrete_type = parent_type
+            # if discriminator_value is unknown, default to outdated_sdk_version type
+            concrete_type = mapping['outdated_sdk_version']
 
         return self.__deserialize(
             data,

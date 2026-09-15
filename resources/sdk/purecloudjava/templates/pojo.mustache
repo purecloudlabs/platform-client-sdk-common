@@ -3,7 +3,23 @@
  */{{#description}}
 @ApiModel(description = "{{{description}}}"){{/description}}
 
-public class {{classname}} {{#parent}}extends {{{parent}}}{{/parent}} {{#serializableModel}}{{#isPagedResource}}implements Serializable, PagedResource<{{{pagedResourceType}}}>{{/isPagedResource}}{{^isPagedResource}}implements Serializable{{/isPagedResource}}{{/serializableModel}}{{#isPagedResource}}{{^serializableModel}}implements PagedResource<{{{pagedResourceType}}}>{{/serializableModel}}{{/isPagedResource}} {
+{{#vendorExtensions.x-genesys-is-polymorphism-parent}}
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.NAME,
+    include = JsonTypeInfo.As.EXISTING_PROPERTY,
+    property = "{{discriminator.propertyName}}",
+    defaultImpl = {{vendorExtensions.x-genesys-polymorphism-unknown-child}}.class
+)
+@JsonSubTypes({
+  {{#vendorExtensions.x-genesys-polymorphism-children-mapping-array}}
+  @JsonSubTypes.Type(
+        value = {{name}}.class,
+        name = "{{value}}"
+  ){{^-last}},{{/-last}}
+  {{/vendorExtensions.x-genesys-polymorphism-children-mapping-array}}
+}){{/vendorExtensions.x-genesys-is-polymorphism-parent}}
+public {{#vendorExtensions.x-genesys-is-polymorphism-parent}}abstract {{/vendorExtensions.x-genesys-is-polymorphism-parent}}class {{classname}} {{#vendorExtensions.x-genesys-is-one-of-child}}implements {{vendorExtensions.x-genesys-one-of-parent}}{{/vendorExtensions.x-genesys-is-one-of-child}}{{^vendorExtensions.x-genesys-is-one-of-child}}{{#parent}}extends {{{parent}}}{{/parent}} {{#serializableModel}}{{#isPagedResource}}implements Serializable, PagedResource<{{{pagedResourceType}}}>{{/isPagedResource}}{{^isPagedResource}}implements Serializable{{/isPagedResource}}{{/serializableModel}}{{#isPagedResource}}{{^serializableModel}}implements PagedResource<{{{pagedResourceType}}}>{{/serializableModel}}{{/isPagedResource}}{{/vendorExtensions.x-genesys-is-one-of-child}} {
   {{#vars}}{{#isEnum}}
 
 {{>modelInnerEnum}}{{/isEnum}}{{#items.isEnum}}{{#items}}
@@ -15,15 +31,46 @@ public class {{classname}} {{#parent}}extends {{{parent}}}{{/parent}} {{#seriali
     if (ApiClient.LEGACY_EMPTY_LIST == true) { {{#vars}}{{#isArray}}
       {{name}} = {{{defaultValue}}};{{/isArray}}{{/vars}}
     }
+    {{#vendorExtensions.x-genesys-is-polymorphism-child}}
+    {{#vars}}
+    {{#vendorExtensions.x-genesys-is-polymorphism-discriminator}}
+    {{name}} = "{{vendorExtensions.x-discriminator-value}}";
+    {{/vendorExtensions.x-genesys-is-polymorphism-discriminator}}
+    {{/vars}}
+    {{/vendorExtensions.x-genesys-is-polymorphism-child}}
   }
 
   public {{classname}}(Boolean initWithEmptyList) {
     if (initWithEmptyList == true) { {{#vars}}{{#isArray}}
       {{name}} = {{{defaultValue}}};{{/isArray}}{{/vars}}
     }
+    {{#vendorExtensions.x-genesys-is-polymorphism-child}}
+    {{#vars}}
+    {{#vendorExtensions.x-genesys-is-polymorphism-discriminator}}
+    {{name}} = "{{vendorExtensions.x-discriminator-value}}";
+    {{/vendorExtensions.x-genesys-is-polymorphism-discriminator}}
+    {{/vars}}
+    {{/vendorExtensions.x-genesys-is-polymorphism-child}}
   }
 
-  {{#vars}}{{^isReadOnly}}
+  {{#vendorExtensions.x-genesys-is-one-of-child}}
+  {{^vendorExtensions.x-genesys-is-outdated-sdk-version}}
+  public static boolean matchesJsonData(JsonNode node) {
+        // Generated matching logic.
+        //
+        // Ideally use required/distinguishing properties from
+        // {{classname}}'s OpenAPI schema.
+        if ({{#requiredVars}}node.hasNonNull("{{name}}"){{^-last}} && {{/-last}}{{/requiredVars}}) {
+            return true;
+        }
+        return false;
+  }
+  {{/vendorExtensions.x-genesys-is-outdated-sdk-version}}
+  {{/vendorExtensions.x-genesys-is-one-of-child}}
+
+  {{^vendorExtensions.x-genesys-class-complex}}
+  {{#vars}}
+  {{^isReadOnly}}
   /**{{#description}}
    * {{{description}}}{{/description}}{{#minimum}}
    * minimum: {{minimum}}{{/minimum}}{{#maximum}}
@@ -45,6 +92,75 @@ public class {{classname}} {{#parent}}extends {{{parent}}}{{/parent}} {{#seriali
   }{{/isReadOnly}}
 
   {{/vars}}
+  {{/vendorExtensions.x-genesys-class-complex}}
+  {{#vendorExtensions.x-genesys-class-complex}}
+  {{#vars}}
+  {{^isDiscriminator}}
+  {{^vendorExtensions.x-genesys-is-polymorphism-discriminator}}
+  {{^isReadOnly}}
+  /**{{#description}}
+   * {{{description}}}{{/description}}{{#minimum}}
+   * minimum: {{minimum}}{{/minimum}}{{#maximum}}
+   * maximum: {{maximum}}{{/maximum}}
+   **/
+  public {{classname}} {{name}}({{{datatypeWithEnum}}} {{name}}) {
+    this.{{name}} = {{name}};
+    return this;
+  }
+  {{/isReadOnly}}{{#vendorExtensions.extraAnnotation}}
+  {{vendorExtensions.extraAnnotation}}{{/vendorExtensions.extraAnnotation}}
+  @ApiModelProperty({{#example}}example = "{{example}}", {{/example}}{{#required}}required = {{required}}, {{/required}}value = "{{{description}}}")
+  @JsonProperty("{{baseName}}")
+  public {{{datatypeWithEnum}}} {{getter}}() {
+    return {{name}};
+  }{{^isReadOnly}}
+  public void {{setter}}({{{datatypeWithEnum}}} {{name}}) {
+    this.{{name}} = {{name}};
+  }{{/isReadOnly}}
+  {{/vendorExtensions.x-genesys-is-polymorphism-discriminator}}
+  {{#vendorExtensions.x-genesys-is-polymorphism-discriminator}}
+  {{^isReadOnly}}
+  /**{{#description}}
+   * {{{description}}}{{/description}}{{#minimum}}
+   * minimum: {{minimum}}{{/minimum}}{{#maximum}}
+   * maximum: {{maximum}}{{/maximum}}
+   **/
+  @Override
+  public {{classname}} {{name}}({{{datatypeWithEnum}}} {{name}}) {
+    this.{{name}} = "{{vendorExtensions.x-discriminator-value}}";
+    return this;
+  }
+  {{/isReadOnly}}{{#vendorExtensions.extraAnnotation}}
+  {{vendorExtensions.extraAnnotation}}{{/vendorExtensions.extraAnnotation}}
+  @Override
+  public {{{datatypeWithEnum}}} {{getter}}() {
+    return "{{vendorExtensions.x-discriminator-value}}";
+  }{{^isReadOnly}}
+  @Override
+  public void {{setter}}({{{datatypeWithEnum}}} {{name}}) {
+    this.{{name}} = "{{vendorExtensions.x-discriminator-value}}";
+  }{{/isReadOnly}}
+  {{/vendorExtensions.x-genesys-is-polymorphism-discriminator}}
+  {{/isDiscriminator}}
+  {{#isDiscriminator}}
+  {{^isReadOnly}}
+  /**{{#description}}
+   * {{{description}}}{{/description}}{{#minimum}}
+   * minimum: {{minimum}}{{/minimum}}{{#maximum}}
+   * maximum: {{maximum}}{{/maximum}}
+   **/
+  public abstract {{classname}} {{name}}({{{datatypeWithEnum}}} {{name}});
+  {{/isReadOnly}}{{#vendorExtensions.extraAnnotation}}
+  {{vendorExtensions.extraAnnotation}}{{/vendorExtensions.extraAnnotation}}
+  @ApiModelProperty({{#example}}example = "{{example}}", {{/example}}{{#required}}required = {{required}}, {{/required}}value = "{{{description}}}")
+  @JsonProperty("{{baseName}}")
+  public abstract {{{datatypeWithEnum}}} {{getter}}();{{^isReadOnly}}
+  public abstract void {{setter}}({{{datatypeWithEnum}}} {{name}});{{/isReadOnly}}
+
+  {{/isDiscriminator}}
+  {{/vars}}
+
+  {{/vendorExtensions.x-genesys-class-complex}}
 
   @Override
   public boolean equals(java.lang.Object o) {

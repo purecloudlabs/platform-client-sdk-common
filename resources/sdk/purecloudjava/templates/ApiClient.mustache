@@ -57,6 +57,10 @@ import {{invokerPackage}}.hooksmanager.LoggingPreRequestHook;
 import {{invokerPackage}}.hooksmanager.PostResponseHook;
 import {{invokerPackage}}.hooksmanager.PreRequestHook;
 
+{{#apiInfo}}{{#apis}}{{#-first}}{{#vendorExtensions.x-genesys-one-of-summary}}
+import {{invokerPackage}}.model.{{name}};
+{{/vendorExtensions.x-genesys-one-of-summary}}{{/-first}}{{/apis}}{{/apiInfo}}
+
 public class ApiClient implements AutoCloseable {
     private static final String DEFAULT_BASE_PATH = "{{basePath}}";
     private static final String DEFAULT_USER_AGENT = "{{#httpUserAgent}}{{.}}{{/httpUserAgent}}{{^httpUserAgent}}Swagger-Codegen{{/httpUserAgent}}/java";
@@ -198,6 +202,16 @@ public class ApiClient implements AutoCloseable {
         SimpleModule localDateTimeModule = new SimpleModule();
         localDateTimeModule.addSerializer(LocalDateTime.class, new LocalDateTimeSerializer());
         objectMapper.registerModule(localDateTimeModule);
+
+        {{#apiInfo}}{{#apis}}{{#-first}}{{#vendorExtensions.x-genesys-one-of-summary}}
+        SimpleModule module{{name}} = new SimpleModule();
+        module{{name}}.addDeserializer(
+            {{name}}.class,
+            new {{name}}.{{name}}Deserializer()
+        );
+        objectMapper.registerModule(module{{name}});
+        {{/vendorExtensions.x-genesys-one-of-summary}}{{/-first}}{{/apis}}{{/apiInfo}}
+
         return objectMapper;
     }
 
