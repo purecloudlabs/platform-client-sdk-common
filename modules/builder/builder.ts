@@ -53,6 +53,15 @@ const aliasOperationIds: any = {
 let forceInt64Integers = true;
 // Remove duplicates in topics enumerations
 let removeEnumDuplicates = true;
+// Add info (vendor extensions) - follow redirect body property
+const followRedirectBodyOperations = {
+	"/api/v2/audits/query/{transactionId}/results": {
+		"get": {
+			"status": 302,
+			"property": "downloadUrl"
+		}
+	}
+};
 
 export class Builder {
 
@@ -470,6 +479,9 @@ function prebuildImpl(): Promise<string> {
 				})
 				.then(() => {
 					return overrideOperations(overrideOperationIds);
+				})
+				.then(() => {
+					return followRedirectBody(followRedirectBodyOperations);
 				})
 				.then(() => {
 					// Save new swagger to temp file for build
@@ -1125,6 +1137,26 @@ function quarantineOperationsAndModels(quarantineOperationIds: string[], quarant
 		for (const modelName of quarantineModels) {
 			if (swaggerDiff.newSwagger.definitions[modelName]) {
 				delete swaggerDiff.newSwagger.definitions[modelName];
+			}
+		}
+	}
+	return;
+}
+
+function followRedirectBody(followRedirectBodyOperations: any) {
+	if (followRedirectBodyOperations && Object.keys(followRedirectBodyOperations).length > 0) {
+		for (let path in followRedirectBodyOperations) {
+			if (swaggerDiff.newSwagger.paths[path]) {
+				let followPath = followRedirectBodyOperations[path];
+				if (followPath && Object.keys(followPath).length > 0) {
+					for (let method in followPath) {
+						if (swaggerDiff.newSwagger.paths[path][method]) {
+							swaggerDiff.newSwagger.paths[path][method]["x-genesys-follow-redirect-body"] = true;
+							swaggerDiff.newSwagger.paths[path][method]["x-genesys-follow-redirect-body-status"] = followPath[method]['status'] ?? 0;
+							swaggerDiff.newSwagger.paths[path][method]["x-genesys-follow-redirect-body-property"] = followPath[method]['property'] ?? '';
+						}
+					}
+				}
 			}
 		}
 	}
