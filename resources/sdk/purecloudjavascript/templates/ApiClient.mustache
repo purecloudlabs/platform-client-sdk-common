@@ -2063,11 +2063,11 @@ class ApiClient {
 	 * @param {Array.<String>} authNames An array of authentication type names.
 	 * @param {Array.<String>} contentTypes An array of request MIME types.
 	 * @param {Array.<String>} accepts An array of acceptable response MIME types.types or the
-	 * constructor for a complex type.{{#enableCustomHeaders}}
-	 * @param {Object.<string, string>} customHeaders Optional per-request headers to include with the API call.{{/enableCustomHeaders}}
+	 * constructor for a complex type.
+	 * @param {Object.<string, string>} customHeaders Optional per-request headers to include with the API call.
 	 * @returns {Promise} A Promise object.
 	 */
-	callApi(path, httpMethod, pathParams, queryParams, headerParams, formParams, bodyParam, authNames, contentTypes, accepts{{#enableCustomHeaders}}, customHeaders{{/enableCustomHeaders}}) {
+	callApi(path, httpMethod, pathParams, queryParams, headerParams, formParams, bodyParam, authNames, contentTypes, accepts, customHeaders) {
 		return new Promise((resolve, reject) => {
 			sendRequest(this);
 			function sendRequest(that) {
@@ -2080,7 +2080,7 @@ class ApiClient {
 				// set header parameters
 				const defaultHeaders = that.defaultHeaders;
 				const normalizedHeaderParams = that.normalizeParams(headerParams);
-				request.headers = that.addHeaders(request.headers, defaultHeaders, normalizedHeaderParams);{{#enableCustomHeaders}}
+				request.headers = that.addHeaders(request.headers, defaultHeaders, normalizedHeaderParams);
 
 				if (customHeaders) {
 					if (typeof customHeaders !== 'object') {
@@ -2103,7 +2103,7 @@ class ApiClient {
 						}
 						request.headers[name] = value;
 					}
-				}{{/enableCustomHeaders}}
+				}
 
 				var contentType = that.jsonPreferredMime(contentTypes);
 				if (contentType) {
