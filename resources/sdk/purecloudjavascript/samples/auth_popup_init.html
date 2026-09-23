@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta name="robots" content="noindex" />
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Genesys Cloud Authentication Status - Init</title>
+  <meta name="Genesys Cloud Authentication Status Init" content="" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      font-family: Arial, Helvetica, sans-serif;
+      background-color: #f4f4f4;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    #popupStatus {
+      width: 360px;
+      height: 140px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+      font-weight: bold;
+      border-radius: 10px;
+      box-sizing: border-box;
+      transition: all 0.25s ease;
+      text-align: center;
+    }
+
+    .popupInProgress {
+      border: 3px solid #003366;
+      color: #003366;
+    }
+
+    .popupCompleted {
+      border: 3px solid #059154;
+      color: #059154;
+    }
+
+    .popupError {
+      border: 3px solid #c80139;
+      color: #c80139;
+    }
+
+  </style>
+</head>
+
+<body onload="start()">
+
+  <div id="popupStatus" class="popupInProgress">Authenticating...</div>
+  
+  <script>
+    'use strict' //Enables strict mode is JavaScript
+    
+    async function start() {
+      try {
+        // Collect URL Query parameters (update only if URL parameters are set)
+        let urlSearch = window.location.search;
+
+        if (!urlSearch) {
+          // Missing URL Query Parameters
+          console.log('Error: ', 'Missing URL Query Parameters');
+          popupStatus.classList.replace("popupInProgress", "popupError");
+          popupStatus.innerHTML = "Error...<br>Missing URL Query Parameters";
+        } else {
+          let popupParams = new URLSearchParams(urlSearch);
+          let gcEnv = "mypurecloud.com";
+          if (popupParams.has('env')) {
+            gcEnv = popupParams.get('env');
+            popupParams.delete('env');
+          }
+          let loginUrl = `https://login.${gcEnv}/oauth/authorize`;
+          let loginSearch = popupParams.toString();
+          if (loginSearch) {
+            loginUrl = `${loginUrl}?${loginSearch}`;
+          }
+          window.location.replace(loginUrl);
+        }
+      } catch (err) {
+        console.log('Error: ', err);
+        popupStatus.classList.replace("popupInProgress", "popupError");
+        popupStatus.innerHTML = "Error...<br>" + err.message ? err.message : err.name;
+      }
+    }
+  </script>
+</body>
+
+</html>
