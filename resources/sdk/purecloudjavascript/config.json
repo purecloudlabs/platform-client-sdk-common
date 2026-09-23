@@ -30,7 +30,6 @@
     "enableLoggerColor": false,
     "packageName": "purecloud-platform-client-v2",
     "moduleName": "platformClient",
-    "enableCustomHeaders": true,
     "apiHealthCheckUrl": "https://api.mypurecloud.com/api/v2/health/check"
   },
     "stageSettings": {
@@ -52,9 +51,6 @@
                         },
                         {
                             "$ref": "#/settings/packageName"
-                        },
-                        {
-                            "$ref": "#/settings/enableCustomHeaders"
                         }
                     ],
                     "failOnError": true
