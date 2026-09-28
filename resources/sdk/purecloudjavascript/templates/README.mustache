@@ -253,8 +253,6 @@ Optional parameters may be specified in the optional third parameter for `loginI
 * `login_hint` - The `login_hint` allows an application to pass the email address and/or the org name values to the authorization server (email:orgName, email, orgName).
 * `prompt` - Use the `prompt=login` parameter to require that the user be prompted to enter credentials at the Gensys Cloud login screen and ignore any remembered sessions (auth cookies).
 
-* `skipTest` - (optional) Default: false. If true, loginImplicitGrant proceeds to OAuth Grant flow regardless of existing token (skip test of token). By default, loginImplicitGrant will: (1) check if there is an existing token in memory or in local storage, (2) test this token against Genesys Cloud, (3) use this token and skip the OAuth Grant flow process if it is still valid.
-
 ```javascript
 const client = {{moduleName}}.ApiClient.instance;
 client.loginImplicitGrant(clientId, redirectUri, { state: state, login_hint: "jane@example.com:acme-org" })
