@@ -888,7 +888,6 @@ class ApiClient {
 	 * @param {string} opts.login_hint - (optional) The login_hint allows an application to pass the email address and/or the org name values to the authorization server (email:orgName, email, orgName).
 	 * @param {string} opts.prompt - (optional) Use the prompt=login parameter to require that the user be prompted to enter credentials at the Gensys Cloud login screen and ignore any remembered sessions (auth cookies).
 	 * @param {object} opts.authPopupConfiguration - (optional) Overrides Authorization Popup Configuration.
-	 * @param {boolean} opts.skipTest - (optional) Default: false. If true, proceeds to OAuth Grant flow regardless of existing token (skip test of token).
 	 */
 	loginImplicitGrant(clientId, redirectUri, opts) {
 		// Check for auth token in hash
@@ -915,7 +914,7 @@ class ApiClient {
 			}
 
 			// Test token and proceed with login
-			this._testTokenAccess(opts.skipTest)
+			this._testTokenAccess()
 				.then(() => {
 					if (!this.authData.state && opts.state)
 						this.authData.state = opts.state;
