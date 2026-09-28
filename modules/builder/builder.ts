@@ -9,7 +9,7 @@ import { Config, Script, Haystack, PureCloud } from '../types/config'
 import { LocalConfig, Overrides, Settings, StageSettings, valueOverides } from '../types/localConfig'
 import moment, { Moment } from 'moment-timezone';
 import { Resourcepaths, Version, ApiVersionData, Data, Release } from '../types/builderTypes'
-import { ItemsType, Format, Swagger } from '../types/swagger'
+import { ItemsType, Format } from '../types/swagger'
 import platformClient from 'purecloud-platform-client-v2';
 import yaml from 'js-yaml';
 import SwaggerDiff from '../swagger/swaggerDiff';
@@ -471,6 +471,8 @@ function prebuildImpl(): Promise<string> {
 								discriminatorManagement = 'override';
 							} else if (allSwaggerSettings.discriminatorManagement.toLowerCase() === 'extensions') {
 								discriminatorManagement = 'extensions';
+							} else {
+								discriminatorManagement = 'keep';
 							}
 						}
 					}
@@ -1064,9 +1066,9 @@ function addExtensions_oneOf() {
 	for (let oInfo of oneofInfoArray) {
 		let refDoc = `${oInfo.parentName} is an abstract class/type. In this context, it means the property can be one of the following classes: ${oInfo.childrenNames.join(', ')} or ${oInfo.defaultChildName}. ${oInfo.defaultChildName} is added in this SDK to prevent deserialization errors - e.g. when the class is unknown due to an outdated SDK version (compared to current version of the Platform API).`;
 		if (_this.config.settings.swaggerCodegen.codegenLanguage === "purecloudpython") {
-			refDoc = `${oInfo.parentName} is an abstract class/type. In this context, it means the property can be one of the following classes: ${oInfo.childrenNames.join(', ')} or ${oInfo.defaultChildName}. ${oInfo.defaultChildName} is added in this SDK to prevent deserialization errors - e.g. when the class is unknown due to an outdated SDK version (compared to current version of the Platform API).`;
+			refDoc = `${oInfo.parentName} is a union type (abstract). In this context, it means the property can be one of the following classes: ${oInfo.childrenNames.join(', ')} or ${oInfo.defaultChildName}. ${oInfo.defaultChildName} is added in this SDK to prevent deserialization errors - e.g. when the class is unknown due to an outdated SDK version (compared to current version of the Platform API).`;
 		} else if (_this.config.settings.swaggerCodegen.codegenLanguage === "purecloudjava") {
-			refDoc = `${oInfo.parentName} is an abstract class/type. In this context, it means the property can be one of the following classes: ${oInfo.childrenNames.join(', ')} or ${oInfo.defaultChildName}. ${oInfo.defaultChildName} is added in this SDK to prevent deserialization errors - e.g. when the class is unknown due to an outdated SDK version (compared to current version of the Platform API).`;
+			refDoc = `${oInfo.parentName} is an abstract class. In this context, it means the property can be one of the following classes: ${oInfo.childrenNames.join(', ')} or ${oInfo.defaultChildName}. ${oInfo.defaultChildName} is added in this SDK to prevent deserialization errors - e.g. when the class is unknown due to an outdated SDK version (compared to current version of the Platform API).`;
 		}
 
 		let regexConvertItemsRef = new RegExp(String.raw`"items":{"\$ref":"#\/definitions\/${oInfo.parentName}"}`, "g");
@@ -1233,12 +1235,7 @@ function addExtensions_discriminator() {
 	let swaggerDefinitionsAsString = JSON.stringify(swagger.definitions);
 	for (let dInfo of discriminatorInfoArray) {
 		let refDoc = `${dInfo.parentName} is a parent class. In this context, it means the property can be one of the following classes: ${dInfo.mapping.map((x) => x.name).join(', ')} or ${dInfo.defaultChildName}. ${dInfo.defaultChildName} is added in this SDK to prevent deserialization errors - e.g. when the class is unknown due to an outdated SDK version (compared to current version of the Platform API).`;
-		if (_this.config.settings.swaggerCodegen.codegenLanguage === "purecloudpython") {
-			refDoc = `${dInfo.parentName} is a parent class. In this context, it means the property can be one of the following classes: ${dInfo.mapping.map((x) => x.name).join(', ')} or ${dInfo.defaultChildName}. ${dInfo.defaultChildName} is added in this SDK to prevent deserialization errors - e.g. when the class is unknown due to an outdated SDK version (compared to current version of the Platform API).`;
-		} else if (_this.config.settings.swaggerCodegen.codegenLanguage === "purecloudjava") {
-			refDoc = `${dInfo.parentName} is a parent class. In this context, it means the property can be one of the following classes: ${dInfo.mapping.map((x) => x.name).join(', ')} or ${dInfo.defaultChildName}. ${dInfo.defaultChildName} is added in this SDK to prevent deserialization errors - e.g. when the class is unknown due to an outdated SDK version (compared to current version of the Platform API).`;
-		}
-
+		
 		let regexConvertItemsRef = new RegExp(String.raw`"items":{"\$ref":"#\/definitions\/${dInfo.parentName}"}`, "g");
 		let newItemsRef = `"items":{"$ref":"#/definitions/${dInfo.parentName}"},"x-gc-property-complex":true,"x-gc-property-doc":"${refDoc}"`;
 		swaggerPathsAsString = swaggerPathsAsString.replace(regexConvertItemsRef, newItemsRef);
