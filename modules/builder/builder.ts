@@ -472,7 +472,7 @@ function prebuildImpl(): Promise<string> {
 							} else if (allSwaggerSettings.discriminatorManagement.toLowerCase() === 'extensions') {
 								discriminatorManagement = 'extensions';
 							} else {
-								discriminatorManagement = 'keep';
+								discriminatorManagement = defaultDiscriminatorManagement;
 							}
 						}
 					}
@@ -1212,7 +1212,7 @@ function addExtensions_discriminator() {
 
 			// Fix ListValues model bug - compute enum
 			if (!discriminatorParentModel.properties[discriminatorPropertyName].enum) {
-				discriminatorParentModel.properties[discriminatorPropertyName].enum = discriminatorValues;
+				discriminatorParentModel.properties[discriminatorPropertyName].enum = [ ...discriminatorValues ];
 			}
 			
 			// Add DefaultValue to enum
