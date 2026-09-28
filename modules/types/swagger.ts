@@ -21,8 +21,9 @@ export enum ProduceElement {
 }
 
 export interface Definition {
-    type: ItemsType;
+    type?: ItemsType;
     properties?: { [key: string]: Property };
+    additionalProperties?: Property;
     required?: string[];
     description?: string;
     discriminator?: string;
