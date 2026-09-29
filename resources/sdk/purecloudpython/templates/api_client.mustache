@@ -56,10 +56,17 @@ from .gateway_configuration import GatewayConfiguration
 from .configuration import Configuration
 from .year_month import YearMonth
 
+{{#apiInfo}}{{#apis}}{{#-first}}{{#vendorExtensions.x-gc-one-of-details}}
+{{#childrenNames}}
+from .models.{{#lambda.snakecase}}{{.}}{{/lambda.snakecase}} import {{.}}
+{{/childrenNames}}
+from .models.{{#lambda.snakecase}}{{defaultChildName}}{{/lambda.snakecase}} import {{defaultChildName}}
+{{/vendorExtensions.x-gc-one-of-details}}{{/-first}}{{/apis}}{{/apiInfo}}
+
 ONE_OF_TYPES = { {{#apiInfo}}{{#apis}}{{#-first}}{{#vendorExtensions.x-gc-one-of-details}}
     '{{parentName}}': {
-        'values': [ {{#childrenNames}}'{{.}}'{{^-last}}, {{/-last}}{{/childrenNames}} ],
-        'default': '{{defaultChildName}}'
+        'values': [ {{#childrenNames}}{{.}}{{^-last}}, {{/-last}}{{/childrenNames}} ],
+        'default': {{defaultChildName}}
     }{{^-last}},{{/-last}}{{/vendorExtensions.x-gc-one-of-details}}{{/-first}}{{/apis}}{{/apiInfo}}
 }
 
