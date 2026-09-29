@@ -1039,6 +1039,14 @@ function addExtensions_oneOf() {
 			oneOfParentModel["x-gc-is-one-of-parent"] = true;
 			oneOfParentModel["x-gc-one-of-children"] = oneOfChildren;
 			oneOfParentModel["x-gc-one-of-default"] = oneOfDefaultChild;
+			if (!oneOfParentModel.properties) oneOfParentModel.properties = {};
+			if (!oneOfParentModel.properties["emulateProperty"]) {
+				oneOfParentModel.properties["emulateProperty"] = {
+					"type": ItemsType.String,
+					"description": `Emulate property.`
+				};
+				oneOfParentModel.properties["emulateProperty"]["x-gc-ignore-property"] = true;
+			}
 
 			// Add vendor extensions to children classes
 			for (let childName of oneOfChildren) {
