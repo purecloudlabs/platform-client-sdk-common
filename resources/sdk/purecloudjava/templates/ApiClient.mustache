@@ -56,6 +56,9 @@ import {{invokerPackage}}.hooksmanager.LoggingPostResponseHook;
 import {{invokerPackage}}.hooksmanager.LoggingPreRequestHook;
 import {{invokerPackage}}.hooksmanager.PostResponseHook;
 import {{invokerPackage}}.hooksmanager.PreRequestHook;
+{{#apiInfo}}{{#apis}}{{#-first}}{{#vendorExtensions.x-gc-one-of-details}}
+import {{invokerPackage}}.model.{{parentName}};
+{{/vendorExtensions.x-gc-one-of-details}}{{/-first}}{{/apis}}{{/apiInfo}}
 
 public class ApiClient implements AutoCloseable {
     private static final String DEFAULT_BASE_PATH = "{{basePath}}";
@@ -198,6 +201,14 @@ public class ApiClient implements AutoCloseable {
         SimpleModule localDateTimeModule = new SimpleModule();
         localDateTimeModule.addSerializer(LocalDateTime.class, new LocalDateTimeSerializer());
         objectMapper.registerModule(localDateTimeModule);
+        {{#apiInfo}}{{#apis}}{{#-first}}{{#vendorExtensions.x-gc-one-of-details}}
+        {{#-first}}SimpleModule oneOfModule = new SimpleModule();{{/-first}}
+        oneOfModule.addDeserializer(
+            {{parentName}}.class,
+            new {{parentName}}.{{parentName}}Deserializer()
+        );
+        {{#-last}}objectMapper.registerModule(oneOfModule);{{/-last}}
+        {{/vendorExtensions.x-gc-one-of-details}}{{/-first}}{{/apis}}{{/apiInfo}}
         return objectMapper;
     }
 

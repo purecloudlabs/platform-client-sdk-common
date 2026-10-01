@@ -17,6 +17,38 @@ import com.mypurecloud.sdk.v2.ApiClient;
 {{#serializableModel}}import java.io.Serializable;{{/serializableModel}}
 {{#models}}
 {{#model}}
+{{^vendorExtensions.x-gc-class-complex}}
 {{#isEnum}}{{>modelEnum}}{{/isEnum}}{{^isEnum}}{{>pojo}}{{/isEnum}}
+{{/vendorExtensions.x-gc-class-complex}}{{#vendorExtensions.x-gc-class-complex}}
+{{#vendorExtensions.x-gc-is-one-of-parent}}
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+{{>pojoOneOfParent}}
+{{/vendorExtensions.x-gc-is-one-of-parent}}
+{{#vendorExtensions.x-gc-is-one-of-child}}
+import {{package}}.{{vendorExtensions.x-gc-one-of-parent}};
+import com.fasterxml.jackson.databind.JsonNode;
+
+{{>pojoOneOfChild}}
+{{/vendorExtensions.x-gc-is-one-of-child}}
+{{#vendorExtensions.x-gc-is-discriminator-parent}}
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+{{>pojoDiscriminatorParent}}
+{{/vendorExtensions.x-gc-is-discriminator-parent}}
+{{#vendorExtensions.x-gc-is-discriminator-child}}
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+{{>pojoDiscriminatorChild}}
+{{/vendorExtensions.x-gc-is-discriminator-child}}
+{{/vendorExtensions.x-gc-class-complex}}
 {{/model}}
 {{/models}}
