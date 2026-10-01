@@ -764,5 +764,15 @@
         "get": {
             "name": "list"
         }
+    },
+    "/api/v2/workforcemanagement/businessunits/{businessUnitId}/activityplans/{activityPlanId}/occurrences/{occurrenceId}/sessions/{sessionId}/jobs/{jobId}": {
+        "get": {
+            "name": "getforedit"
+        }
+    },
+    "/api/v2/workforcemanagement/businessunits/{businessUnitId}/activityplans/{activityPlanId}/occurrences/{occurrenceId}/sessions/{sessionId}/jobs": {
+        "post": {
+            "name": "createforedit"
+        }
     }
 }
