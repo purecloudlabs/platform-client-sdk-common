@@ -230,26 +230,34 @@ declare namespace {{classname}} { {{#operation}}
 {{/operations}}
 {{/apis}}
 
-declare namespace Models { {{#models}}{{#model}}{{^vendorExtensions.x-gc-class-complex}}
+declare namespace Models { {{#models}}{{#model}}
+{{^vendorExtensions.x-gc-class-complex}}
 	export interface {{classname}} { {{#vars}}
 		"{{baseName}}"{{^required}}?{{/required}}: {{{typeScriptType}}};{{/vars}}
 	}
-	{{/vendorExtensions.x-gc-class-complex}}{{#vendorExtensions.x-gc-class-complex}}{{#vendorExtensions.x-gc-is-one-of-parent}}
+{{/vendorExtensions.x-gc-class-complex}}
+{{#vendorExtensions.x-gc-class-complex}}
+{{#vendorExtensions.x-gc-is-one-of-parent}}
 	export type {{classname}} = {{#vendorExtensions.x-gc-one-of-children}}Models.{{.}} | {{/vendorExtensions.x-gc-one-of-children}}Models.{{vendorExtensions.x-gc-one-of-default}};
-	{{/vendorExtensions.x-gc-is-one-of-parent}}{{#vendorExtensions.x-gc-is-one-of-child}}
+{{/vendorExtensions.x-gc-is-one-of-parent}}
+{{#vendorExtensions.x-gc-is-one-of-child}}
 	export interface {{classname}} { {{#vars}}{{^vendorExtensions.x-gc-ignore-property}}
 		"{{baseName}}"{{^required}}?{{/required}}: {{{typeScriptType}}};{{/vendorExtensions.x-gc-ignore-property}}{{/vars}}
 	}
-	{{/vendorExtensions.x-gc-is-one-of-child}}{{#vendorExtensions.x-gc-is-discriminator-parent}}
+{{/vendorExtensions.x-gc-is-one-of-child}}
+{{#vendorExtensions.x-gc-is-discriminator-parent}}
 	export type {{classname}} = {{#vendorExtensions.x-gc-discriminator-children}}Models.{{.}} | {{/vendorExtensions.x-gc-discriminator-children}}Models.{{vendorExtensions.x-gc-discriminator-default}};
 
 	export interface {{classname}}Base { {{#vars}}
 		"{{baseName}}"{{^required}}?{{/required}}: {{^vendorExtensions.x-gc-is-discriminator-property}}{{{typeScriptType}}}{{/vendorExtensions.x-gc-is-discriminator-property}}{{#vendorExtensions.x-gc-is-discriminator-property}}{{#model.vendorExtensions.x-gc-discriminator-values}}"{{.}}" | {{/model.vendorExtensions.x-gc-discriminator-values}}string{{/vendorExtensions.x-gc-is-discriminator-property}};{{/vars}}
 	}
-	{{/vendorExtensions.x-gc-is-discriminator-parent}}{{#vendorExtensions.x-gc-is-discriminator-child}}
+{{/vendorExtensions.x-gc-is-discriminator-parent}}
+{{#vendorExtensions.x-gc-is-discriminator-child}}
 	export interface {{classname}} extends Models.{{parent}}Base { {{#vars}}
 		"{{baseName}}"{{^required}}?{{/required}}: {{^vendorExtensions.x-gc-is-discriminator-property}}{{{typeScriptType}}}{{/vendorExtensions.x-gc-is-discriminator-property}}{{#vendorExtensions.x-gc-is-discriminator-property}}{{^model.vendorExtensions.x-gc-is-outdated-sdk-version}}"{{model.vendorExtensions.x-discriminator-value}}"{{/model.vendorExtensions.x-gc-is-outdated-sdk-version}}{{#model.vendorExtensions.x-gc-is-outdated-sdk-version}}{{{typeScriptType}}}{{/model.vendorExtensions.x-gc-is-outdated-sdk-version}}{{/vendorExtensions.x-gc-is-discriminator-property}};{{/vars}}
 	}
-	{{/vendorExtensions.x-gc-is-discriminator-child}}{{/vendorExtensions.x-gc-class-complex}}{{/model}}{{/models}}
+{{/vendorExtensions.x-gc-is-discriminator-child}}
+{{/vendorExtensions.x-gc-class-complex}}
+{{/model}}{{/models}}
 }
 {{/apiInfo}}
