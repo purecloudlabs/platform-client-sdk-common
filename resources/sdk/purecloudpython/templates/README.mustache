@@ -405,15 +405,15 @@ A YearMonth instance can also be transformed into a date (with day being forced 
 
 "OneOf" models have been introduced in the Platform API Swagger specification.
 
-These models are represented as a Union type (union of classes) - i.e. the model is one of the classes.
+These models are represented as a union type (union of classes) - i.e. the model is one of the class variants.
 
-Python's isinstance() can be used to determine the concrete type of a one-of value. The one-of parent type can also be used with isinstance().
+Python's `isinstance()` can be used to determine the concrete type of a one-of value. It can also be used to verify the one-of parent type.
 
-e.g. {{#apiInfo}}{{#apis}}{{#-first}}{{#vendorExtensions.x-gc-one-of-details}}
-* {{parentName}} is a union type of the following classes: {{#childrenNames}}{{.}}{{^-last}}, {{/-last}}{{/childrenNames}}and {{defaultChildName}}
+OneOf Models: {{#apiInfo}}{{#apis}}{{#-first}}{{#vendorExtensions.x-gc-one-of-details}}
+* {{parentName}} (one-of parent) is one of the following classes: {{#childrenNames}}{{.}}{{^-last}}, {{/-last}}{{/childrenNames}}or {{defaultChildName}}
 {{/vendorExtensions.x-gc-one-of-details}}{{/-first}}{{/apis}}{{/apiInfo}}
 
-Python's isinstance() can be used to determine the concrete type of a one-of value:
+Python's `isinstance()` can be used to determine the concrete type of a one-of value:
 ```python
 condition = model.condition
 
@@ -428,7 +428,7 @@ elif isinstance(condition, AgenticVirtualAgentStructuredConditionOutdatedSdkVers
     ...
 ```
 
-The one-of parent type can also be used with isinstance():
+It can also be used to verify the one-of parent type of a one-of value:
 ```python
 if isinstance(condition, AgenticVirtualAgentStructuredCondition):
     # condition is one of the supported AgenticVirtualAgentStructuredCondition types
@@ -439,13 +439,13 @@ if isinstance(condition, AgenticVirtualAgentStructuredCondition):
 
 Models with discriminator (polymorphism) have been introduced in the Platform API Swagger specification.
 
-These models are represented as a parent class and their children.
+These models are represented as a parent class (which uses one of its properties as a discriminator) and their children.
 
-e.g. {{#apiInfo}}{{#apis}}{{#-first}}{{#vendorExtensions.x-gc-discriminator-details}}
+Discriminator Models: {{#apiInfo}}{{#apis}}{{#-first}}{{#vendorExtensions.x-gc-discriminator-details}}
 * {{parentName}} is the parent class of the following classes: {{#mapping}}{{name}} ("{{value}}"){{^-last}}, {{/-last}}{{/mapping}}and {{defaultChildName}} (default)
 {{/vendorExtensions.x-gc-discriminator-details}}{{/-first}}{{/apis}}{{/apiInfo}}
 
-Python's isinstance() can be used to determine the concrete type of the value:
+Python's `isinstance()` can be used to determine the concrete type of the value:
 ```python
 event_settings = model.event_settings
 
@@ -457,7 +457,7 @@ elif isinstance(event_settings, AgenticVirtualAgentEscalationEventSettings):
     ...
 ```
 
-Because discriminator child classes inherit from the parent class, they are also instances of the parent type:
+Because discriminator child classes inherit from the parent class, they are also instances of the parent class:
 ```python
 if isinstance(event_settings, AgenticVirtualAgentEventSettings):
     # event_settings is an AgenticVirtualAgentEventSettings
