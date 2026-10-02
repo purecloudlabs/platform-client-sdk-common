@@ -2,13 +2,41 @@
 
 {{#models}}{{#model}}## {{classname}}
 
+{{#vendorExtensions.x-gc-is-one-of-parent}}
+{{classname}} is a union type (abstract). It is one of the following class variants: {{#vendorExtensions.x-gc-one-of-children}}[{{.}}]({{.}}), {{/vendorExtensions.x-gc-one-of-children}}or [{{vendorExtensions.x-gc-one-of-default}}]({{vendorExtensions.x-gc-one-of-default}}).
+
+[{{vendorExtensions.x-gc-one-of-default}}]({{vendorExtensions.x-gc-one-of-default}}) is used to prevent deserialization errors - e.g. outdated SDK version: a new class variant has been introduced in the Platform API (compared to the version of the Platform API used to build this version of the SDK).
+{{/vendorExtensions.x-gc-is-one-of-parent}}
+{{#vendorExtensions.x-gc-is-one-of-child}}
+{{#vendorExtensions.x-gc-is-outdated-sdk-version}}
+{{classname}} is used to prevent deserialization errors - e.g. outdated SDK version: a new class variant has been introduced to the [{{vendorExtensions.x-gc-one-of-parent}}]({{vendorExtensions.x-gc-one-of-parent}}) union, in the Platform API (compared to the version of the Platform API used to build this version of the SDK).
+{{/vendorExtensions.x-gc-is-outdated-sdk-version}}
+{{/vendorExtensions.x-gc-is-one-of-child}}
+{{#vendorExtensions.x-gc-is-discriminator-parent}}
+{{classname}} is the parent class of {{#vendorExtensions.x-gc-discriminator-children}}[{{.}}]({{.}}), {{/vendorExtensions.x-gc-discriminator-children}}and [{{vendorExtensions.x-gc-discriminator-default}}]({{vendorExtensions.x-gc-discriminator-default}}).
+
+[{{vendorExtensions.x-gc-discriminator-default}}]({{vendorExtensions.x-gc-discriminator-default}}) is used to prevent deserialization errors - e.g. outdated SDK version: a new child class variant has been added to the {{classname}} class, in the Platform API (compared to the version of the Platform API used to build this version of the SDK).
+{{/vendorExtensions.x-gc-is-discriminator-parent}}
+{{#vendorExtensions.x-gc-is-discriminator-child}}
+{{classname}} is a child class of [{{parent}}]({{parent}}).
+{{#vendorExtensions.x-gc-is-outdated-sdk-version}}
+
+{{classname}} is used to prevent deserialization errors - e.g. outdated SDK version: a new child class variant has been added to the [{{parent}}]({{parent}}) class, in the Platform API (compared to the version of the Platform API used to build this version of the SDK).
+{{/vendorExtensions.x-gc-is-outdated-sdk-version}}
+{{/vendorExtensions.x-gc-is-discriminator-child}}
+{{^vendorExtensions.x-gc-is-one-of-parent}}
+
 ## Properties
 
 |Name | Type | Description | Notes|
 |------------ | ------------- | ------------- | -------------|
 {{#vars}}
-| **{{name}}** | {{#isPrimitiveType}}{{datatype}}{{/isPrimitiveType}}{{^isPrimitiveType}}[{{datatype}}]({{complexType}}){{/isPrimitiveType}} | {{description}} | {{^required}}[optional] {{/required}}{{#readOnly}}[readonly] {{/readOnly}}{{#defaultValue}}[default to {{defaultValue}}]{{/defaultValue}}|
+{{^vendorExtensions.x-gc-ignore-property}}
+| **{{name}}** | {{#isPrimitiveType}}{{datatype}}{{/isPrimitiveType}}{{^isPrimitiveType}}[{{datatype}}]({{complexType}}){{/isPrimitiveType}} | {{#vendorExtensions.x-gc-is-discriminator-property}}{{#model.vendorExtensions.x-gc-is-discriminator-child}}{{^model.vendorExtensions.x-gc-is-outdated-sdk-version}}Always "{{model.vendorExtensions.x-discriminator-value}}" for this class. {{/model.vendorExtensions.x-gc-is-outdated-sdk-version}}{{/model.vendorExtensions.x-gc-is-discriminator-child}}{{/vendorExtensions.x-gc-is-discriminator-property}}{{description}} | {{^required}}[optional] {{/required}}{{#readOnly}}[readonly] {{/readOnly}}{{#defaultValue}}[default to {{defaultValue}}]{{/defaultValue}}|
+{{/vendorExtensions.x-gc-ignore-property}}
 {{/vars}}
+
+{{/vendorExtensions.x-gc-is-one-of-parent}}
 
 {{/model}}{{/models}}
 
