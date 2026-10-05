@@ -438,10 +438,6 @@ function prebuildImpl(): Promise<string> {
 					return processPaths();
 				})
 				.then(() => {
-					log.debug('Processing swagger references');
-					return processRefs();
-				})
-				.then(() => {
 					log.debug('Processing any types in schema');
 					return processAnyTypes();
 				})
@@ -483,6 +479,10 @@ function prebuildImpl(): Promise<string> {
 				})
 				.then(() => {
 					return addExtensions_followRedirectBody(followRedirectBodyOperations);
+				})
+				.then(() => {
+					log.debug('Processing swagger references');
+					return processRefs();
 				})
 				.then(() => {
 					// Save new swagger to temp file for build
@@ -1252,8 +1252,8 @@ function addPolymorphismDescriptionToProperty(prop: Property, oneofInfoParents: 
 				prop.description = discriminatorInfoDocMap[modelName];
 			}
 		}
-	} else if (prop["allOf"] && prop["allOf"].length == 1 && prop["allOf"][0]["$ref"]) {
-		let modelName = prop["allOf"][0]["$ref"].replace('#/definitions/', '');
+	} else if (prop.additionalProperties && prop.additionalProperties["$ref"]) {
+		let modelName = prop.additionalProperties["$ref"].replace('#/definitions/', '');
 		if (oneofInfoParents.includes(modelName)) {
 			if (prop.description) {
 				prop.description = prop.description + ' ' + oneofInfoDocMap[modelName];
@@ -1276,23 +1276,22 @@ function addPolymorphismDescription(oneofInfoArray: oneofInfo[], discriminatorIn
 
 	let skipDocForLanguages = ["purecloudjavascript", "clisdkclient"];
 	if (!skipDocForLanguages.includes(_this.config.settings.swaggerCodegen.codegenLanguage)) {
-		let oneofInfoParents: string[] = [];
+		let oneofInfoParents: string[] = oneofInfoArray.map((oInfo) => oInfo.parentName);
 		let oneofInfoDocMap: Record<string, string> = {};
-		for (let oInfo of oneofInfoArray) {
+		oneofInfoArray.forEach((oInfo) => {
 			let refDoc = `${oInfo.parentName} is defined as an interface (abstract class). In this context, it means the property value is an instance of one of the following class variants: ${oInfo.childrenNames.join(', ')} or ${oInfo.defaultChildName}. ${oInfo.defaultChildName} is added in this SDK to prevent deserialization errors - e.g. outdated SDK version: a new class variant has been introduced in the Platform API (compared to the version of the Platform API used to build this version of the SDK).`;
 			if (_this.config.settings.swaggerCodegen.codegenLanguage === "purecloudpython") {
 				refDoc = `${oInfo.parentName} is defined as a union type (abstract). In this context, it means the property value is an instance of one of the following class variants: ${oInfo.childrenNames.join(', ')} or ${oInfo.defaultChildName}. ${oInfo.defaultChildName} is added in this SDK to prevent deserialization errors - e.g. outdated SDK version: a new class variant has been introduced in the Platform API (compared to the version of the Platform API used to build this version of the SDK).`;
 			}
-			oneofInfoParents.push(oInfo.parentName);
 			oneofInfoDocMap[oInfo.parentName] = refDoc;
-		}
-		let discriminatorInfoParents: string[] = [];
+		});
+
+		let discriminatorInfoParents: string[] = discriminatorInfoArray.map((dInfo) => dInfo.parentName);
 		let discriminatorInfoDocMap: Record<string, string> = {};
-		for (let dInfo of discriminatorInfoArray) {
+		discriminatorInfoArray.forEach((dInfo) => {
 			let refDoc = `${dInfo.parentName} is a parent class (using ${dInfo.propertyName} property as discriminator). In this context, it means the property value is an instance of one of its children classes: ${dInfo.mapping.map((x) => `${x.name} (${dInfo.propertyName}: ${x.value})`).join(', ')} or ${dInfo.defaultChildName} (${dInfo.propertyName}: unknown values). ${dInfo.defaultChildName} is added in this SDK to prevent deserialization errors - e.g. outdated SDK version: a new class variant has been introduced in the Platform API (compared to the version of the Platform API used to build this version of the SDK).`;
-			discriminatorInfoParents.push(dInfo.parentName);
 			discriminatorInfoDocMap[dInfo.parentName] = refDoc;
-		}
+		});
 
 		for (let modelName in swagger.definitions) {
 			let model = swagger.definitions[modelName];
@@ -1553,9 +1552,9 @@ function processRefs() {
 	keys.forEach((key, index) => {
 		let obj = swaggerDiff.newSwagger.definitions[key].properties;
 		if (obj) {
-			const keys = Object.keys(swaggerDiff.newSwagger.definitions[key].properties);
+			const keys = Object.keys(obj);
 			keys.forEach((key2, index) => {
-				let obj2 = swaggerDiff.newSwagger.definitions[key].properties[key2];
+				let obj2 = obj[key2];
 				if (obj2) {
 					if (obj2.hasOwnProperty("$ref") && (obj2.hasOwnProperty("readOnly") || obj2.hasOwnProperty("description"))) {
 						if (obj2.readOnly === true && obj2.hasOwnProperty("description")) {
@@ -1568,6 +1567,27 @@ function processRefs() {
 					}
 				}
 			});
+		} else if (swaggerDiff.newSwagger.definitions[key].allOf) {
+			for (let allOfElement of swaggerDiff.newSwagger.definitions[key].allOf) {
+				let obj = allOfElement.properties;
+				if (obj) {
+					const keys = Object.keys(obj);
+					keys.forEach((key2, index) => {
+						let obj2 = obj[key2];
+						if (obj2) {
+							if (obj2.hasOwnProperty("$ref") && (obj2.hasOwnProperty("readOnly") || obj2.hasOwnProperty("description"))) {
+								if (obj2.readOnly === true && obj2.hasOwnProperty("description")) {
+									obj2.description = `${obj2.description} readOnly`
+								}
+
+								let refObj = { "$ref": obj2.$ref };
+								obj2.allOf = [refObj];
+								delete obj2.$ref;
+							}
+						}
+					});
+				}
+			}
 		}
 	});
 }
