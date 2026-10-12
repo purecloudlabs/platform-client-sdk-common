@@ -13,11 +13,11 @@ echo "NUGET_SOURCE=$NUGET_SOURCE"
 echo "IS_NEW_RELEASE=$IS_NEW_RELEASE"
 echo "VERSION=$VERSION"
 
-if [ ! "$IS_NEW_RELEASE" = "true" ]
-then
-	echo "Skipping nuget publish"
-	exit 0
-fi
+# if [ ! "$IS_NEW_RELEASE" = "true" ]
+# then
+# 	echo "Skipping nuget publish"
+# 	exit 0
+# fi
 
 # Determine authentication method
 # For JFrog: Use JFROG_USR:JFROG_PSW from environment if available and source is JFrog
