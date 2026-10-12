@@ -4,6 +4,7 @@
  */{{#description}}
 @ApiModel(description = "{{{description}}}"){{/description}}
 
+@JsonDeserialize(using = JsonDeserializer.None.class)
 public class {{classname}} implements {{vendorExtensions.x-gc-one-of-parent}} {
   {{#vars}}{{^vendorExtensions.x-gc-ignore-property}}{{#isEnum}}
 

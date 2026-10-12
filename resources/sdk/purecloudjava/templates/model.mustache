@@ -33,6 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 {{#vendorExtensions.x-gc-is-one-of-child}}
 import {{package}}.{{vendorExtensions.x-gc-one-of-parent}};
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.JsonDeserializer;
 
 {{>pojoOneOfChild}}
 {{/vendorExtensions.x-gc-is-one-of-child}}

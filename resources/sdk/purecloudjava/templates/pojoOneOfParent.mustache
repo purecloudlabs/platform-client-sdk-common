@@ -5,6 +5,7 @@
  */{{#description}}
 @ApiModel(description = "{{{description}}}"){{/description}}
 
+@JsonDeserialize(using = {{classname}}.{{classname}}Deserializer.class)
 public interface {{classname}} extends Serializable {
 
     public final class {{classname}}Deserializer
@@ -21,17 +22,24 @@ public interface {{classname}} extends Serializable {
 
             JsonNode node = parser.getCodec().readTree(parser);
 
+            int countMatch = 0;
+
             {{#vendorExtensions.x-gc-one-of-children}}
             boolean is{{.}}Match = {{.}}.matchesJsonData(node);
+            if (is{{.}}Match) countMatch++;
             {{/vendorExtensions.x-gc-one-of-children}}
 
             ObjectMapper mapper = (ObjectMapper) parser.getCodec();
 
-            if ({{#vendorExtensions.x-gc-one-of-children}}is{{.}}Match{{^-last}} && {{/-last}}{{/vendorExtensions.x-gc-one-of-children}}) {
+            // Defaults to default
+            // countMatch == 0 - Value does not match any oneOf alternative
+            // countMatch > 1 - Value matches more than one oneOf alternative
+
+            if (countMatch == 0) {
                 return mapper.treeToValue(node, {{vendorExtensions.x-gc-one-of-default}}.class);
             }
 
-            if ({{#vendorExtensions.x-gc-one-of-children}}!is{{.}}Match{{^-last}} && {{/-last}}{{/vendorExtensions.x-gc-one-of-children}}) {
+            if (countMatch > 1) {
                 return mapper.treeToValue(node, {{vendorExtensions.x-gc-one-of-default}}.class);
             }
 
