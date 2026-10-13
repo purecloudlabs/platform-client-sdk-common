@@ -774,5 +774,10 @@
         "post": {
             "name": "createforedit"
         }
+    },
+    "/api/v2/users/me/verifiers/{verifierId}": {
+        "patch": {
+            "name": "patch"
+        }
     }
 }
