@@ -11,7 +11,7 @@ public class {{classname}} {{#parent}}extends {{{parent}}}{{/parent}} {{#seriali
 {{>modelInnerEnum}}{{/isEnum}}{{#items.isEnum}}{{#items}}
 
 {{>modelInnerEnum}}{{/items}}{{/items.isEnum}}{{/vendorExtensions.x-gc-is-discriminator-property}}
-  private {{^vendorExtensions.x-gc-is-discriminator-property}}{{{datatypeWithEnum}}}{{/vendorExtensions.x-gc-is-discriminator-property}}{{#vendorExtensions.x-gc-is-discriminator-property}}{{{datatype}}}{{/vendorExtensions.x-gc-is-discriminator-property}} {{name}} = {{^isArray}}{{{defaultValue}}}{{/isArray}}{{#isArray}}null{{/isArray}};{{/vars}}
+  private {{^vendorExtensions.x-gc-is-discriminator-property}}{{{datatypeWithEnum}}}{{/vendorExtensions.x-gc-is-discriminator-property}}{{#vendorExtensions.x-gc-is-discriminator-property}}{{{datatype}}}{{/vendorExtensions.x-gc-is-discriminator-property}} {{name}} = {{^isArray}}{{^vendorExtensions.x-gc-is-discriminator-property}}{{{defaultValue}}}{{/vendorExtensions.x-gc-is-discriminator-property}}{{#vendorExtensions.x-gc-is-discriminator-property}}{{^model.vendorExtensions.x-gc-is-outdated-sdk-version}}"{{model.vendorExtensions.x-discriminator-value}}"{{/model.vendorExtensions.x-gc-is-outdated-sdk-version}}{{#model.vendorExtensions.x-gc-is-outdated-sdk-version}}{{{defaultValue}}}{{/model.vendorExtensions.x-gc-is-outdated-sdk-version}}{{/vendorExtensions.x-gc-is-discriminator-property}}{{/isArray}}{{#isArray}}null{{/isArray}};{{/vars}}
 
   public {{classname}}() {
     if (ApiClient.LEGACY_EMPTY_LIST == true) { {{#vars}}{{#isArray}}
