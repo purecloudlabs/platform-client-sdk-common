@@ -1,0 +1,212 @@
+    /// <summary>
+    /// {{#description}}{{.}}{{/description}}{{^description}}{{classname}}{{/description}}
+    /// {{classname}} is the parent class of {{#vendorExtensions.x-gc-discriminator-children}}{{.}}, {{/vendorExtensions.x-gc-discriminator-children}}and {{vendorExtensions.x-gc-discriminator-default}}.
+    /// {{vendorExtensions.x-gc-discriminator-default}} is used to prevent deserialization errors - e.g. outdated SDK version: a new child class variant has been added to the {{classname}} class, in the Platform API (compared to the version of the Platform API used to build this version of the SDK).
+    /// </summary>
+    [DataContract]
+    [JsonConverter(typeof({{classname}}Converter))]
+    public abstract partial class {{classname}} : {{#parent}}{{{parent}}}, {{/parent}} IEquatable<{{classname}}>{{#isPagedResource}}, IPagedResource<{{{pagedResourceType}}}>{{/isPagedResource}}
+    {
+        {{#vars}}
+        {{^vendorExtensions.x-gc-is-discriminator-property}}
+        {{#isEnum}}
+{{>modelInnerEnum}}
+        {{/isEnum}}
+        {{#items.isEnum}}
+        {{#items}}
+{{>modelInnerEnum}}
+        {{/items}}
+        {{/items.isEnum}}
+        {{/vendorExtensions.x-gc-is-discriminator-property}}
+        {{/vars}}
+        {{#vars}}
+        {{^vendorExtensions.x-gc-is-discriminator-property}}
+        {{#isEnum}}
+        /// <summary>
+        /// {{^description}}Gets or Sets {{{name}}}{{/description}}{{#description}}{{{description}}}{{/description}}
+        /// </summary>{{#description}}
+        /// <value>{{{description}}}</value>{{/description}}
+        [DataMember(Name="{{baseName}}", EmitDefaultValue={{emitDefaultValue}})]
+        public {{{datatypeWithEnum}}}? {{name}} { get; {{#isReadOnly}}private {{/isReadOnly}}set; }
+
+        {{/isEnum}}
+        {{/vendorExtensions.x-gc-is-discriminator-property}}
+        {{/vars}}
+    {{#hasRequired}}
+        /// <summary>
+        /// Initializes a new instance of the <see cref="{{classname}}" /> class.
+        /// </summary>
+        [JsonConstructorAttribute]
+        protected {{classname}}() { }
+
+    {{/hasRequired}}
+        /// <summary>
+        /// Initializes a new instance of the <see cref="{{classname}}" /> class.
+        /// </summary>{{#vars}}{{^isReadOnly}}
+        /// <param name="{{name}}">{{#description}}{{description}}{{/description}}{{^description}}{{name}}{{/description}}{{#required}} (required){{/required}}{{#defaultValue}} (default to {{defaultValue}}){{/defaultValue}}.</param>{{/isReadOnly}}{{/vars}}
+        public {{classname}}({{#vars}}{{^isReadOnly}}{{^vendorExtensions.x-gc-is-discriminator-property}}{{{datatypeWithEnum}}}{{#isEnum}}?{{/isEnum}}{{/vendorExtensions.x-gc-is-discriminator-property}}{{#vendorExtensions.x-gc-is-discriminator-property}}{{{datatype}}}{{/vendorExtensions.x-gc-is-discriminator-property}} {{name}} = null{{/isReadOnly}}{{#hasMoreNonReadOnly}}{{^isReadOnly}}, {{/isReadOnly}}{{/hasMoreNonReadOnly}}{{/vars}})
+        {
+            {{#vars}}{{^isReadOnly}}{{#defaultValue}}// use default value if no "{{name}}" provided
+            if ({{name}} == null)
+            {
+                this.{{name}} = {{{defaultValue}}};
+            }
+            else
+            {
+                this.{{name}} = {{name}};
+            } {{/defaultValue}}{{^defaultValue}}this.{{name}} = {{name}};
+            {{/defaultValue}}{{/isReadOnly}}{{/vars}}
+        }
+        
+        {{#vars}}
+        {{^isEnum}}
+        /// <summary>
+        /// {{^description}}Gets or Sets {{{name}}}{{/description}}{{#description}}{{description}}{{/description}}
+        /// </summary>{{#description}}
+        /// <value>{{description}}</value>{{/description}}
+        [DataMember(Name="{{baseName}}", EmitDefaultValue={{emitDefaultValue}})]
+        public {{{datatypeWithEnum}}} {{name}} { get; {{#isReadOnly}}private {{/isReadOnly}}set; }
+        {{/isEnum}}
+        {{#vendorExtensions.x-gc-is-discriminator-property}}
+        /// <summary>
+        /// {{^description}}Gets or Sets {{{name}}}{{/description}}{{#description}}{{description}}{{/description}}
+        /// </summary>{{#description}}
+        /// <value>{{description}}</value>{{/description}}
+        [DataMember(Name="{{baseName}}", EmitDefaultValue={{emitDefaultValue}})]
+        [JsonProperty("{{baseName}}", Required = Required.Always)]
+        public {{{datatype}}} {{name}} { get; {{#isReadOnly}}private {{/isReadOnly}}set; }
+        {{/vendorExtensions.x-gc-is-discriminator-property}}
+
+        {{/vars}}
+        /// <summary>
+        /// Returns the string presentation of the object
+        /// </summary>
+        /// <returns>String presentation of the object</returns>
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            sb.Append("class {{classname}} {\n");
+
+            {{#vars}}
+            sb.Append("  {{name}}: ").Append({{name}}).Append("\n");
+            {{/vars}}
+            sb.Append("}\n");
+            return sb.ToString();
+        }
+  
+        /// <summary>
+        /// Returns the JSON string presentation of the object
+        /// </summary>
+        /// <returns>JSON string presentation of the object</returns>
+        public {{#parent}} new {{/parent}}string ToJson()
+        {
+            return JsonConvert.SerializeObject(this, new JsonSerializerSettings
+            {
+                MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
+                Formatting = Formatting.Indented
+            });
+        }
+
+        /// <summary>
+        /// Returns true if objects are equal
+        /// </summary>
+        /// <param name="obj">Object to be compared</param>
+        /// <returns>Boolean</returns>
+        public override bool Equals(object obj)
+        {
+            // credit: http://stackoverflow.com/a/10454552/677735
+            return this.Equals(obj as {{classname}});
+        }
+
+        /// <summary>
+        /// Returns true if {{classname}} instances are equal
+        /// </summary>
+        /// <param name="other">Instance of {{classname}} to be compared</param>
+        /// <returns>Boolean</returns>
+        public bool Equals({{classname}} other)
+        {
+            // credit: http://stackoverflow.com/a/10454552/677735
+            if (other == null)
+                return false;
+
+            return true{{#vars}}{{^isContainer}} &&
+                (
+                    this.{{name}} == other.{{name}} ||
+                    this.{{name}} != null &&
+                    this.{{name}}.Equals(other.{{name}})
+                ){{/isContainer}}{{#isContainer}} &&
+                (
+                    this.{{name}} == other.{{name}} ||
+                    this.{{name}} != null &&
+                    this.{{name}}.SequenceEqual(other.{{name}})
+                ){{/isContainer}}{{/vars}}{{^vars}} && false{{/vars}};
+        }
+
+        /// <summary>
+        /// Gets the hash code
+        /// </summary>
+        /// <returns>Hash code</returns>
+        public override int GetHashCode()
+        {
+            // credit: http://stackoverflow.com/a/263416/677735
+            unchecked // Overflow is fine, just wrap
+            {
+                int hash = 41;
+                // Suitable nullity checks etc, of course :)
+                {{#vars}}
+                if (this.{{name}} != null)
+                    hash = hash * 59 + this.{{name}}.GetHashCode();
+
+                {{/vars}}
+                return hash;
+            }
+        }
+    }
+
+    public class {{classname}}Converter : JsonConverter
+    {
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof({{classname}});
+        }
+
+        public override object ReadJson(
+            JsonReader reader,
+            Type objectType,
+            object existingValue,
+            JsonSerializer serializer)
+        {
+            var jsonObject = JObject.Load(reader);
+
+            var discriminator = jsonObject["{{vendorExtensions.x-gc-discriminator-property}}"]?.Value<string>();
+
+            {{classname}} target;
+
+            switch (discriminator)
+            {
+                {{#vendorExtensions.x-gc-discriminator-mapping}}
+                case "{{value}}":
+                    target = new {{name}}();
+                    break;
+                {{/vendorExtensions.x-gc-discriminator-mapping}}
+                default:
+                    target = new {{vendorExtensions.x-gc-discriminator-default}}();
+                    break;
+            }
+
+            serializer.Populate(jsonObject.CreateReader(), target);
+
+            return target;
+        }
+
+        public override void WriteJson(
+            JsonWriter writer,
+            object value,
+            JsonSerializer serializer)
+        {
+            // We only need this converter for deserialization.
+            throw new NotSupportedException();
+        }
+
+        public override bool CanWrite => false;
+    }
