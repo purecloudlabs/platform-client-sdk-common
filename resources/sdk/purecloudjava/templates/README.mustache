@@ -538,6 +538,72 @@ The Java Platform API Client SDK implements the following strategy to manage the
 * `withAuthenticatedProxy(Proxy proxy, String user, String pass)` Sets an authenticated proxy to use for requests
 * `withRefreshTokenWaitTime(int refreshTokenWaitTime)` Overrides the default time a thread will wait for another thread to request a new access token. The default is 10 seconds
 
+### Polymorphism in SDK
+
+#### OneOf Union Types
+
+"OneOf" models have been introduced in the Platform API Swagger specification.
+
+These models are represented as an interface (abstract class) - i.e. the model is one of the class variants which implement this interface.
+
+Java's `instanceof` can be used to determine the concrete type of a one-of value. It can also be used to verify the one-of parent type.
+
+OneOf Models: {{#apiInfo}}{{#apis}}{{#-first}}{{#vendorExtensions.x-gc-one-of-details}}
+* {{parentName}} (one-of parent) is one of the following classes: {{#childrenNames}}{{.}}{{^-last}}, {{/-last}}{{/childrenNames}}or {{defaultChildName}}
+{{/vendorExtensions.x-gc-one-of-details}}{{/-first}}{{/apis}}{{/apiInfo}}
+
+Java's `instanceof` can be used to determine the concrete type of a one-of value:
+```java
+condition = model.condition
+
+if (condition instanceof AgenticVirtualAgentStructuredRule) {
+    # Handle a rule
+    ...
+} else if (condition instanceof AgenticVirtualAgentStructuredConditionGroup) {
+    # Handle a condition group
+    ...
+} else if (condition instanceof AgenticVirtualAgentStructuredConditionOutdatedSdkVersion) {
+    # Handle an outdated SDK version condition
+    ...
+```
+
+It can also be used to verify the one-of parent type of a one-of value:
+```java
+if (condition instanceof AgenticVirtualAgentStructuredCondition) {
+    # condition is one of the supported AgenticVirtualAgentStructuredCondition types
+    ...
+```
+
+#### Discriminator
+
+Models with discriminator (polymorphism) have been introduced in the Platform API Swagger specification.
+
+These models are represented as a parent class (which uses one of its properties as a discriminator) and their children.
+
+Discriminator Models: {{#apiInfo}}{{#apis}}{{#-first}}{{#vendorExtensions.x-gc-discriminator-details}}
+* {{parentName}} is the parent class of the following classes: {{#mapping}}{{name}} ("{{value}}"){{^-last}}, {{/-last}}{{/mapping}}and {{defaultChildName}} (default)
+{{/vendorExtensions.x-gc-discriminator-details}}{{/-first}}{{/apis}}{{/apiInfo}}
+
+Java's `instanceof` can be used to determine the concrete type of the value:
+```java
+event_settings = model.event_settings
+
+if (event_settings instanceof AgenticVirtualAgentGuardrailsSettings) {
+    # Handle guardrails settings
+    ...
+} else if (event_settings instanceof AgenticVirtualAgentEscalationEventSettings) {
+    # Handle escalation settings
+    ...
+```
+
+Because discriminator child classes inherit from the parent class, they are also instances of the parent class:
+```java
+if (event_settings instanceof AgenticVirtualAgentEventSettings) {
+    # event_settings is an AgenticVirtualAgentEventSettings
+    # or one of its child classes
+    ...
+```
+
 ### Making Requests
 
 There are two steps to making requests:
