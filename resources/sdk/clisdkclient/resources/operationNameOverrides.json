@@ -774,5 +774,20 @@
         "post": {
             "name": "createforedit"
         }
+    },
+    "/api/v2/users/me/verifiers/{verifierId}": {
+        "patch": {
+            "name": "patch"
+        }
+    },
+    "/api/v2/scripts/{scriptId}/uploads": {
+        "post": {
+            "name": "createforscript"
+        }
+    },
+    "/api/v2/authorization/roles/settings": {
+        "patch": {
+            "name": "patch"
+        }
     }
 }
