@@ -399,6 +399,72 @@ The YearMonth class contains two properties of integer type: **year** (allowing 
 An instance of the class can be created using the class constructor `YearMonth(year: int, month: int)` or parsing a `date` with `YearMonth.from_date(d: date)`.  
 A YearMonth instance can also be transformed into a date (with day being forced to 1) with `my_year_month.to_date()`.
 
+### Polymorphism in SDK
+
+#### OneOf Union Types
+
+"OneOf" models have been introduced in the Platform API Swagger specification.
+
+These models are represented as a union type (union of classes) - i.e. the model is one of the class variants.
+
+Python's `isinstance()` can be used to determine the concrete type of a one-of value. It can also be used to verify the one-of parent type.
+
+OneOf Models: {{#apiInfo}}{{#apis}}{{#-first}}{{#vendorExtensions.x-gc-one-of-details}}
+* {{parentName}} (one-of parent) is one of the following classes: {{#childrenNames}}{{.}}{{^-last}}, {{/-last}}{{/childrenNames}}or {{defaultChildName}}
+{{/vendorExtensions.x-gc-one-of-details}}{{/-first}}{{/apis}}{{/apiInfo}}
+
+Python's `isinstance()` can be used to determine the concrete type of a one-of value:
+```python
+condition = model.condition
+
+if isinstance(condition, AgenticVirtualAgentStructuredRule):
+    # Handle a rule
+    ...
+elif isinstance(condition, AgenticVirtualAgentStructuredConditionGroup):
+    # Handle a condition group
+    ...
+elif isinstance(condition, AgenticVirtualAgentStructuredConditionOutdatedSdkVersion):
+    # Handle an outdated SDK version condition
+    ...
+```
+
+It can also be used to verify the one-of parent type of a one-of value:
+```python
+if isinstance(condition, AgenticVirtualAgentStructuredCondition):
+    # condition is one of the supported AgenticVirtualAgentStructuredCondition types
+    ...
+```
+
+#### Discriminator
+
+Models with discriminator (polymorphism) have been introduced in the Platform API Swagger specification.
+
+These models are represented as a parent class (which uses one of its properties as a discriminator) and their children.
+
+Discriminator Models: {{#apiInfo}}{{#apis}}{{#-first}}{{#vendorExtensions.x-gc-discriminator-details}}
+* {{parentName}} is the parent class of the following classes: {{#mapping}}{{name}} ("{{value}}"){{^-last}}, {{/-last}}{{/mapping}}and {{defaultChildName}} (default)
+{{/vendorExtensions.x-gc-discriminator-details}}{{/-first}}{{/apis}}{{/apiInfo}}
+
+Python's `isinstance()` can be used to determine the concrete type of the value:
+```python
+event_settings = model.event_settings
+
+if isinstance(event_settings, AgenticVirtualAgentGuardrailsSettings):
+    # Handle guardrails settings
+    ...
+elif isinstance(event_settings, AgenticVirtualAgentEscalationEventSettings):
+    # Handle escalation settings
+    ...
+```
+
+Because discriminator child classes inherit from the parent class, they are also instances of the parent class:
+```python
+if isinstance(event_settings, AgenticVirtualAgentEventSettings):
+    # event_settings is an AgenticVirtualAgentEventSettings
+    # or one of its child classes
+    ...
+```
+
 ### Managing updates in Platform API Enumerations
 
 The Platform API Client SDKs (Java, Javascript/NodeJs, Python, Go, .Net, iOS/Swift) are automatically generated using the Platform API OpenAPI v2 definition.
