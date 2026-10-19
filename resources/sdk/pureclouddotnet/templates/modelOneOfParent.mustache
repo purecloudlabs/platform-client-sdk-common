@@ -3,7 +3,6 @@
     /// {{classname}} is an interface (abstract class). It is one of the following class variants, which implement this interface: {{#vendorExtensions.x-gc-one-of-children}}{{.}}, {{/vendorExtensions.x-gc-one-of-children}}or {{vendorExtensions.x-gc-one-of-default}}.
     /// {{vendorExtensions.x-gc-one-of-default}} is used to prevent deserialization errors - e.g. outdated SDK version: a new class variant has been introduced in the Platform API (compared to the version of the Platform API used to build this version of the SDK).
     /// </summary>
-    [JsonConverter(typeof({{classname}}Converter))]
     public interface {{classname}}
     {
     }

@@ -16,6 +16,7 @@ using Newtonsoft.Json;
 using {{packageName}}.Extensions;
 using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
+using {{packageName}}.Model;
 
 namespace {{packageName}}.Client
 {
@@ -102,6 +103,15 @@ namespace {{packageName}}.Client
             serializerSettings.Converters.Add(new Iso8601DateTimeConverter());
             serializerSettings.Converters.Add(new UpgradeSdkEnumConverter());
             serializerSettings.Converters.Add(new YearMonthConverter());
+            {{#apiInfo}}
+            {{#apis}}
+            {{#-first}}
+            {{#vendorExtensions.x-gc-one-of-details}}
+            serializerSettings.Converters.Add(new {{parentName}}Converter());
+            {{/vendorExtensions.x-gc-one-of-details}}
+            {{/-first}}
+            {{/apis}}
+            {{/apiInfo}}
             // Future - To enable for serialization (currently unused)
             // apiSerializerSettings.Converters.Add(new YearMonthConverter());
         }
