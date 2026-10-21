@@ -1684,6 +1684,23 @@ class ApiClient {
 	}
 
 	/**
+	 * @description Loads token from storage, if enabled, and checks to ensure it works.
+	 * @returns {Object} AuthData if a saved token could be loaded from storage, and is still valid.
+	 */
+	restoreSavedAccess() {
+		return new Promise((resolve, reject) => {
+			// Test token
+			this._testTokenAccess()
+				.then(() => {
+					resolve(this.authData);
+				})
+				.catch((error) => {
+					reject(new Error(`Auth Session could not be restored.`));
+				});
+		});
+	}
+
+	/**
 	 * @description Parses the URL hash, grabs the access token, and clears the hash. If no access token is found, no action is taken.
 	 */
 	_setValuesFromUrlHash() {
