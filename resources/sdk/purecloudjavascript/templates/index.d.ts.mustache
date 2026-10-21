@@ -43,6 +43,7 @@ declare class ApiClientClass {
 	logout(logoutRedirectUri: string): void;
 	setAccessToken(token: string): void;
 	clearAccessToken(): void;
+	restoreSavedAccess(): Promise<AuthData>;
 	setEnvironment(environment: string): void;
 	setDefaultHeaders(newHeaders: Record<string, string>): void;
 	getDefaultHeaders(): Record<string, string>;
