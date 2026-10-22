@@ -12,6 +12,9 @@ echo "PACKAGE_NAME=$PACKAGE_NAME"
 
 cd $BUILD_DIR
 
+echo "NodeJs Version:"
+node -v
+
 echo "Installing dependencies..."
 npm i
 
