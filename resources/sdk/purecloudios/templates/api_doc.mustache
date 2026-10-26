@@ -44,7 +44,7 @@ Requires NO permissions:
 import {{{projectName}}}
 
 {{{projectName}}}API.basePath = "{{basePath}}"
-{{{projectName}}}API.accessToken = "cwRto9ScT..."
+{{{projectName}}}API.accessToken = "YOUR_ACCESS_TOKEN"
 
 {{#allParams}}
 let {{{paramName}}}: {{#isEnum}}{{#isContainer}}{{{dataType}}}{{/isContainer}}{{^isContainer}}{{{classname}}}.{{{datatypeWithEnum}}}_{{operationId}}{{/isContainer}}{{/isEnum}}{{^isEnum}}{{{dataType}}}{{/isEnum}} = {{#isEnum}}{{#isContainer}}[{{/isContainer}}{{{classname}}}.{{{enumName}}}_{{{operationId}}}.enummember{{#isContainer}}.rawValue]{{/isContainer}}{{/isEnum}}{{^isEnum}}{{{example}}}{{/isEnum}} // {{#description}}{{{description}}}{{/description}}
