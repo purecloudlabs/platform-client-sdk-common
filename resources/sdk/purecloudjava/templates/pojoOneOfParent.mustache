@@ -1,0 +1,56 @@
+/**
+ * {{#description}}{{.}}{{/description}}{{^description}}{{classname}}{{/description}}
+ * {{classname}} is an interface (abstract class). It is one of the following class variants, which implement this interface: {{#vendorExtensions.x-gc-one-of-children}}{{.}}, {{/vendorExtensions.x-gc-one-of-children}}or {{vendorExtensions.x-gc-one-of-default}}.
+ * {{vendorExtensions.x-gc-one-of-default}} is used to prevent deserialization errors - e.g. outdated SDK version: a new class variant has been introduced in the Platform API (compared to the version of the Platform API used to build this version of the SDK).
+ */{{#description}}
+@ApiModel(description = "{{{description}}}"){{/description}}
+
+@JsonDeserialize(using = {{classname}}.{{classname}}Deserializer.class)
+public interface {{classname}} extends Serializable {
+
+    public final class {{classname}}Deserializer
+        extends StdDeserializer<{{classname}}> {
+
+        public {{classname}}Deserializer() {
+            super({{classname}}.class);
+        }
+
+        @Override
+        public {{classname}} deserialize(
+                JsonParser parser,
+                DeserializationContext context) throws IOException {
+
+            JsonNode node = parser.getCodec().readTree(parser);
+
+            int countMatch = 0;
+
+            {{#vendorExtensions.x-gc-one-of-children}}
+            boolean is{{.}}Match = {{.}}.matchesJsonData(node);
+            if (is{{.}}Match) countMatch++;
+            {{/vendorExtensions.x-gc-one-of-children}}
+
+            ObjectMapper mapper = (ObjectMapper) parser.getCodec();
+
+            // Defaults to default
+            // countMatch == 0 - Value does not match any oneOf alternative
+            // countMatch > 1 - Value matches more than one oneOf alternative
+
+            if (countMatch == 0) {
+                return mapper.treeToValue(node, {{vendorExtensions.x-gc-one-of-default}}.class);
+            }
+
+            if (countMatch > 1) {
+                return mapper.treeToValue(node, {{vendorExtensions.x-gc-one-of-default}}.class);
+            }
+
+            {{#vendorExtensions.x-gc-one-of-children}}
+            if (is{{.}}Match) {
+                return mapper.treeToValue(node, {{.}}.class);
+            }
+            {{/vendorExtensions.x-gc-one-of-children}}
+
+            return mapper.treeToValue(node, {{vendorExtensions.x-gc-one-of-default}}.class);
+        }
+    }
+
+}
