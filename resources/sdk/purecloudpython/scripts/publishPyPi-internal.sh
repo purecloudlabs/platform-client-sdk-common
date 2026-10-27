@@ -15,18 +15,18 @@ then
 fi
 
 echo "Upgrading PIP"
-python3.10 -m pip install --upgrade --user pip
+python3.11 -m pip install --upgrade --user pip
 export PIP_ROOT_USER_ACTION=ignore
 
 echo "Installing Twine"
-python3.10 -m pip install twine --user --upgrade
+python3.11 -m pip install twine --user --upgrade
 
 echo "Creating the distribution package"
-python3.10 -m pip install build --user
-python3.10 -m build
+python3.11 -m pip install build --user
+python3.11 -m build
 
 echo "Running twine check"
-python3.10 -m twine check dist/*
+python3.11 -m twine check dist/*
 
 echo "uploading to the pypi server"
-python3.10 -m twine upload --verbose --repository $INDEX_SERVER dist/*
+python3.11 -m twine upload --verbose --repository $INDEX_SERVER dist/*

@@ -12,33 +12,33 @@ cp $SDK_REPO/LICENSE $BUILD_DIR/License.txt
 # Compile module
 cd $BUILD_DIR
 echo "Upgrading PIP"
-python3.10 -m pip install --upgrade --user pip
+python3.11 -m pip install --upgrade --user pip
 
 echo "NodeJs Version:"
 node -v
 echo "Python Version:"
-python3.10 -V
+python3.11 -V
 echo "PIP Version:"
 pip --version
 
 export PIP_ROOT_USER_ACTION=ignore
 echo "Installing Build"
-python3.10 -m pip install build --user
+python3.11 -m pip install build --user
 echo "Building"
-python3.10 -m build --sdist --wheel --outdir build
+python3.11 -m build --sdist --wheel --outdir build
 
 # Run tests
 echo "Running tests"
 cd "$TESTS_DIR"
 echo "Install requests..."
-python3.10 -m pip install --user -U requests
+python3.11 -m pip install --user -U requests
 echo "Install watchdog..."
-python3.10 -m pip install --user -U watchdog
+python3.11 -m pip install --user -U watchdog
 echo "Install retry..."
-python3.10 -m pip install --user -U retry
+python3.11 -m pip install --user -U retry
 echo "Run unit tests -> SdkTests"
-python3.10 -W all -m unittest SdkTests
+python3.11 -W all -m unittest SdkTests
 echo "Run unit tests mtls"
-python3.10 -W all -m unittest SdkTests_mtls
+python3.11 -W all -m unittest SdkTests_mtls
 echo "Run unit tests proxy"
-python3.10 -W all -m unittest SdkTests_proxy
+python3.11 -W all -m unittest SdkTests_proxy
