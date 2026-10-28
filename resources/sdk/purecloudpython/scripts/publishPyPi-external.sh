@@ -13,21 +13,21 @@ then
 fi
 
 echo "Upgrading PIP"
-python3.10 -m pip install --upgrade --user pip
+python3.11 -m pip install --upgrade --user pip
 export PIP_ROOT_USER_ACTION=ignore
 
 echo "Installing Twine"
-python3.10 -m pip install twine --user --upgrade
+python3.11 -m pip install twine --user --upgrade
 
 echo "Creating the distribution package"
-python3.10 -m pip install build --user
-python3.10 -m build
+python3.11 -m pip install build --user
+python3.11 -m build
 
 echo "Running twine check"
-python3.10 -m twine check dist/*
+python3.11 -m twine check dist/*
 
 echo "uploading to the pypi test server"
-python3.10 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/* -u __token__ -p $DEVTOOLING_SDK_PYPI_TEST
+python3.11 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/* -u __token__ -p $DEVTOOLING_SDK_PYPI_TEST
 
 echo "uploading to the pypi prod server"
-python3.10 -m twine upload --verbose --repository-url https://upload.pypi.org/legacy/ dist/* -u __token__ -p $DEVTOOLING_SDK_PYPI_PROD
+python3.11 -m twine upload --verbose --repository-url https://upload.pypi.org/legacy/ dist/* -u __token__ -p $DEVTOOLING_SDK_PYPI_PROD
