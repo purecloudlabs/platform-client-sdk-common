@@ -789,5 +789,15 @@
         "patch": {
             "name": "patch"
         }
+    },
+    "/api/v2/workforcemanagement/businessunits/{businessUnitId}/schedulechangeconstraints": {
+        "get": {
+            "name": "getallforunit"
+        }
+    },
+    "/api/v2/workforcemanagement/businessunits/{businessUnitId}/shiftactivityrules": {
+        "get": {
+            "name": "getallforunit"
+        }
     }
 }
