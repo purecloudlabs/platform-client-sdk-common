@@ -181,6 +181,130 @@ var accessTokenInfo = Configuration.Default.ApiClient.PostToken("18a4c365-7ea3-4
 Console.WriteLine("Access token=" + accessTokenInfo.AccessToken);
 ```
 
+### Polymorphism in SDK
+
+#### OneOf Union Types
+
+"OneOf" models have been introduced in the Platform API Swagger specification.
+
+These models are represented as an interface (abstract class) - i.e. the model is one of the class variants which implement this interface.
+
+OneOf Models: {{#apiInfo}}{{#apis}}{{#-first}}{{#vendorExtensions.x-gc-one-of-details}}
+* {{parentName}} (one-of parent) is one of the following classes: {{#childrenNames}}{{.}}{{^-last}}, {{/-last}}{{/childrenNames}}or {{defaultChildName}}
+{{/vendorExtensions.x-gc-one-of-details}}{{/-first}}{{/apis}}{{/apiInfo}}
+
+The following patterns can be used to determine the concrete type of a one-of value:
+```csharp
+condition = model.Condition
+
+switch (condition)
+{
+    case AgenticVirtualAgentStructuredRule childRule:
+        // use childRule
+        // Handle a rule
+        break;
+
+    case AgenticVirtualAgentStructuredConditionGroup childGroup:
+        // use childGroup
+        // Handle a condition group
+        break;
+
+    case AgenticVirtualAgentStructuredConditionOutdatedSdkVersion childOutdatedSdkVersion:
+        // use childOutdatedSdkVersion
+        // Handle an outdated SDK version condition
+        break;
+}
+
+// or:
+
+if (condition is AgenticVirtualAgentStructuredRule childRule) {
+    // Handle a rule
+    Console.WriteLine(childRule.Name);
+} else if (condition is AgenticVirtualAgentStructuredConditionGroup childGroup) {
+    // Handle a condition group
+    Console.WriteLine(childGroup.Group);
+} else if (condition is childOutdatedSdkVersion childOutdatedSdkVersion) {
+    // Handle an outdated SDK version condition
+    Console.WriteLine("Outdated Sdk Version");
+}
+```
+
+It can also be used to verify the one-of parent type of a one-of value:
+```csharp
+switch (condition)
+{
+    case AgenticVirtualAgentStructuredCondition childCondition:
+        // use childCondition
+        // condition is one of the supported AgenticVirtualAgentStructuredCondition types
+        break;
+}
+
+// or:
+
+if (condition is AgenticVirtualAgentStructuredCondition childCondition) {
+    // condition is one of the supported AgenticVirtualAgentStructuredCondition types
+}
+```
+
+#### Discriminator
+
+Models with discriminator (polymorphism) have been introduced in the Platform API Swagger specification.
+
+These models are represented as a parent class (which uses one of its properties as a discriminator) and their children.
+
+Discriminator Models: {{#apiInfo}}{{#apis}}{{#-first}}{{#vendorExtensions.x-gc-discriminator-details}}
+* {{parentName}} is the parent class of the following classes: {{#mapping}}{{name}} ("{{value}}"){{^-last}}, {{/-last}}{{/mapping}}and {{defaultChildName}} (default)
+{{/vendorExtensions.x-gc-discriminator-details}}{{/-first}}{{/apis}}{{/apiInfo}}
+
+The following patterns can be used to determine the concrete type of the value:
+```csharp
+eventSettings = model.EventSettings
+
+switch (eventSettings)
+{
+    case AgenticVirtualAgentGuardrailsSettings childGuardrails:
+        // use childGuardrails
+        // Handle guardrails settings
+        break;
+
+    case AgenticVirtualAgentEscalationEventSettings childEscalation:
+        // use childEscalation
+        // Handle escalation settings
+        break;
+
+    ...
+}
+
+// or:
+
+if (eventSettings is AgenticVirtualAgentGuardrailsSettings childGuardrails) {
+    // Handle guardrails settings
+    Console.WriteLine(childGuardrails.Type);
+} else if (eventSettings is AgenticVirtualAgentEscalationEventSettings childEscalation) {
+    // Handle escalation settings
+    Console.WriteLine(childEscalation.Type);
+} else if (...) {
+    ...
+}
+```
+
+Because discriminator child classes inherit from the parent class, they are also instances of the parent class:
+```csharp
+switch (eventSettings)
+{
+    case AgenticVirtualAgentEventSettings childEventSettings:
+        // use childEventSettings
+        // eventSettings is one of the supported AgenticVirtualAgentEventSettings types
+        break;
+}
+
+// or:
+
+if (eventSettings is AgenticVirtualAgentEventSettings childEventSettings) {
+    // eventSettings is one of the supported AgenticVirtualAgentEventSettings types
+}
+```
+
 ### Making Requests
 
 #### Setting the Environment
