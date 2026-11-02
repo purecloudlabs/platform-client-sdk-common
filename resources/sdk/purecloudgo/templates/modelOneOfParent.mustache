@@ -1,0 +1,115 @@
+import (
+	"fmt"
+	"bytes"
+)
+
+// {{classname}}{{#description}} - {{{description}}}{{/description}}
+type {{classname}} struct {
+	actualInstance interface{}
+}
+
+{{#vendorExtensions.x-gc-one-of-children}}
+func (o *{{classname}}) Get{{#lambda.gocase}}{{.}}{{/lambda.gocase}}() (*{{#lambda.gocase}}{{.}}{{/lambda.gocase}}, bool) {
+	if o == nil {
+		return nil, false
+	}
+
+	v, ok := o.actualInstance.(*{{#lambda.gocase}}{{.}}{{/lambda.gocase}})
+	return v, ok
+}
+{{/vendorExtensions.x-gc-one-of-children}}
+
+func (o *{{classname}}) Get{{#lambda.gocase}}{{vendorExtensions.x-gc-one-of-default}}{{/lambda.gocase}}() (*{{#lambda.gocase}}{{vendorExtensions.x-gc-one-of-default}}{{/lambda.gocase}}, bool) {
+	if o == nil {
+		return nil, false
+	}
+
+	v, ok := o.actualInstance.(*{{#lambda.gocase}}{{vendorExtensions.x-gc-one-of-default}}{{/lambda.gocase}})
+	return v, ok
+}
+
+func (o *{{classname}}) GetActualInstance() interface{} {
+	if o == nil {
+		return nil
+	}
+
+	return o.actualInstance
+}
+
+func (o *{{classname}}) SetActualInstance(value interface{}) error {
+	switch value.(type) {
+	{{#vendorExtensions.x-gc-one-of-children}}
+	case *{{#lambda.gocase}}{{.}}{{/lambda.gocase}}:
+	{{/vendorExtensions.x-gc-one-of-children}}
+	case *{{#lambda.gocase}}{{vendorExtensions.x-gc-one-of-default}}{{/lambda.gocase}}:
+	default:
+		return fmt.Errorf(
+			"invalid type %T for {{classname}}",
+			value,
+		)
+	}
+
+	o.actualInstance = value
+	return nil
+}
+
+func (o {{classname}}) MarshalJSON() ([]byte, error) {
+	if o.actualInstance == nil {
+		return []byte("null"), nil
+	}
+
+	return json.Marshal(o.actualInstance)
+}
+
+func (o *{{classname}}) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(bytes.TrimSpace(data), []byte("null")) {
+		o.actualInstance = nil
+		return nil
+	}
+
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return fmt.Errorf("{{classname}} must be a JSON object: %w", err)
+	}
+
+	var matches []interface{}
+
+	{{#vendorExtensions.x-gc-one-of-children}}
+	// Try {{#lambda.gocase}}{{.}}{{/lambda.gocase}}.
+	if matches{{#lambda.gocase}}{{.}}{{/lambda.gocase}}(raw) {
+		var value {{#lambda.gocase}}{{.}}{{/lambda.gocase}}
+		if err := json.Unmarshal(data, &value); err == nil {
+			matches = append(matches, &value)
+		}
+	}
+
+	{{/vendorExtensions.x-gc-one-of-children}}
+	switch len(matches) {
+	case 0:
+		return fmt.Errorf(
+			"JSON does not match any variant of {{classname}}",
+		)
+		var value {{#lambda.gocase}}{{vendorExtensions.x-gc-one-of-default}}{{/lambda.gocase}}
+		if err := json.Unmarshal(data, &value); err == nil {
+			o.actualInstance = &value
+		}
+		return nil
+
+	case 1:
+		o.actualInstance = matches[0]
+		return nil
+
+	default:
+		return fmt.Errorf(
+			"JSON matches multiple variants of {{classname}}",
+		)
+	}
+}
+
+// String returns a JSON representation of the model
+func (o *{{classname}}) String() string {
+	j, _ := json.Marshal(o)
+	str, _ := strconv.Unquote(strings.Replace(strconv.Quote(string(j)), `\\u`, `\u`, -1))
+
+	return str
+}
