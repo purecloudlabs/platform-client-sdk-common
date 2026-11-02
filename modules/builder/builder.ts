@@ -5,25 +5,29 @@ import fs from 'fs-extra';
 import https from 'https';
 import path from 'path';
 import pluralize from 'pluralize';
-import { Config, Script, Haystack, PureCloud } from '../types/config'
-import { LocalConfig, Overrides, Settings, StageSettings, valueOverides } from '../types/localConfig'
-import moment, { Moment } from 'moment-timezone';
-import { Resourcepaths, Version, ApiVersionData, Data, Release } from '../types/builderTypes'
-import { ItemsType, Format } from '../types/swagger'
+import { Config, Script, Haystack, PureCloud, LocalConfig, valueOverides } from '../types/config.js'
+import { Resourcepaths, Version, ApiVersionData, Data, Release } from '../types/builderTypes.js'
+import { ItemsType, Format } from '../types/swagger.js'
 import platformClient from 'purecloud-platform-client-v2';
 import yaml from 'js-yaml';
-import SwaggerDiff from '../swagger/swaggerDiff';
-import GitModule from '../git/gitModule';
-import Zip from '../util/zip';
+import SwaggerDiff from '../swagger/swaggerDiff.js';
+import { GitModule, GithubConfig } from '../git/gitModule.js';
+import { zipDir } from '../util/zip.js';
 import { Models } from 'purecloud-platform-client-v2';
-import log from '../log/logger';
-import axios from "axios";
-import { Endpoints } from "@octokit/types";
+import { log } from '../log/logger.js';
 
 
 const swaggerDiff = new SwaggerDiff();
-const git = new GitModule();
-const zip = new Zip();
+
+const git: GitModule = new GitModule();
+let githubConfig: GithubConfig = {
+	owner: "github_username",
+	repo: "repo_name",
+	token: "your_github_token",
+	host: "https://api.github.com",
+	debug: false
+};
+
 const TIMESTAMP_FORMAT = 'h:mm:ss a';
 const NOTIFICATION_ID_REGEX = /^urn:jsonschema:(.+):v2:(.+)$/i;
 let _this: Builder;
@@ -172,6 +176,9 @@ export class Builder {
 				maybeInit(this.config.stageSettings, 'build', {}, "1build");
 				maybeInit(this.config.stageSettings, 'postbuild', {}, "1postbuild");
 				maybeInit(this.config.settings.sdkRepo, 'tagFormat', '{version}', "1tagFormat");
+				maybeInit(this.config.settings.swaggerCodegen, 'sdkPathLanguage', '', "1sdkPathLanguage");
+				maybeInit(this.config.settings.swaggerCodegen, 'isCustomLanguage', false, "1isCustomLanguage");
+		
 
 				// Check for required settings
 				checkAndThrow(this.config.settings.swagger, 'oldSwaggerPath', "1oldSwaggerPath");
@@ -193,8 +200,15 @@ export class Builder {
 				// Set env vars
 				log.debug('Setting up environment variables');
 				const commonRoot = path.resolve('./');
-				const sdkRepo = path.resolve(path.join('./output', this.config.settings.swaggerCodegen.codegenLanguage));
-				const sdkTemp = path.resolve(path.join('./temp', this.config.settings.swaggerCodegen.codegenLanguage));
+				let sdkRepo: string, sdkTemp: string;
+				if (!this.config.settings.swaggerCodegen.sdkPathLanguage) {
+					// No swaggerCodegen.sdkPathLanguage - use swaggerCodegen.codegenLanguage
+					sdkRepo = path.resolve(path.join('./output', this.config.settings.swaggerCodegen.codegenLanguage));
+					sdkTemp = path.resolve(path.join('./temp', this.config.settings.swaggerCodegen.codegenLanguage));
+				} else {
+					sdkRepo = path.resolve(path.join('./output', this.config.settings.swaggerCodegen.sdkPathLanguage));
+					sdkTemp = path.resolve(path.join('./temp', this.config.settings.swaggerCodegen.sdkPathLanguage));
+				}
 
 				log.debug(`Environment paths - CommonRoot: ${commonRoot}, SdkRepo: ${sdkRepo}, SdkTemp: ${sdkTemp}`);
 				setEnv('COMMON_ROOT', commonRoot);
@@ -298,7 +312,7 @@ export class Builder {
 		return new Promise<string>((resolve, reject) => {
 			log.debug('Full build process initiated');
 			log.info('Full build initiated!');
-			let fullBuildStartTime = moment();
+			let fullBuildStartTime = Date.now();
 			this.prebuild()
 				.then(() => {
 					log.debug('Prebuild completed, starting build phase');
@@ -310,7 +324,7 @@ export class Builder {
 				})
 				.then(() => {
 					log.debug('Full build process completed successfully');
-					log.info(`Full build complete at ${moment().format(TIMESTAMP_FORMAT)} in ${measureDurationFrom(fullBuildStartTime)}`);
+					log.info(`Full build complete at ${new Date(Date.now()).toUTCString()} in ${measureDurationFrom(fullBuildStartTime)}`);
 					resolve("");
 				})
 				.catch((err: Error) => {
@@ -325,11 +339,11 @@ export class Builder {
 		return new Promise<string>((resolve, reject) => {
 			log.debug('Prebuild stage initiated');
 			log.writeBox('STAGE: pre-build');
-			let prebuildStartTime = moment();
+			let prebuildStartTime = Date.now();
 			prebuildImpl()
 				.then(() => {
 					log.debug('Prebuild implementation completed');
-					log.info(`Pre-build complete at ${moment().format(TIMESTAMP_FORMAT)} in ${measureDurationFrom(prebuildStartTime)}`);
+					log.info(`Pre-build complete at ${new Date(Date.now()).toUTCString()} in ${measureDurationFrom(prebuildStartTime)}`);
 					resolve("");
 				})
 				.catch((err) => {
@@ -343,12 +357,12 @@ export class Builder {
 		return new Promise<string>((resolve, reject) => {
 			log.debug('Build stage initiated');
 			log.writeBox('STAGE: build');
-			let buildStartTime = moment();
+			let buildStartTime = Date.now();
 
 			buildImpl()
 				.then(() => {
 					log.debug('Build implementation completed');
-					log.info(`Build complete at ${moment().format(TIMESTAMP_FORMAT)} in ${measureDurationFrom(buildStartTime)}`);
+					log.info(`Build complete at ${new Date(Date.now()).toUTCString()} in ${measureDurationFrom(buildStartTime)}`);
 					resolve("");
 				})
 				.catch((err: Error) => {
@@ -363,12 +377,12 @@ export class Builder {
 		return new Promise<string>((resolve, reject) => {
 			log.debug('Postbuild stage initiated');
 			log.writeBox('STAGE: post-build');
-			let postbuildStartTime = moment();
+			let postbuildStartTime = Date.now();
 
 			postbuildImpl()
 				.then(() => {
 					log.debug('Postbuild implementation completed');
-					log.info(`Post-build complete at ${moment().format(TIMESTAMP_FORMAT)} in ${measureDurationFrom(postbuildStartTime)}`);
+					log.info(`Post-build complete at ${new Date(Date.now()).toUTCString()} in ${measureDurationFrom(postbuildStartTime)}`);
 					resolve("");
 				})
 				.catch((err: Error) => {
@@ -389,7 +403,7 @@ function prebuildImpl(): Promise<string> {
 			executeScripts(_this.config.stageSettings.prebuild.preRunScripts, 'custom prebuild pre-run');
 
 			// Clone repo
-			let startTime = moment();
+			let startTime = Date.now();
 			log.debug(`Starting repository clone operation - Repo: ${_this.config.settings.sdkRepo.repo}, Branch: ${_this.config.settings.sdkRepo.branch}, Target: ${getEnv('SDK_REPO')}`);
 			log.info(`Cloning ${_this.config.settings.sdkRepo.repo} (${_this.config.settings.sdkRepo.branch}) to ${getEnv('SDK_REPO')}`);
 			git
@@ -617,7 +631,17 @@ function buildImpl(): Promise<string> {
 			command += `-DmodelTests=${_this.config.settings.swaggerCodegen.generateModelTests} `;
 			command += `${getEnv('JAVA_OPTS', '')} -XX:MaxMetaspaceSize=256M -Xmx2g -DloggerPath=conf/log4j.properties `;
 			// Swagger-codegen jar file
-			command += `-jar ${_this.config.settings.swaggerCodegen.jarPath} `;
+			if (_this.config.settings.swaggerCodegen.isCustomLanguage === true) {
+				// To run custom language/generator with openapi-generator
+				// the jarPath will include both plugin for the custom language/generator and the openapi-generator jar file
+				// "jarPath": "${COMMON_ROOT}/resources/oagenerator/languages/purecloudjavascript-oas2/target/purecloudjavascript-oas2-openapi-generator-1.0.0.jar:${COMMON_ROOT}/resources/oagenerator/main/openapi-generator-cli-7.24.0.jar"
+				command += `-cp ${_this.config.settings.swaggerCodegen.jarPath} org.openapitools.codegen.OpenAPIGenerator `;
+			} else {
+				// To run swagger-generator (legacy), or to run language/generator provided with openapi-generator (supported/included)
+				// "jarPath": "${WORKSPACE}/openapi-generator/modules/openapi-generator-cli/target/openapi-generator-cli.jar"
+				// "jarPath": "${COMMON_ROOT}/resources/oagenerator/main/openapi-generator-cli-7.24.0.jar"
+				command += `-jar ${_this.config.settings.swaggerCodegen.jarPath} `;
+			}
 			// Swagger-codegen options
 			command += 'generate ';
 			command += `-i ${newSwaggerTempFile} `;
@@ -686,8 +710,7 @@ function buildImpl(): Promise<string> {
 
 			log.debug('Starting documentation zip operation');
 			log.info('Zipping docs...');
-			zip
-				.zipDir(path.join(outputDir, 'docs'), path.join(getEnv('SDK_TEMP') as string, 'docs.zip'))
+			zipDir(path.join(outputDir, 'docs'), path.join(getEnv('SDK_TEMP') as string, 'docs.zip'))
 				.then(() => {
 					log.debug('Documentation zipped successfully, executing post-run scripts');
 					return executeScripts(_this.config.stageSettings.build.postRunScripts, 'custom build post-run');
@@ -810,7 +833,7 @@ function createRelease(): Promise<string> {
 
 				console.log(createReleaseOptions);
 				// Create release
-				return githubCreateRelease(createReleaseOptions);
+				return git.githubCreateRelease(githubConfig, createReleaseOptions);
 			})
 			.then((release) => {
 				log.info(`Created release #${release}`);
@@ -1592,7 +1615,7 @@ function executeScripts(scripts: Script[], phase: string) {
 
 function executeScript(script: Script) {
 	let code: Buffer;
-	let startTime = moment();
+	let startTime = Date.now();
 	let bufferCode: Number;
 
 	log.debug(`Executing script - Type: ${script.type}, Path: ${script.path}, Args: ${script.args ? script.args.join(' ') : 'none'}`);
@@ -1743,11 +1766,24 @@ function resolveEnvVars(config: { [key: string]: any }) {
 		}
 	});
 }
-
-function measureDurationFrom(startTime: Moment, endTime: Moment = moment()) {
+function measureDurationFrom(startTime: number, endTime: number = Date.now()) {
 	if (!startTime) return 'no time';
+	if (endTime > startTime) return 'negative time';
 
-	return moment.duration(endTime.diff(startTime)).humanize();
+	// ms
+	let timeDiff = endTime - startTime;
+	const time = {
+		day: Math.floor(timeDiff / 86400000),
+		hour: Math.floor(timeDiff / 3600000) % 24,
+		minute: Math.floor(timeDiff / 60000) % 60,
+		second: Math.floor(timeDiff / 1000) % 60
+	};
+	let humanizedTimeDiff = Object.entries(time)
+		.filter(val => val[1] !== 0)
+		.map(([key, val]) => `${val} ${key}${val !== 1 ? 's' : ''}`)
+		.join(', ');
+
+	return humanizedTimeDiff;
 }
 
 function getFileCount(dir: fs.PathLike) {
@@ -1764,93 +1800,4 @@ function getFileCount(dir: fs.PathLike) {
 	}
 
 	return files.length;
-}
-
-// Alternative to github-api-promise until update
-
-let githubConfig: any = {
-	owner: "github_username",
-	repo: "repo_name",
-	token: "your_github_token",
-	host: "https://api.github.com",
-	debug: false,
-};
-
-function githubGetRepoUrl(additionalPath: string) {
-	var url = githubConfig.host + "/repos/" + githubConfig.owner + "/" + githubConfig.repo + "/";
-	if (additionalPath) url += additionalPath;
-	return url;
-}
-
-function githubLogRequestSuccess(res: any, message?: string) {
-	if (githubConfig.debug != true) {
-		return;
-	}
-	let logMsg: string = "[INFO]" +
-		"[" +
-		res.statusCode +
-		"]" +
-		"[" +
-		res.req.method +
-		" " +
-		res.req.path +
-		"] " +
-		(message ? message : "");
-
-	console.log(logMsg);
-}
-
-function githubLogRequestError(err: any) {
-	if (err) {
-		let logMsg: string = "[ERROR]" +
-			"[" +
-			(err.res ? err.res.statusCode : "Unknown Status Code") +
-			"]" +
-			"[" +
-			(err.res && err.res.req ? err.res.req.method : "Unknown Method") +
-			" " +
-			(err.res && err.res.req ? err.res.req.path : "Unknown Path") +
-			"] " +
-			(err.message ? err.message : "Unknown Error Message");
-		console.log(logMsg);
-	} else {
-		console.log("[ERROR] Unknown Error");
-	}
-}
-
-/**
- * Users with push access to the repository can create a release. Returns 422 if anything is wrong with the values in the body.
- * @param  {JSON} 	body  		A JSON document to send with the request
- * @return {JSON}           	The release data
- */
-function githubCreateRelease(
-	body: any
-): Promise<
-	Endpoints["POST /repos/{owner}/{repo}/releases"]["response"]["data"]
-> {
-	return new Promise((resolve, reject) => {
-		try {
-			axios
-				.post(githubGetRepoUrl("releases"), body, {
-					headers: {
-						Authorization: `token ${githubConfig.token}`,
-						"User-Agent": "github-api-promise",
-						"Content-Type": "application/json",
-					},
-				})
-				.then(
-					function (res: any) {
-						githubLogRequestSuccess(res);
-						resolve(res.body);
-					},
-					function (err: any) {
-						githubLogRequestError(err);
-						reject(err.message);
-					}
-				);
-		} catch (err) {
-			console.log(err);
-			reject(err.message);
-		}
-	});
 }

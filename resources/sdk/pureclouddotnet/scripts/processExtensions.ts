@@ -27,7 +27,7 @@ export class ProcessExtensions {
 				fs.ensureDirSync(path.dirname(fileDest));
 
 				let templateString = fs.readFileSync(filePath.path, 'utf8');
-				let template = dot.template(templateString, null, { packageName: packageName });
+				let template = dot.template(templateString, undefined, { packageName: packageName });
 				let result = template({ packageName: packageName });
 				fs.writeFileSync(filePath.path.replace(extensionsSource, extensionsDest), result);
 				console.log(`Extension templated to ${fileDest}`);

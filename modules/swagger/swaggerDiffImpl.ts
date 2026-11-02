@@ -1,9 +1,9 @@
 import _ from 'lodash';
 import dot from 'dot';
 import pluralize from 'pluralize';
-import { Swagger, Info, Path, TypeResponse, ItemsType, Property, HttpMethod, valueTypes, Parameter, Changes } from '../types/swagger';
-import { Version, Data } from '../types/builderTypes';
-import log from '../log/logger';
+import { Swagger, Info, Path, TypeResponse, ItemsType, Property, HttpMethod, valueTypes, Parameter, Changes } from '../types/swagger.js';
+import { Version, Data } from '../types/builderTypes.js';
+import { log } from '../log/logger.js';
 
 /* PRIVATE VARS */
 
@@ -204,11 +204,6 @@ class SwaggerDiffImpl {
 // Create an instance of SwaggerDiffImpl and export it.
 const _this: SwaggerDiffImpl = new SwaggerDiffImpl();
 export default _this;
-
-// Check if the 'window' object is available and add the instance to it if so.
-if (typeof window !== 'undefined') {
-	(window as any).swaggerDiffImpl = _this;
-}
 
 /* PRIVATE FUNCTIONS */
 
