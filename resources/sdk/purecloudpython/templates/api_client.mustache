@@ -56,6 +56,22 @@ from .gateway_configuration import GatewayConfiguration
 from .configuration import Configuration
 from .year_month import YearMonth
 
+ONE_OF_TYPES = { {{#apiInfo}}{{#apis}}{{#-first}}{{#vendorExtensions.x-gc-one-of-details}}
+    '{{parentName}}': {
+        'values': [ {{#childrenNames}}'{{.}}'{{^-last}}, {{/-last}}{{/childrenNames}} ],
+        'default': '{{defaultChildName}}'
+    }{{^-last}},{{/-last}}{{/vendorExtensions.x-gc-one-of-details}}{{/-first}}{{/apis}}{{/apiInfo}}
+}
+
+DISCRIMINATORS = { {{#apiInfo}}{{#apis}}{{#-first}}{{#vendorExtensions.x-gc-discriminator-details}}
+    '{{parentName}}': {
+        'discriminator_property_name': '{{propertyName}}',
+        'mapping_value_to_child': { {{#mapping}}
+            '{{value}}': '{{name}}'{{^-last}},{{/-last}}{{/mapping}}
+        },
+        'default': '{{defaultChildName}}'
+    }{{^-last}},{{/-last}}{{/vendorExtensions.x-gc-discriminator-details}}{{/-first}}{{/apis}}{{/apiInfo}}
+}
 
 class ApiClient(object):
     """
@@ -662,6 +678,19 @@ class ApiClient(object):
                 sub_kls = re.match('dict\\(([^,]*), (.*)\\)', klass).group(2)
                 return {k: self.__deserialize(v, sub_kls)
                         for k, v in data.items()}
+            
+            if klass in ONE_OF_TYPES:
+                return self.__deserialize_one_of(
+                    data,
+                    ONE_OF_TYPES[klass]
+                )
+
+            if klass in DISCRIMINATORS:
+                return self.__deserialize_polymorphic(
+                    data,
+                    klass,
+                    DISCRIMINATORS[klass]
+                )
 
             # convert str to class
             # for native types
@@ -988,3 +1017,62 @@ class ApiClient(object):
                 setattr(instance, attr, self.__deserialize(value, attr_type))
 
         return instance
+    
+    def __deserialize_polymorphic(
+            self,
+            data,
+            parent_type,
+            discriminator):
+
+        if not isinstance(data, dict):
+            raise TypeError(
+                '{} must be represented by a JSON object'.format(
+                    parent_type
+                )
+            )
+
+        property_name = discriminator['discriminator_property_name']
+        mapping = discriminator['mapping_value_to_child']
+
+        if property_name not in data:
+            raise ValueError(
+                "Missing discriminator property '{}' for {}".format(
+                    property_name,
+                    parent_type
+                )
+            )
+
+        discriminator_value = data[property_name]
+
+        try:
+            concrete_type = mapping[discriminator_value]
+        except KeyError:
+            # if discriminator_value is unknown, use default
+            concrete_type = discriminator['default']
+
+        return self.__deserialize(
+            data,
+            concrete_type
+        )
+
+    def __deserialize_one_of(self, data, oneof):
+        matches = []
+
+        for candidate in oneof['values']:
+            klass = eval('models.' + candidate)
+            instance = klass()
+            if instance.matches_json_data(data):
+                matches.append(candidate)
+
+        # Defaults to default
+        # len(matches) == 0 - Value does not match any oneOf alternative
+        # len(matches) > 1 - Value matches more than one oneOf alternative
+        concrete_type = oneof['default']
+
+        if len(matches) == 1:
+            concrete_type = matches[0]
+
+        return self.__deserialize(
+            data,
+            concrete_type
+        )
