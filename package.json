@@ -39,7 +39,7 @@
   "dependencies": {
     "archiver": "^8.0.0",
     "commander": "^15.0.0",
-    "winston": "^3.19.0",
+    "winston": "^2.3.1",
     "fs-extra": "^11.4.1",
     "pluralize": "^8.0.0",
     "@apidevtools/json-schema-ref-parser": "^16.0.5",

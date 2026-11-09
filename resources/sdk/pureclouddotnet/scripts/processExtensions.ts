@@ -18,6 +18,7 @@ export class ProcessExtensions {
 
 			let paths = klawSync(extensionsSource, {
 				nodir: true,
+				traverseAll: true,
 				filter: (data) => data.path.toLowerCase().endsWith('.cs')
 			});
 
