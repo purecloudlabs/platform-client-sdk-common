@@ -28,6 +28,28 @@ export interface Definition {
     description?: string;
     discriminator?: string;
     allOf?: any[];
+    anyOf?: any[];
+    oneOf?: any[];
+    "x-discriminator-value"?: string;
+    "x-genesys-one-of"?: AllOf[];
+    "x-gc-class-complex"?: boolean;
+    "x-gc-class-one-of"?: boolean;
+    "x-gc-is-one-of-child"?: boolean;
+    "x-gc-is-outdated-sdk-version"?: boolean;
+    "x-gc-one-of-default"?: string;
+    "x-gc-is-one-of-parent"?: boolean;
+    "x-gc-one-of-parent"?: string;
+    "x-gc-one-of-children"?: string[];
+    "x-gc-class-discriminator"?: boolean;
+    "x-gc-is-discriminator-parent"?: boolean;
+    "x-gc-discriminator-default"?: string;
+    "x-gc-discriminator-default-value"?: string;
+    "x-gc-discriminator-children"?: string[];
+    "x-gc-discriminator-values"?: string[];
+    "x-gc-discriminator-mapping"?: any[];
+    "x-gc-discriminator-property"?: string;
+    "x-gc-is-discriminator-child"?: boolean;
+    "x-gc-discriminator-parent"?: string;
 }
 
 export interface ChangeItem {
@@ -70,6 +92,7 @@ export interface Property {
     "x-genesys-search-fields"?: XGenesysSearchFields;
     allOf?: AllOf[];
     properties?: PropertyProperties;
+    "x-gc-is-discriminator-property"?: boolean;
 }
 
 export interface AllOf {

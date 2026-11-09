@@ -1,17 +1,24 @@
 import childProcess from 'child_process';
-import fs from 'fs';
-import swaggerDiffImpl from './swaggerDiffImpl.js';
+import fs from 'node:fs';
+import { SwaggerDiffImpl } from './swaggerDiffImpl.js';
 import { Swagger, Info, Changes, ProduceElement, ItemsType } from '../types/swagger.js';
 import { Data, Version } from '../types/builderTypes.js';
 import { log } from '../log/logger.js';
 import { downloadFile } from '../util/http.js';
-export default class SwaggerDiff {
+import { swaggerPreprocessing, combineSwagger } from '../swagger/swaggerProcessing.js';
+import { Config, PureCloud } from '../types/config.js';
+
+export class SpecificationDiff {
 
 	changes: Changes;
 	changeCount: number = 0;
+	// Swagger
 	swaggerInfo: Info;
 	oldSwagger: Swagger;
 	newSwagger: Swagger;
+	swaggerDiffImpl: SwaggerDiffImpl;
+	// OpenApiV3
+	// type
 
 	useSdkVersioning: boolean = false;
 	// Special treatment for Web Messaging specification (downgrade from OpenAPI v3 to Swagger v2)
@@ -22,6 +29,8 @@ export default class SwaggerDiff {
 		log.info('Starting swagger diff process');
 		log.debug(`Parameters: oldPath=${oldSwaggerPath}, newPath=${newSwaggerPath}, previewPath=${previewSwaggerPath}`);
 		let oldSwagger: Swagger, newSwagger: Swagger, previewSwagger: Swagger;
+
+		this.swaggerDiffImpl = new SwaggerDiffImpl();
 
 		// Retrieve old swagger
 		if (fs.existsSync(oldSwaggerPath)) {
@@ -128,15 +137,15 @@ export default class SwaggerDiff {
 
 		// Diff
 		log.debug('Executing swagger diff implementation');
-		let retval = swaggerDiffImpl.diff(oldSwagger, newSwagger);
+		let retval = this.swaggerDiffImpl.diff(oldSwagger, newSwagger);
 
 		// Set vars from diff impl
 		log.debug('Retrieving results from diff implementation');
-		this.changeCount = swaggerDiffImpl.changeCount;
-		this.changes = swaggerDiffImpl.changes;
-		this.oldSwagger = swaggerDiffImpl.oldSwagger;
-		this.newSwagger = swaggerDiffImpl.newSwagger;
-		this.swaggerInfo = swaggerDiffImpl.swaggerInfo;
+		this.changeCount = this.swaggerDiffImpl.changeCount;
+		this.changes = this.swaggerDiffImpl.changes;
+		this.oldSwagger = this.swaggerDiffImpl.oldSwagger;
+		this.newSwagger = this.swaggerDiffImpl.newSwagger;
+		this.swaggerInfo = this.swaggerDiffImpl.swaggerInfo;
 
 		log.info(`Diff completed: ${this.changeCount} changes found`);
 		return retval;
@@ -157,7 +166,7 @@ export default class SwaggerDiff {
 		}
 
 		log.debug('Calling implementation to generate release notes');
-		const result = swaggerDiffImpl.generateReleaseNotes(templateString, data);
+		const result = this.swaggerDiffImpl.generateReleaseNotes(templateString, data);
 		log.info('Release notes generated successfully');
 		return result;
 	};
@@ -174,28 +183,38 @@ export default class SwaggerDiff {
 
 		this.copyPropertiesToImpl();
 
-		const result = swaggerDiffImpl.incrementVersion(version, forceMajor, forceMinor, forcePoint);
+		const result = this.swaggerDiffImpl.incrementVersion(version, forceMajor, forceMinor, forcePoint);
 		log.info(`Version incremented to ${result.major}.${result.minor}.${result.point}`);
 		return result;
 	};
+
+	public writeSpecification(filename: string) {
+		fs.writeFileSync(filename, JSON.stringify(this.newSwagger));
+		log.debug('Swagger file written successfully');
+	}
+
+	public preprocessing(pureCloud: PureCloud, config: Config): Promise<string> {
+		log.debug('Swagger Preprocessing');
+		return swaggerPreprocessing(this.newSwagger, pureCloud, config);
+	}
 
 	public stringifyVersion(version, includePrerelease) {
 		log.debug(`Stringifying version: ${version.major}.${version.minor}.${version.point}, includePrerelease: ${includePrerelease}`);
 		this.copyPropertiesToImpl();
 
-		const result = swaggerDiffImpl.stringifyVersion(version, includePrerelease);
+		const result = this.swaggerDiffImpl.stringifyVersion(version, includePrerelease);
 		log.debug(`Version string result: ${result}`);
 		return result;
 	};
 
 	private copyPropertiesToImpl() {
 		// Set properties on impl object just to be safe
-		swaggerDiffImpl.changes = this.changes;
-		swaggerDiffImpl.changeCount = this.changeCount;
-		swaggerDiffImpl.swaggerInfo = this.swaggerInfo;
-		swaggerDiffImpl.useSdkVersioning = this.useSdkVersioning;
-		swaggerDiffImpl.oldSwagger = this.oldSwagger;
-		swaggerDiffImpl.newSwagger = this.newSwagger;
+		this.swaggerDiffImpl.changes = this.changes;
+		this.swaggerDiffImpl.changeCount = this.changeCount;
+		this.swaggerDiffImpl.swaggerInfo = this.swaggerInfo;
+		this.swaggerDiffImpl.useSdkVersioning = this.useSdkVersioning;
+		this.swaggerDiffImpl.oldSwagger = this.oldSwagger;
+		this.swaggerDiffImpl.newSwagger = this.newSwagger;
 	}
 
 	private convertToV2(swaggerV3 : any) {
@@ -262,9 +281,9 @@ export default class SwaggerDiff {
 					}
 
 					if (obj && obj.properties) {
-						const keys = Object.keys(swaggerV2.definitions[key].properties);
+						const keys = Object.keys(obj.properties);
 						keys.forEach((key2, index) => {
-							let obj2 = swaggerV2.definitions[key].properties[key2];
+							let obj2 = obj.properties[key2];
 							if (obj2) {
 								// Remove nullable attribute (not supported in v2)
 								if (obj2.hasOwnProperty("nullable")) {
@@ -329,51 +348,3 @@ function getEnv(varname, defaultValue, isDefaultValue) {
 	return defaultValue;
 }
 
-// This function will combine the public swagger with the preview swagger
-function combineSwagger(publicSwagger: Swagger, preview: Swagger) {
-	log.info('Combining public and preview swagger docs into one');
-
-	// Set new file equal to public file for now
-	let newSwaggerFile = publicSwagger;
-
-	// Search for tags that are in the preview swagger but not in the public swagger and add to new new JSON object
-	preview.tags.forEach((previewTag) => {
-		let duplicate = publicSwagger.tags.some((publicTag) => publicTag.name === previewTag.name);
-		if (!duplicate) {
-			newSwaggerFile.tags.push(previewTag);
-		}
-	});
-
-	// mark preview paths as preview(similar to marking as deprecated)
-	for (const [key1, value1] of Object.entries(preview.paths)) {
-		for (const [key, value] of Object.entries(value1)) {
-			preview.paths[key1][key]['x-genesys-preview'] = true;
-		}
-	}
-
-	// Search for paths in the preview swagger not in the public swagger(should be all paths) and add preview paths to new JSON object
-	let previewPaths = Object.keys(preview.paths);
-	let publicPaths = Object.keys(publicSwagger.paths);
-	for (let i = 0; i < previewPaths.length; i++) {
-		if (publicPaths.includes(previewPaths[i])) {
-			// Path does exist in public swagger, add the preview HTTP method to the existing path in the new JSON object
-			for (const [key, value] of Object.entries(preview.paths[previewPaths[i]])) {
-				newSwaggerFile.paths[previewPaths[i]][key] = value;
-			}
-		} else {
-			// Path does not exist in public swagger, add the preview path to the new JSON objects paths
-			newSwaggerFile.paths[previewPaths[i]] = preview.paths[previewPaths[i]];
-		}
-	}
-
-	// Search for definitions in the preview swagger not in the public swagger and add preview definitions to new JSON object
-	let previewDefinitions = Object.keys(preview.definitions);
-	let publicDefinitions = Object.keys(publicSwagger.definitions);
-	for (let i = 0; i < previewDefinitions.length; i++) {
-		if (!publicDefinitions.includes(previewDefinitions[i])) {
-			newSwaggerFile.definitions[previewDefinitions[i]] = preview.definitions[previewDefinitions[i]];
-		}
-	}
-
-	return newSwaggerFile
-}

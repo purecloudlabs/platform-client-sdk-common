@@ -5,19 +5,15 @@ import fs from 'fs-extra';
 import https from 'https';
 import path from 'path';
 import pluralize from 'pluralize';
-import { Config, Script, Haystack, PureCloud, LocalConfig, valueOverides } from '../types/config.js'
-import { Resourcepaths, Version, ApiVersionData, Data, Release } from '../types/builderTypes.js'
-import { ItemsType, Format } from '../types/swagger.js'
-import platformClient from 'purecloud-platform-client-v2';
-import yaml from 'js-yaml';
-import SwaggerDiff from '../swagger/swaggerDiff.js';
+import { Config, Script, Haystack, PureCloud, LocalConfig, valueOverides } from '../types/config.js';
+import { Resourcepaths, Version, ApiVersionData, Data } from '../types/builderTypes.js';
+import { load } from 'js-yaml';
+import { SpecificationDiff } from '../swagger/specificationDiff.js';
 import { GitModule, GithubConfig } from '../git/gitModule.js';
 import { zipDir } from '../util/zip.js';
-import { Models } from 'purecloud-platform-client-v2';
 import { log } from '../log/logger.js';
 
-
-const swaggerDiff = new SwaggerDiff();
+const specificationDiff = new SpecificationDiff();
 
 const git: GitModule = new GitModule();
 let githubConfig: GithubConfig = {
@@ -28,41 +24,7 @@ let githubConfig: GithubConfig = {
 	debug: false
 };
 
-const TIMESTAMP_FORMAT = 'h:mm:ss a';
-const NOTIFICATION_ID_REGEX = /^urn:jsonschema:(.+):v2:(.+)$/i;
-let _this: Builder;
 let newSwaggerTempFile = '';
-
-
-// Quarantine Operations
-const quarantineOperationIds: string[] = ['postGroupImages', 'postUserImages', 'postLocationImages'];
-const quarantineModels: string[] = [];
-// Keep, Quarantine or Override Discriminator and Polymorphism (possible values: keep, quarantine, override)
-const defaultDiscriminatorManagement: string = 'quarantine';
-const keepDiscriminatorModels: string[] = ['ListValues'];
-// Override OperationId due to name conflict ("operationId", "x-purecloud-method-name")
-const overrideOperationIds: any = {};
-const aliasOperationIds: any = {
-	"/api/v2/presence/definitions/{definitionId}": {
-		"get": "getDivisionBasedPresenceDefinition",
-		"put": "putDivisionBasedPresenceDefinition",
-		"delete": "deleteDivisionBasedPresenceDefinition"
-	},
-	"/api/v2/presence/definitions": {
-		"get": "getDivisionBasedPresenceDefinitions",
-		"post": "postDivisionBasedPresenceDefinitions"
-	}
-};
-// Override available topics schema properties from type: "integer" to type: "integer", format: "int64"
-let forceInt64Integers = true;
-// Remove duplicates in topics enumerations
-let removeEnumDuplicates = true;
-// Add info (vendor extensions) - follow redirect body property
-const followRedirectBodyOperations = {
-	"/api/v2/audits/query/{transactionId}/results": {
-		"get": [{ "status": 302, "property": "downloadUrl" }]
-	}
-};
 
 export class Builder {
 
@@ -152,7 +114,6 @@ export class Builder {
 		return new Promise<string>((resolve, reject) => {
 			try {
 				log.debug('Starting post-construction builder setup');
-				_this = this;
 
 				// https://github.com/winstonjs/winston#logging-levels
 				// silly > debug > verbose > info > warn > error
@@ -340,7 +301,7 @@ export class Builder {
 			log.debug('Prebuild stage initiated');
 			log.writeBox('STAGE: pre-build');
 			let prebuildStartTime = Date.now();
-			prebuildImpl()
+			prebuildImpl(this)
 				.then(() => {
 					log.debug('Prebuild implementation completed');
 					log.info(`Pre-build complete at ${new Date(Date.now()).toUTCString()} in ${measureDurationFrom(prebuildStartTime)}`);
@@ -359,7 +320,7 @@ export class Builder {
 			log.writeBox('STAGE: build');
 			let buildStartTime = Date.now();
 
-			buildImpl()
+			buildImpl(this)
 				.then(() => {
 					log.debug('Build implementation completed');
 					log.info(`Build complete at ${new Date(Date.now()).toUTCString()} in ${measureDurationFrom(buildStartTime)}`);
@@ -379,7 +340,7 @@ export class Builder {
 			log.writeBox('STAGE: post-build');
 			let postbuildStartTime = Date.now();
 
-			postbuildImpl()
+			postbuildImpl(this)
 				.then(() => {
 					log.debug('Postbuild implementation completed');
 					log.info(`Post-build complete at ${new Date(Date.now()).toUTCString()} in ${measureDurationFrom(postbuildStartTime)}`);
@@ -394,20 +355,20 @@ export class Builder {
 	}
 }
 
-function prebuildImpl(): Promise<string> {
+function prebuildImpl(builder: Builder): Promise<string> {
 	return new Promise<string>((resolve, reject) => {
 		try {
 			log.debug('Starting prebuild implementation');
 			// Pre-run scripts
 			log.debug('Executing prebuild pre-run scripts');
-			executeScripts(_this.config.stageSettings.prebuild.preRunScripts, 'custom prebuild pre-run');
+			executeScripts(builder, builder.config.stageSettings.prebuild.preRunScripts, 'custom prebuild pre-run');
 
 			// Clone repo
 			let startTime = Date.now();
-			log.debug(`Starting repository clone operation - Repo: ${_this.config.settings.sdkRepo.repo}, Branch: ${_this.config.settings.sdkRepo.branch}, Target: ${getEnv('SDK_REPO')}`);
-			log.info(`Cloning ${_this.config.settings.sdkRepo.repo} (${_this.config.settings.sdkRepo.branch}) to ${getEnv('SDK_REPO')}`);
+			log.debug(`Starting repository clone operation - Repo: ${builder.config.settings.sdkRepo.repo}, Branch: ${builder.config.settings.sdkRepo.branch}, Target: ${getEnv('SDK_REPO')}`);
+			log.info(`Cloning ${builder.config.settings.sdkRepo.repo} (${builder.config.settings.sdkRepo.branch}) to ${getEnv('SDK_REPO')}`);
 			git
-				.clone(_this.config.settings.sdkRepo.repo, _this.config.settings.sdkRepo.branch, getEnv('SDK_REPO') as string)
+				.clone(builder.config.settings.sdkRepo.repo, builder.config.settings.sdkRepo.branch, getEnv('SDK_REPO') as string)
 				.then(function () {
 					log.debug('Repository clone completed successfully');
 					log.debug(`Clone operation completed in ${measureDurationFrom(startTime)}`);
@@ -416,19 +377,19 @@ function prebuildImpl(): Promise<string> {
 					// Diff swagger
 					log.debug('Starting swagger diff operation');
 					log.info('Diffing swagger files...');
-					swaggerDiff.useSdkVersioning = true;
+					specificationDiff.useSdkVersioning = true;
 					// Special treatment for Web Messaging specification (downgrade from OpenAPI v3 to Swagger v2)
-					if (_this.config.settings.swaggerCodegen.codegenLanguage == "webmessagingjava") {
+					if (builder.config.settings.swaggerCodegen.codegenLanguage == "webmessagingjava") {
 						log.debug('Enabling OpenAPI v3 to Swagger v2 downgrade for webmessagingjava');
-						swaggerDiff.downgradeToSwaggerV2 = true;
+						specificationDiff.downgradeToSwaggerV2 = true;
 					}
-					log.debug(`Swagger diff paths - Old: ${_this.config.settings.swagger.oldSwaggerPath}, New: ${_this.config.settings.swagger.newSwaggerPath}, Preview: ${_this.config.settings.swagger.previewSwaggerPath}`);
-					swaggerDiff.getAndDiff(
-						_this.config.settings.swagger.oldSwaggerPath,
-						_this.config.settings.swagger.newSwaggerPath,
-						_this.config.settings.swagger.previewSwaggerPath,
-						_this.config.settings.swagger.saveOldSwaggerPath,
-						_this.config.settings.swagger.saveNewSwaggerPath
+					log.debug(`Swagger diff paths - Old: ${builder.config.settings.swagger.oldSwaggerPath}, New: ${builder.config.settings.swagger.newSwaggerPath}, Preview: ${builder.config.settings.swagger.previewSwaggerPath}`);
+					specificationDiff.getAndDiff(
+						builder.config.settings.swagger.oldSwaggerPath,
+						builder.config.settings.swagger.newSwaggerPath,
+						builder.config.settings.swagger.previewSwaggerPath,
+						builder.config.settings.swagger.saveOldSwaggerPath,
+						builder.config.settings.swagger.saveNewSwaggerPath
 					);
 					log.debug('Swagger diff completed');
 				})
@@ -436,79 +397,26 @@ function prebuildImpl(): Promise<string> {
 					// For Jenkins only. 
 					log.debug('Checking for upstream changes validation');
 					if (newSwaggerTempFile.includes('build-platform-sdks-internal-pipeline') && process.argv.includes("build-contains-upstream-changes")) {
-						log.debug(`Validating upstream changes - Change count: ${swaggerDiff.changeCount}`);
-						if (swaggerDiff.changeCount == 0) {
+						log.debug(`Validating upstream changes - Change count: ${specificationDiff.changeCount}`);
+						if (specificationDiff.changeCount == 0) {
 							log.debug('No swagger changes detected but upstream changes expected');
 							throw new Error('The build contains upstream changes, but the Swagger definition has not changed.');
 						}
 					}
 				})
 				.then(() => {
-					log.debug('Adding notifications to schema');
-					return addNotifications();
-				})
-				.then(() => {
-					log.debug('Processing swagger paths');
-					return processPaths();
-				})
-				.then(() => {
-					log.debug('Processing swagger references');
-					return processRefs();
-				})
-				.then(() => {
-					log.debug('Processing any types in schema');
-					return processAnyTypes();
-				})
-				.then(() => {
-					let forceCSVCollectionFormatInTags: string[] = [];
-					if (_this.config.settings.swagger) {
-						let allSwaggerSettings: any = _this.config.settings.swagger;
-						if (allSwaggerSettings.forceCSVCollectionFormatOnTags) {
-							forceCSVCollectionFormatInTags = allSwaggerSettings.forceCSVCollectionFormatOnTags;
-						}
-					}
-					return forceCSVCollectionFormat(forceCSVCollectionFormatInTags);
-				})
-				.then(() => {
-					return quarantineOperationsAndModels(quarantineOperationIds, quarantineModels);
-				})
-				.then(() => {
-					let discriminatorManagement: string = defaultDiscriminatorManagement;
-					if (_this.config.settings.swagger) {
-						let allSwaggerSettings: any = _this.config.settings.swagger;
-						if (allSwaggerSettings.discriminatorManagement !== null && allSwaggerSettings.discriminatorManagement !== undefined) {
-							if (allSwaggerSettings.discriminatorManagement.toLowerCase() === 'keep') {
-								discriminatorManagement = 'keep';
-							} else if (allSwaggerSettings.discriminatorManagement.toLowerCase() === 'quarantine') {
-								discriminatorManagement = 'quarantine';
-							} else if (allSwaggerSettings.discriminatorManagement.toLowerCase() === 'override') {
-								discriminatorManagement = 'override';
-							} else if (allSwaggerSettings.discriminatorManagement.toLowerCase() === 'extensions') {
-								discriminatorManagement = 'extensions';
-							} else {
-								discriminatorManagement = defaultDiscriminatorManagement;
-							}
-						}
-					}
-					return manageDiscriminator(discriminatorManagement, keepDiscriminatorModels);
-				})
-				.then(() => {
-					return overrideOperations(overrideOperationIds);
-				})
-				.then(() => {
-					return addExtensions_followRedirectBody(followRedirectBodyOperations);
+					log.debug('Specification Preprocessing');
+					return specificationDiff.preprocessing(builder.pureCloud, builder.config);
 				})
 				.then(() => {
 					// Save new swagger to temp file for build
-					log.debug(`Writing processed swagger to temp file: ${newSwaggerTempFile}`);
 					log.info(`Writing new swagger file to temp storage path: ${newSwaggerTempFile}`);
-					fs.writeFileSync(newSwaggerTempFile, JSON.stringify(swaggerDiff.newSwagger));
-					log.debug('Swagger file written successfully');
+					specificationDiff.writeSpecification(newSwaggerTempFile);
 				})
 				.then(function (): Promise<string> {
 					return new Promise<string>((resolve, reject) => {
 
-						_this.version = {
+						builder.version = {
 							major: 0,
 							minor: 0,
 							point: 0,
@@ -516,37 +424,37 @@ function prebuildImpl(): Promise<string> {
 							apiVersion: 0,
 						};
 
-						if (_this.config.settings.versionFile) {
-							if (fs.existsSync(_this.config.settings.versionFile)) {
-								_this.version = JSON.parse(fs.readFileSync(_this.config.settings.versionFile, 'utf8'));
+						if (builder.config.settings.versionFile) {
+							if (fs.existsSync(builder.config.settings.versionFile)) {
+								builder.version = JSON.parse(fs.readFileSync(builder.config.settings.versionFile, 'utf8'));
 							} else {
-								log.warn(`Version file not found: ${_this.config.settings.versionFile}`);
+								log.warn(`Version file not found: ${builder.config.settings.versionFile}`);
 							}
 						} else {
 							log.warn('Version file not specified! Defaulting to 0.0.0-UNKNOWN');
 						}
 
 						// Increment version in config
-						let oldVersion = swaggerDiff.stringifyVersion(_this.version, true);
+						let oldVersion = specificationDiff.stringifyVersion(builder.version, true);
 						log.debug(`Previous version: ${oldVersion}`);
-						swaggerDiff.incrementVersion(_this.version);
-						let newVersion = swaggerDiff.stringifyVersion(_this.version, true);
+						specificationDiff.incrementVersion(builder.version);
+						let newVersion = specificationDiff.stringifyVersion(builder.version, true);
 
 						// Determine if new version
-						_this.isNewVersion = getEnv('BRANCH_NAME') !== 'master' ? false : oldVersion !== newVersion;
-						setEnv('SDK_NEW_VERSION', _this.isNewVersion);
-						if (_this.isNewVersion === true) log.info(`New version: ${_this.version.displayFull}`);
+						builder.isNewVersion = getEnv('BRANCH_NAME') !== 'master' ? false : oldVersion !== newVersion;
+						setEnv('SDK_NEW_VERSION', builder.isNewVersion);
+						if (builder.isNewVersion === true) log.info(`New version: ${builder.version.displayFull}`);
 						else log.warn('Version was not incremented');
 
 						// Write new version to file
-						if (_this.isNewVersion === true && _this.config.settings.versionFile) {
-							fs.writeFileSync(_this.config.settings.versionFile, JSON.stringify(_this.version, null, 2));
+						if (builder.isNewVersion === true && builder.config.settings.versionFile) {
+							fs.writeFileSync(builder.config.settings.versionFile, JSON.stringify(builder.version, null, 2));
 						}
 
 						// Get API version from health check endpoint
 						let resString = '';
-						log.info(`Getting API version from ${_this.config.settings.apiHealthCheckUrl}`);
-						https.get(_this.config.settings.apiHealthCheckUrl, function (res) {
+						log.info(`Getting API version from ${builder.config.settings.apiHealthCheckUrl}`);
+						https.get(builder.config.settings.apiHealthCheckUrl, function (res) {
 							res.on('data', function (chunk) {
 								resString += chunk;
 							});
@@ -566,7 +474,7 @@ function prebuildImpl(): Promise<string> {
 					_.forIn(apiVersionData, function (value, key) {
 						apiVersionDataClean[key.replace(/\W+/g, '')] = value;
 					});
-					_this.apiVersionData = apiVersionDataClean;
+					builder.apiVersionData = apiVersionDataClean;
 					log.debug(`API version data: ${JSON.stringify(apiVersionDataClean, null, 2)}`);
 
 
@@ -576,23 +484,23 @@ function prebuildImpl(): Promise<string> {
 					const data: Data = {
 						extraNotes: getEnv('RELEASE_NOTES') as string,
 						hasExtraNotes: false,
-						apiVersionData: _this.apiVersionData,
+						apiVersionData: builder.apiVersionData,
 					};
 
 					data.hasExtraNotes = data.extraNotes !== undefined;
 
 					// Get release notes
 					log.info('Generating release notes...');
-					_this.releaseNotes = swaggerDiff.generateReleaseNotes(_this.releaseNoteTemplatePath, data);
-					_this.releaseNoteSummary = swaggerDiff.generateReleaseNotes(_this.releaseNoteSummaryTemplatePath, data);
+					builder.releaseNotes = specificationDiff.generateReleaseNotes(builder.releaseNoteTemplatePath, data);
+					builder.releaseNoteSummary = specificationDiff.generateReleaseNotes(builder.releaseNoteSummaryTemplatePath, data);
 
 					let releaseNotePath = path.join(getEnv('SDK_REPO') as string, 'releaseNotes.md');
 					log.info(`Writing release notes to ${releaseNotePath}`);
-					fs.writeFileSync(releaseNotePath, _this.releaseNotes);
+					fs.writeFileSync(releaseNotePath, builder.releaseNotes);
 				})
 				.then(() => {
 					log.debug('Executing prebuild post-run scripts');
-					return executeScripts(_this.config.stageSettings.prebuild.postRunScripts, 'custom prebuild post-run');
+					return executeScripts(builder, builder.config.stageSettings.prebuild.postRunScripts, 'custom prebuild post-run');
 				})
 				.then(() => {
 					log.debug('Prebuild implementation completed successfully');
@@ -612,13 +520,13 @@ function prebuildImpl(): Promise<string> {
 	});
 }
 
-function buildImpl(): Promise<string> {
+function buildImpl(builder: Builder): Promise<string> {
 	return new Promise<string>((resolve, reject) => {
 		try {
 			log.debug('Starting build implementation');
 			// Pre-run scripts
 			log.debug('Executing build pre-run scripts');
-			executeScripts(_this.config.stageSettings.build.preRunScripts, 'custom build pre-run');
+			executeScripts(builder, builder.config.stageSettings.build.preRunScripts, 'custom build pre-run');
 
 			let outputDir = path.join(getEnv('SDK_REPO') as string, 'build');
 			log.debug(`Setting up build output directory: ${outputDir}`);
@@ -627,32 +535,32 @@ function buildImpl(): Promise<string> {
 			let command = '';
 			// Java command and options
 			command += 'java ';
-			command += `-DapiTests=${_this.config.settings.swaggerCodegen.generateApiTests} `;
-			command += `-DmodelTests=${_this.config.settings.swaggerCodegen.generateModelTests} `;
+			command += `-DapiTests=${builder.config.settings.swaggerCodegen.generateApiTests} `;
+			command += `-DmodelTests=${builder.config.settings.swaggerCodegen.generateModelTests} `;
 			command += `${getEnv('JAVA_OPTS', '')} -XX:MaxMetaspaceSize=256M -Xmx2g -DloggerPath=conf/log4j.properties `;
 			// Swagger-codegen jar file
-			if (_this.config.settings.swaggerCodegen.isCustomLanguage === true) {
+			if (builder.config.settings.swaggerCodegen.isCustomLanguage === true) {
 				// To run custom language/generator with openapi-generator
 				// the jarPath will include both plugin for the custom language/generator and the openapi-generator jar file
 				// "jarPath": "${COMMON_ROOT}/resources/oagenerator/languages/purecloudjavascript-oas2/target/purecloudjavascript-oas2-openapi-generator-1.0.0.jar:${COMMON_ROOT}/resources/oagenerator/main/openapi-generator-cli-7.24.0.jar"
-				command += `-cp ${_this.config.settings.swaggerCodegen.jarPath} org.openapitools.codegen.OpenAPIGenerator `;
+				command += `-cp ${builder.config.settings.swaggerCodegen.jarPath} org.openapitools.codegen.OpenAPIGenerator `;
 			} else {
 				// To run swagger-generator (legacy), or to run language/generator provided with openapi-generator (supported/included)
 				// "jarPath": "${WORKSPACE}/openapi-generator/modules/openapi-generator-cli/target/openapi-generator-cli.jar"
 				// "jarPath": "${COMMON_ROOT}/resources/oagenerator/main/openapi-generator-cli-7.24.0.jar"
-				command += `-jar ${_this.config.settings.swaggerCodegen.jarPath} `;
+				command += `-jar ${builder.config.settings.swaggerCodegen.jarPath} `;
 			}
 			// Swagger-codegen options
 			command += 'generate ';
 			command += `-i ${newSwaggerTempFile} `;
-			command += `-g ${_this.config.settings.swaggerCodegen.codegenLanguage} `;
+			command += `-g ${builder.config.settings.swaggerCodegen.codegenLanguage} `;
 			command += `-o ${outputDir} `;
-			command += `-c ${_this.config.settings.swaggerCodegen.configFile} `;
+			command += `-c ${builder.config.settings.swaggerCodegen.configFile} `;
 			command += '--skip-validate-spec ';
 			// Don't append empty templates directory
-			if (getFileCount(_this.resourcePaths.templates) > 0) command += `-t ${_this.resourcePaths.templates} `;
+			if (getFileCount(builder.resourcePaths.templates) > 0) command += `-t ${builder.resourcePaths.templates} `;
 
-			_.forEach(_this.config.settings.swaggerCodegen.extraGeneratorOptions, (option) => (command += ' ' + option));
+			_.forEach(builder.config.settings.swaggerCodegen.extraGeneratorOptions, (option) => (command += ' ' + option));
 
 			log.debug(`Executing swagger-codegen command: ${command}`);
 			log.info('Running swagger-codegen...');
@@ -660,36 +568,36 @@ function buildImpl(): Promise<string> {
 			log.debug('Swagger-codegen execution completed');
 
 			log.debug('Checking for extensions to copy...');
-			if (fs.existsSync(_this.resourcePaths.extensions)) {
-				log.debug(`Copying extensions from ${_this.resourcePaths.extensions} to ${_this.config.settings.extensionsDestination}`);
+			if (fs.existsSync(builder.resourcePaths.extensions)) {
+				log.debug(`Copying extensions from ${builder.resourcePaths.extensions} to ${builder.config.settings.extensionsDestination}`);
 				log.info('Copying extensions...');
-				fs.copySync(_this.resourcePaths.extensions, _this.config.settings.extensionsDestination);
+				fs.copySync(builder.resourcePaths.extensions, builder.config.settings.extensionsDestination);
 			} else {
 				log.debug('Extensions path not found');
-				log.warn(`Extensions path does not exist! Path: ${_this.resourcePaths.extensions}`);
+				log.warn(`Extensions path does not exist! Path: ${builder.resourcePaths.extensions}`);
 			}
 
-			if (_this.config.settings.samplesDestination) {
+			if (builder.config.settings.samplesDestination) {
 				log.debug('Checking for samples to copy...');
-				if (fs.existsSync(_this.resourcePaths.samples)) {
-					fs.ensureDirSync(_this.config.settings.samplesDestination);
-					log.debug(`Copying samples from ${_this.resourcePaths.samples} to ${_this.config.settings.samplesDestination}`);
+				if (fs.existsSync(builder.resourcePaths.samples)) {
+					fs.ensureDirSync(builder.config.settings.samplesDestination);
+					log.debug(`Copying samples from ${builder.resourcePaths.samples} to ${builder.config.settings.samplesDestination}`);
 					log.info('Copying samples...');
-					fs.copySync(_this.resourcePaths.samples, _this.config.settings.samplesDestination);
+					fs.copySync(builder.resourcePaths.samples, builder.config.settings.samplesDestination);
 				} else {
 					log.debug('Samples path not found');
-					log.warn(`Samples path does not exist! Path: ${_this.resourcePaths.samples}`);
+					log.warn(`Samples path does not exist! Path: ${builder.resourcePaths.samples}`);
 				}
 			}
 
 			// Ensure compile scripts fail on error
-			_.forEach(_this.config.stageSettings.build.compileScripts, function (script) {
+			_.forEach(builder.config.stageSettings.build.compileScripts, function (script) {
 				script.failOnError = true;
 			});
 
 			// Run compile scripts
 			log.debug('Executing compile scripts');
-			executeScripts(_this.config.stageSettings.build.compileScripts, 'compile');
+			executeScripts(builder, builder.config.stageSettings.build.compileScripts, 'compile');
 
 			// Copy readme from build to docs and repo root
 			log.debug('Starting readme copy operations');
@@ -713,7 +621,7 @@ function buildImpl(): Promise<string> {
 			zipDir(path.join(outputDir, 'docs'), path.join(getEnv('SDK_TEMP') as string, 'docs.zip'))
 				.then(() => {
 					log.debug('Documentation zipped successfully, executing post-run scripts');
-					return executeScripts(_this.config.stageSettings.build.postRunScripts, 'custom build post-run');
+					return executeScripts(builder, builder.config.stageSettings.build.postRunScripts, 'custom build post-run');
 				})
 				.then(() => {
 					log.debug('Build implementation completed successfully');
@@ -731,19 +639,19 @@ function buildImpl(): Promise<string> {
 	});
 }
 
-function postbuildImpl(): Promise<string> {
+function postbuildImpl(builder: Builder): Promise<string> {
 	return new Promise<string>((resolve, reject) => {
 		try {
 			log.debug('Starting postbuild implementation');
 			// Pre-run scripts
 			log.debug('Executing postbuild pre-run scripts');
-			executeScripts(_this.config.stageSettings.postbuild.preRunScripts, 'custom postbuild pre-run');
+			executeScripts(builder, builder.config.stageSettings.postbuild.preRunScripts, 'custom postbuild pre-run');
 
 			log.debug('Creating release');
-			createRelease()
+			createRelease(builder)
 				.then(() => {
 					log.debug('Release created, executing postbuild post-run scripts');
-					return executeScripts(_this.config.stageSettings.postbuild.postRunScripts, 'custom postbuild post-run');
+					return executeScripts(builder, builder.config.stageSettings.postbuild.postRunScripts, 'custom postbuild post-run');
 				})
 				.then(() => {
 					log.debug('Postbuild implementation completed successfully');
@@ -760,6 +668,9 @@ function postbuildImpl(): Promise<string> {
 		}
 	});
 }
+
+/* PRIVATE FUNCTIONS */
+
 
 /* PRIVATE FUNCTIONS */
 
@@ -781,36 +692,36 @@ function applyOverrides(original: Config, overrides: valueOverides) {
 	});
 }
 
-function createRelease(): Promise<string> {
+function createRelease(builder: Builder): Promise<string> {
 	return new Promise<string>((resolve, reject) => {
 
-		if (!_this.config.settings.sdkRepo.repo || _this.config.settings.sdkRepo.repo === '') {
+		if (!builder.config.settings.sdkRepo.repo || builder.config.settings.sdkRepo.repo === '') {
 			log.warn('Skipping github release creation! Repo is undefined.');
 			resolve("");
 			return;
 		}
-		if (_this.config.stageSettings.postbuild.gitCommit !== true) {
+		if (builder.config.stageSettings.postbuild.gitCommit !== true) {
 			log.warn('Skipping git commit and github release creation! Set postbuild.gitCommit=true to commit changes.');
 			resolve("");
 			return;
 		}
 
-		if (_this.isNewVersion !== true) {
+		if (builder.isNewVersion !== true) {
 			log.warn('Skipping github release creation! Build did not produce a new version.');
 			resolve("");
 			return;
 		}
 
 		git
-			.saveChanges(_this.config.settings.sdkRepo.repo, getEnv('SDK_REPO') as string, _this.version.displayFull)
+			.saveChanges(builder.config.settings.sdkRepo.repo, getEnv('SDK_REPO') as string, builder.version.displayFull)
 			.then(() => {
-				if (_this.config.stageSettings.postbuild.publishRelease !== true) {
+				if (builder.config.stageSettings.postbuild.publishRelease !== true) {
 					log.warn('Skipping github release creation! Set postbuild.publishRelease=true to release.');
 					resolve("");
 				}
 
 				// Expected format: https://github.com/grouporuser/reponame
-				let repoParts = _this.config.settings.sdkRepo.repo.split('/');
+				let repoParts = builder.config.settings.sdkRepo.repo.split('/');
 				let repoName = repoParts[repoParts.length - 1];
 				let repoOwner = repoParts[repoParts.length - 2];
 				if (repoName.endsWith('.git')) repoName = repoName.substring(0, repoName.length - 4);
@@ -821,12 +732,12 @@ function createRelease(): Promise<string> {
 				githubConfig.owner = repoOwner;
 				githubConfig.token = getEnv('GITHUB_TOKEN') as string;
 
-				const tagName = _this.config.settings.sdkRepo.tagFormat.replace('{version}', _this.version.displayFull);
+				const tagName = builder.config.settings.sdkRepo.tagFormat.replace('{version}', builder.version.displayFull);
 				let createReleaseOptions = {
 					tag_name: tagName,
-					target_commitish: _this.config.settings.sdkRepo.branch ? _this.config.settings.sdkRepo.branch : 'master',
+					target_commitish: builder.config.settings.sdkRepo.branch ? builder.config.settings.sdkRepo.branch : 'master',
 					name: tagName,
-					body: `Release notes for version ${tagName}\n${_this.releaseNoteSummary}`,
+					body: `Release notes for version ${tagName}\n${builder.releaseNoteSummary}`,
 					draft: false,
 					prerelease: false,
 				};
@@ -843,759 +754,13 @@ function createRelease(): Promise<string> {
 	});
 }
 
-function addNotifications(): Promise<string> {
-	return new Promise<string>((resolve, reject) => {
-
-		try {
-			// Skip notifications
-			if (getEnv('EXCLUDE_NOTIFICATIONS') === true) {
-				log.info('Not adding notifications to schema');
-				resolve("");
-			}
-
-			// Check PureCloud settings
-			checkAndThrow(_this.pureCloud, 'clientId', 'Environment variable PURECLOUD_CLIENT_ID must be set!');
-			checkAndThrow(_this.pureCloud, 'clientSecret', 'Environment variable PURECLOUD_CLIENT_SECRET must be set!');
-			checkAndThrow(_this.pureCloud, 'environment', 'PureCloud environment was blank!');
-
-			const client = platformClient.ApiClient.instance;
-			client.setEnvironment(_this.pureCloud.environment);
-			let notificationsApi = new platformClient.NotificationsApi();
-
-			client.loginClientCredentialsGrant(_this.pureCloud.clientId, _this.pureCloud.clientSecret)
-				.then(() => {
-					return notificationsApi.getNotificationsAvailabletopics({ 'expand': ['schema'] });
-				})
-				.then((notifications: Models.AvailableTopicEntityListing) => {
-					//let notificationMappings = { notifications: [] };
-
-					type Notification = {
-						topic: string; // Replace 'string' with the appropriate type for the 'topic' property
-						class: string;
-					}
-
-
-					type NotificationMappings = {
-						notifications: Notification[];
-					};
-
-
-					const notificationMappings: NotificationMappings = { notifications: [] };
-
-					// Process schemas
-					log.info(`Processing ${notifications.entities.length} notification schemas...`);
-					_.forEach(notifications.entities, (entity) => {
-						if (!entity.schema) {
-							log.warn(`Notification ${entity.id} does not have a defined schema!`);
-							return;
-						}
-
-						const schemaName = getNotificationClassName(entity.schema.id.toString());
-						log.info(`Notification mapping: ${entity.id} (${schemaName})`);
-						notificationMappings.notifications.push({ topic: entity.id, class: schemaName });
-						extractDefinitons(entity.schema);
-						swaggerDiff.newSwagger.definitions[schemaName] = JSON.parse(JSON.stringify(entity.schema));
-					});
-
-					// Write mappings to file
-					let mappingFilePath = path.resolve(path.join(getEnv('SDK_REPO') as string, 'notificationMappings.json'));
-					log.info(`Writing Notification mappings to ${mappingFilePath}`);
-					fs.writeFileSync(mappingFilePath, JSON.stringify(notificationMappings, null, 2));
-
-					resolve("");
-				})
-				.catch((err: Error) => {
-					reject(err)
-				});
-		} catch (err: unknown) {
-			reject(err);
-		}
-	});
-}
-
-function getNotificationClassName(id: string) {
-	// Normalize to include v2. Architect topics just have to be different and don't have v2...
-	let parts = id.split(':');
-	if (parts[parts.length - 2] !== 'v2') parts.splice(parts.length - 2, 0, 'v2');
-	const normalizedId = parts.join(':');
-
-	// Regex match the URN parts we want
-	let className = '';
-	let matches = NOTIFICATION_ID_REGEX.exec(normalizedId);
-	if (!matches) {
-		log.warn('No regex matches!');
-		log.warn(`id: ${id}`);
-		log.warn(`normalizedId: ${normalizedId}`);
-	}
-	if (matches !== null) {
-		for (let i = 1; i < matches.length; i++) {
-			matches[i].split(':').forEach((part) => {
-				className += part.charAt(0).toUpperCase() + part.slice(1);
-			});
-		}
-	}
-
-	return className;
-}
-
-function processAnyTypes() {
-	const keys = Object.keys(swaggerDiff.newSwagger.definitions);
-	keys.forEach((key, index) => {
-		let obj = swaggerDiff.newSwagger.definitions[key].properties;
-		if (obj) {
-			const keys = Object.keys(swaggerDiff.newSwagger.definitions[key].properties);
-			keys.forEach((key2, index) => {
-				let obj2 = swaggerDiff.newSwagger.definitions[key].properties[key2];
-				if (obj2) {
-					if (obj2.hasOwnProperty("type") && obj2["type"] === "any") {
-						obj2.type = "string" as ItemsType;
-						obj2.format = "date-time" as Format;
-					}
-				}
-			});
-		}
-	});
-}
-
-function forceCSVCollectionFormat(forceCSVCollectionFormatInTags: string[]) {
-	if (forceCSVCollectionFormatInTags && forceCSVCollectionFormatInTags.length > 0) {
-		log.info(`Updating CollectionFormat from multi to csv for operations with tags: ${forceCSVCollectionFormatInTags.toString()}`);
-		const paths = Object.keys(swaggerDiff.newSwagger.paths);
-		for (const path of paths) {
-			const methods = Object.keys(swaggerDiff.newSwagger.paths[path]);
-			for (const method of methods) {
-				let operation = swaggerDiff.newSwagger.paths[path][method];
-				let overrideOperation = false;
-				for (let overrideTag of forceCSVCollectionFormatInTags) {
-					if (operation && operation.tags && operation.tags.includes(overrideTag)) {
-						overrideOperation = true;
-						break;
-					}
-				}
-				if (overrideOperation === true) {
-					if (operation.parameters && operation.parameters.length > 0) {
-						for (let opParameter of operation.parameters) {
-							if (opParameter.in && opParameter.in === "query" && opParameter.type && opParameter.type === "array" && opParameter.collectionFormat && opParameter.collectionFormat === "multi") {
-								opParameter.collectionFormat = "csv";
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	return;
-}
-
-function addExtensions_followRedirectBody(followRedirectBodyOperations: Record<string, any>) {
-	// Add vendor extensions in swagger
-	// Operations which can return a 302 status, with no Location header set
-	// Url to follow is in the body of the 302 Response - as a JSON Object property.
-	if (followRedirectBodyOperations && Object.keys(followRedirectBodyOperations).length > 0) {
-		for (let path in followRedirectBodyOperations) {
-			if (swaggerDiff.newSwagger.paths[path]) {
-				let followPath = followRedirectBodyOperations[path];
-				if (followPath && Object.keys(followPath).length > 0) {
-					for (let method in followPath) {
-						if (swaggerDiff.newSwagger.paths[path][method]) {
-							swaggerDiff.newSwagger.paths[path][method]["x-gc-is-follow-redirect-body"] = true;
-							swaggerDiff.newSwagger.paths[path][method]["x-gc-follow-redirect-body-values"] = followPath[method];
-						}
-					}
-				}
-			}
-		}
-	}
-	return;
-}
-
-interface oneofInfo {
-	parentName: string;
-	childrenNames: string[];
-	defaultChildName: string;
-}
-
-function addExtensions_oneOf() {
-	// Add vendor extensions in swagger
-	const SUFFIX_DEFAULT_CHILD = 'OutdatedSdkVersion';
-	let swagger = swaggerDiff.newSwagger;
-
-	let oneofInfoArray: oneofInfo[] = [];
-
-	// Find models, identified as being a oneOf emulation ("parent" class)
-	// - "x-genesys-one-of": [{"$ref": "#/definitions/..."},{"$ref": "#/definitions/..."}]
-    for (let defKey in swagger.definitions) {
-        if (swagger.definitions[defKey]["x-genesys-one-of"]) {
-			let oneOfParentModel = swagger.definitions[defKey];
-			let oneOfParentName = defKey;
-
-			let oneOfChildren: string[] = oneOfParentModel["x-genesys-one-of"].map((x: any) => x["$ref"].replace('#/definitions/', ''));
-
-			// Add default class: used in SDK to prevent deserialization error
-			let oneOfDefaultChild = oneOfParentName + SUFFIX_DEFAULT_CHILD;
-			let oneOfDefaultModel = {
-				"allOf": [
-					{
-						"$ref": `#/definitions/${oneOfParentName}`
-					},
-					{
-						"type": ItemsType.Object,
-						"description": `Class for unknown/unexpected ${oneOfDefaultChild}. This class is used to avoid deserialization issue if a new ${oneOfDefaultChild} is added to the API (with an older SDK version).`,
-						"additionalProperties": {
-							"type": ItemsType.Object
-						}
-					}
-				],
-				"x-gc-class-complex": true,
-				"x-gc-class-one-of": true,
-				"x-gc-is-one-of-child": true,
-				"x-gc-one-of-parent": oneOfParentName,
-				"x-gc-is-outdated-sdk-version": true
-			};
-			swagger.definitions[oneOfDefaultChild] = oneOfDefaultModel;
-			// Not necessary but to be compliant
-			swagger.definitions[defKey]["x-genesys-one-of"].push({ "$ref": `#/definitions/${oneOfDefaultChild}`});
-
-			// Add vendor extensions to "parent" class
-			oneOfParentModel["x-gc-class-complex"] = true;
-			oneOfParentModel["x-gc-class-one-of"] = true;
-			oneOfParentModel["x-gc-is-one-of-parent"] = true;
-			oneOfParentModel["x-gc-one-of-children"] = oneOfChildren;
-			oneOfParentModel["x-gc-one-of-default"] = oneOfDefaultChild;
-
-			// Add vendor extensions to children classes
-			for (let childName of oneOfChildren) {
-				let oneOfChildModel = swagger.definitions[childName];
-				oneOfChildModel["x-gc-class-complex"] = true;
-				oneOfChildModel["x-gc-class-one-of"] = true;
-				oneOfChildModel["x-gc-is-one-of-child"] = true;
-				oneOfChildModel["x-gc-one-of-parent"] = oneOfParentName;
-			}
-
-			oneofInfoArray.push({
-				parentName: oneOfParentName,
-				childrenNames: oneOfChildren,
-				defaultChildName: oneOfDefaultChild
-			});
-        }
-    }
-
-	// All OneOf details ("parents" and "children") made available at swagger root level
-	swagger["x-gc-one-of-details"] = oneofInfoArray;
-
-	// Special treatment for documentation at property level (referencing a oneOf "parent" class)
-	let swaggerPathsAsString = JSON.stringify(swagger.paths);
-	let swaggerDefinitionsAsString = JSON.stringify(swagger.definitions);
-	for (let oInfo of oneofInfoArray) {
-		let refDoc = `${oInfo.parentName} is an abstract class/type. In this context, it means the property can be one of the following classes: ${oInfo.childrenNames.join(', ')} or ${oInfo.defaultChildName}. ${oInfo.defaultChildName} is added in this SDK to prevent deserialization errors - e.g. when the class is unknown due to an outdated SDK version (compared to current version of the Platform API).`;
-		if (_this.config.settings.swaggerCodegen.codegenLanguage === "purecloudpython") {
-			refDoc = `${oInfo.parentName} is a union type (abstract). In this context, it means the property can be one of the following classes: ${oInfo.childrenNames.join(', ')} or ${oInfo.defaultChildName}. ${oInfo.defaultChildName} is added in this SDK to prevent deserialization errors - e.g. when the class is unknown due to an outdated SDK version (compared to current version of the Platform API).`;
-		} else if (_this.config.settings.swaggerCodegen.codegenLanguage === "purecloudjava") {
-			refDoc = `${oInfo.parentName} is an abstract class. In this context, it means the property can be one of the following classes: ${oInfo.childrenNames.join(', ')} or ${oInfo.defaultChildName}. ${oInfo.defaultChildName} is added in this SDK to prevent deserialization errors - e.g. when the class is unknown due to an outdated SDK version (compared to current version of the Platform API).`;
-		}
-
-		let regexConvertItemsRef = new RegExp(String.raw`"items":{"\$ref":"#\/definitions\/${oInfo.parentName}"}`, "g");
-		let newItemsRef = `"items":{"$ref":"#/definitions/${oInfo.parentName}"},"x-gc-property-complex":true,"x-gc-property-doc":"${refDoc}"`;
-		swaggerPathsAsString = swaggerPathsAsString.replace(regexConvertItemsRef, newItemsRef);
-		swaggerDefinitionsAsString = swaggerDefinitionsAsString.replace(regexConvertItemsRef, newItemsRef);
-	
-		let regexConvertRef = new RegExp(String.raw`"\$ref":"#\/definitions\/${oInfo.parentName}"`, "g");
-		let newRef = `"$ref":"#/definitions/${oInfo.parentName}","x-gc-property-complex":true,"x-gc-property-doc":"${refDoc}"`;
-		swaggerPathsAsString = swaggerPathsAsString.replace(regexConvertRef, newRef);
-		swaggerDefinitionsAsString = swaggerDefinitionsAsString.replace(regexConvertRef, newRef);
-	}
-	swagger.paths = JSON.parse(swaggerPathsAsString);
-	swagger.definitions = JSON.parse(swaggerDefinitionsAsString);
-
-	return oneofInfoArray;
-}
-
-interface discriminatorInfo {
-	parentName: string;
-	propertyName: string;
-	defaultChildName: string;
-	defaultValue: string;
-	mapping: any[]
-}
-
-function addExtensions_discriminator() {
-	// Add vendor extensions in swagger
-	const SUFFIX_DEFAULT_CHILD = 'OutdatedSdkVersion';
-	let swagger = swaggerDiff.newSwagger;
-
-	let discriminatorInfoArray: discriminatorInfo[] = [];
-
-	// Find all discriminator children - Get all models with "x-discriminator-value" property
-	let discriminatorValueModels = {};
-	for (let modelName in swagger.definitions) {
-		let model = swagger.definitions[modelName];
-		if (model && model["x-discriminator-value"]) {
-			discriminatorValueModels[modelName] = model;
-		}
-	}
-
-	// Find models, identified as being a discriminator ("parent" class)
-	// Get all models with "discriminator" property
-	for (let modelName in swagger.definitions) {
-		let model = swagger.definitions[modelName];
-		if (model && model.discriminator) {
-			let discriminatorParentModel = model;
-			let discriminatorParentName = modelName;
-			let discriminatorPropertyName = model.discriminator;
-
-			// Fix ListValues model bug - create discriminator property
-			if (!discriminatorParentModel.properties || !discriminatorParentModel.properties[discriminatorPropertyName]) {
-				// Add property to swagger model
-				if (!discriminatorParentModel.properties) discriminatorParentModel.properties = {};
-				if (!discriminatorParentModel.properties[discriminatorPropertyName]) {
-					discriminatorParentModel.properties[discriminatorPropertyName] = {
-						"type": ItemsType.String,
-						"description": `Validation ${discriminatorPropertyName} discriminator.`,
-                	};
-				}
-			}
-
-			// Children, Values, Mapping (without Default Class/Value)
-			let discriminatorChildren: string[] = [];
-			let discriminatorValues: string[] = [];
-			let discriminatorMapping: any[] = [];
-
-			// Find children of discriminatorParentName/modelName (in the filtered discriminatorValueModels map)
-			for (let childName of Object.keys(discriminatorValueModels)) {
-				let childModel = discriminatorValueModels[childName];
-				if (childModel["allOf"]) {
-					for (let allOfElement of childModel["allOf"]) {
-						if (allOfElement["$ref"] && allOfElement["$ref"].endsWith('/' + discriminatorParentName)) {
-							discriminatorChildren.push(childName);
-							if (childModel["x-discriminator-value"]) {
-								discriminatorValues.push(childModel["x-discriminator-value"]);
-								discriminatorMapping.push({ "name": childName, "value": childModel["x-discriminator-value"]})
-							}
-							break;
-						}
-					}
-				}
-			}
-
-			// Add default class: used in SDK to prevent deserialization error
-			let discriminatorDefaultChild = discriminatorParentName + SUFFIX_DEFAULT_CHILD;
-			let discriminatorDefaultValue = SUFFIX_DEFAULT_CHILD;
-			let discriminatorDefaultModel = {
-				"allOf": [
-					{
-						"$ref": `#/definitions/${discriminatorParentName}`
-					},
-					{
-						"type": ItemsType.Object,
-						"description": `Class for unknown/unexpected ${discriminatorDefaultChild}. This class is used to avoid deserialization issue if a new ${discriminatorDefaultChild} is added to the API (with an older SDK version).`,
-						"additionalProperties": {
-							"type": ItemsType.Object
-						}
-					}
-				],
-				"x-discriminator-value": discriminatorDefaultValue,
-				"x-gc-class-complex": true,
-				"x-gc-class-discriminator": true,
-				"x-gc-is-discriminator-child": true,
-				"x-gc-discriminator-parent": discriminatorParentName,
-				"x-gc-is-outdated-sdk-version": true
-			};
-			swagger.definitions[discriminatorDefaultChild] = discriminatorDefaultModel;
-
-			// Add vendor extensions to "parent" class
-			discriminatorParentModel["x-gc-class-complex"] = true;
-			discriminatorParentModel["x-gc-class-discriminator"] = true;
-			discriminatorParentModel["x-gc-is-discriminator-parent"] = true;
-			discriminatorParentModel["x-gc-discriminator-default"] = discriminatorDefaultChild;
-			discriminatorParentModel["x-gc-discriminator-default-value"] = discriminatorDefaultValue;
-			discriminatorParentModel["x-gc-discriminator-children"] = discriminatorChildren;
-			discriminatorParentModel["x-gc-discriminator-values"] = discriminatorValues;
-			discriminatorParentModel["x-gc-discriminator-mapping"] = discriminatorMapping;
-			discriminatorParentModel["x-gc-discriminator-property"] = discriminatorPropertyName;
-			// Inside discriminator property
-			discriminatorParentModel.properties[discriminatorPropertyName]["x-gc-is-discriminator-property"] = true;
-			
-			// Add vendor extensions to children classes
-			for (let childName of discriminatorChildren) {
-				let discriminatorChildModel = swagger.definitions[childName];
-				discriminatorChildModel["x-gc-class-complex"] = true;
-				discriminatorChildModel["x-gc-class-discriminator"] = true;
-				discriminatorChildModel["x-gc-is-discriminator-child"] = true;
-				discriminatorChildModel["x-gc-discriminator-parent"] = discriminatorParentName;
-
-				// Delete discriminator property (e.g. "type") at children level, if it exists
-				if (discriminatorChildModel.allOf) {
-					for (let allOfElement of discriminatorChildModel.allOf) {
-						if (allOfElement.properties && allOfElement.properties[discriminatorPropertyName]) {
-							delete allOfElement.properties[discriminatorPropertyName];
-						}
-					}
-				}
-			}
-
-			// Fix ListValues model bug - compute enum
-			if (!discriminatorParentModel.properties[discriminatorPropertyName].enum) {
-				discriminatorParentModel.properties[discriminatorPropertyName].enum = [ ...discriminatorValues ];
-			}
-			
-			// Add DefaultValue to enum
-			discriminatorParentModel.properties[discriminatorPropertyName].enum.push(discriminatorDefaultValue);
-
-			discriminatorInfoArray.push({
-				parentName: discriminatorParentName,
-				propertyName: discriminatorPropertyName,
-				defaultChildName: discriminatorDefaultChild,
-				defaultValue: discriminatorDefaultValue,
-				mapping: discriminatorMapping
-			});
-		}
-	}
-
-	swaggerDiff.newSwagger["x-gc-discriminator-details"] = discriminatorInfoArray;
-
-	// Special treatment for documentation at property level (referencing a discriminator "parent" class)
-	let swaggerPathsAsString = JSON.stringify(swagger.paths);
-	let swaggerDefinitionsAsString = JSON.stringify(swagger.definitions);
-	for (let dInfo of discriminatorInfoArray) {
-		let refDoc = `${dInfo.parentName} is a parent class. In this context, it means the property can be one of the following classes: ${dInfo.mapping.map((x) => x.name).join(', ')} or ${dInfo.defaultChildName}. ${dInfo.defaultChildName} is added in this SDK to prevent deserialization errors - e.g. when the class is unknown due to an outdated SDK version (compared to current version of the Platform API).`;
-		
-		let regexConvertItemsRef = new RegExp(String.raw`"items":{"\$ref":"#\/definitions\/${dInfo.parentName}"}`, "g");
-		let newItemsRef = `"items":{"$ref":"#/definitions/${dInfo.parentName}"},"x-gc-property-complex":true,"x-gc-property-doc":"${refDoc}"`;
-		swaggerPathsAsString = swaggerPathsAsString.replace(regexConvertItemsRef, newItemsRef);
-		swaggerDefinitionsAsString = swaggerDefinitionsAsString.replace(regexConvertItemsRef, newItemsRef);
-	
-		let regexConvertRef = new RegExp(String.raw`"\$ref":"#\/definitions\/${dInfo.parentName}"`, "g");
-		let newRef = `"$ref":"#/definitions/${dInfo.parentName}","x-gc-property-complex":true,"x-gc-property-doc":"${refDoc}"`;
-		swaggerPathsAsString = swaggerPathsAsString.replace(regexConvertRef, newRef);
-		swaggerDefinitionsAsString = swaggerDefinitionsAsString.replace(regexConvertRef, newRef);
-	}
-	swagger.paths = JSON.parse(swaggerPathsAsString);
-	swagger.definitions = JSON.parse(swaggerDefinitionsAsString);
-	
-	return discriminatorInfoArray;
-}
-
-function manageDiscriminator(discriminatorManagement: string, keepDiscriminatorModels: string[]) {
-	if (discriminatorManagement !== null && discriminatorManagement !== undefined && discriminatorManagement !== 'keep') {
-		if (discriminatorManagement === 'extensions') {
-			addExtensions_oneOf();
-			addExtensions_discriminator();
-		} else {
-			let modelsWithDiscriminator: string[] = [];
-			let childDiscriminatorModels: string[] = [];
-			// Find Models with Discriminator
-			if (swaggerDiff.newSwagger.definitions) {
-				for (let modelName in swaggerDiff.newSwagger.definitions) {
-					if (swaggerDiff.newSwagger.definitions[modelName].discriminator) {
-						if (!keepDiscriminatorModels.includes(modelName)) {
-							modelsWithDiscriminator.push(modelName);
-						}
-					}
-				}
-			}
-			// Find Models with a Discriminator based parent model
-			if (modelsWithDiscriminator.length > 0) {
-				// find all models with an indirect dependency on modelsWithDiscriminator
-				let refsWithDiscriminatorModels: string[] = [];
-				for (let discriminatorModelName of modelsWithDiscriminator) {
-					refsWithDiscriminatorModels.push(`#/definitions/${discriminatorModelName}`);
-				}
-				for (let modelName in swaggerDiff.newSwagger.definitions) {
-					if (swaggerDiff.newSwagger.definitions[modelName].allOf) {
-						for (let compositeModel of swaggerDiff.newSwagger.definitions[modelName].allOf) {
-							if (compositeModel['$ref'] && refsWithDiscriminatorModels.includes(compositeModel['$ref'])) {
-								childDiscriminatorModels.push(modelName);
-								break;
-							}
-						}
-					}
-				}
-			}
-			log.info(`Found Discriminator based Models: ${modelsWithDiscriminator.toString()}`);
-			log.info(`Found Discriminator Child Models: ${childDiscriminatorModels.toString()}`);
-			if (modelsWithDiscriminator.length > 0) {
-				// Manage Discriminator
-				if (discriminatorManagement === 'override') {
-					// Override
-					// Remove discriminator models and their children from Swagger
-					for (let modelName of modelsWithDiscriminator) {
-						if (swaggerDiff.newSwagger.definitions[modelName]) {
-							delete swaggerDiff.newSwagger.definitions[modelName];
-						}
-					}
-					for (let modelName of childDiscriminatorModels) {
-						if (swaggerDiff.newSwagger.definitions[modelName]) {
-							delete swaggerDiff.newSwagger.definitions[modelName];
-						}
-					}
-					// Override references to Discriminator Models with JsonNode (generic object)
-					if (!swaggerDiff.newSwagger.definitions['JsonNode']) {
-						swaggerDiff.newSwagger.definitions['JsonNode'] = { type: ItemsType.Object };
-					}
-					let definitionsAsString = JSON.stringify(swaggerDiff.newSwagger.definitions);
-					let pathsAsString = JSON.stringify(swaggerDiff.newSwagger.paths);
-					let modelsToOverride: string[] = [...modelsWithDiscriminator, ...childDiscriminatorModels];
-					for (let modelName of modelsToOverride) {
-						let regexConvertRef = new RegExp(String.raw`"#\/definitions\/${modelName}"`, "g");
-						definitionsAsString = definitionsAsString.replace(regexConvertRef, '"#/definitions/JsonNode"');
-						pathsAsString = pathsAsString.replace(regexConvertRef, '"#/definitions/JsonNode"');
-					}
-					swaggerDiff.newSwagger.definitions = JSON.parse(definitionsAsString);
-					swaggerDiff.newSwagger.paths = JSON.parse(pathsAsString);
-				} else if (discriminatorManagement === 'quarantine') {
-					// Quarantine
-					// Find models with a direct or indirect reference on modelsWithDiscriminator or childDiscriminatorModels
-					// Init with discriminator based models and their children
-					let modelsToQuarantine: string[] = [...modelsWithDiscriminator, ...childDiscriminatorModels];
-					// Recursive processing to find models
-					let searchModels: string[] = [...modelsToQuarantine];
-					let foundModels: string[] = [];
-					let findingCompleted: boolean = false;
-					while (findingCompleted !== true) {
-						for (let modelName in swaggerDiff.newSwagger.definitions) {
-							if (!modelsToQuarantine.includes(modelName)) {
-								let definitionAsString = JSON.stringify(swaggerDiff.newSwagger.definitions[modelName]);
-								for (let defName of searchModels) {
-									if (definitionAsString.includes(`"#/definitions/${defName}"`)) {
-										foundModels.push(modelName);
-										break;
-									}
-								}
-							}
-						}
-						if (foundModels.length === 0) {
-							findingCompleted = true;
-						} else {
-							searchModels = [];
-							for (let defName of foundModels) {
-								searchModels.push(defName);
-								modelsToQuarantine.push(defName);
-							}
-							foundModels = [];
-						}
-					}
-					log.info(`Found Discriminator based Models, children and dependencies: ${modelsToQuarantine.toString()}`);
-
-					// Find operations with a reference to a model involving discriminator directly or indirectly
-					let operationsToQuarantine: string[] = [];
-					if (modelsToQuarantine.length > 0) {
-						const paths = Object.keys(swaggerDiff.newSwagger.paths);
-						for (const path of paths) {
-							const methods = Object.keys(swaggerDiff.newSwagger.paths[path]);
-							for (const method of methods) {
-								let operation = swaggerDiff.newSwagger.paths[path][method];
-								let operationAsString = JSON.stringify(operation);
-								for (let defName of modelsToQuarantine) {
-									if (operationAsString.includes(`"#/definitions/${defName}"`)) {
-										operationsToQuarantine.push(operation.operationId);
-										break;
-									}
-								}
-							}
-						}
-						log.info(`Found Operations referencing Discriminator based Models: ${operationsToQuarantine.toString()}`);
-					}
-
-					// Quarantine (delete) found operations and models
-					// Remove identified models from Swagger
-					if (modelsToQuarantine.length > 0) {
-						for (let modelName of modelsToQuarantine) {
-							if (swaggerDiff.newSwagger.definitions[modelName]) {
-								delete swaggerDiff.newSwagger.definitions[modelName];
-							}
-						}
-					}
-					// Remove identified operations from Swagger
-					if (operationsToQuarantine.length > 0) {
-						const paths = Object.keys(swaggerDiff.newSwagger.paths);
-						for (const path of paths) {
-							const methods = Object.keys(swaggerDiff.newSwagger.paths[path]);
-							for (const method of methods) {
-								let operation = swaggerDiff.newSwagger.paths[path][method];
-								if (operation && operation.operationId && operationsToQuarantine.includes(operation.operationId)) {
-									// Remove Operation
-									delete swaggerDiff.newSwagger.paths[path][method];
-								}
-							}
-							const remainingMethods = Object.keys(swaggerDiff.newSwagger.paths[path]);
-							if (remainingMethods.length == 0) {
-								delete swaggerDiff.newSwagger.paths[path];
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	return;
-}
-
-function quarantineOperationsAndModels(quarantineOperationIds: string[], quarantineModels: string[]) {
-	if (quarantineOperationIds && quarantineOperationIds.length > 0) {
-		log.info(`Quarantine for OperationIds: ${quarantineOperationIds.toString()}`);
-		const paths = Object.keys(swaggerDiff.newSwagger.paths);
-		for (const path of paths) {
-			const methods = Object.keys(swaggerDiff.newSwagger.paths[path]);
-			for (const method of methods) {
-				let operation = swaggerDiff.newSwagger.paths[path][method];
-				if (operation && operation.operationId && quarantineOperationIds.includes(operation.operationId)) {
-					// Remove Operation
-					delete swaggerDiff.newSwagger.paths[path][method];
-				}
-			}
-			const remainingMethods = Object.keys(swaggerDiff.newSwagger.paths[path]);
-			if (remainingMethods.length == 0) {
-				delete swaggerDiff.newSwagger.paths[path];
-			}
-		}
-	}
-	if (quarantineModels && quarantineModels.length > 0) {
-		log.info(`Quarantine for Models: ${quarantineModels.toString()}`);
-		for (const modelName of quarantineModels) {
-			if (swaggerDiff.newSwagger.definitions[modelName]) {
-				delete swaggerDiff.newSwagger.definitions[modelName];
-			}
-		}
-	}
-	return;
-}
-
-function overrideOperations(overrideOperationIds: any) {
-	if (overrideOperationIds && Object.keys(overrideOperationIds).length > 0) {
-		const overridePaths = Object.keys(overrideOperationIds);
-		for (const path of overridePaths) {
-			const overrideMethods = Object.keys(overrideOperationIds[path]);
-			for (const method of overrideMethods) {
-				let newOperationId = overrideOperationIds[path][method];
-				if (swaggerDiff.newSwagger.paths && swaggerDiff.newSwagger.paths[path] && swaggerDiff.newSwagger.paths[path][method]) {
-					let operation = swaggerDiff.newSwagger.paths[path][method];
-					if (operation && operation.operationId) {
-						log.info(`Override OperationId (path: ${path}, method: ${method}): old=${operation.operationId}, new=${newOperationId}`);
-						operation.operationId = newOperationId;
-					}
-					if (operation && operation["x-purecloud-method-name"]) {
-						operation["x-purecloud-method-name"] = newOperationId;
-					}
-				}
-			}
-		}
-	}
-	return;
-}
-
-function processPaths() {
-	const paths = Object.keys(swaggerDiff.newSwagger.paths);
-	for (const path of paths) {
-		if (!path.startsWith("/api/v2") || (path.startsWith("/api/v2/apps") && !path.startsWith("/api/v2/apps/agentic") && _this.config.settings.swaggerCodegen.codegenLanguage === "purecloudpython")) {
-			delete swaggerDiff.newSwagger.paths[path]
-		}
-	}
-
-	if (_this.config.settings.swaggerCodegen.codegenLanguage !== "purecloudpython") return
-
-	const definitions = Object.keys(swaggerDiff.newSwagger.definitions);
-	for (const definition of definitions) {
-		if (definition.endsWith("_")) {
-			delete swaggerDiff.newSwagger.definitions[definition]
-		}
-	}
-}
-
-function processRefs() {
-	const keys = Object.keys(swaggerDiff.newSwagger.definitions);
-	keys.forEach((key, index) => {
-		let obj = swaggerDiff.newSwagger.definitions[key].properties;
-		if (obj) {
-			const keys = Object.keys(swaggerDiff.newSwagger.definitions[key].properties);
-			keys.forEach((key2, index) => {
-				let obj2 = swaggerDiff.newSwagger.definitions[key].properties[key2];
-				if (obj2) {
-					if (obj2.hasOwnProperty("$ref") && (obj2.hasOwnProperty("readOnly") || obj2.hasOwnProperty("description"))) {
-						if (obj2.readOnly === true && obj2.hasOwnProperty("description")) {
-							obj2.description = `${obj2.description} readOnly`
-						}
-
-						let refObj = { "$ref": obj2.$ref };
-						obj2.allOf = [refObj];
-						delete obj2.$ref;
-					}
-				}
-			});
-		}
-	});
-}
-
-// Receives AvailableTopic.schema of Type "schema"?: { [key: string]: object; };
-function extractDefinitons(entity: { [key: string]: any }) {
-	try {
-		_.forOwn(entity, (property, key) => {
-			// Rewrite URN refs to JSON refs
-			if (key == '$ref' && !property.startsWith('#')) {
-				entity[key] = '#/definitions/' + getNotificationClassName(property);
-			}
-
-			// Force int64 integers
-			if (forceInt64Integers == true) {
-				if (key == 'type' && property == 'integer') {
-					if (!entity['format']) {
-						entity['format'] = 'int64';
-					}
-				}
-			}
-			// Remove enum duplicates
-			if (removeEnumDuplicates == true) {
-				if (key == 'enum') {
-					if (entity["type"] && entity["type"] == "string") {
-						if (entity["enum"] && entity["enum"].length > 0) {
-							let filteredEnum: string[] = [];
-							let upperCaseEnum: string[] = [];
-							for (let enumValue of entity["enum"]) {
-								if (!upperCaseEnum.includes(enumValue.toUpperCase())) {
-									upperCaseEnum.push(enumValue.toUpperCase());
-									filteredEnum.push(enumValue);
-								} else {
-									log.info(`Duplicate enum value in topic: ${enumValue}. Removing it...`);
-								}
-							}
-							entity["enum"] = filteredEnum;
-						}
-					}
-				}
-			}
-
-			// Recurse on objects
-			if (typeof property !== 'object') return;
-			extractDefinitons(property);
-
-			// Update object to ref
-			if (property.id && typeof property.id === 'string') {
-				let className = getNotificationClassName(property.id);
-
-				// Store definition
-				swaggerDiff.newSwagger.definitions[className] = JSON.parse(JSON.stringify(property));
-
-				// Set reference
-				entity[key] = {
-					type: 'object',
-					$ref: `#/definitions/${className}`,
-				};
-			}
-		});
-	} catch (err: unknown) {
-		if (err instanceof Error) {
-			console.log(err);
-			console.log(err.stack);
-		}
-	}
-}
-
 function loadConfig(configPath: string) {
 	configPath = path.resolve(configPath);
 	let extension = path.parse(configPath).ext.toLowerCase();
 	if (extension == '.yml' || extension == '.yaml') {
 		log.info(`Loading YAML config from ${configPath}`);
 		const fileContents = fs.readFileSync(configPath, 'utf8');
-		return yaml.load(fileContents);
+		return load(fileContents);
 		//return yaml.load(path.resolve(configPath));
 	} else {
 		log.info(`Loading JSON config from ${configPath}`);
@@ -1604,16 +769,16 @@ function loadConfig(configPath: string) {
 	}
 }
 
-function executeScripts(scripts: Script[], phase: string) {
+function executeScripts(builder: Builder, scripts: Script[], phase: string) {
 	if (!scripts) return;
 	let scriptCount = scripts ? scripts.length : 0;
 	log.info(`Executing ${scriptCount} ${phase ? phase.trim() + ' ' : ''}${pluralize('scripts', scriptCount)}...`);
 	_.forEach(scripts, function (script) {
-		executeScript(script);
+		executeScript(builder, script);
 	});
 }
 
-function executeScript(script: Script) {
+function executeScript(builder: Builder, script: Script) {
 	let code: Buffer;
 	let startTime = Date.now();
 	let bufferCode: Number;
@@ -1627,20 +792,20 @@ function executeScript(script: Script) {
 			options['cwd'] = path.resolve(script.cwd);
 		}
 
-		if (script.appendIsNewReleaseArg === true) args.push(_this.isNewVersion.toString());
+		if (script.appendIsNewReleaseArg === true) args.push(builder.isNewVersion.toString());
 
-		if (script.appendVersionArg === true) args.push(_this.version.displayFull);
+		if (script.appendVersionArg === true) args.push(builder.version.displayFull);
 
 		switch (script.type.toLowerCase()) {
 			case 'tsx': {
-				args.unshift(getScriptPath(script));
+				args.unshift(getScriptPath(builder, script));
 				log.verbose(`Executing node script: ${args.join(' ')}`);
 				code = childProcess.execFileSync('tsx', args, options);
 
 				break;
 			}
 			case 'shell': {
-				args.unshift(getScriptPath(script));
+				args.unshift(getScriptPath(builder, script));
 				args.unshift('-e');
 				log.verbose(`Executing shell script: ${args.join(' ')}`);
 				code = childProcess.execFileSync('sh', args, options);
@@ -1684,10 +849,10 @@ function executeScript(script: Script) {
 	}
 }
 
-function getScriptPath(script: Script) {
+function getScriptPath(builder: Builder, script: Script) {
 	let scriptPath = script.path;
 	if (!path.parse(scriptPath).dir)
-		scriptPath = path.join('./resources/sdk', _this.config.settings.swaggerCodegen.resourceLanguage, 'scripts', script.path);
+		scriptPath = path.join('./resources/sdk', builder.config.settings.swaggerCodegen.resourceLanguage, 'scripts', script.path);
 	scriptPath = path.resolve(scriptPath);
 
 	if (!fs.existsSync(scriptPath)) {
@@ -1801,3 +966,4 @@ function getFileCount(dir: fs.PathLike) {
 
 	return files.length;
 }
+

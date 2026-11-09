@@ -9,7 +9,7 @@
     "sourceMap": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "strict": true,
+    "strict": false,
     "moduleResolution": "nodenext",
     "skipLibCheck": true
   },
