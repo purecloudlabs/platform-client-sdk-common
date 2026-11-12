@@ -1,0 +1,122 @@
+/**
+ * {{#description}}{{.}}{{/description}}{{^description}}{{classname}}{{/description}}
+ * {{classname}} is the parent class of {{#vendorExtensions.x-gc-discriminator-children}}{{.}}, {{/vendorExtensions.x-gc-discriminator-children}}and {{vendorExtensions.x-gc-discriminator-default}}.
+ * {{vendorExtensions.x-gc-discriminator-default}} is used to prevent deserialization errors - e.g. outdated SDK version: a new child class variant has been added to the {{classname}} class, in the Platform API (compared to the version of the Platform API used to build this version of the SDK).
+ */{{#description}}
+@ApiModel(description = "{{{description}}}"){{/description}}
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.NAME,
+    include = JsonTypeInfo.As.EXISTING_PROPERTY,
+    property = "{{vendorExtensions.x-gc-discriminator-property}}",
+    visible = true,
+    defaultImpl = {{vendorExtensions.x-gc-discriminator-default}}.class
+)
+@JsonSubTypes({
+  {{#vendorExtensions.x-gc-discriminator-mapping}}
+  @JsonSubTypes.Type(
+        value = {{name}}.class,
+        name = "{{value}}"
+  ){{^-last}},{{/-last}}
+  {{/vendorExtensions.x-gc-discriminator-mapping}}
+})
+public abstract class {{classname}} {{#parent}}extends {{{parent}}}{{/parent}} {{#serializableModel}}{{#isPagedResource}}implements Serializable, PagedResource<{{{pagedResourceType}}}>{{/isPagedResource}}{{^isPagedResource}}implements Serializable{{/isPagedResource}}{{/serializableModel}}{{#isPagedResource}}{{^serializableModel}}implements PagedResource<{{{pagedResourceType}}}>{{/serializableModel}}{{/isPagedResource}} {
+  {{#vars}}{{^vendorExtensions.x-gc-is-discriminator-property}}{{#isEnum}}
+
+{{>modelInnerEnum}}{{/isEnum}}{{#items.isEnum}}{{#items}}
+
+{{>modelInnerEnum}}{{/items}}{{/items.isEnum}}{{/vendorExtensions.x-gc-is-discriminator-property}}
+  private {{^vendorExtensions.x-gc-is-discriminator-property}}{{{datatypeWithEnum}}}{{/vendorExtensions.x-gc-is-discriminator-property}}{{#vendorExtensions.x-gc-is-discriminator-property}}{{{datatype}}}{{/vendorExtensions.x-gc-is-discriminator-property}} {{name}} = {{^isArray}}{{{defaultValue}}}{{/isArray}}{{#isArray}}null{{/isArray}};{{/vars}}
+
+  public {{classname}}() {
+    if (ApiClient.LEGACY_EMPTY_LIST == true) { {{#vars}}{{#isArray}}
+      {{name}} = {{{defaultValue}}};{{/isArray}}{{/vars}}
+    }
+  }
+
+  public {{classname}}(Boolean initWithEmptyList) {
+    if (initWithEmptyList == true) { {{#vars}}{{#isArray}}
+      {{name}} = {{{defaultValue}}};{{/isArray}}{{/vars}}
+    }
+  }
+
+  {{#vars}}{{^vendorExtensions.x-gc-is-discriminator-property}}{{^isReadOnly}}
+  /**{{#description}}
+   * {{{description}}}{{/description}}{{#minimum}}
+   * minimum: {{minimum}}{{/minimum}}{{#maximum}}
+   * maximum: {{maximum}}{{/maximum}}
+   **/
+  public {{classname}} {{name}}({{{datatypeWithEnum}}} {{name}}) {
+    this.{{name}} = {{name}};
+    return this;
+  }
+  {{/isReadOnly}}{{#vendorExtensions.extraAnnotation}}
+  {{vendorExtensions.extraAnnotation}}{{/vendorExtensions.extraAnnotation}}
+  @ApiModelProperty({{#example}}example = "{{example}}", {{/example}}{{#required}}required = {{required}}, {{/required}}value = "{{{description}}}")
+  @JsonProperty("{{baseName}}")
+  public {{{datatypeWithEnum}}} {{getter}}() {
+    return {{name}};
+  }{{^isReadOnly}}
+  public void {{setter}}({{{datatypeWithEnum}}} {{name}}) {
+    this.{{name}} = {{name}};
+  }{{/isReadOnly}}{{/vendorExtensions.x-gc-is-discriminator-property}}
+  {{#vendorExtensions.x-gc-is-discriminator-property}}{{^isReadOnly}}
+  /**{{#description}}
+   * {{{description}}}{{/description}}{{#minimum}}
+   * minimum: {{minimum}}{{/minimum}}{{#maximum}}
+   * maximum: {{maximum}}{{/maximum}}
+   **/
+  public abstract {{classname}} {{name}}({{{datatype}}} {{name}});
+  {{/isReadOnly}}{{#vendorExtensions.extraAnnotation}}
+  {{vendorExtensions.extraAnnotation}}{{/vendorExtensions.extraAnnotation}}
+  @ApiModelProperty({{#example}}example = "{{example}}", {{/example}}{{#required}}required = {{required}}, {{/required}}value = "{{{description}}}")
+  @JsonProperty("{{baseName}}")
+  public abstract {{{datatype}}} {{getter}}();{{^isReadOnly}}
+  public abstract void {{setter}}({{{datatype}}} {{name}});{{/isReadOnly}}{{/vendorExtensions.x-gc-is-discriminator-property}}
+
+  {{/vars}}
+
+  @Override
+  public boolean equals(java.lang.Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }{{#hasVars}}
+    {{classname}} {{classVarName}} = ({{classname}}) o;
+
+    return {{#vars}}{{#isByteArray}}Arrays{{/isByteArray}}{{^isByteArray}}Objects{{/isByteArray}}.equals(this.{{name}}, {{classVarName}}.{{name}}){{^-last}} &&
+            {{/-last}}{{/vars}}{{#parent}} &&
+            super.equals(o){{/parent}};{{/hasVars}}{{^hasVars}}
+
+    return true;{{/hasVars}}
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash({{#vars}}{{^isByteArray}}{{name}}{{/isByteArray}}{{#isByteArray}}Arrays.hashCode({{name}}){{/isByteArray}}{{^-last}}, {{/-last}}{{/vars}}{{#parent}}{{#hasVars}}, {{/hasVars}}super.hashCode(){{/parent}});
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("class {{classname}} {\n");
+    {{#parent}}sb.append("    ").append(toIndentedString(super.toString())).append("\n");{{/parent}}
+    {{#vars}}sb.append("    {{name}}: ").append(toIndentedString({{name}})).append("\n");
+    {{/vars}}sb.append("}");
+    return sb.toString();
+  }
+
+  /**
+   * Convert the given object to string with each line indented by 4 spaces
+   * (except the first line).
+   */
+  private String toIndentedString(java.lang.Object o) {
+    if (o == null) {
+      return "null";
+    }
+    return o.toString().replace("\n", "\n    ");
+  }
+}
