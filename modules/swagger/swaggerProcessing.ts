@@ -1,10 +1,14 @@
 import _ from 'lodash';
 import fs from 'fs-extra';
 import path from 'path';
-import { Swagger, ItemsType, Format } from '../types/swagger.js'
+import { Swagger, ItemsType, Format, Property } from '../types/swagger.js'
 import { log } from '../log/logger.js';
 import { gcLoginClientCredentialsGrant, AvailableTopicEntityListing, gcGetNotificationsAvailabletopics } from '../util/http.js';
 import { PureCloud, Haystack, Config } from '../types/config.js'
+
+/************************************************************************************
+ * Preprocessing of the Swagger specification
+ *************************************************************************************/
 
 const NOTIFICATION_ID_REGEX = /^urn:jsonschema:(.+):v2:(.+)$/i;
 
@@ -46,10 +50,6 @@ export function swaggerPreprocessing(newSwagger: Swagger, pureCloud: PureCloud, 
                 .then(() => {
                     log.debug('Processing swagger paths');
                     return processPaths(newSwagger, config.settings.swaggerCodegen.codegenLanguage);
-                })
-                .then(() => {
-                    log.debug('Processing swagger references');
-                    return processRefs(newSwagger);
                 })
                 .then(() => {
                     log.debug('Processing any types in schema');
@@ -95,6 +95,10 @@ export function swaggerPreprocessing(newSwagger: Swagger, pureCloud: PureCloud, 
                     return addExtensions_followRedirectBody(newSwagger, followRedirectBodyOperations);
                 })
                 .then(() => {
+                    log.debug('Processing swagger references');
+                    return processRefs(newSwagger);
+                })
+                .then(() => {
                     resolve("");
                 })
                 .catch((err: unknown) => {
@@ -105,6 +109,8 @@ export function swaggerPreprocessing(newSwagger: Swagger, pureCloud: PureCloud, 
         }
     });
 }
+
+//#region Preprocessing Steps
 
 function addNotifications(newSwagger: Swagger, pureCloud: PureCloud): Promise<string> {
     return new Promise<string>((resolve, reject) => {
@@ -275,98 +281,84 @@ interface oneofInfo {
 }
 
 function addExtensions_oneOf(newSwagger: Swagger, codegenLanguage: string) {
-    // Add vendor extensions in swagger
-    const SUFFIX_DEFAULT_CHILD = 'OutdatedSdkVersion';
-    let swagger = newSwagger;
+	// Add vendor extensions in swagger
+	const SUFFIX_DEFAULT_CHILD = 'OutdatedSdkVersion';
+	let swagger = newSwagger;
 
-    let oneofInfoArray: oneofInfo[] = [];
+	let oneofInfoArray: oneofInfo[] = [];
 
-    // Find models, identified as being a oneOf emulation ("parent" class)
-    // - "x-genesys-one-of": [{"$ref": "#/definitions/..."},{"$ref": "#/definitions/..."}]
+	// Find models, identified as being a oneOf emulation ("parent" class)
+	// - "x-genesys-one-of": [{"$ref": "#/definitions/..."},{"$ref": "#/definitions/..."}]
     for (let defKey in swagger.definitions) {
         if (swagger.definitions[defKey]["x-genesys-one-of"]) {
-            let oneOfParentModel = swagger.definitions[defKey];
-            let oneOfParentName = defKey;
+			let oneOfParentModel = swagger.definitions[defKey];
+			let oneOfParentName = defKey;
 
-            let oneOfChildren: string[] = oneOfParentModel["x-genesys-one-of"].map((x: any) => x["$ref"].replace('#/definitions/', ''));
+            swagger.definitions[defKey]["oneOf"] = swagger.definitions[defKey]["x-genesys-one-of"];
 
-            // Add default class: used in SDK to prevent deserialization error
-            let oneOfDefaultChild = oneOfParentName + SUFFIX_DEFAULT_CHILD;
-            let oneOfDefaultModel = {
-                "allOf": [
-                    {
-                        "$ref": `#/definitions/${oneOfParentName}`
-                    },
-                    {
-                        "type": ItemsType.Object,
-                        "description": `Class for unknown/unexpected ${oneOfDefaultChild}. This class is used to avoid deserialization issue if a new ${oneOfDefaultChild} is added to the API (with an older SDK version).`,
-                        "additionalProperties": {
-                            "type": ItemsType.Object
-                        }
-                    }
-                ],
-                "x-gc-class-complex": true,
-                "x-gc-class-one-of": true,
-                "x-gc-is-one-of-child": true,
-                "x-gc-one-of-parent": oneOfParentName,
-                "x-gc-is-outdated-sdk-version": true
-            };
-            swagger.definitions[oneOfDefaultChild] = oneOfDefaultModel;
-            // Not necessary but to be compliant
-            swagger.definitions[defKey]["x-genesys-one-of"].push({ "$ref": `#/definitions/${oneOfDefaultChild}` });
+			let oneOfChildren: string[] = oneOfParentModel["x-genesys-one-of"].map((x: any) => x["$ref"].replace('#/definitions/', ''));
 
-            // Add vendor extensions to "parent" class
-            oneOfParentModel["x-gc-class-complex"] = true;
-            oneOfParentModel["x-gc-class-one-of"] = true;
-            oneOfParentModel["x-gc-is-one-of-parent"] = true;
-            oneOfParentModel["x-gc-one-of-children"] = oneOfChildren;
-            oneOfParentModel["x-gc-one-of-default"] = oneOfDefaultChild;
+			// Add default class: used in SDK to prevent deserialization error
+			let oneOfDefaultChild = oneOfParentName + SUFFIX_DEFAULT_CHILD;
+			let oneOfDefaultModel = {
+				"allOf": [
+					{
+						"$ref": `#/definitions/${oneOfParentName}`
+					},
+					{
+						"type": ItemsType.Object,
+						"description": `Class for unknown/unexpected ${oneOfDefaultChild}. This class is used to avoid deserialization issue if a new ${oneOfDefaultChild} is added to the API (with an older SDK version).`,
+						"additionalProperties": {
+							"type": ItemsType.Object
+						}
+					}
+				],
+				"x-gc-class-complex": true,
+				"x-gc-class-one-of": true,
+				"x-gc-is-one-of-child": true,
+				"x-gc-one-of-parent": oneOfParentName,
+				"x-gc-is-outdated-sdk-version": true
+			};
+			swagger.definitions[oneOfDefaultChild] = oneOfDefaultModel;
+			// Not necessary but to be compliant
+			swagger.definitions[defKey]["x-genesys-one-of"].push({ "$ref": `#/definitions/${oneOfDefaultChild}`});
 
-            // Add vendor extensions to children classes
-            for (let childName of oneOfChildren) {
-                let oneOfChildModel = swagger.definitions[childName];
-                oneOfChildModel["x-gc-class-complex"] = true;
-                oneOfChildModel["x-gc-class-one-of"] = true;
-                oneOfChildModel["x-gc-is-one-of-child"] = true;
-                oneOfChildModel["x-gc-one-of-parent"] = oneOfParentName;
-            }
+			// Add vendor extensions to "parent" class
+			oneOfParentModel["x-gc-class-complex"] = true;
+			oneOfParentModel["x-gc-class-one-of"] = true;
+			oneOfParentModel["x-gc-is-one-of-parent"] = true;
+			oneOfParentModel["x-gc-one-of-children"] = oneOfChildren;
+			oneOfParentModel["x-gc-one-of-default"] = oneOfDefaultChild;
+			if (!oneOfParentModel.properties) oneOfParentModel.properties = {};
+			if (!oneOfParentModel.properties["emulateProperty"]) {
+				oneOfParentModel.properties["emulateProperty"] = {
+					"type": ItemsType.String,
+					"description": `Emulate property.`
+				};
+				oneOfParentModel.properties["emulateProperty"]["x-gc-ignore-property"] = true;
+			}
 
-            oneofInfoArray.push({
-                parentName: oneOfParentName,
-                childrenNames: oneOfChildren,
-                defaultChildName: oneOfDefaultChild
-            });
+			// Add vendor extensions to children classes
+			for (let childName of oneOfChildren) {
+				let oneOfChildModel = swagger.definitions[childName];
+				oneOfChildModel["x-gc-class-complex"] = true;
+				oneOfChildModel["x-gc-class-one-of"] = true;
+				oneOfChildModel["x-gc-is-one-of-child"] = true;
+				oneOfChildModel["x-gc-one-of-parent"] = oneOfParentName;
+			}
+
+			oneofInfoArray.push({
+				parentName: oneOfParentName,
+				childrenNames: oneOfChildren,
+				defaultChildName: oneOfDefaultChild
+			});
         }
     }
 
-    // All OneOf details ("parents" and "children") made available at swagger root level
-    swagger["x-gc-one-of-details"] = oneofInfoArray;
+	// All OneOf details ("parents" and "children") made available at swagger root level
+	swagger["x-gc-one-of-details"] = oneofInfoArray;
 
-    // Special treatment for documentation at property level (referencing a oneOf "parent" class)
-    let swaggerPathsAsString = JSON.stringify(swagger.paths);
-    let swaggerDefinitionsAsString = JSON.stringify(swagger.definitions);
-    for (let oInfo of oneofInfoArray) {
-        let refDoc = `${oInfo.parentName} is an abstract class/type. In this context, it means the property can be one of the following classes: ${oInfo.childrenNames.join(', ')} or ${oInfo.defaultChildName}. ${oInfo.defaultChildName} is added in this SDK to prevent deserialization errors - e.g. when the class is unknown due to an outdated SDK version (compared to current version of the Platform API).`;
-        if (codegenLanguage === "purecloudpython") {
-            refDoc = `${oInfo.parentName} is a union type (abstract). In this context, it means the property can be one of the following classes: ${oInfo.childrenNames.join(', ')} or ${oInfo.defaultChildName}. ${oInfo.defaultChildName} is added in this SDK to prevent deserialization errors - e.g. when the class is unknown due to an outdated SDK version (compared to current version of the Platform API).`;
-        } else if (codegenLanguage === "purecloudjava") {
-            refDoc = `${oInfo.parentName} is an abstract class. In this context, it means the property can be one of the following classes: ${oInfo.childrenNames.join(', ')} or ${oInfo.defaultChildName}. ${oInfo.defaultChildName} is added in this SDK to prevent deserialization errors - e.g. when the class is unknown due to an outdated SDK version (compared to current version of the Platform API).`;
-        }
-
-        let regexConvertItemsRef = new RegExp(String.raw`"items":{"\$ref":"#\/definitions\/${oInfo.parentName}"}`, "g");
-        let newItemsRef = `"items":{"$ref":"#/definitions/${oInfo.parentName}"},"x-gc-property-complex":true,"x-gc-property-doc":"${refDoc}"`;
-        swaggerPathsAsString = swaggerPathsAsString.replace(regexConvertItemsRef, newItemsRef);
-        swaggerDefinitionsAsString = swaggerDefinitionsAsString.replace(regexConvertItemsRef, newItemsRef);
-
-        let regexConvertRef = new RegExp(String.raw`"\$ref":"#\/definitions\/${oInfo.parentName}"`, "g");
-        let newRef = `"$ref":"#/definitions/${oInfo.parentName}","x-gc-property-complex":true,"x-gc-property-doc":"${refDoc}"`;
-        swaggerPathsAsString = swaggerPathsAsString.replace(regexConvertRef, newRef);
-        swaggerDefinitionsAsString = swaggerDefinitionsAsString.replace(regexConvertRef, newRef);
-    }
-    swagger.paths = JSON.parse(swaggerPathsAsString);
-    swagger.definitions = JSON.parse(swaggerDefinitionsAsString);
-
-    return oneofInfoArray;
+	return oneofInfoArray;
 }
 
 interface discriminatorInfo {
@@ -378,167 +370,252 @@ interface discriminatorInfo {
 }
 
 function addExtensions_discriminator(newSwagger: Swagger, codegenLanguage: string) {
-    // Add vendor extensions in swagger
-    const SUFFIX_DEFAULT_CHILD = 'OutdatedSdkVersion';
-    let swagger = newSwagger;
+	// Add vendor extensions in swagger
+	const SUFFIX_DEFAULT_CHILD = 'OutdatedSdkVersion';
+	let swagger = newSwagger;
 
-    let discriminatorInfoArray: discriminatorInfo[] = [];
+	let discriminatorInfoArray: discriminatorInfo[] = [];
 
-    // Find all discriminator children - Get all models with "x-discriminator-value" property
-    let discriminatorValueModels = {};
-    for (let modelName in swagger.definitions) {
-        let model = swagger.definitions[modelName];
-        if (model && model["x-discriminator-value"]) {
-            discriminatorValueModels[modelName] = model;
-        }
-    }
+	// Find all discriminator children - Get all models with "x-discriminator-value" property
+	let discriminatorValueModels = {};
+	for (let modelName in swagger.definitions) {
+		let model = swagger.definitions[modelName];
+		if (model && model["x-discriminator-value"]) {
+			discriminatorValueModels[modelName] = model;
+		}
+	}
 
-    // Find models, identified as being a discriminator ("parent" class)
-    // Get all models with "discriminator" property
-    for (let modelName in swagger.definitions) {
-        let model = swagger.definitions[modelName];
-        if (model && model.discriminator) {
-            let discriminatorParentModel = model;
-            let discriminatorParentName = modelName;
-            let discriminatorPropertyName = model.discriminator;
+	// Find models, identified as being a discriminator ("parent" class)
+	// Get all models with "discriminator" property
+	for (let modelName in swagger.definitions) {
+		let model = swagger.definitions[modelName];
+		if (model && model.discriminator) {
+			let discriminatorParentModel = model;
+			let discriminatorParentName = modelName;
+			let discriminatorPropertyName = model.discriminator;
 
-            // Fix ListValues model bug - create discriminator property
-            if (!discriminatorParentModel.properties || !discriminatorParentModel.properties[discriminatorPropertyName]) {
-                // Add property to swagger model
-                if (!discriminatorParentModel.properties) discriminatorParentModel.properties = {};
-                if (!discriminatorParentModel.properties[discriminatorPropertyName]) {
-                    discriminatorParentModel.properties[discriminatorPropertyName] = {
-                        "type": ItemsType.String,
-                        "description": `Validation ${discriminatorPropertyName} discriminator.`,
-                    };
-                }
-            }
+			// Fix ListValues model bug - create discriminator property
+			if (!discriminatorParentModel.properties || !discriminatorParentModel.properties[discriminatorPropertyName]) {
+				// Add property to swagger model
+				if (!discriminatorParentModel.properties) discriminatorParentModel.properties = {};
+				if (!discriminatorParentModel.properties[discriminatorPropertyName]) {
+					discriminatorParentModel.properties[discriminatorPropertyName] = {
+						"type": ItemsType.String,
+						"description": `Validation ${discriminatorPropertyName} discriminator.`,
+                	};
+				}
+			}
 
-            // Children, Values, Mapping (without Default Class/Value)
-            let discriminatorChildren: string[] = [];
-            let discriminatorValues: string[] = [];
-            let discriminatorMapping: any[] = [];
+			// Children, Values, Mapping (without Default Class/Value)
+			let discriminatorChildren: string[] = [];
+			let discriminatorValues: string[] = [];
+			let discriminatorMapping: any[] = [];
 
-            // Find children of discriminatorParentName/modelName (in the filtered discriminatorValueModels map)
-            for (let childName of Object.keys(discriminatorValueModels)) {
-                let childModel = discriminatorValueModels[childName];
-                if (childModel["allOf"]) {
-                    for (let allOfElement of childModel["allOf"]) {
-                        if (allOfElement["$ref"] && allOfElement["$ref"].endsWith('/' + discriminatorParentName)) {
-                            discriminatorChildren.push(childName);
-                            if (childModel["x-discriminator-value"]) {
-                                discriminatorValues.push(childModel["x-discriminator-value"]);
-                                discriminatorMapping.push({ "name": childName, "value": childModel["x-discriminator-value"] })
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
+			// Find children of discriminatorParentName/modelName (in the filtered discriminatorValueModels map)
+			for (let childName of Object.keys(discriminatorValueModels)) {
+				let childModel = discriminatorValueModels[childName];
+				if (childModel["allOf"]) {
+					for (let allOfElement of childModel["allOf"]) {
+						if (allOfElement["$ref"] && allOfElement["$ref"].endsWith('/' + discriminatorParentName)) {
+							discriminatorChildren.push(childName);
+							if (childModel["x-discriminator-value"]) {
+								discriminatorValues.push(childModel["x-discriminator-value"]);
+								discriminatorMapping.push({ "name": childName, "value": childModel["x-discriminator-value"]})
+							}
+							break;
+						}
+					}
+				}
+			}
 
-            // Add default class: used in SDK to prevent deserialization error
-            let discriminatorDefaultChild = discriminatorParentName + SUFFIX_DEFAULT_CHILD;
-            let discriminatorDefaultValue = SUFFIX_DEFAULT_CHILD;
-            let discriminatorDefaultModel = {
-                "allOf": [
-                    {
-                        "$ref": `#/definitions/${discriminatorParentName}`
-                    },
-                    {
-                        "type": ItemsType.Object,
-                        "description": `Class for unknown/unexpected ${discriminatorDefaultChild}. This class is used to avoid deserialization issue if a new ${discriminatorDefaultChild} is added to the API (with an older SDK version).`,
-                        "additionalProperties": {
-                            "type": ItemsType.Object
-                        }
-                    }
-                ],
-                "x-discriminator-value": discriminatorDefaultValue,
-                "x-gc-class-complex": true,
-                "x-gc-class-discriminator": true,
-                "x-gc-is-discriminator-child": true,
-                "x-gc-discriminator-parent": discriminatorParentName,
-                "x-gc-is-outdated-sdk-version": true
-            };
-            swagger.definitions[discriminatorDefaultChild] = discriminatorDefaultModel;
+			// Add default class: used in SDK to prevent deserialization error
+			let discriminatorDefaultChild = discriminatorParentName + SUFFIX_DEFAULT_CHILD;
+			let discriminatorDefaultValue = SUFFIX_DEFAULT_CHILD;
+			let discriminatorDefaultModel = {
+				"allOf": [
+					{
+						"$ref": `#/definitions/${discriminatorParentName}`
+					},
+					{
+						"type": ItemsType.Object,
+						"description": `Class for unknown/unexpected ${discriminatorDefaultChild}. This class is used to avoid deserialization issue if a new ${discriminatorDefaultChild} is added to the API (with an older SDK version).`,
+						"additionalProperties": {
+							"type": ItemsType.Object
+						}
+					}
+				],
+				"x-discriminator-value": discriminatorDefaultValue,
+				"x-gc-class-complex": true,
+				"x-gc-class-discriminator": true,
+				"x-gc-is-discriminator-child": true,
+				"x-gc-discriminator-parent": discriminatorParentName,
+				"x-gc-is-outdated-sdk-version": true
+			};
+			swagger.definitions[discriminatorDefaultChild] = discriminatorDefaultModel;
 
-            // Add vendor extensions to "parent" class
-            discriminatorParentModel["x-gc-class-complex"] = true;
-            discriminatorParentModel["x-gc-class-discriminator"] = true;
-            discriminatorParentModel["x-gc-is-discriminator-parent"] = true;
-            discriminatorParentModel["x-gc-discriminator-default"] = discriminatorDefaultChild;
-            discriminatorParentModel["x-gc-discriminator-default-value"] = discriminatorDefaultValue;
-            discriminatorParentModel["x-gc-discriminator-children"] = discriminatorChildren;
-            discriminatorParentModel["x-gc-discriminator-values"] = discriminatorValues;
-            discriminatorParentModel["x-gc-discriminator-mapping"] = discriminatorMapping;
-            discriminatorParentModel["x-gc-discriminator-property"] = discriminatorPropertyName;
-            // Inside discriminator property
-            discriminatorParentModel.properties[discriminatorPropertyName]["x-gc-is-discriminator-property"] = true;
+			// Add vendor extensions to "parent" class
+			discriminatorParentModel["x-gc-class-complex"] = true;
+			discriminatorParentModel["x-gc-class-discriminator"] = true;
+			discriminatorParentModel["x-gc-is-discriminator-parent"] = true;
+			discriminatorParentModel["x-gc-discriminator-default"] = discriminatorDefaultChild;
+			discriminatorParentModel["x-gc-discriminator-default-value"] = discriminatorDefaultValue;
+			discriminatorParentModel["x-gc-discriminator-children"] = discriminatorChildren;
+			discriminatorParentModel["x-gc-discriminator-values"] = discriminatorValues;
+			discriminatorParentModel["x-gc-discriminator-mapping"] = discriminatorMapping;
+			discriminatorParentModel["x-gc-discriminator-property"] = discriminatorPropertyName;
+			// Inside discriminator property
+			discriminatorParentModel.properties[discriminatorPropertyName]["x-gc-is-discriminator-property"] = true;
+			
+			// Add vendor extensions to children classes
+			for (let childName of discriminatorChildren) {
+				let discriminatorChildModel = swagger.definitions[childName];
+				discriminatorChildModel["x-gc-class-complex"] = true;
+				discriminatorChildModel["x-gc-class-discriminator"] = true;
+				discriminatorChildModel["x-gc-is-discriminator-child"] = true;
+				discriminatorChildModel["x-gc-discriminator-parent"] = discriminatorParentName;
 
-            // Add vendor extensions to children classes
-            for (let childName of discriminatorChildren) {
-                let discriminatorChildModel = swagger.definitions[childName];
-                discriminatorChildModel["x-gc-class-complex"] = true;
-                discriminatorChildModel["x-gc-class-discriminator"] = true;
-                discriminatorChildModel["x-gc-is-discriminator-child"] = true;
-                discriminatorChildModel["x-gc-discriminator-parent"] = discriminatorParentName;
+				// Delete discriminator property (e.g. "type") at children level, if it exists
+				if (discriminatorChildModel.allOf) {
+					for (let allOfElement of discriminatorChildModel.allOf) {
+						if (allOfElement.properties && allOfElement.properties[discriminatorPropertyName]) {
+							delete allOfElement.properties[discriminatorPropertyName];
+						}
+					}
+				}
+			}
 
-                // Delete discriminator property (e.g. "type") at children level, if it exists
-                if (discriminatorChildModel.allOf) {
-                    for (let allOfElement of discriminatorChildModel.allOf) {
-                        if (allOfElement.properties && allOfElement.properties[discriminatorPropertyName]) {
-                            delete allOfElement.properties[discriminatorPropertyName];
-                        }
-                    }
-                }
-            }
+			// Fix ListValues model bug - compute enum
+			if (!discriminatorParentModel.properties[discriminatorPropertyName].enum) {
+				discriminatorParentModel.properties[discriminatorPropertyName].enum = [ ...discriminatorValues ];
+			}
+			
+			// Add DefaultValue to enum
+			discriminatorParentModel.properties[discriminatorPropertyName].enum.push(discriminatorDefaultValue);
 
-            // Fix ListValues model bug - compute enum
-            if (!discriminatorParentModel.properties[discriminatorPropertyName].enum) {
-                discriminatorParentModel.properties[discriminatorPropertyName].enum = [...discriminatorValues];
-            }
+			discriminatorInfoArray.push({
+				parentName: discriminatorParentName,
+				propertyName: discriminatorPropertyName,
+				defaultChildName: discriminatorDefaultChild,
+				defaultValue: discriminatorDefaultValue,
+				mapping: discriminatorMapping
+			});
+		}
+	}
 
-            // Add DefaultValue to enum
-            discriminatorParentModel.properties[discriminatorPropertyName].enum.push(discriminatorDefaultValue);
+	newSwagger["x-gc-discriminator-details"] = discriminatorInfoArray;
 
-            discriminatorInfoArray.push({
-                parentName: discriminatorParentName,
-                propertyName: discriminatorPropertyName,
-                defaultChildName: discriminatorDefaultChild,
-                defaultValue: discriminatorDefaultValue,
-                mapping: discriminatorMapping
-            });
-        }
-    }
+	return discriminatorInfoArray;
+}
 
-    newSwagger["x-gc-discriminator-details"] = discriminatorInfoArray;
+function addPolymorphismDescriptionToProperty(prop: Property, oneofInfoParents: string[], oneofInfoDocMap: Record<string, string>, discriminatorInfoParents: string[], discriminatorInfoDocMap: Record<string, string>) {
+	if (prop["$ref"]) {
+		let modelName = prop["$ref"].replace('#/definitions/', '');
+		if (oneofInfoParents.includes(modelName)) {
+			prop["allOf"] = [ { "$ref": prop["$ref"] }];
+			if (prop.description) {
+				prop.description = prop.description + ' ' + oneofInfoDocMap[modelName];
+			} else {
+				prop.description = oneofInfoDocMap[modelName];
+			}
+			delete prop["$ref"];
+		} else if (discriminatorInfoParents.includes(modelName)) {
+			prop["allOf"] = [ { "$ref": prop["$ref"] }];
+			if (prop.description) {
+				prop.description = prop.description + ' ' + discriminatorInfoDocMap[modelName];
+			} else {
+				prop.description = discriminatorInfoDocMap[modelName];
+			}
+			delete prop["$ref"];
+		}
+	} else if (prop.type === "array" && prop.items && prop.items["$ref"]) {
+		let modelName = prop.items["$ref"].replace('#/definitions/', '');
+		if (oneofInfoParents.includes(modelName)) {
+			if (prop.description) {
+				prop.description = prop.description + ' ' + oneofInfoDocMap[modelName];
+			} else {
+				prop.description = oneofInfoDocMap[modelName];
+			}
+		} else if (discriminatorInfoParents.includes(modelName)) {
+			if (prop.description) {
+				prop.description = prop.description + ' ' + discriminatorInfoDocMap[modelName];
+			} else {
+				prop.description = discriminatorInfoDocMap[modelName];
+			}
+		}
+	} else if (prop.additionalProperties && prop.additionalProperties["$ref"]) {
+		let modelName = prop.additionalProperties["$ref"].replace('#/definitions/', '');
+		if (oneofInfoParents.includes(modelName)) {
+			if (prop.description) {
+				prop.description = prop.description + ' ' + oneofInfoDocMap[modelName];
+			} else {
+				prop.description = oneofInfoDocMap[modelName];
+			}
+		} else if (discriminatorInfoParents.includes(modelName)) {
+			if (prop.description) {
+				prop.description = prop.description + ' ' + discriminatorInfoDocMap[modelName];
+			} else {
+				prop.description = discriminatorInfoDocMap[modelName];
+			}
+		}
+	}
+}
 
-    // Special treatment for documentation at property level (referencing a discriminator "parent" class)
-    let swaggerPathsAsString = JSON.stringify(swagger.paths);
-    let swaggerDefinitionsAsString = JSON.stringify(swagger.definitions);
-    for (let dInfo of discriminatorInfoArray) {
-        let refDoc = `${dInfo.parentName} is a parent class. In this context, it means the property can be one of the following classes: ${dInfo.mapping.map((x) => x.name).join(', ')} or ${dInfo.defaultChildName}. ${dInfo.defaultChildName} is added in this SDK to prevent deserialization errors - e.g. when the class is unknown due to an outdated SDK version (compared to current version of the Platform API).`;
+function addPolymorphismDescription(newSwagger: Swagger, codegenLanguage: string, oneofInfoArray: oneofInfo[], discriminatorInfoArray: discriminatorInfo[]) {
+	// Special treatment for documentation at property level (referencing a discriminator "parent" class)
+	let swagger = newSwagger;
 
-        let regexConvertItemsRef = new RegExp(String.raw`"items":{"\$ref":"#\/definitions\/${dInfo.parentName}"}`, "g");
-        let newItemsRef = `"items":{"$ref":"#/definitions/${dInfo.parentName}"},"x-gc-property-complex":true,"x-gc-property-doc":"${refDoc}"`;
-        swaggerPathsAsString = swaggerPathsAsString.replace(regexConvertItemsRef, newItemsRef);
-        swaggerDefinitionsAsString = swaggerDefinitionsAsString.replace(regexConvertItemsRef, newItemsRef);
+	let skipDocForLanguages = ["purecloudjavascript", "clisdkclient"];
+	if (!skipDocForLanguages.includes(codegenLanguage)) {
+		let oneofInfoParents: string[] = oneofInfoArray.map((oInfo) => oInfo.parentName);
+		let oneofInfoDocMap: Record<string, string> = {};
+		oneofInfoArray.forEach((oInfo) => {
+			let refDoc = `${oInfo.parentName} is defined as an interface (abstract class). In this context, it means the property value is an instance of one of the following class variants: ${oInfo.childrenNames.join(', ')} or ${oInfo.defaultChildName}. ${oInfo.defaultChildName} is added in this SDK to prevent deserialization errors - e.g. outdated SDK version: a new class variant has been introduced in the Platform API (compared to the version of the Platform API used to build this version of the SDK).`;
+			if (codegenLanguage === "purecloudpython") {
+				refDoc = `${oInfo.parentName} is defined as a union type (abstract). In this context, it means the property value is an instance of one of the following class variants: ${oInfo.childrenNames.join(', ')} or ${oInfo.defaultChildName}. ${oInfo.defaultChildName} is added in this SDK to prevent deserialization errors - e.g. outdated SDK version: a new class variant has been introduced in the Platform API (compared to the version of the Platform API used to build this version of the SDK).`;
+			}
+			oneofInfoDocMap[oInfo.parentName] = refDoc;
+		});
 
-        let regexConvertRef = new RegExp(String.raw`"\$ref":"#\/definitions\/${dInfo.parentName}"`, "g");
-        let newRef = `"$ref":"#/definitions/${dInfo.parentName}","x-gc-property-complex":true,"x-gc-property-doc":"${refDoc}"`;
-        swaggerPathsAsString = swaggerPathsAsString.replace(regexConvertRef, newRef);
-        swaggerDefinitionsAsString = swaggerDefinitionsAsString.replace(regexConvertRef, newRef);
-    }
-    swagger.paths = JSON.parse(swaggerPathsAsString);
-    swagger.definitions = JSON.parse(swaggerDefinitionsAsString);
+		let discriminatorInfoParents: string[] = discriminatorInfoArray.map((dInfo) => dInfo.parentName);
+		let discriminatorInfoDocMap: Record<string, string> = {};
+		discriminatorInfoArray.forEach((dInfo) => {
+			let refDoc = `${dInfo.parentName} is a parent class (using ${dInfo.propertyName} property as discriminator). In this context, it means the property value is an instance of one of its children classes: ${dInfo.mapping.map((x) => `${x.name} (${dInfo.propertyName}: ${x.value})`).join(', ')} or ${dInfo.defaultChildName} (${dInfo.propertyName}: unknown values). ${dInfo.defaultChildName} is added in this SDK to prevent deserialization errors - e.g. outdated SDK version: a new class variant has been introduced in the Platform API (compared to the version of the Platform API used to build this version of the SDK).`;
+			discriminatorInfoDocMap[dInfo.parentName] = refDoc;
+		});
 
-    return discriminatorInfoArray;
+		for (let modelName in swagger.definitions) {
+			let model = swagger.definitions[modelName];
+			if (model && model.allOf) {
+				for (let allOfElement of model.allOf) {
+					if (allOfElement && allOfElement.properties) {
+						for (let propName in allOfElement.properties) {
+							let prop = allOfElement.properties[propName];
+							addPolymorphismDescriptionToProperty(prop, oneofInfoParents, oneofInfoDocMap, discriminatorInfoParents, discriminatorInfoDocMap);
+						}
+					} else if (allOfElement && allOfElement.additionalProperties) {
+						addPolymorphismDescriptionToProperty(allOfElement.additionalProperties, oneofInfoParents, oneofInfoDocMap, discriminatorInfoParents, discriminatorInfoDocMap);
+					}
+				}
+			} else if (model && model.properties) {
+				for (let propName in model.properties) {
+					let prop = model.properties[propName];
+					addPolymorphismDescriptionToProperty(prop, oneofInfoParents, oneofInfoDocMap, discriminatorInfoParents, discriminatorInfoDocMap);
+				}
+			} else if (model && model.additionalProperties) {
+				addPolymorphismDescriptionToProperty(model.additionalProperties, oneofInfoParents, oneofInfoDocMap, discriminatorInfoParents, discriminatorInfoDocMap);
+			}
+		}
+	}
+
+	return;
 }
 
 function manageDiscriminator(newSwagger: Swagger, codegenLanguage: string, discriminatorManagement: string, keepDiscriminatorModels: string[]) {
     if (discriminatorManagement !== null && discriminatorManagement !== undefined && discriminatorManagement !== 'keep') {
         if (discriminatorManagement === 'extensions') {
-            addExtensions_oneOf(newSwagger, codegenLanguage);
-            addExtensions_discriminator(newSwagger, codegenLanguage);
+            let oneofInfoArray = addExtensions_oneOf(newSwagger, codegenLanguage);
+            let discriminatorInfoArray = addExtensions_discriminator(newSwagger, codegenLanguage);
+			addPolymorphismDescription(newSwagger, codegenLanguage, oneofInfoArray, discriminatorInfoArray);
         } else {
             let modelsWithDiscriminator: string[] = [];
             let childDiscriminatorModels: string[] = [];
@@ -765,9 +842,9 @@ function processRefs(newSwagger: Swagger) {
     keys.forEach((key, index) => {
         let obj = newSwagger.definitions[key].properties;
         if (obj) {
-            const keys = Object.keys(newSwagger.definitions[key].properties);
+            const keys = Object.keys(obj);
             keys.forEach((key2, index) => {
-                let obj2 = newSwagger.definitions[key].properties[key2];
+                let obj2 = obj[key2];
                 if (obj2) {
                     if (obj2.hasOwnProperty("$ref") && (obj2.hasOwnProperty("readOnly") || obj2.hasOwnProperty("description"))) {
                         if (obj2.readOnly === true && obj2.hasOwnProperty("description")) {
@@ -780,7 +857,28 @@ function processRefs(newSwagger: Swagger) {
                     }
                 }
             });
-        }
+        } else if (newSwagger.definitions[key].allOf) {
+			for (let allOfElement of newSwagger.definitions[key].allOf) {
+				let obj = allOfElement.properties;
+				if (obj) {
+					const keys = Object.keys(obj);
+					keys.forEach((key2, index) => {
+						let obj2 = obj[key2];
+						if (obj2) {
+							if (obj2.hasOwnProperty("$ref") && (obj2.hasOwnProperty("readOnly") || obj2.hasOwnProperty("description"))) {
+								if (obj2.readOnly === true && obj2.hasOwnProperty("description")) {
+									obj2.description = `${obj2.description} readOnly`
+								}
+
+								let refObj = { "$ref": obj2.$ref };
+								obj2.allOf = [refObj];
+								delete obj2.$ref;
+							}
+						}
+					});
+				}
+			}
+		}
     });
 }
 
@@ -886,6 +984,11 @@ function getEnv(
     return defaultValue;
 }
 
+//#endregion
+
+/************************************************************************************
+ * Merge Swagger specifications
+ *************************************************************************************/
 
 // This function will combine the public swagger with the preview swagger
 export function combineSwagger(publicSwagger: Swagger, preview: Swagger) {

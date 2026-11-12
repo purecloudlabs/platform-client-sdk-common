@@ -1,160 +1,186 @@
-import childProcess from 'child_process';
 import fs from 'node:fs';
 import { SwaggerDiffImpl } from './swaggerDiffImpl.js';
-import { Swagger, Info, Changes, ProduceElement, ItemsType } from '../types/swagger.js';
-import { Data, Version } from '../types/builderTypes.js';
+import { OpenApiDiffImpl } from './openapiDiffImpl.js';
+import { Swagger, ProduceElement, ItemsType } from '../types/swagger.js';
+import { Data, Version, Changes } from '../types/builderTypes.js';
 import { log } from '../log/logger.js';
 import { downloadFile } from '../util/http.js';
 import { swaggerPreprocessing, combineSwagger } from '../swagger/swaggerProcessing.js';
+import { openapiPreprocessing, combineOpenApi } from '../swagger/openapiProcessing.js';
 import { Config, PureCloud } from '../types/config.js';
 
 export class SpecificationDiff {
 
 	changes: Changes;
 	changeCount: number = 0;
-	// Swagger
-	swaggerInfo: Info;
-	oldSwagger: Swagger;
-	newSwagger: Swagger;
 	swaggerDiffImpl: SwaggerDiffImpl;
-	// OpenApiV3
-	// type
+	openapiDiffImpl: OpenApiDiffImpl;
 
 	useSdkVersioning: boolean = false;
 	// Special treatment for Web Messaging specification (downgrade from OpenAPI v3 to Swagger v2)
 	downgradeToSwaggerV2: boolean = false;
 
-	public getAndDiff(oldSwaggerPath: string, newSwaggerPath: string, previewSwaggerPath: string,
-		saveOldSwaggerPath: string, saveNewSwaggerPath: string) {
-		log.info('Starting swagger diff process');
-		log.debug(`Parameters: oldPath=${oldSwaggerPath}, newPath=${newSwaggerPath}, previewPath=${previewSwaggerPath}`);
-		let oldSwagger: Swagger, newSwagger: Swagger, previewSwagger: Swagger;
+	public getAndDiff(oldSpecPath: string, newSpecPath: string, previewSpecPath: string,
+		saveOldSpecPath: string, saveNewSpecPath: string) {
+		log.info('Starting spec diff process');
+		log.debug(`Parameters: oldPath=${oldSpecPath}, newPath=${newSpecPath}, previewPath=${previewSpecPath}`);
 
-		this.swaggerDiffImpl = new SwaggerDiffImpl();
+		let oldSpec: any, newSpec: any, previewSpec: any;
 
-		// Retrieve old swagger
-		if (fs.existsSync(oldSwaggerPath)) {
-			log.info(`Loading old swagger from disk: ${oldSwaggerPath}`);
-			oldSwagger = JSON.parse(fs.readFileSync(oldSwaggerPath, 'utf8'));
-		} else if (oldSwaggerPath.toLowerCase().startsWith('http')) {
-			log.info(`Downloading old swagger from: ${oldSwaggerPath}`);
-			oldSwagger = JSON.parse(downloadFile(oldSwaggerPath));
+		// Retrieve old spec
+		if (fs.existsSync(oldSpecPath)) {
+			log.info(`Loading old spec from disk: ${oldSpecPath}`);
+			oldSpec = JSON.parse(fs.readFileSync(oldSpecPath, 'utf8'));
+		} else if (oldSpecPath.toLowerCase().startsWith('http')) {
+			log.info(`Downloading old spec from: ${oldSpecPath}`);
+			oldSpec = JSON.parse(downloadFile(oldSpecPath));
 		} else {
-			log.warn(`Invalid oldSwaggerPath: ${oldSwaggerPath}`);
-			throw new Error(`Invalid old swagger path: ${oldSwaggerPath}`);
+			log.warn(`Invalid oldSpecPath: ${oldSpecPath}`);
+			throw new Error(`Invalid old spec path: ${oldSpecPath}`);
 		}
 
-		log.debug(`Old swagger loaded successfully, length: ${(JSON.stringify(oldSwagger) || []).length}`);
-		log.debug(`Old swagger info: ${oldSwagger?.info?.title || 'Unknown'} v${oldSwagger?.info?.version || 'Unknown'}`);
+		log.debug(`Old spec loaded successfully, length: ${(JSON.stringify(oldSpec) || []).length}`);
+		log.debug(`Old spec info: ${oldSpec?.info?.title || 'Unknown'} v${oldSpec?.info?.version || 'Unknown'}`);
 
-		// Retrieve new swagger
-		if (fs.existsSync(newSwaggerPath)) {
-			log.info(`Loading new swagger from disk: ${newSwaggerPath}`);
+		// Retrieve new spec
+		if (fs.existsSync(newSpecPath)) {
+			log.info(`Loading new spec from disk: ${newSpecPath}`);
 			if (this.downgradeToSwaggerV2 == false) {
-				newSwagger = JSON.parse(fs.readFileSync(newSwaggerPath, 'utf8'));
+				newSpec = JSON.parse(fs.readFileSync(newSpecPath, 'utf8'));
 			} else {
 				// Special treatment for Web Messaging specification (downgrade from OpenAPI v3 to Swagger v2)
 				// Verify specification version and downgrade only if openapi=="3..." (starts with 3)
-				let newSwaggerRaw: any = JSON.parse(fs.readFileSync(newSwaggerPath, 'utf8'));
-				if (newSwaggerRaw && newSwaggerRaw.openapi && newSwaggerRaw.openapi.startsWith("3")) {
-					newSwagger = this.convertToV2(newSwaggerRaw);
+				let newSpecRaw: any = JSON.parse(fs.readFileSync(newSpecPath, 'utf8'));
+				if (newSpecRaw && newSpec.openapi && newSpec.openapi.startsWith("3")) {
+					newSpec = this.convertToV2(newSpecRaw);
 				} else {
-					newSwagger = newSwaggerRaw;
+					newSpec = newSpecRaw;
 				}
 			}
-		} else if (newSwaggerPath.toLowerCase().startsWith('http')) {
-			log.info(`Downloading new swagger from: ${newSwaggerPath}`);
+		} else if (newSpecPath.toLowerCase().startsWith('http')) {
+			log.info(`Downloading new spec from: ${newSpecPath}`);
 			if (this.downgradeToSwaggerV2 == false) {
-				newSwagger = JSON.parse(downloadFile(newSwaggerPath));
+				newSpec = JSON.parse(downloadFile(newSpecPath));
 			} else {
 				// Special treatment for Web Messaging specification (downgrade from OpenAPI v3 to Swagger v2)
 				// Verify specification version and downgrade only if openapi=="3..." (starts with 3)
-				let newSwaggerRaw: any = JSON.parse(downloadFile(newSwaggerPath));
-				if (newSwaggerRaw && newSwaggerRaw.openapi && newSwaggerRaw.openapi.startsWith("3")) {
-					newSwagger = this.convertToV2(newSwaggerRaw);
+				let newSpecRaw: any = JSON.parse(downloadFile(newSpecPath));
+				if (newSpecRaw && newSpecRaw.openapi && newSpecRaw.openapi.startsWith("3")) {
+					newSpec = this.convertToV2(newSpecRaw);
 				} else {
-					newSwagger = newSwaggerRaw;
+					newSpec = newSpecRaw;
 				}
 			}
 		} else {
-			log.warn(`Invalid newSwaggerPath: ${newSwaggerPath}`);
-			throw new Error(`Invalid new swagger path: ${newSwaggerPath}`);
+			log.warn(`Invalid newSpecPath: ${newSpecPath}`);
+			throw new Error(`Invalid new spec path: ${newSpecPath}`);
 		}
 
-		// Check to see if preview swagger path is present. Internal builds do not need the preview swagger
-		if (previewSwaggerPath) {
-			// Retrieve preview swagger
-			if (fs.existsSync(previewSwaggerPath)) {
-				log.info(`Loading preview swagger from disk: ${previewSwaggerPath}`);
-				previewSwagger = JSON.parse(fs.readFileSync(previewSwaggerPath, 'utf8'));
-			} else if (previewSwaggerPath.toLowerCase().startsWith('http')) {
-				log.info(`Downloading preview swagger from: ${previewSwaggerPath}`);
-				previewSwagger = JSON.parse(downloadFile(previewSwaggerPath));
+		// Check to see if preview spec path is present. Internal builds do not need the preview spec
+		if (previewSpecPath) {
+			// Retrieve preview spec
+			if (fs.existsSync(previewSpecPath)) {
+				log.info(`Loading preview swagger from disk: ${previewSpecPath}`);
+				previewSpec = JSON.parse(fs.readFileSync(previewSpecPath, 'utf8'));
+			} else if (previewSpecPath.toLowerCase().startsWith('http')) {
+				log.info(`Downloading preview spec from: ${previewSpecPath}`);
+				previewSpec = JSON.parse(downloadFile(previewSpecPath));
 			} else {
-				log.warn(`Invalid previewSwaggerPath: ${previewSwaggerPath}`);
+				log.warn(`Invalid previewSpecPath: ${previewSpecPath}`);
 			}
-
-			log.info('Combining preview swagger with new swagger');
-			// Add the preview swagger and the public swagger together to create the full new swagger
-			newSwagger = combineSwagger(newSwagger, previewSwagger);
-			log.debug('Preview swagger combined successfully');
 		} else {
-			log.debug('No preview swagger path provided, skipping preview swagger processing');
+			log.debug('No preview spec path provided, skipping preview spec processing');
 		}
 
-		log.debug(`New swagger loaded successfully, length: ${JSON.stringify(newSwagger).length}`);
-		log.debug(`New swagger info: ${newSwagger?.info?.title || 'Unknown'} v${newSwagger?.info?.version || 'Unknown'}`);
+		log.debug(`New spec loaded successfully, length: ${JSON.stringify(newSpec).length}`);
+		log.debug(`New spec info: ${newSpec?.info?.title || 'Unknown'} v${newSpec?.info?.version || 'Unknown'}`);
 
 		// Save files to disk
-		if (saveOldSwaggerPath) {
-			log.info(`Writing old swagger to ${saveOldSwaggerPath}`);
+		if (saveOldSpecPath) {
+			log.info(`Writing old spec to ${saveOldSpecPath}`);
 			try {
-				fs.writeFileSync(saveOldSwaggerPath, JSON.stringify(oldSwagger));
-				log.debug('Old swagger file saved successfully');
+				fs.writeFileSync(saveOldSpecPath, JSON.stringify(oldSpec));
+				log.debug('Old spec file saved successfully');
 			} catch (error) {
-				log.warn(`Failed to save old swagger: ${error.message}`);
+				log.warn(`Failed to save old spec: ${error.message}`);
 			}
 		}
-		if (saveNewSwaggerPath) {
-			log.info(`Writing new swagger to ${saveNewSwaggerPath}`);
+		if (saveNewSpecPath) {
+			log.info(`Writing new spec to ${saveNewSpecPath}`);
 			try {
-				fs.writeFileSync(saveNewSwaggerPath, JSON.stringify(newSwagger));
-				log.debug('New swagger file saved successfully');
+				fs.writeFileSync(saveNewSpecPath, JSON.stringify(newSpec));
+				log.debug('New spec file saved successfully');
 			} catch (error) {
-				log.warn(`Failed to save new swagger: ${error.message}`);
+				log.warn(`Failed to save new spec: ${error.message}`);
 			}
 		}
 
-		// Diff swaggers
-		log.info('Starting swagger diff comparison');
-		this.diff(oldSwagger, newSwagger);
+		if (newSpec) {
+			if (newSpec && newSpec.swagger && newSpec.swagger.startsWith("2")) {
+				this.swaggerDiffImpl = new SwaggerDiffImpl();
+				if (previewSpec) {
+					log.info('Combining preview swagger with new swagger');
+					// Add the preview spec and the public spec together to create the full new spec
+					newSpec = combineSwagger(newSpec, previewSpec);
+					log.debug('Preview swagger combined successfully');
+				}
+				this.swaggerDiffImpl.swaggerInfo = newSpec.info ?? {};
+				this.swaggerDiffImpl.useSdkVersioning = this.useSdkVersioning;
+				this.swaggerDiffImpl.oldSwagger = oldSpec;
+				this.swaggerDiffImpl.newSwagger = newSpec;
+			} else if (newSpec && newSpec.openapi && newSpec.openapi.startsWith("3.1")) {
+				this.openapiDiffImpl = new OpenApiDiffImpl();
+				if (previewSpec) {
+					log.info('Combining preview openapi specification with new openapi specification');
+					// Add the preview spec and the public spec together to create the full new spec
+					newSpec = combineOpenApi(newSpec, previewSpec);
+					log.debug('Preview openapi specification combined successfully');
+				}
+				this.openapiDiffImpl.openapiInfo = newSpec.info ?? {};
+				this.openapiDiffImpl.useSdkVersioning = this.useSdkVersioning;
+				this.openapiDiffImpl.oldOpenApiSpec = oldSpec;
+				this.openapiDiffImpl.newOpenApiSpec = newSpec;
+			} else {
+				log.warn(`Unknown spec version: ${JSON.stringify(newSpec)}`);
+				throw new Error(`Unknown spec version: ${JSON.stringify(newSpec)}`);	
+			}
+		}
+
+		// Diff swaggers/openapi specs
+		log.info('Starting spec diff comparison');
+		this.diff();
 		log.info(`Swagger diff completed with ${this.changeCount} total changes`);
 	};
 
-	public diff(oldSwagger: Swagger, newSwagger: Swagger) {
-		log.debug('Copying properties to implementation');
-		this.copyPropertiesToImpl();
-
+	private diff() {
 		// Diff
-		log.debug('Executing swagger diff implementation');
-		let retval = this.swaggerDiffImpl.diff(oldSwagger, newSwagger);
+		if (this.swaggerDiffImpl) {
+			log.debug('Executing swagger diff implementation');
+			this.swaggerDiffImpl.diff();
 
-		// Set vars from diff impl
-		log.debug('Retrieving results from diff implementation');
-		this.changeCount = this.swaggerDiffImpl.changeCount;
-		this.changes = this.swaggerDiffImpl.changes;
-		this.oldSwagger = this.swaggerDiffImpl.oldSwagger;
-		this.newSwagger = this.swaggerDiffImpl.newSwagger;
-		this.swaggerInfo = this.swaggerDiffImpl.swaggerInfo;
+			// Set vars from diff impl
+			log.debug('Retrieving results from diff implementation');
+			this.changeCount = this.swaggerDiffImpl.changeCount;
+			this.changes = this.swaggerDiffImpl.changes;
+		} else if (this.openapiDiffImpl) {
+			log.debug('Executing openapi specification diff implementation');
+			this.openapiDiffImpl.diff();
+
+			// Set vars from diff impl
+			log.debug('Retrieving results from diff implementation');
+			this.changeCount = this.openapiDiffImpl.changeCount;
+			this.changes = this.openapiDiffImpl.changes;
+		} else {
+			throw new Error("Error - no swaggerDiffImpl or openapiDiffImpl defined");
+		}
 
 		log.info(`Diff completed: ${this.changeCount} changes found`);
-		return retval;
+		return;
 	};
 
 	public generateReleaseNotes(template: string, data: Data) {
 		log.info('Generating release notes');
 		log.debug(`Template source: ${fs.existsSync(template) ? 'file' : 'string'}`);
-		this.copyPropertiesToImpl();
 
 		let templateString = template;
 		if (fs.existsSync(template) === true) {
@@ -166,7 +192,14 @@ export class SpecificationDiff {
 		}
 
 		log.debug('Calling implementation to generate release notes');
-		const result = this.swaggerDiffImpl.generateReleaseNotes(templateString, data);
+		let result: string = "";
+		if (this.swaggerDiffImpl) {
+			result = this.swaggerDiffImpl.generateReleaseNotes(templateString, data);
+		} else if (this.openapiDiffImpl) {
+			result = this.openapiDiffImpl.generateReleaseNotes(templateString, data);
+		} else {
+			throw new Error("Error - no swaggerDiffImpl or openapiDiffImpl defined");
+		}
 		log.info('Release notes generated successfully');
 		return result;
 	};
@@ -181,41 +214,53 @@ export class SpecificationDiff {
 		if (forceMinor === true) log.info('Forcing minor release!');
 		if (forcePoint === true) log.info('Forcing point release!');
 
-		this.copyPropertiesToImpl();
-
-		const result = this.swaggerDiffImpl.incrementVersion(version, forceMajor, forceMinor, forcePoint);
+		let result: Version;
+		if (this.swaggerDiffImpl) {
+			result = this.swaggerDiffImpl.incrementVersion(version, forceMajor, forceMinor, forcePoint);
+		} else if (this.openapiDiffImpl) {
+			result = this.openapiDiffImpl.incrementVersion(version, forceMajor, forceMinor, forcePoint);
+		} else {
+			throw new Error("Error - no swaggerDiffImpl or openapiDiffImpl defined");
+		}
 		log.info(`Version incremented to ${result.major}.${result.minor}.${result.point}`);
 		return result;
 	};
 
 	public writeSpecification(filename: string) {
-		fs.writeFileSync(filename, JSON.stringify(this.newSwagger));
+		if (this.swaggerDiffImpl) {
+			fs.writeFileSync(filename, JSON.stringify(this.swaggerDiffImpl.newSwagger));
+		} else if (this.openapiDiffImpl) {
+			fs.writeFileSync(filename, JSON.stringify(this.openapiDiffImpl.newOpenApiSpec));
+		} else {
+			throw new Error("Error - no swaggerDiffImpl or openapiDiffImpl defined");
+		}
 		log.debug('Swagger file written successfully');
 	}
 
 	public preprocessing(pureCloud: PureCloud, config: Config): Promise<string> {
 		log.debug('Swagger Preprocessing');
-		return swaggerPreprocessing(this.newSwagger, pureCloud, config);
+		if (this.swaggerDiffImpl) {
+			return swaggerPreprocessing(this.swaggerDiffImpl.newSwagger, pureCloud, config);
+		} else if (this.openapiDiffImpl) {
+			return openapiPreprocessing(this.openapiDiffImpl.newOpenApiSpec, pureCloud, config);
+		} else {
+			throw new Error("Error - no swaggerDiffImpl or openapiDiffImpl defined");
+		}
 	}
 
 	public stringifyVersion(version, includePrerelease) {
 		log.debug(`Stringifying version: ${version.major}.${version.minor}.${version.point}, includePrerelease: ${includePrerelease}`);
-		this.copyPropertiesToImpl();
-
-		const result = this.swaggerDiffImpl.stringifyVersion(version, includePrerelease);
+		let result: string = "";
+		if (this.swaggerDiffImpl) {
+			result = this.swaggerDiffImpl.stringifyVersion(version, includePrerelease);
+		} else if (this.openapiDiffImpl) {
+			result = this.openapiDiffImpl.stringifyVersion(version, includePrerelease);
+		} else {
+			throw new Error("Error - no swaggerDiffImpl or openapiDiffImpl defined");
+		}
 		log.debug(`Version string result: ${result}`);
 		return result;
 	};
-
-	private copyPropertiesToImpl() {
-		// Set properties on impl object just to be safe
-		this.swaggerDiffImpl.changes = this.changes;
-		this.swaggerDiffImpl.changeCount = this.changeCount;
-		this.swaggerDiffImpl.swaggerInfo = this.swaggerInfo;
-		this.swaggerDiffImpl.useSdkVersioning = this.useSdkVersioning;
-		this.swaggerDiffImpl.oldSwagger = this.oldSwagger;
-		this.swaggerDiffImpl.newSwagger = this.newSwagger;
-	}
 
 	private convertToV2(swaggerV3 : any) {
 		log.info('Converting OpenAPI v3 to Swagger v2');

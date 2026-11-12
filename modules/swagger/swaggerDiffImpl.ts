@@ -1,8 +1,8 @@
 import _ from 'lodash';
 import dot from 'dot';
 import pluralize from 'pluralize';
-import { Swagger, Info, Path, TypeResponse, ItemsType, Property, HttpMethod, valueTypes, Parameter, Changes } from '../types/swagger.js';
-import { Version, Data } from '../types/builderTypes.js';
+import { Swagger, Info, Path, TypeResponse, ItemsType, Property, HttpMethod, valueTypes, Parameter } from '../types/swagger.js';
+import { Version, Data, Changes } from '../types/builderTypes.js';
 import { log } from '../log/logger.js';
 
 /* PRIVATE VARS */
@@ -50,27 +50,25 @@ export class SwaggerDiffImpl {
 	constructor() {
 		dot.templateSettings.strip = false;
 	}
-	public diff(oldSwagger: Swagger, newSwagger: Swagger): void {
+	public diff(): void {
 		log.info('Starting swagger diff implementation');
-		log.debug(`Old swagger paths: ${Object.keys(oldSwagger?.paths || {}).length}`);
-		log.debug(`New swagger paths: ${Object.keys(newSwagger?.paths || {}).length}`);
-		log.debug(`Old swagger definitions: ${Object.keys(oldSwagger?.definitions || {}).length}`);
-		log.debug(`New swagger definitions: ${Object.keys(newSwagger?.definitions || {}).length}`);
+		log.debug(`Old swagger paths: ${Object.keys(this.oldSwagger?.paths || {}).length}`);
+		log.debug(`New swagger paths: ${Object.keys(this.newSwagger?.paths || {}).length}`);
+		log.debug(`Old swagger definitions: ${Object.keys(this.oldSwagger?.definitions || {}).length}`);
+		log.debug(`New swagger definitions: ${Object.keys(this.newSwagger?.definitions || {}).length}`);
 
 		// Set data
-		this.oldSwagger = oldSwagger;
-		this.newSwagger = newSwagger;
-		this.swaggerInfo = newSwagger.info;
-		this.swaggerInfo.swagger = newSwagger.swagger;
-		this.swaggerInfo.host = newSwagger.host;
+		if (!this.swaggerInfo) this.swaggerInfo = this.newSwagger.info;
+		this.swaggerInfo.swagger = this.newSwagger.swagger;
+		this.swaggerInfo.host = this.newSwagger.host;
 		this.changes = {};
 		this.changeCount = 0;
 		
 		// Diff
 		log.info('Checking operations for changes');
-		checkOperations(this, oldSwagger, newSwagger);
+		checkOperations(this, this.oldSwagger, this.newSwagger);
 		log.info('Checking models for changes');
-		checkModels(this, oldSwagger, newSwagger);
+		checkModels(this, this.oldSwagger, this.newSwagger);
 
 		log.info(`Swagger diff implementation complete. Found ${this.changeCount} changes.`);
 	};
@@ -500,13 +498,13 @@ function checkOperations(swaggerDiffImpl: SwaggerDiffImpl, oldSwagger: Swagger, 
 
 function getSchemaType(schema: Property) {
 	if (!schema) {
-		log.debug('getSchemaType called with null/undefined schema');
+		// log.debug('getSchemaType called with null/undefined schema');
 		return '_undefined_';
 	}
 	
 	if (schema && schema['$ref']) {
 		const refType = schema['$ref'].replace('#/definitions/', '');
-		log.debug(`Schema type resolved as reference: ${refType}`);
+		// log.debug(`Schema type resolved as reference: ${refType}`);
 		return refType;
 	}
 
@@ -514,26 +512,26 @@ function getSchemaType(schema: Property) {
 		if (schema.type.toLowerCase() == 'array' && schema.items) {
 			if (schema.items['$ref']) {
 				const arrayType = `${schema.items['$ref'].replace('#/definitions/', '')}[]`;
-				log.debug(`Schema type resolved as array reference: ${arrayType}`);
+				// log.debug(`Schema type resolved as array reference: ${arrayType}`);
 				return arrayType;
 			}
 			if (schema.items.type) {
 				const arrayType = `${schema.items.type}[]`;
-				log.debug(`Schema type resolved as array: ${arrayType}`);
+				// log.debug(`Schema type resolved as array: ${arrayType}`);
 				return arrayType;
 			}
 		}
 		if (schema.type.toLowerCase() == 'object' && schema.additionalProperties) {
 			const mapType = `Map<${schema.type}, ${getSchemaType(schema.additionalProperties)}>`;
-			log.debug(`Schema type resolved as map: ${mapType}`);
+			// log.debug(`Schema type resolved as map: ${mapType}`);
 			return mapType;
 		}
 
-		log.debug(`Schema type resolved as simple type: ${schema.type}`);
+		// log.debug(`Schema type resolved as simple type: ${schema.type}`);
 		return schema.type;
 	}
 
-	log.debug('Schema type could not be determined, returning _undefined_');
+	// log.debug('Schema type could not be determined, returning _undefined_');
 	return '_undefined_';
 }
 
@@ -729,21 +727,21 @@ function checkModels(swaggerDiffImpl: SwaggerDiffImpl, oldSwagger: Swagger, newS
 
 function getEnumValues(property) {
 	if (!property) {
-		log.debug('getEnumValues called with null/undefined property');
+		// log.debug('getEnumValues called with null/undefined property');
 		return undefined;
 	}
 	
 	if (property.enum) {
-		log.debug(`Found enum values: ${property.enum.length} items`);
+		// log.debug(`Found enum values: ${property.enum.length} items`);
 		return property.enum;
 	}
 
 	if (property.items && property.items.enum) {
-		log.debug(`Found enum values in items: ${property.items.enum.length} items`);
+		// log.debug(`Found enum values in items: ${property.items.enum.length} items`);
 		return property.items.enum;
 	}
 
-	log.debug('No enum values found in property');
+	// log.debug('No enum values found in property');
 	return undefined;
 }
 

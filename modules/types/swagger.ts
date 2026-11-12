@@ -52,23 +52,6 @@ export interface Definition {
     "x-gc-discriminator-parent"?: string;
 }
 
-export interface ChangeItem {
-    parent: string;
-    impact: string;
-    key: string;
-    location: string;
-    oldValue: any;
-    newValue: any;
-    description: string;
-}
-
-// Assuming 'changes' is an object with string keys and arrays of ChangeItem
-export interface Changes {
-    [id: string]: {
-        [impact: string]: ChangeItem[];
-    };
-}
-
 export interface Property {
     type?: ItemsType;
     description?: string;
@@ -285,8 +268,6 @@ export interface ItemsClass {
 export type RestResponse = RestHttpResponse;
 
 export type TypeResponse = RestResponse | RestResponse["schema"]
-
-
 
 export interface RestHttpResponse {
     description?: string;
