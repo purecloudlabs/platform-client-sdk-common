@@ -1,0 +1,68 @@
+    /// <summary>
+    /// {{#description}}{{.}}{{/description}}{{^description}}{{classname}}{{/description}}
+    /// {{classname}} is an interface (abstract class). It is one of the following class variants, which implement this interface: {{#vendorExtensions.x-gc-one-of-children}}{{.}}, {{/vendorExtensions.x-gc-one-of-children}}or {{vendorExtensions.x-gc-one-of-default}}.
+    /// {{vendorExtensions.x-gc-one-of-default}} is used to prevent deserialization errors - e.g. outdated SDK version: a new class variant has been introduced in the Platform API (compared to the version of the Platform API used to build this version of the SDK).
+    /// </summary>
+    public interface {{classname}}
+    {
+    }
+
+    public class {{classname}}Converter : JsonConverter
+    {
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof({{classname}});
+        }
+
+        public override object ReadJson(
+            JsonReader reader,
+            Type objectType,
+            object existingValue,
+            JsonSerializer serializer)
+        {
+            if (reader.TokenType == JsonToken.Null)
+            {
+                return null;
+            }
+
+            JObject jsonObject = JObject.Load(reader);
+
+            int countMatch = 0;
+
+            {{#vendorExtensions.x-gc-one-of-children}}
+            bool is{{.}}Match = {{.}}.matchesJsonData(jsonObject);
+            if (is{{.}}Match) countMatch++;
+            {{/vendorExtensions.x-gc-one-of-children}}
+
+            // Defaults to default
+            // countMatch == 0 - Value does not match any oneOf alternative
+            // countMatch > 1 - Value matches more than one oneOf alternative
+
+            if (countMatch == 0) {
+                return jsonObject.ToObject<{{vendorExtensions.x-gc-one-of-default}}>(serializer);
+            }
+
+            if (countMatch > 1) {
+                return jsonObject.ToObject<{{vendorExtensions.x-gc-one-of-default}}>(serializer);
+            }
+
+            {{#vendorExtensions.x-gc-one-of-children}}
+            if (is{{.}}Match) {
+                return jsonObject.ToObject<{{.}}>(serializer);
+            }
+            {{/vendorExtensions.x-gc-one-of-children}}
+
+            return jsonObject.ToObject<{{vendorExtensions.x-gc-one-of-default}}>(serializer);
+        }
+
+        public override bool CanWrite => false;
+
+        public override void WriteJson(
+            JsonWriter writer,
+            object value,
+            JsonSerializer serializer)
+        {
+            throw new NotImplementedException();
+        }
+    }
+

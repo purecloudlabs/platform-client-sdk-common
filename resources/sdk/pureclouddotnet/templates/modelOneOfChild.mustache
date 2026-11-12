@@ -1,0 +1,175 @@
+    /// <summary>
+    /// {{#description}}{{.}}{{/description}}{{^description}}{{classname}}{{/description}}{{#vendorExtensions.x-gc-is-outdated-sdk-version}}
+    /// {{classname}} is used to prevent deserialization errors - e.g. outdated SDK version: a new class variant has been introduced to the {{vendorExtensions.x-gc-one-of-parent}} union, in the Platform API (compared to the version of the Platform API used to build this version of the SDK).{{/vendorExtensions.x-gc-is-outdated-sdk-version}}
+    /// </summary>
+    [DataContract]
+    public partial class {{classname}} : {{vendorExtensions.x-gc-one-of-parent}}, IEquatable<{{classname}}>{{#isPagedResource}}, IPagedResource<{{{pagedResourceType}}}>{{/isPagedResource}}
+    {
+        {{#vars}}
+        {{^vendorExtensions.x-gc-ignore-property}}
+        {{#isEnum}}
+{{>modelInnerEnum}}
+        {{/isEnum}}
+        {{#items.isEnum}}
+        {{#items}}
+{{>modelInnerEnum}}
+        {{/items}}
+        {{/items.isEnum}}
+        {{/vendorExtensions.x-gc-ignore-property}}
+        {{/vars}}
+        {{#vars}}
+        {{^vendorExtensions.x-gc-ignore-property}}
+        {{#isEnum}}
+        /// <summary>
+        /// {{^description}}Gets or Sets {{{name}}}{{/description}}{{#description}}{{{description}}}{{/description}}
+        /// </summary>{{#description}}
+        /// <value>{{{description}}}</value>{{/description}}
+        [DataMember(Name="{{baseName}}", EmitDefaultValue={{emitDefaultValue}})]
+        public {{{datatypeWithEnum}}}? {{name}} { get; {{#isReadOnly}}private {{/isReadOnly}}set; }
+
+        {{/isEnum}}
+        {{/vendorExtensions.x-gc-ignore-property}}
+        {{/vars}}
+    {{#hasRequired}}
+        /// <summary>
+        /// Initializes a new instance of the <see cref="{{classname}}" /> class.
+        /// </summary>
+        [JsonConstructorAttribute]
+        protected {{classname}}() { }
+
+    {{/hasRequired}}
+        /// <summary>
+        /// Initializes a new instance of the <see cref="{{classname}}" /> class.
+        /// </summary>{{#vars}}{{^vendorExtensions.x-gc-ignore-property}}{{^isReadOnly}}
+        /// <param name="{{name}}">{{#description}}{{description}}{{/description}}{{^description}}{{name}}{{/description}}{{#required}} (required){{/required}}{{#defaultValue}} (default to {{defaultValue}}){{/defaultValue}}.</param>{{/isReadOnly}}{{/vendorExtensions.x-gc-ignore-property}}{{/vars}}
+        public {{classname}}({{#vars}}{{^vendorExtensions.x-gc-ignore-property}}{{^isReadOnly}}{{{datatypeWithEnum}}}{{#isEnum}}?{{/isEnum}} {{name}} = null{{/isReadOnly}}{{#hasMoreNonReadOnly}}{{^isReadOnly}}, {{/isReadOnly}}{{/hasMoreNonReadOnly}}{{/vendorExtensions.x-gc-ignore-property}}{{/vars}})
+        {
+            {{#vars}}{{^vendorExtensions.x-gc-ignore-property}}{{^isReadOnly}}{{#defaultValue}}// use default value if no "{{name}}" provided
+            if ({{name}} == null)
+            {
+                this.{{name}} = {{{defaultValue}}};
+            }
+            else
+            {
+                this.{{name}} = {{name}};
+            } {{/defaultValue}}{{^defaultValue}}this.{{name}} = {{name}};
+            {{/defaultValue}}{{/isReadOnly}}{{/vendorExtensions.x-gc-ignore-property}}{{/vars}}
+        }
+        
+        {{#vars}}
+        {{^vendorExtensions.x-gc-ignore-property}}
+        {{^isEnum}}
+        /// <summary>
+        /// {{^description}}Gets or Sets {{{name}}}{{/description}}{{#description}}{{description}}{{/description}}
+        /// </summary>{{#description}}
+        /// <value>{{description}}</value>{{/description}}
+        [DataMember(Name="{{baseName}}", EmitDefaultValue={{emitDefaultValue}})]
+        public {{{datatypeWithEnum}}} {{name}} { get; {{#isReadOnly}}private {{/isReadOnly}}set; }
+        {{/isEnum}}
+        {{/vendorExtensions.x-gc-ignore-property}}
+        {{/vars}}
+
+        {{^vendorExtensions.x-gc-is-outdated-sdk-version}}
+        public static bool matchesJsonData(JObject jsonObject) {
+            // Generated matching logic.
+            //
+            // Ideally use required/distinguishing properties from
+            // {{classname}}'s OpenAPI schema.
+            if ({{#requiredVars}}jsonObject.Property("{{baseName}}") != null{{^-last}} && {{/-last}}{{/requiredVars}}) {
+                return true;
+            }
+            return false;
+        }
+
+        {{/vendorExtensions.x-gc-is-outdated-sdk-version}}
+        /// <summary>
+        /// Returns the string presentation of the object
+        /// </summary>
+        /// <returns>String presentation of the object</returns>
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            sb.Append("class {{classname}} {\n");
+
+            {{#vars}}
+            {{^vendorExtensions.x-gc-ignore-property}}
+            sb.Append("  {{name}}: ").Append({{name}}).Append("\n");
+            {{/vendorExtensions.x-gc-ignore-property}}
+            {{/vars}}
+            sb.Append("}\n");
+            return sb.ToString();
+        }
+  
+        /// <summary>
+        /// Returns the JSON string presentation of the object
+        /// </summary>
+        /// <returns>JSON string presentation of the object</returns>
+        public {{#parent}} new {{/parent}}string ToJson()
+        {
+            return JsonConvert.SerializeObject(this, new JsonSerializerSettings
+            {
+                MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
+                Formatting = Formatting.Indented
+            });
+        }
+
+        /// <summary>
+        /// Returns true if objects are equal
+        /// </summary>
+        /// <param name="obj">Object to be compared</param>
+        /// <returns>Boolean</returns>
+        public override bool Equals(object obj)
+        {
+            // credit: http://stackoverflow.com/a/10454552/677735
+            return this.Equals(obj as {{classname}});
+        }
+
+        /// <summary>
+        /// Returns true if {{classname}} instances are equal
+        /// </summary>
+        /// <param name="other">Instance of {{classname}} to be compared</param>
+        /// <returns>Boolean</returns>
+        public bool Equals({{classname}} other)
+        {
+            // credit: http://stackoverflow.com/a/10454552/677735
+            if (other == null)
+                return false;
+
+            {{^vendorExtensions.x-gc-is-outdated-sdk-version}}
+            return true{{#vars}}{{^vendorExtensions.x-gc-ignore-property}}{{^isContainer}} &&
+                (
+                    this.{{name}} == other.{{name}} ||
+                    this.{{name}} != null &&
+                    this.{{name}}.Equals(other.{{name}})
+                ){{/isContainer}}{{#isContainer}} &&
+                (
+                    this.{{name}} == other.{{name}} ||
+                    this.{{name}} != null &&
+                    this.{{name}}.SequenceEqual(other.{{name}})
+                ){{/isContainer}}{{/vendorExtensions.x-gc-ignore-property}}{{/vars}}{{^vars}} && false{{/vars}};
+            {{/vendorExtensions.x-gc-is-outdated-sdk-version}}
+            {{#vendorExtensions.x-gc-is-outdated-sdk-version}}
+            return false;
+            {{/vendorExtensions.x-gc-is-outdated-sdk-version}}
+        }
+
+        /// <summary>
+        /// Gets the hash code
+        /// </summary>
+        /// <returns>Hash code</returns>
+        public override int GetHashCode()
+        {
+            // credit: http://stackoverflow.com/a/263416/677735
+            unchecked // Overflow is fine, just wrap
+            {
+                int hash = 41;
+                // Suitable nullity checks etc, of course :)
+                {{#vars}}{{^vendorExtensions.x-gc-ignore-property}}
+                if (this.{{name}} != null)
+                    hash = hash * 59 + this.{{name}}.GetHashCode();
+
+                {{/vendorExtensions.x-gc-ignore-property}}{{/vars}}
+                return hash;
+            }
+        }
+    }

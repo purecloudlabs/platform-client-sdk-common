@@ -8,13 +8,35 @@ using System.Collections.ObjectModel;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
 using {{packageName}}.Client;
 
 {{#models}}
 {{#model}}
 namespace {{packageName}}.Model
 {
-{{#isEnum}}{{>modelEnum}}{{/isEnum}}{{^isEnum}}{{>modelGeneric}}{{/isEnum}}
+{{#isEnum}}
+{{>modelEnum}}
+{{/isEnum}}
+{{^isEnum}}
+{{^vendorExtensions.x-gc-class-complex}}
+{{>modelGeneric}}
+{{/vendorExtensions.x-gc-class-complex}}
+{{#vendorExtensions.x-gc-class-complex}}
+{{#vendorExtensions.x-gc-is-one-of-parent}}
+{{>modelOneOfParent}}
+{{/vendorExtensions.x-gc-is-one-of-parent}}
+{{#vendorExtensions.x-gc-is-one-of-child}}
+{{>modelOneOfChild}}
+{{/vendorExtensions.x-gc-is-one-of-child}}
+{{#vendorExtensions.x-gc-is-discriminator-parent}}
+{{>modelDiscriminatorParent}}
+{{/vendorExtensions.x-gc-is-discriminator-parent}}
+{{#vendorExtensions.x-gc-is-discriminator-child}}
+{{>modelDiscriminatorChild}}
+{{/vendorExtensions.x-gc-is-discriminator-child}}
+{{/vendorExtensions.x-gc-class-complex}}
+{{/isEnum}}
 {{/model}}
 {{/models}}
 }
