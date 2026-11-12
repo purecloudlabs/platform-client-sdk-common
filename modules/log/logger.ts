@@ -184,8 +184,7 @@ class Logger {
 }
 
 // Export singleton instance
-const logger = Logger.getInstance();
-export default logger;
+export const log = Logger.getInstance();
 
 function pad(value: string, length: number, padchar: string) {
 	return value.toString().length < length ? pad(value + padchar, length, padchar) : value;

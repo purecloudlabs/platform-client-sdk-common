@@ -1,6 +1,7 @@
 import fs from 'fs';
 import childProcess from 'child_process';
-import { Swagger , Definition, Property, ProduceElement, ItemsType} from '../../../../modules/types/swagger';
+import { Swagger , Definition, Property, ProduceElement, ItemsType} from '../../../../modules/types/swagger.js';
+import { downloadFile } from '../../../../modules/util/http.js';
 
 export class CombineSwagger {
     internalSwagger: Swagger;
@@ -20,7 +21,7 @@ export class CombineSwagger {
                 this.internalSwagger = JSON.parse(fs.readFileSync(internalSwaggerPath, 'utf8'));
             } else if (internalSwaggerPath.toLowerCase().startsWith('http')) {
                 console.log('Downloading internal swagger');
-                let file = this.downloadFile(internalSwaggerPath);
+                let file = downloadFile(internalSwaggerPath);
                 this.internalSwagger = JSON.parse(file);
             } else {
                 console.log('Invalid internalSwaggerPath');
@@ -41,7 +42,7 @@ export class CombineSwagger {
                 console.log('Downloading new swagger');
                 // Special treatment for Web Messaging specification (downgrade from OpenAPI v3 to Swagger v2)
 				// Verify specification version and downgrade only if openapi=="3..." (starts with 3)
-                let newSwaggerRaw: any = JSON.parse(this.downloadFile(newSwaggerPath));
+                let newSwaggerRaw: any = JSON.parse(downloadFile(newSwaggerPath));
                 if (newSwaggerRaw && newSwaggerRaw.openapi && newSwaggerRaw.openapi.startsWith("3")) {
                     this.newSwagger = this.convertToV2(newSwaggerRaw);
                 } else {
@@ -260,24 +261,6 @@ export class CombineSwagger {
             }
         });
         return swagger;
-    }
-    
-    downloadFile(url : string) {
-        var i = 0
-        while (i < 10) {
-            i++
-            console.log(`Downloading file: ${url}`)
-            // Source: https://www.npmjs.com/package/download-file-sync
-            var file = childProcess.execFileSync('curl', ['--silent', '-L', url], { encoding: 'utf8', maxBuffer: 1024 * 1024 * 1024 })
-            if (!file || file === '') {
-                console.log(`File was empty! sleeping for 5 seconds. Retries left: ${10 - i}`)
-                childProcess.execFileSync('curl', ['--silent', 'https://httpbin.org/delay/10'], { encoding: 'utf8' })
-            } else {
-                return file
-            }
-        }
-        console.log('Failed to get contents for file!')
-        return null
     }
 }
 

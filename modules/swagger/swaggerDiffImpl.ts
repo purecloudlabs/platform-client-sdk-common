@@ -1,9 +1,9 @@
 import _ from 'lodash';
 import dot from 'dot';
 import pluralize from 'pluralize';
-import { Swagger, Info, Path, TypeResponse, ItemsType, Property, HttpMethod, valueTypes, Parameter, Changes } from '../types/swagger';
-import { Version, Data } from '../types/builderTypes';
-import log from '../log/logger';
+import { Swagger, Info, Path, TypeResponse, ItemsType, Property, HttpMethod, valueTypes, Parameter } from '../types/swagger.js';
+import { Version, Data, Changes } from '../types/builderTypes.js';
+import { log } from '../log/logger.js';
 
 /* PRIVATE VARS */
 
@@ -38,7 +38,7 @@ Array.prototype.pushApply = function <T>(arr: T[]): void {
 	this.push(...arr);
 };
 
-class SwaggerDiffImpl {
+export class SwaggerDiffImpl {
 
 	changes: Changes;
 	changeCount: number = 0;
@@ -50,27 +50,25 @@ class SwaggerDiffImpl {
 	constructor() {
 		dot.templateSettings.strip = false;
 	}
-	public diff(oldSwagger: Swagger, newSwagger: Swagger): void {
+	public diff(): void {
 		log.info('Starting swagger diff implementation');
-		log.debug(`Old swagger paths: ${Object.keys(oldSwagger?.paths || {}).length}`);
-		log.debug(`New swagger paths: ${Object.keys(newSwagger?.paths || {}).length}`);
-		log.debug(`Old swagger definitions: ${Object.keys(oldSwagger?.definitions || {}).length}`);
-		log.debug(`New swagger definitions: ${Object.keys(newSwagger?.definitions || {}).length}`);
+		log.debug(`Old swagger paths: ${Object.keys(this.oldSwagger?.paths || {}).length}`);
+		log.debug(`New swagger paths: ${Object.keys(this.newSwagger?.paths || {}).length}`);
+		log.debug(`Old swagger definitions: ${Object.keys(this.oldSwagger?.definitions || {}).length}`);
+		log.debug(`New swagger definitions: ${Object.keys(this.newSwagger?.definitions || {}).length}`);
 
 		// Set data
-		this.oldSwagger = oldSwagger;
-		this.newSwagger = newSwagger;
-		this.swaggerInfo = newSwagger.info;
-		this.swaggerInfo.swagger = newSwagger.swagger;
-		this.swaggerInfo.host = newSwagger.host;
+		if (!this.swaggerInfo) this.swaggerInfo = this.newSwagger.info;
+		this.swaggerInfo.swagger = this.newSwagger.swagger;
+		this.swaggerInfo.host = this.newSwagger.host;
 		this.changes = {};
 		this.changeCount = 0;
 		
 		// Diff
 		log.info('Checking operations for changes');
-		checkOperations(oldSwagger, newSwagger);
+		checkOperations(this, this.oldSwagger, this.newSwagger);
 		log.info('Checking models for changes');
-		checkModels(oldSwagger, newSwagger);
+		checkModels(this, this.oldSwagger, this.newSwagger);
 
 		log.info(`Swagger diff implementation complete. Found ${this.changeCount} changes.`);
 	};
@@ -201,18 +199,9 @@ class SwaggerDiffImpl {
 
 }
 
-// Create an instance of SwaggerDiffImpl and export it.
-const _this: SwaggerDiffImpl = new SwaggerDiffImpl();
-export default _this;
-
-// Check if the 'window' object is available and add the instance to it if so.
-if (typeof window !== 'undefined') {
-	(window as any).swaggerDiffImpl = _this;
-}
-
 /* PRIVATE FUNCTIONS */
 
-function addChange(id: string, key: string, location: string, impact: string, oldValue: valueTypes, newValue: valueTypes, description: string) {
+function addChange(swaggerDiffImpl: SwaggerDiffImpl, id: string, key: string, location: string, impact: string, oldValue: valueTypes, newValue: valueTypes, description: string) {
 	// Generate default description
 	if (!description) {
 		if (!oldValue && newValue) description = `${location.capitalizeFirstLetter()} ${key} was added`;
@@ -223,11 +212,11 @@ function addChange(id: string, key: string, location: string, impact: string, ol
 	log.debug(`Adding ${impact} change: ${id} - ${description}`);
 	
 	// Initialize
-	if (!_this.changes[id]) _this.changes[id] = {};
-	if (!_this.changes[id][impact]) _this.changes[id][impact] = [];
+	if (!swaggerDiffImpl.changes[id]) swaggerDiffImpl.changes[id] = {};
+	if (!swaggerDiffImpl.changes[id][impact]) swaggerDiffImpl.changes[id][impact] = [];
 
 	// Add
-	_this.changes[id][impact].push({
+	swaggerDiffImpl.changes[id][impact].push({
 		parent: id,
 		impact: impact,
 		key: key,
@@ -238,11 +227,11 @@ function addChange(id: string, key: string, location: string, impact: string, ol
 	});
 
 	// Increment change count
-	_this.changeCount++;
-	log.debug(`Total change count: ${_this.changeCount}`);
+	swaggerDiffImpl.changeCount++;
+	log.debug(`Total change count: ${swaggerDiffImpl.changeCount}`);
 }
 
-function checkForChange(id: string, key: string, location: string, impact: string, property: string, oldObject: TypeResponse, newObject: TypeResponse, description: string) {
+function checkForChange(swaggerDiffImpl: SwaggerDiffImpl, id: string, key: string, location: string, impact: string, property: string, oldObject: TypeResponse, newObject: TypeResponse, description: string) {
 	// Initialize property values
 	// Use property=undefined for direct object comparison
 	var oldPropertyValue = property ? (oldObject ? oldObject[property] : undefined) : oldObject;
@@ -250,10 +239,10 @@ function checkForChange(id: string, key: string, location: string, impact: strin
 
 	// Have one but not the other, or properties aren't equal
 	if ((!oldObject && newObject) || (oldObject && !newObject) || oldPropertyValue !== newPropertyValue)
-		addChange(id, key ? key : property, location, impact, oldPropertyValue, newPropertyValue, description);
+		addChange(swaggerDiffImpl, id, key ? key : property, location, impact, oldPropertyValue, newPropertyValue, description);
 }
 
-function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
+function checkOperations(swaggerDiffImpl: SwaggerDiffImpl, oldSwagger: Swagger, newSwagger: Swagger) {
 	if (!oldSwagger) {
 		log.warn('No old swagger provided, skipping operation checks');
 		return;
@@ -269,7 +258,7 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 		var newPath = newSwagger.paths[pathKey];
 		if (!newPath) {
 			log.debug(`Path removed: ${pathKey}`);
-			addChange(pathKey, pathKey, LOCATION_PATH, IMPACT_MAJOR, pathKey, undefined, undefined);
+			addChange(swaggerDiffImpl, pathKey, pathKey, LOCATION_PATH, IMPACT_MAJOR, pathKey, undefined, undefined);
 		}
 	});
 
@@ -280,18 +269,18 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 		if (!oldPath) {
 			log.debug(`New path added: ${pathKey}`);
 			// Add note about the new path itself
-			addChange(pathKey, pathKey, LOCATION_PATH, IMPACT_MINOR, undefined, pathKey, 'Path was added');
+			addChange(swaggerDiffImpl, pathKey, pathKey, LOCATION_PATH, IMPACT_MINOR, undefined, pathKey, 'Path was added');
 
 			// Add each operation
 			_.forEach(newPath, function (newOperation, methodKey) {
-				addChange(pathKey, methodKey.toUpperCase(), LOCATION_OPERATION, IMPACT_MINOR, undefined, pathKey, undefined);
+				addChange(swaggerDiffImpl, pathKey, methodKey.toUpperCase(), LOCATION_OPERATION, IMPACT_MINOR, undefined, pathKey, undefined);
 			});
 		} else {
 			// Check for removed operations
 			_.forEach(oldPath, function (oldOperation: HttpMethod, methodKey) {
 				var newOperation = newPath[methodKey];
 				if (!newOperation) {
-					addChange(pathKey, methodKey.toUpperCase(), LOCATION_OPERATION, IMPACT_MAJOR, methodKey, undefined, undefined);
+					addChange(swaggerDiffImpl, pathKey, methodKey.toUpperCase(), LOCATION_OPERATION, IMPACT_MAJOR, methodKey, undefined, undefined);
 				}
 			});
 
@@ -301,6 +290,7 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 				if (!oldOperation) {
 					// Operation was added
 					addChange(
+						swaggerDiffImpl,
 						pathKey,
 						methodKey.toUpperCase(),
 						LOCATION_OPERATION,
@@ -313,8 +303,9 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 					var operationMethodAndPath = `${methodKey.toUpperCase()} ${pathKey}`;
 
 					// Check operation properties
-					checkForChange(operationMethodAndPath, undefined, LOCATION_OPERATION, IMPACT_MAJOR, 'operationId', oldOperation, newOperation, undefined);
+					checkForChange(swaggerDiffImpl, operationMethodAndPath, undefined, LOCATION_OPERATION, IMPACT_MAJOR, 'operationId', oldOperation, newOperation, undefined);
 					checkForChange(
+						swaggerDiffImpl,
 						operationMethodAndPath,
 						undefined,
 						LOCATION_OPERATION,
@@ -325,6 +316,7 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 						undefined
 					);
 					checkForChange(
+						swaggerDiffImpl,
 						operationMethodAndPath,
 						undefined,
 						LOCATION_OPERATION,
@@ -335,6 +327,7 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 						'Description was changed'
 					);
 					checkForChange(
+						swaggerDiffImpl,
 						operationMethodAndPath,
 						undefined,
 						LOCATION_OPERATION,
@@ -347,6 +340,7 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 					// Check for deprecated
 					if (newOperation.deprecated === true && oldOperation.deprecated !== true) {
 						addChange(
+							swaggerDiffImpl,
 							operationMethodAndPath,
 							'deprecated',
 							LOCATION_OPERATION,
@@ -358,6 +352,7 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 					} else if (newOperation.deprecated !== true && oldOperation.deprecated === true) {
 						// This condition should never happen, but let's be thorough
 						addChange(
+							swaggerDiffImpl,
 							operationMethodAndPath,
 							'deprecated',
 							LOCATION_OPERATION,
@@ -381,7 +376,7 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 					// Check for removed parameters
 					_.forEach(oldParams, function (oldParam) {
 						if (!newParams[oldParam.name]) {
-							addChange(operationMethodAndPath, oldParam.name, LOCATION_PARAMETER, IMPACT_MAJOR, oldParam.name, undefined, undefined);
+							addChange(swaggerDiffImpl, operationMethodAndPath, oldParam.name, LOCATION_PARAMETER, IMPACT_MAJOR, oldParam.name, undefined, undefined);
 						}
 					});
 
@@ -390,8 +385,9 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 						var oldParam = oldParams[newParam.name];
 						if (!oldParam) {
 							// Parameter was added, major change if in path or required
-							var i = _this.useSdkVersioning || newParam.in.toLowerCase() === 'path' || newParam.required === true;
+							var i = swaggerDiffImpl.useSdkVersioning || newParam.in.toLowerCase() === 'path' || newParam.required === true;
 							addChange(
+								swaggerDiffImpl,
 								operationMethodAndPath,
 								newParam.name,
 								LOCATION_PARAMETER,
@@ -401,9 +397,10 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 								undefined
 							);
 						} else {
-							checkForChange(operationMethodAndPath, newParam.name, LOCATION_PARAMETER, IMPACT_MAJOR, 'in', oldParam, newParam, undefined);
-							checkForChange(operationMethodAndPath, newParam.name, LOCATION_PARAMETER, IMPACT_MAJOR, 'type', oldParam, newParam, undefined);
+							checkForChange(swaggerDiffImpl, operationMethodAndPath, newParam.name, LOCATION_PARAMETER, IMPACT_MAJOR, 'in', oldParam, newParam, undefined);
+							checkForChange(swaggerDiffImpl, operationMethodAndPath, newParam.name, LOCATION_PARAMETER, IMPACT_MAJOR, 'type', oldParam, newParam, undefined);
 							checkForChange(
+								swaggerDiffImpl,
 								operationMethodAndPath,
 								newParam.name,
 								LOCATION_PARAMETER,
@@ -418,6 +415,7 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 							if (oldParam.required !== newParam.required) {
 								if (newParam.required === true) {
 									addChange(
+										swaggerDiffImpl,
 										operationMethodAndPath,
 										newParam.name,
 										LOCATION_PARAMETER,
@@ -428,6 +426,7 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 									);
 								} else {
 									addChange(
+										swaggerDiffImpl,
 										operationMethodAndPath,
 										newParam.name,
 										LOCATION_PARAMETER,
@@ -444,7 +443,7 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 					// Check for removed responses
 					_.forEach(oldOperation.responses, function (oldResponse, oldResponseCode) {
 						if (!newOperation.responses[oldResponseCode]) {
-							addChange(operationMethodAndPath, oldResponseCode, LOCATION_RESPONSE, IMPACT_MAJOR, oldResponseCode, undefined, undefined);
+							addChange(swaggerDiffImpl, operationMethodAndPath, oldResponseCode, LOCATION_RESPONSE, IMPACT_MAJOR, oldResponseCode, undefined, undefined);
 						}
 					});
 
@@ -453,9 +452,10 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 						var oldResponse: TypeResponse = oldOperation.responses[newResponseCode];
 						if (!oldResponse) {
 							// Response was added
-							addChange(operationMethodAndPath, newResponseCode, LOCATION_RESPONSE, IMPACT_MINOR, undefined, newResponseCode, undefined);
+							addChange(swaggerDiffImpl, operationMethodAndPath, newResponseCode, LOCATION_RESPONSE, IMPACT_MINOR, undefined, newResponseCode, undefined);
 						} else {
 							checkForChange(
+								swaggerDiffImpl,
 								operationMethodAndPath,
 								newResponseCode,
 								LOCATION_RESPONSE,
@@ -466,6 +466,7 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 								undefined
 							);
 							checkForChange(
+								swaggerDiffImpl,
 								operationMethodAndPath,
 								newResponseCode,
 								LOCATION_RESPONSE,
@@ -482,12 +483,12 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 
 					// Check for removed tags
 					_.forEach(_.difference(oldOperation.tags, newOperation.tags), function (tag) {
-						addChange(operationMethodAndPath, tag, LOCATION_TAG, IMPACT_MAJOR, tag, undefined, undefined);
+						addChange(swaggerDiffImpl, operationMethodAndPath, tag, LOCATION_TAG, IMPACT_MAJOR, tag, undefined, undefined);
 					});
 
 					// Check for added tags
 					_.forEach(_.difference(newOperation.tags, oldOperation.tags), function (tag) {
-						addChange(operationMethodAndPath, tag, LOCATION_TAG, IMPACT_MAJOR, undefined, tag, undefined);
+						addChange(swaggerDiffImpl, operationMethodAndPath, tag, LOCATION_TAG, IMPACT_MAJOR, undefined, tag, undefined);
 					});
 				}
 			}); // end operation iteration
@@ -497,13 +498,13 @@ function checkOperations(oldSwagger: Swagger, newSwagger: Swagger) {
 
 function getSchemaType(schema: Property) {
 	if (!schema) {
-		log.debug('getSchemaType called with null/undefined schema');
+		// log.debug('getSchemaType called with null/undefined schema');
 		return '_undefined_';
 	}
 	
 	if (schema && schema['$ref']) {
 		const refType = schema['$ref'].replace('#/definitions/', '');
-		log.debug(`Schema type resolved as reference: ${refType}`);
+		// log.debug(`Schema type resolved as reference: ${refType}`);
 		return refType;
 	}
 
@@ -511,30 +512,30 @@ function getSchemaType(schema: Property) {
 		if (schema.type.toLowerCase() == 'array' && schema.items) {
 			if (schema.items['$ref']) {
 				const arrayType = `${schema.items['$ref'].replace('#/definitions/', '')}[]`;
-				log.debug(`Schema type resolved as array reference: ${arrayType}`);
+				// log.debug(`Schema type resolved as array reference: ${arrayType}`);
 				return arrayType;
 			}
 			if (schema.items.type) {
 				const arrayType = `${schema.items.type}[]`;
-				log.debug(`Schema type resolved as array: ${arrayType}`);
+				// log.debug(`Schema type resolved as array: ${arrayType}`);
 				return arrayType;
 			}
 		}
 		if (schema.type.toLowerCase() == 'object' && schema.additionalProperties) {
 			const mapType = `Map<${schema.type}, ${getSchemaType(schema.additionalProperties)}>`;
-			log.debug(`Schema type resolved as map: ${mapType}`);
+			// log.debug(`Schema type resolved as map: ${mapType}`);
 			return mapType;
 		}
 
-		log.debug(`Schema type resolved as simple type: ${schema.type}`);
+		// log.debug(`Schema type resolved as simple type: ${schema.type}`);
 		return schema.type;
 	}
 
-	log.debug('Schema type could not be determined, returning _undefined_');
+	// log.debug('Schema type could not be determined, returning _undefined_');
 	return '_undefined_';
 }
 
-function checkModels(oldSwagger: Swagger, newSwagger: Swagger) {
+function checkModels(swaggerDiffImpl: SwaggerDiffImpl, oldSwagger: Swagger, newSwagger: Swagger) {
 	if (!oldSwagger) {
 		log.warn('No old swagger provided, skipping model checks');
 		return;
@@ -550,7 +551,7 @@ function checkModels(oldSwagger: Swagger, newSwagger: Swagger) {
 		var newModel = newSwagger.definitions[modelKey];
 		if (!newModel) {
 			log.debug(`Model removed: ${modelKey}`);
-			addChange(modelKey, modelKey, LOCATION_MODEL, IMPACT_MAJOR, modelKey, undefined, undefined);
+			addChange(swaggerDiffImpl, modelKey, modelKey, LOCATION_MODEL, IMPACT_MAJOR, modelKey, undefined, undefined);
 		}
 	});
 
@@ -566,7 +567,7 @@ function checkModels(oldSwagger: Swagger, newSwagger: Swagger) {
 		if (!oldModel) {
 			log.debug(`New model added: ${modelKey}`);
 			// Add note about the new model
-			addChange(modelKey, modelKey, LOCATION_MODEL, IMPACT_MINOR, undefined, modelKey, 'Model was added');
+			addChange(swaggerDiffImpl, modelKey, modelKey, LOCATION_MODEL, IMPACT_MINOR, undefined, modelKey, 'Model was added');
 		} else {
 			if (!oldModel.properties) {
 				log.debug(`Skipping model ${modelKey} comparison (old model has no properties)`);
@@ -578,7 +579,7 @@ function checkModels(oldSwagger: Swagger, newSwagger: Swagger) {
 				var newProperty = newModel.properties[propertyKey];
 				if (!newProperty) {
 					log.debug(`Property removed from ${modelKey}: ${propertyKey}`);
-					addChange(modelKey, propertyKey, LOCATION_PROPERTY, IMPACT_MAJOR, propertyKey, undefined, undefined);
+					addChange(swaggerDiffImpl, modelKey, propertyKey, LOCATION_PROPERTY, IMPACT_MAJOR, propertyKey, undefined, undefined);
 				}
 			});
 
@@ -593,6 +594,7 @@ function checkModels(oldSwagger: Swagger, newSwagger: Swagger) {
 					// New required properties are major changes
 					if (newModel.required && newModel.required.includes(propertyKey)) {
 						addChange(
+							swaggerDiffImpl,
 							modelKey,
 							propertyKey,
 							LOCATION_PROPERTY,
@@ -603,6 +605,7 @@ function checkModels(oldSwagger: Swagger, newSwagger: Swagger) {
 						);
 					} else {
 						addChange(
+							swaggerDiffImpl,
 							modelKey,
 							propertyKey,
 							LOCATION_PROPERTY,
@@ -614,6 +617,7 @@ function checkModels(oldSwagger: Swagger, newSwagger: Swagger) {
 					}
 				} else {
 					checkForChange(
+						swaggerDiffImpl,
 						modelKey,
 						propertyKey,
 						LOCATION_PROPERTY,
@@ -627,6 +631,7 @@ function checkModels(oldSwagger: Swagger, newSwagger: Swagger) {
 					// Newly made readonly
 					if (newProperty.readOnly === true && oldProperty.readOnly !== true) {
 						addChange(
+							swaggerDiffImpl,
 							modelKey,
 							propertyKey,
 							LOCATION_PROPERTY,
@@ -640,6 +645,7 @@ function checkModels(oldSwagger: Swagger, newSwagger: Swagger) {
 					// No longer readonly
 					if (oldProperty.readOnly === true && newProperty.readOnly !== true) {
 						addChange(
+							swaggerDiffImpl,
 							modelKey,
 							propertyKey,
 							LOCATION_PROPERTY,
@@ -657,6 +663,7 @@ function checkModels(oldSwagger: Swagger, newSwagger: Swagger) {
 					if (!oldEnums && newEnums) {
 						// Is an enum now
 						addChange(
+							swaggerDiffImpl,
 							modelKey,
 							propertyKey,
 							LOCATION_PROPERTY,
@@ -669,10 +676,11 @@ function checkModels(oldSwagger: Swagger, newSwagger: Swagger) {
 					if (oldEnums && !newEnums) {
 						// Not an enum anymore
 						addChange(
+							swaggerDiffImpl,
 							modelKey,
 							propertyKey,
 							LOCATION_PROPERTY,
-							_this.useSdkVersioning ? IMPACT_MINOR : IMPACT_MINOR,
+							swaggerDiffImpl.useSdkVersioning ? IMPACT_MINOR : IMPACT_MINOR,
 							oldEnums,
 							newEnums,
 							'Values are no longer constrained by enum members'
@@ -683,6 +691,7 @@ function checkModels(oldSwagger: Swagger, newSwagger: Swagger) {
 						_.forEach(oldEnums, function (oldEnumValue) {
 							if (newEnums.indexOf(oldEnumValue) == -1) {
 								addChange(
+									swaggerDiffImpl,
 									modelKey,
 									propertyKey,
 									LOCATION_PROPERTY,
@@ -698,6 +707,7 @@ function checkModels(oldSwagger: Swagger, newSwagger: Swagger) {
 						_.forEach(newEnums, function (newEnumValue) {
 							if (oldEnums.indexOf(newEnumValue) == -1) {
 								addChange(
+									swaggerDiffImpl,
 									modelKey,
 									propertyKey,
 									LOCATION_PROPERTY,
@@ -717,21 +727,21 @@ function checkModels(oldSwagger: Swagger, newSwagger: Swagger) {
 
 function getEnumValues(property) {
 	if (!property) {
-		log.debug('getEnumValues called with null/undefined property');
+		// log.debug('getEnumValues called with null/undefined property');
 		return undefined;
 	}
 	
 	if (property.enum) {
-		log.debug(`Found enum values: ${property.enum.length} items`);
+		// log.debug(`Found enum values: ${property.enum.length} items`);
 		return property.enum;
 	}
 
 	if (property.items && property.items.enum) {
-		log.debug(`Found enum values in items: ${property.items.enum.length} items`);
+		// log.debug(`Found enum values in items: ${property.items.enum.length} items`);
 		return property.items.enum;
 	}
 
-	log.debug('No enum values found in property');
+	// log.debug('No enum values found in property');
 	return undefined;
 }
 

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import * as readline from 'readline';
-import log from '../../modules/log/logger';
+import { log } from '../../modules/log/logger.js';
 
 interface APIData {
 	operationId?: string;
@@ -21,8 +21,8 @@ interface Parameter {
 
 export default class CombineApis {
 
-	dataFile: APIData = {};
-	dirent: fs.Dirent;
+	dataFile: Record<string, APIData> = {};
+	dirent: fs.Dirent | null = null;
 	rl: readline.Interface;
 
 	constructor() {
@@ -143,9 +143,11 @@ export default class CombineApis {
 			fs.writeFileSync(dataFileName, outputData);
 			log.info('File written successfully');
 			
-		} catch (err) {
+		} catch (err: unknown) {
 			log.error(`Exception occurred: ${err}`);
-			log.error(`Stack trace: ${err.stack}`);
+			if (err instanceof Error) {
+				log.error(`Stack trace: ${err.stack}`);
+			}
 			process.exit(-1);
 		}
 	}
