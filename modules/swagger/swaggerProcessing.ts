@@ -4,7 +4,8 @@ import path from 'path';
 import { Swagger, ItemsType, Format, Property } from '../types/swagger.js'
 import { log } from '../log/logger.js';
 import { gcLoginClientCredentialsGrant, AvailableTopicEntityListing, gcGetNotificationsAvailabletopics } from '../util/http.js';
-import { PureCloud, Haystack, Config } from '../types/config.js'
+import { PureCloud, Config } from '../types/config.js';
+import { checkAndThrow, getEnv } from '../util/utils.js';
 
 /************************************************************************************
  * Preprocessing of the Swagger specification
@@ -944,44 +945,6 @@ function extractDefinitons(newSwagger: Swagger, entity: { [key: string]: any }) 
             console.log(err.stack);
         }
     }
-}
-
-
-function checkAndThrow(haystack: Haystack, needle: string, message: string = `${needle} must be set!`): void {
-    if (!haystack[needle] || haystack[needle] === '') {
-        throw new Error(message);
-    }
-}
-
-function getEnv(
-    varname: string,
-    defaultValue: string = '',
-    isdefaultValue: boolean = false
-): string | boolean {
-    varname = varname.trim();
-    const envVar = process.env[varname];
-    log.silly(`ENV: ${varname}->${envVar}`);
-
-    if (!envVar && defaultValue !== '') {
-        if (isdefaultValue === true) {
-            log.info(`Using default value for ${varname}: ${defaultValue}`);
-        } else {
-            log.warn(`Using override for ${varname}: ${defaultValue}`);
-        }
-        return defaultValue;
-    }
-
-    if (envVar) {
-        if (envVar.toLowerCase() === 'true') {
-            return true;
-        } else if (envVar.toLowerCase() === 'false') {
-            return false;
-        } else {
-            return envVar;
-        }
-    }
-
-    return defaultValue;
 }
 
 //#endregion

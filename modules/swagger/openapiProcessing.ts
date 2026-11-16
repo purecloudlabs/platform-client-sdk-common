@@ -4,7 +4,8 @@ import path from 'path';
 import { OpenApiSpec, Operation, Tag, Definition, Property } from '../types/openapiSpec.js';
 import { log } from '../log/logger.js';
 import { gcLoginClientCredentialsGrant, AvailableTopicEntityListing, gcGetNotificationsAvailabletopics } from '../util/http.js';
-import { PureCloud, Haystack, Config } from '../types/config.js';
+import { PureCloud, Config } from '../types/config.js';
+import { checkAndThrow, getEnv } from '../util/utils.js';
 
 /************************************************************************************
  * Preprocessing of the OpenApi specification
@@ -203,8 +204,8 @@ function replaceTypeArrayModels(newOpenApiSpec: OpenApiSpec) {
 		let model = newOpenApiSpec.components.schemas[modelName];
 		if (model.type && model.type == 'array') {
 			replaceModels[modelName] = model;
+			delete newOpenApiSpec.components.schemas[modelName];
 		}
-		delete newOpenApiSpec.components.schemas[modelName];
 	}
 
 	let openapiPathsAsString = JSON.stringify(newOpenApiSpec.paths);
@@ -313,8 +314,8 @@ function openapiRemoveUnused(newOpenApiSpec: OpenApiSpec) {
 			}
 		}
 		let namesToProcess: string[] = [...discoveredDefinitionNames];
-		let discoveredNames: string[] = [];
 		while (namesToProcess.length > 0) {
+			let discoveredNames: string[] = [];
 			let modelsToInvestigate: Record<string, Definition> = {};
 			for (let name of namesToProcess) {
 				modelsToInvestigate[name] = newOpenApiSpec.components.schemas[name];
@@ -330,10 +331,10 @@ function openapiRemoveUnused(newOpenApiSpec: OpenApiSpec) {
 				}
 			}
 			let inputString = JSON.stringify(modelsToInvestigate);
-			let matches: any;
-			while (matches = regexDefinitionName.exec(inputString)) {
-				if (matches[1] && !matches[1].endsWith("\\")) {
-					if (!discoveredDefinitionNames.includes(matches[1])) discoveredNames.push(matches[1]);
+			let newMatches: any;
+			while (newMatches = regexDefinitionName.exec(inputString)) {
+				if (newMatches[1] && !newMatches[1].endsWith("\\")) {
+					if (!discoveredDefinitionNames.includes(newMatches[1])) discoveredNames.push(newMatches[1]);
 				} else {
 					// Ignore what could come from property description or notes
 				}
@@ -818,43 +819,6 @@ function extractDefinitons(newOpenApiSpec: OpenApiSpec, entity: { [key: string]:
 			console.log(err.stack);
 		}
 	}
-}
-
-function checkAndThrow(haystack: Haystack, needle: string, message: string = `${needle} must be set!`): void {
-	if (!haystack[needle] || haystack[needle] === '') {
-		throw new Error(message);
-	}
-}
-
-function getEnv(
-	varname: string,
-	defaultValue: string = '',
-	isdefaultValue: boolean = false
-): string | boolean {
-	varname = varname.trim();
-	const envVar = process.env[varname];
-	log.silly(`ENV: ${varname}->${envVar}`);
-
-	if (!envVar && defaultValue !== '') {
-		if (isdefaultValue === true) {
-			log.info(`Using default value for ${varname}: ${defaultValue}`);
-		} else {
-			log.warn(`Using override for ${varname}: ${defaultValue}`);
-		}
-		return defaultValue;
-	}
-
-	if (envVar) {
-		if (envVar.toLowerCase() === 'true') {
-			return true;
-		} else if (envVar.toLowerCase() === 'false') {
-			return false;
-		} else {
-			return envVar;
-		}
-	}
-
-	return defaultValue;
 }
 
 //#endregion

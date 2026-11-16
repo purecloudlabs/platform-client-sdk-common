@@ -453,6 +453,20 @@ function checkOperations(openapiDiffImpl: OpenApiDiffImpl, oldOpenApiSpec: OpenA
 								newResponse,
 								undefined
 							);
+							let oldSchema: Property = null;
+							let newSchema: Property = null;
+							if (oldResponse.content) {
+								let contentTypes = Object.keys(oldResponse.content);
+								if (contentTypes.length > 0) {
+									oldSchema = oldResponse.content[contentTypes[0]].schema;
+								}
+							}
+							if (newResponse.content) {
+								let contentTypes = Object.keys(newResponse.content);
+								if (contentTypes.length > 0) {
+									newSchema = newResponse.content[contentTypes[0]].schema;
+								}
+							}
 							checkForChange(
 								openapiDiffImpl,
 								operationMethodAndPath,
@@ -460,11 +474,9 @@ function checkOperations(openapiDiffImpl: OpenApiDiffImpl, oldOpenApiSpec: OpenA
 								LOCATION_RESPONSE,
 								IMPACT_MAJOR,
 								'$ref',
-								oldResponse.content["application/json"]?.schema,
-								newResponse.content["application/json"]?.schema,
-								`Response ${newResponseCode} type was changed from ${getSchemaType(oldResponse.content["application/json"]?.schema)} to ${getSchemaType(
-									newResponse.content["application/json"]?.schema
-								)}`
+								oldSchema,
+								newSchema,
+								`Response ${newResponseCode} type was changed from ${getSchemaType(oldSchema)} to ${getSchemaType(newSchema)}`
 							);
 						}
 					});
