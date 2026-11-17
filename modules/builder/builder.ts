@@ -933,7 +933,7 @@ function resolveEnvVars(config: { [key: string]: any }) {
 }
 function measureDurationFrom(startTime: number, endTime: number = Date.now()) {
 	if (!startTime) return 'no time';
-	if (endTime > startTime) return 'negative time';
+	if (endTime < startTime) return 'negative time';
 
 	// ms
 	let timeDiff = endTime - startTime;

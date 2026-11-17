@@ -51,7 +51,7 @@ export class SpecificationDiff {
 				// Special treatment for Web Messaging specification (downgrade from OpenAPI v3 to Swagger v2)
 				// Verify specification version and downgrade only if openapi=="3..." (starts with 3)
 				let newSpecRaw: any = JSON.parse(fs.readFileSync(newSpecPath, 'utf8'));
-				if (newSpecRaw && newSpec.openapi && newSpec.openapi.startsWith("3")) {
+				if (newSpecRaw && newSpecRaw.openapi && newSpecRaw.openapi.startsWith("3")) {
 					newSpec = this.convertToV2(newSpecRaw);
 				} else {
 					newSpec = newSpecRaw;

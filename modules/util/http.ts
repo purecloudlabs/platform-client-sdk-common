@@ -18,9 +18,11 @@ function downloadFromUrl(url: string, encoding: 'utf8' | 'binary', maxBuffer: nu
         console.info(`Downloading file: ${url}`);
         // Source: https://www.npmjs.com/package/download-file-sync
         var file = childProcess.execFileSync('curl', ['--silent', '-L', url], { encoding: encoding, maxBuffer: maxBuffer });
-        if ((!file || file === '') && (i < maxRetry)) {
-            console.info(`File was empty! sleeping for ${retryWaitTime} seconds. Retries left: ${maxRetry - i}`);
-            childProcess.execFileSync('curl', ['--silent', 'https://httpbin.org/delay/10'], { encoding: 'utf8' });
+        if (!file || file === '') {
+            if (i < maxRetry) {
+                console.info(`File was empty! sleeping for ${retryWaitTime} seconds. Retries left: ${maxRetry - i}`);
+                childProcess.execFileSync('curl', ['--silent', 'https://httpbin.org/delay/10'], { encoding: 'utf8' });
+            }
         } else {
             return file;
         }
