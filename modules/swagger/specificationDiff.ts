@@ -45,9 +45,7 @@ export class SpecificationDiff {
 		// Retrieve new spec
 		if (fs.existsSync(newSpecPath)) {
 			log.info(`Loading new spec from disk: ${newSpecPath}`);
-			if (this.downgradeToSwaggerV2 == false) {
-				newSpec = JSON.parse(fs.readFileSync(newSpecPath, 'utf8'));
-			} else {
+			if (this.downgradeToSwaggerV2 === true) {
 				// Special treatment for Web Messaging specification (downgrade from OpenAPI v3 to Swagger v2)
 				// Verify specification version and downgrade only if openapi=="3..." (starts with 3)
 				let newSpecRaw: any = JSON.parse(fs.readFileSync(newSpecPath, 'utf8'));
@@ -56,12 +54,12 @@ export class SpecificationDiff {
 				} else {
 					newSpec = newSpecRaw;
 				}
+			} else {
+				newSpec = JSON.parse(fs.readFileSync(newSpecPath, 'utf8'));
 			}
 		} else if (newSpecPath.toLowerCase().startsWith('http')) {
 			log.info(`Downloading new spec from: ${newSpecPath}`);
-			if (this.downgradeToSwaggerV2 == false) {
-				newSpec = JSON.parse(downloadFile(newSpecPath));
-			} else {
+			if (this.downgradeToSwaggerV2 === true) {
 				// Special treatment for Web Messaging specification (downgrade from OpenAPI v3 to Swagger v2)
 				// Verify specification version and downgrade only if openapi=="3..." (starts with 3)
 				let newSpecRaw: any = JSON.parse(downloadFile(newSpecPath));
@@ -70,6 +68,8 @@ export class SpecificationDiff {
 				} else {
 					newSpec = newSpecRaw;
 				}
+			} else {
+				newSpec = JSON.parse(downloadFile(newSpecPath));
 			}
 		} else {
 			log.warn(`Invalid newSpecPath: ${newSpecPath}`);
