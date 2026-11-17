@@ -42,13 +42,17 @@ export function openapiPreprocessing(newOpenApiSpec: OpenApiSpec, pureCloud: Pur
 			filterOpenApiSpec(newOpenApiSpec, defaultFilterSettings);
 			log.debug('Replace Models defined as a type array');
 			replaceTypeArrayModels(newOpenApiSpec);
+			// openapiExploreProperties can be performed beforing adding notification topics
 			log.debug('Explore properties recursively');
 			openapiExploreProperties(newOpenApiSpec);
+			// openapiRemoveUnused can be performed beforing adding notification topics
+			log.debug('Removing unused tags and definitions');
+			openapiRemoveUnused(newOpenApiSpec);
 			log.debug('Adding notifications to schema');
 			addNotifications(newOpenApiSpec, pureCloud)
 				.then(() => {
-					log.debug('Removing unused tags and definitions');
-					openapiRemoveUnused(newOpenApiSpec);
+					// if necessary, openapiExploreProperties could be performed after adding notification topics
+					// if necessary, openapiRemoveUnused could be performed after adding notification topics
 					resolve("");
 				})
 				.catch((err: unknown) => {
@@ -237,12 +241,17 @@ function openapiRemoveUnused(newOpenApiSpec: OpenApiSpec) {
 	let usedSecurities: string[] = [];
 	let usedConsumes: string[] = [];
 	let usedProduces: string[] = [];
+	let unusedDefinitions: string[] = [];
+	let opTagsCount: Record<string, number> = {};
+	let nbOperations = 0;
+	let nbDefinitions = 0;
 
 	// Collect Info
 	if (newOpenApiSpec?.paths) {
 		for (let pathKey in newOpenApiSpec.paths) {
 			for (let methodKey in newOpenApiSpec.paths[pathKey]) {
 				let operation: Operation = newOpenApiSpec.paths[pathKey][methodKey];
+				nbOperations++;
 				if (operation.tags && operation.tags.length > 0) {
 					for (let tagName of operation.tags) {
 						if (!usedTags.includes(tagName)) usedTags.push(tagName);
@@ -278,6 +287,13 @@ function openapiRemoveUnused(newOpenApiSpec: OpenApiSpec) {
 								}
 							}
 						}
+					}
+				}
+				if (operation.tags.length > 1) {
+					if (opTagsCount[operation.tags.length.toString()]) {
+						opTagsCount[operation.tags.length.toString()] = opTagsCount[operation.tags.length.toString()] + 1;
+					} else {
+						opTagsCount[operation.tags.length.toString()] = 1;
 					}
 				}
 			}
@@ -342,10 +358,16 @@ function openapiRemoveUnused(newOpenApiSpec: OpenApiSpec) {
 			namesToProcess = [...discoveredNames];
 		}
 
-		// Delete unused definitions
+		// Delete unused definitions (except Notification Topics)
 		for (let modelName in newOpenApiSpec.components.schemas) {
-			if (!discoveredDefinitionNames.includes(modelName)) delete newOpenApiSpec.components.schemas[modelName];
+			if (!discoveredDefinitionNames.includes(modelName)) {
+				if (!newOpenApiSpec.components.schemas[modelName]["x-genesys-notification-topic"] && !newOpenApiSpec.components.schemas[modelName]["x-genesys-notification-topic-inner"]) {
+					delete newOpenApiSpec.components.schemas[modelName];
+					unusedDefinitions.push(modelName);
+				}
+			}
 		}
+		nbDefinitions = Object.keys(newOpenApiSpec.components.schemas).length;
 	}
 
 	// log missing tags, unused tags
@@ -386,6 +408,13 @@ function openapiRemoveUnused(newOpenApiSpec: OpenApiSpec) {
 	log.debug(`OpenApi Spec - Distinct Consumes: ${usedConsumes.toString()}`);
 	log.debug(`OpenApi Spec - Distinct Produces: ${usedProduces.toString()}`);
 
+	log.debug(`OpenApi Spec - Operation Tags Count: ${JSON.stringify(opTagsCount)}`);
+
+	log.debug(`OpenApi Spec - Unused/Removed Definitions: ${unusedDefinitions.toString()}`);
+
+	log.debug(`OpenApi Spec - Number of Operations: ${nbOperations}`);
+	log.debug(`OpenApi Spec - Number of Definitions: ${nbDefinitions}`);
+
 	log.info('openapiRemoveUnused processing completed.')
 }
 
@@ -407,6 +436,10 @@ function openapiExploreProperties(newOpenApiSpec: OpenApiSpec) {
 				let operation = newOpenApiSpec.paths[pathKey][methodKey];
 				for (let propertyName of Object.keys(operation)) {
 					if (!operationPropertyNames.includes(propertyName)) operationPropertyNames.push(propertyName);
+
+					if (propertyName == 'description') {
+						if (operation['description'].includes('*/*')) operation['description'] = operation['description'].replace('*/*', '*\\/*');
+					}
 				}
 
 				// operation.parameters
@@ -414,6 +447,10 @@ function openapiExploreProperties(newOpenApiSpec: OpenApiSpec) {
 					for (let oParam of operation.parameters) {
 						for (let propertyName of Object.keys(oParam)) {
 							if (!parameterPropertyNames.includes(propertyName)) parameterPropertyNames.push(propertyName);
+							
+							if (propertyName == 'description') {
+								if (oParam['description'].includes('*/*')) oParam['description'] = oParam['description'].replace('*/*', '*\\/*');
+							}
 						}
 
 						if (oParam.schema) {
@@ -425,6 +462,10 @@ function openapiExploreProperties(newOpenApiSpec: OpenApiSpec) {
 				if (operation.requestBody) {
 					for (let propertyName of Object.keys(operation.requestBody)) {
 						if (!requestBodyPropertyNames.includes(propertyName)) requestBodyPropertyNames.push(propertyName);
+
+						if (propertyName == 'description') {
+							if (operation.requestBody['description'].includes('*/*')) operation.requestBody['description'] = operation.requestBody['description'].replace('*/*', '*\\/*');
+						}
 					}
 
 					if (operation.requestBody.content) {
@@ -446,6 +487,10 @@ function openapiExploreProperties(newOpenApiSpec: OpenApiSpec) {
 							let oResp = operation.responses[respCode];
 							for (let propertyName of Object.keys(oResp)) {
 								if (!responseErrorPropertyNames.includes(propertyName)) responseErrorPropertyNames.push(propertyName);
+
+								if (propertyName == 'description') {
+									if (oResp['description'].includes('*/*')) oResp['description'] = oResp['description'].replace('*/*', '*\\/*');
+								}
 							}
 
 							// ... Do nothing...
@@ -454,6 +499,10 @@ function openapiExploreProperties(newOpenApiSpec: OpenApiSpec) {
 							let oResp = operation.responses[respCode];
 							for (let propertyName of Object.keys(oResp)) {
 								if (!responseSuccessPropertyNames.includes(propertyName)) responseSuccessPropertyNames.push(propertyName);
+
+								if (propertyName == 'description') {
+									if (oResp['description'].includes('*/*')) oResp['description'] = oResp['description'].replace('*/*', '*\\/*');
+								}
 							}
 
 							if (oResp.content) {
@@ -475,6 +524,10 @@ function openapiExploreProperties(newOpenApiSpec: OpenApiSpec) {
 			let model = newOpenApiSpec.components.schemas[modelName];
 			for (let propertyName of Object.keys(model)) {
 				if (!modelPropertyNames.includes(propertyName)) modelPropertyNames.push(propertyName);
+
+				if (propertyName == 'description') {
+					if (model['description'].includes('*/*')) model['description'] = model['description'].replace('*/*', '*\\/*');
+				}
 			}
 
 			if (model.allOf) {
@@ -569,13 +622,91 @@ function openapiExploreProperties(newOpenApiSpec: OpenApiSpec) {
 }
 
 function openapiExploreProperty(usedInProperty: Record<string, any>, exploreProperty: Property) {
-	// Property
+	// description property */* to *\\/*
 	// Replace enum with x-genesys-enum-members
+	// enum contains a single entry which is a commat separated list... for string or int... e.g. "2, 23", "ip, tdm, dns"
 	// for type: array with items, there might be properties with empty/first/last (incorrect export of openapi spec)
-	// Recursive explore of properties
 
 	for (let propertyName of Object.keys(exploreProperty)) {
 		if (!usedInProperty.usedPropertyNames.includes(propertyName)) usedInProperty.usedPropertyNames.push(propertyName);
+
+		if (propertyName == 'description') {
+			if (exploreProperty['description'].includes('*/*')) exploreProperty['description'] = exploreProperty['description'].replace('*/*', '*\\/*');
+		}
+	}
+
+	// Convert x-genesys-enum-members back to generic enum
+	if (exploreProperty["x-genesys-enum-members"]) {
+		if (exploreProperty["x-genesys-enum-members"].length > 0) {
+			// Log to know if this happens in the OpenApi v3 specification
+			// x-genesys-enum-members at wrong level (i.e. array)
+			if (exploreProperty.type === 'array') {
+				console.log('Warning: x-genesys-enum-members at wrong level (i.e. array)');
+			} else {
+				// x-genesys-enum-members should be string only at this time
+				if (exploreProperty.type === 'string') {
+					let enumValues: string[] = exploreProperty["x-genesys-enum-members"].map((x) => x.name);
+					// if (exploreProperty.enum && exploreProperty.enum.length > 0) {
+					// 	// Log to know if this happens in the OpenApi v3 specification
+					// 	console.log('Warning: Replacing existing enum with x-genesys-enum-members.');
+					// }
+					exploreProperty["enum"] = enumValues;
+				} else {
+					console.log(`Warning: x-genesys-enum-members defined as ${exploreProperty.type ?? 'unknown'} enum`);
+				}
+			}
+		}
+		delete exploreProperty["x-genesys-enum-members"];
+	}
+	// Fix enum export (should be temporary until fixed in Public API)
+	// - split enum single string
+	// - remove boolean enum (if it exists in OpenApi v3 specification)
+	// - enum defined at wrong level (type array)
+	if (exploreProperty.enum) {
+		if (exploreProperty.type === 'boolean') {
+			// Remove unnecessary enum
+			delete exploreProperty.enum;
+		}
+		else if (exploreProperty.type === 'number' || exploreProperty.type === 'integer') {
+			if (exploreProperty.enum.length == 1) {
+				// Verify if the value contains ',' or ', ' one to multiple times (use string split)
+				if (typeof exploreProperty.enum[0] === 'string') {
+					let splitComma = exploreProperty.enum[0].split(',');
+					if (splitComma.length > 1) {
+						let newValues: number[] = splitComma.map((x) => parseInt(x.trim()));
+						exploreProperty.enum = newValues;
+					}
+				}
+			}
+		}
+		else if (exploreProperty.type === 'string') {
+			if (exploreProperty.enum.length == 1) {
+				// Verify if the value contains ',' or ', ' one to multiple times (use string split)
+				if (typeof exploreProperty.enum[0] === 'string') {
+					let splitComma = exploreProperty.enum[0].split(',');
+					if (splitComma.length > 1) {
+						let newValues: string[] = splitComma.map((x) => x.trim());
+						exploreProperty.enum = newValues;
+					}
+				}
+			}
+		}
+		else {
+			if (exploreProperty.type === 'array') {
+				// console.log('Warning: enum at wrong level (i.e. array)');
+				if (!exploreProperty.items?.enum) {
+					exploreProperty.items.enum = [ ...exploreProperty.enum ];
+					delete exploreProperty.enum;
+				} else {
+					// Enum already defined in items
+					// Trust items.enum (TBD)
+					delete exploreProperty.enum;
+				}
+			} else {
+				// Log to know if this happens in the OpenApi v3 specification
+				console.log(`Warning: Enum is of unexpected ${exploreProperty.type ?? 'unknown'} type`);
+			}
+		}
 	}
 
 	if (exploreProperty.allOf) {
@@ -659,6 +790,7 @@ function openapiExploreProperty(usedInProperty: Record<string, any>, exploreProp
 			// Do nothing
 		}
 	}
+
 }
 
 function addNotifications(newOpenApiSpec: OpenApiSpec, pureCloud: PureCloud): Promise<string> {
@@ -709,6 +841,7 @@ function addNotifications(newOpenApiSpec: OpenApiSpec, pureCloud: PureCloud): Pr
 						notificationMappings.notifications.push({ topic: entity.id, class: schemaName });
 						extractDefinitons(newOpenApiSpec, entity.schema);
 						newOpenApiSpec.components.schemas[schemaName] = JSON.parse(JSON.stringify(entity.schema));
+						newOpenApiSpec.components.schemas[schemaName]["x-genesys-notification-topic"] = true;
 					});
 
 					// Write mappings to file
@@ -805,6 +938,7 @@ function extractDefinitons(newOpenApiSpec: OpenApiSpec, entity: { [key: string]:
 
 				// Store definition
 				newOpenApiSpec.components.schemas[className] = JSON.parse(JSON.stringify(property));
+				newOpenApiSpec.components.schemas[className]["x-genesys-notification-topic-inner"] = true;
 
 				// Set reference
 				entity[key] = {
