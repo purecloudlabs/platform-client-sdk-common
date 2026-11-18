@@ -1,6 +1,7 @@
 import fs from 'fs-extra';
 import cp from 'child_process';
 import path from 'path';
+import { downloadBinary } from '../../../../modules/util/http.js';
 import Mustache from 'mustache';
 export class PreBuildPostRun {
 	init() {
@@ -38,11 +39,9 @@ export class PreBuildPostRun {
 			generateNotificationTopicsFile(notificationsTemplatePath, notificationsDataPath, notificationsOutPath, packageName);
 
 			console.log('downloading nuget...');
-			let data = cp.execFileSync('curl', ['--silent', '-L', 'https://dist.nuget.org/win-x86-commandline/latest/nuget.exe'], {
-				encoding: 'binary',
-				maxBuffer: 1024 * 1024 * 10
-			});
-			fs.writeFileSync(nugetPath, data, 'binary');
+			let data = downloadBinary("https://dist.nuget.org/win-x86-commandline/latest/nuget.exe");
+			if (data) fs.writeFileSync(nugetPath, data, 'binary');
+			else throw new Error(`Failed to download nuget.exe.`);
 		} catch (err) {
 			process.exitCode = 1;
 			console.log(err);
@@ -51,7 +50,7 @@ export class PreBuildPostRun {
 	;
 }
 
-function generateNotificationTopicsFile(templatePath, dataPath, outPath, namespace) {
+function generateNotificationTopicsFile(templatePath: string, dataPath: string, outPath: string, namespace: string) {
 	var notificationsRaw = fs.readFileSync(dataPath, 'utf8');
 	var notifications = JSON.parse(notificationsRaw);
 	notifications.namespace = namespace;

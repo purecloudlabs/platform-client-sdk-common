@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
-import { Swagger } from '../../../../modules/types/swagger';
-import log from '../../../../modules/log/logger';
+import { Swagger } from '../../../../modules/types/swagger.js';
+import { log } from '../../../../modules/log/logger.js';
 
 export class GenerateOperationIdMappings {
     init() {
@@ -54,14 +54,14 @@ export class GenerateOperationIdMappings {
 
 function generateOperationIdMappings(swagger: Swagger, newSwagger: Swagger) {
     log.debug('Starting operation ID mappings generation');
-    let operationIdMappings = {}
+    let operationIdMappings: Record<string, string> = {}
     let processedCount = 0;
     
     for (const path of Object.keys(newSwagger['paths'])) {
         log.debug(`Processing path: ${path}`);
         for (let method of Object.keys(newSwagger['paths'][path])) {
-            const oldOperationId = swagger['paths'][path][method].operationId;
-            const newOperationId = newSwagger['paths'][path][method].operationId;
+            const oldOperationId = (swagger['paths'][path] as any)[method].operationId;
+            const newOperationId = (newSwagger['paths'][path] as any)[method].operationId;
             const command = toCommand(path, newOperationId);
             
             operationIdMappings[oldOperationId] = command;

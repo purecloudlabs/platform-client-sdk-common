@@ -1,16 +1,24 @@
-import _ from 'lodash';
 import fs from 'fs-extra';
 import { spawn, SpawnOptions } from 'child_process';
-import log from '../log/logger';
+import { log } from '../log/logger.js';
+import { Endpoints } from "@octokit/types";
+import { postGithubApiPromise, BuilderHttpError } from '../util/http.js';
 
+// Alternative to github-api-promise until update
 
-export default class Git {
+export interface GithubConfig {
+	owner: string;
+	repo: string;
+	token: string;
+	host: string;
+	debug: boolean;
+}
 
-	public authToken: string = undefined;
+export class GitModule {
+	// Properties
+	public authToken?: string = undefined;
 
-	private defaultWidth: number = 0;
-
-	clone(repo: string, branch: string, target: string): Promise<string> {
+	public async clone(repo: string, branch: string, target: string): Promise<string> {
 		log.info(`Starting git clone operation`);
 		log.debug(`Clone parameters - repo: ${repo ? '[REDACTED]' : 'undefined'}, branch: ${branch || 'default'}, target: ${target}`);
 		return new Promise<string>((resolve, reject) => {
@@ -57,14 +65,14 @@ export default class Git {
 						log.error(`Git clone failed: ${err.message}`);
 						reject(err);
 					});
-			} catch (err) {
-				log.error(`Git clone operation failed with exception: ${err.message}`);
+			} catch (err: unknown) {
+				log.error(`Git clone operation failed with exception: ${err instanceof Error ? err.message : String(err)}`);
 				reject(err);
 			}
 		});
 	}
 
-	saveChanges(repo: string, localDir: string, message: string): Promise<string> {
+	public async saveChanges(repo: string, localDir: string, message: string): Promise<string> {
 		log.info('Starting git save changes operation');
 		log.debug(`Save parameters - repo: ${repo ? '[REDACTED]' : 'undefined'}, localDir: ${localDir}, message: ${message || 'automated commit'}`);
 		return new Promise<string>((resolve, reject) => {
@@ -99,15 +107,14 @@ export default class Git {
 						log.error(`Git save changes failed: ${err.message}`);
 						reject(err);
 					});
-			} catch (err) {
-				log.error(`Git save changes operation failed with exception: ${err.message}`);
+			} catch (err: unknown) {
+				log.error(`Git save changes operation failed with exception: ${err instanceof Error ? err.message : String(err)}`);
 				reject(err);
 			}
 		});
 	}
 
-
-	injectAuthToken(repo, authToken) {
+	private injectAuthToken(repo: string, authToken?: string): string {
 		log.debug('Processing auth token injection');
 		if (authToken) {
 			log.debug(`Auth token provided, injecting into repository URL`);
@@ -132,7 +139,7 @@ export default class Git {
 		return repo;
 	}
 
-	private spawnProcess(args: string[], localDir: string | undefined): Promise<void> {
+	private async spawnProcess(args: string[], localDir: string | undefined): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
 			try {
 				log.debug(`Spawning git process: git ${args.join(' ')}`);
@@ -163,10 +170,83 @@ export default class Git {
 						reject(new Error(`Git operation exited with code ${code}`));
 					}
 				});
-			} catch (err) {
-				log.error(`Failed to spawn git process: ${err.message}`);
+			} catch (err: unknown) {
+				log.error(`Failed to spawn git process: ${err instanceof Error ? err.message : String(err)}`);
 				reject(err);
 			}
 		});
+	}
+
+	/**
+	 * Users with push access to the repository can create a release. Returns 422 if anything is wrong with the values in the body.
+	 * @param  {String} githubConfig 	Github config
+	 * @param  {JSON} 	body  			A JSON document to send with the request
+	 * @return {JSON}           		The release data
+	 */
+	public async githubCreateRelease(githubConfig: GithubConfig, body: any): Promise<Endpoints["POST /repos/{owner}/{repo}/releases"]["response"]["data"]> {
+		return new Promise((resolve, reject) => {
+			postGithubApiPromise(githubGetRepoUrl(githubConfig, "releases"), this.authToken ?? '', body)
+				.then((response: any) => {
+					githubLogRequestSuccess(githubConfig, JSON.stringify(response));
+					resolve(response);
+				})
+				.catch((err: unknown) => {
+					console.log(err);
+					let errMessage = "Undefined";
+					if (err instanceof BuilderHttpError) {
+						githubLogRequestError(githubConfig, err);
+						errMessage = err.message;
+					} else if (err instanceof Error) {
+						errMessage = err.message;
+					} else {
+						errMessage = String(err);
+					}
+					reject(errMessage);
+				});
+		});
+	}
+}
+
+// Module Utils
+
+function githubGetRepoUrl(githubConfig: GithubConfig, additionalPath: string) {
+	var url = githubConfig.host + "/repos/" + githubConfig.owner + "/" + githubConfig.repo + "/";
+	if (additionalPath) url += additionalPath;
+	return url;
+}
+
+function githubLogRequestSuccess(githubConfig: GithubConfig, res: any, message?: string) {
+	if (githubConfig.debug != true) {
+		return;
+	}
+	let logMsg: string = "[INFO]" +
+		"[" +
+		res.statusCode +
+		"]" +
+		"[" +
+		res.req.method +
+		" " +
+		res.req.path +
+		"] " +
+		(message ? message : "");
+
+	console.log(logMsg);
+}
+
+function githubLogRequestError(githubConfig: GithubConfig, err: BuilderHttpError): void {
+	if (err instanceof BuilderHttpError) {
+		let logMsg: string = "[ERROR]" +
+			"[" +
+			(err.response ? err.response.status : "Unknown Status Code") +
+			"]" +
+			"[" +
+			(err.request ? err.request.method : "Unknown Method") +
+			" " +
+			(err.request ? err.request.url : "Unknown url") +
+			"] " +
+			(err.responseText ? err.responseText : "Unknown Error Message");
+		console.log(logMsg);
+	} else {
+		console.log("[ERROR] Unknown Error");
 	}
 }

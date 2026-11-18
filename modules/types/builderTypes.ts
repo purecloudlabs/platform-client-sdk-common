@@ -147,3 +147,20 @@ export interface Release {
     };
 }
 
+export interface ChangeItem {
+    parent: string;
+    impact: string;
+    key: string;
+    location: string;
+    oldValue: any;
+    newValue: any;
+    description: string;
+}
+
+// Assuming 'changes' is an object with string keys and arrays of ChangeItem
+export interface Changes {
+    [id: string]: {
+        [impact: string]: ChangeItem[];
+    };
+}
+

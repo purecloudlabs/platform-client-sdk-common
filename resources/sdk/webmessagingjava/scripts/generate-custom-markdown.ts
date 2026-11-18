@@ -1,5 +1,4 @@
 import path from 'path'
-import mdjd from 'mdjavadoc-api';
 import fs from 'fs';
 
 const tags = {
@@ -27,11 +26,8 @@ export class GenerateMarkdown {
 
         try {
 
-            // Assign our custom version of parseFile
-            mdjd.parseFile = this.parseFile
-
             // Parse the file into a data structure representing the javadoc comments and method declarations
-            let parsedFile = mdjd.parseFile(path.join(this.filePath, this.fileName) + ".java")
+            let parsedFile = this.parseFile(path.join(this.filePath, this.fileName) + ".java", null, null);
 
             let fileOutput = `---
 title: ${this.fileName}

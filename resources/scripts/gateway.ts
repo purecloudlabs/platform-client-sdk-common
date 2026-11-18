@@ -1,11 +1,10 @@
 import http from 'http';
 import net from 'net';
-import url from 'url';
+import { URL } from 'url';
 import fs from 'fs';
 import https from 'https';
-import pkg from 'http-proxy';
-import * as tls from "tls";
-const { createProxyServer } = pkg;
+import httpProxy from 'http-proxy';
+import tls from "tls";
 
 // Logger function to standardize logging format
 const log = (activity: string, details?: any) => {
@@ -13,13 +12,16 @@ const log = (activity: string, details?: any) => {
     console.log(`[${timestamp}] ${activity}`, details ? details : '');
 };
 
-export default class GatewayServer {
-  public gateway: pkg.httpProxy;
+class GatewayServer {
+  // Properties
+  public gateway: httpProxy<http.IncomingMessage, http.ServerResponse<http.IncomingMessage>>;
   public server: https.Server;
   private environment: string;
+
   constructor() {
     log('Initializing GatewayServer');
-    this.gateway = createProxyServer();
+    this.gateway = httpProxy.createProxyServer();
+
     this.environment = this.fetchEnvironment("login");
     const domain = 'localhost';
     log('Server configuration', { environment: this.environment, domain });
@@ -44,24 +46,33 @@ export default class GatewayServer {
 
       let reqURL: string | undefined;
       if (req.url?.includes('/login') || req.url?.includes('/oauth/token')) {
-          reqURL = req.url.replace(/^\/login/, '')
-          this.environment = this.fetchEnvironment("login");
+        reqURL = req.url.replace(/^\/login/, '')
+        this.environment = this.fetchEnvironment("login");
       } else if (req.url?.includes('/api')) {
-          // Handle API requests - replace '/api/api' with '/api' if it exists
-          reqURL = req.url?.includes('/api/api') ? req.url.replace('/api/api', '/api') : req.url;
-          this.environment = this.fetchEnvironment("api");
+        // Handle API requests - replace '/api/api' with '/api' if it exists
+        reqURL = req.url?.includes('/api/api') ? req.url.replace('/api/api', '/api') : req.url;
+        this.environment = this.fetchEnvironment("api");
       } else {
-          reqURL = req.url || ''
+        reqURL = req.url || ''
       }
       
       // Parse incoming request URL
-      const targetHost = url.parse(reqURL || '');
-      log('Parsed target host', targetHost);
+      let targetHostPath = null;
+      if (reqURL) {
+        let targetHost: URL;
+        if (reqURL.startsWith('http')) {
+          targetHost = new URL(reqURL);
+        } else {
+          targetHost = new URL(`https://${this.environment}${reqURL}`);
+        }
+        targetHostPath = `${targetHost.pathname}${targetHost.search}`;
+      }
+      log('Parsed target host path', targetHostPath);
 
       const options: https.RequestOptions = {
         hostname: this.environment,
         port: 443, // HTTPS port
-        path: targetHost.path,
+        path: targetHostPath,
         method: req.method,
         headers: {
           ...req.headers,
@@ -112,9 +123,8 @@ export default class GatewayServer {
       headers: req.headers
     });
 
-    const targetUrl = url.parse(`//${req.url}`, false, true);
     const environment = this.fetchEnvironment("api");
-    log('CONNECT request details', { targetUrl, environment });
+    log('CONNECT request details', { targetUrl: req.url, environment });
 
     const serverSocket = tls.connect(
       {

@@ -1,11 +1,10 @@
 import fs from 'fs-extra';
 import child_process from 'child_process';
-import { Swagger } from '../../../../modules/types/swagger';
-import { ResourceDefinitions } from './resourceDefinitions';
+import { Swagger } from '../../../../modules/types/swagger.js';
+import { ResourceDefinitions } from './resourceDefinitions.js';
 import childProcess from 'child_process';
-import log from '../../../../modules/log/logger';
-const maxFileBufferSize = 1024 * 1024 * 1024;
-
+import { log } from '../../../../modules/log/logger.js';
+import { downloadFile } from '../../../../modules/util/http.js';
 
 export class PreProcessSwagger {
 	init() {
@@ -385,23 +384,6 @@ function combineSwagger(publicSwagger: Swagger, preview: Swagger) {
 	}
 
 	return newSwaggerFile
-}
-
-function downloadFile(url: string) {
-	var i = 0;
-	while (i < 10) {
-		i++;
-		log.debug(`Downloading file: ${url}`);
-		// Source: https://www.npmjs.com/package/download-file-sync
-		var file = childProcess.execFileSync('curl', ['--silent', '-L', url], { encoding: 'utf8', maxBuffer: maxFileBufferSize });
-		if (!file || file === '') {
-			log.debug(`File was empty! sleeping for 5 seconds. Retries left: ${10 - i}`);
-			childProcess.execFileSync('curl', ['--silent', 'https://httpbin.org/delay/10'], { encoding: 'utf8' });
-		} else {
-			return file;
-		}
-	}
-	throw 'Failed to get contents for file!';
 }
 
 

@@ -26,7 +26,7 @@ export class PreBuildPostRun {
 			console.log(`Config file written to ${swaggerCodegenConfigFilePath}`);
 
 			// TODO remove this when kotlin gets its own dedicated repo
-			var outputDir = path.join(process.env['SDK_REPO'], 'build');
+			var outputDir = path.join(process.env['SDK_REPO'] ?? '', 'build');
 			fs.readdirSync(outputDir).forEach(file => {
 				if (file.includes("gradle")) {
 					fs.unlinkSync(path.join(outputDir, file));

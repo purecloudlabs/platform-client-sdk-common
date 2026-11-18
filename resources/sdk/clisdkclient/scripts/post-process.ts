@@ -1,8 +1,8 @@
 import fs from 'fs-extra';
 import path from 'path';
 import dot, { TemplateSettings } from 'dot';
-import { ResourceDefinitions, Template } from './resourceDefinitions'
-import log from '../../../../modules/log/logger';
+import { ResourceDefinitions, Template } from './resourceDefinitions.js'
+import { log } from '../../../../modules/log/logger.js';
 
 type SwaggerMethodDetails = {
   tags?: string[];

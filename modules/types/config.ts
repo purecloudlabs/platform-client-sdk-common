@@ -57,12 +57,13 @@ export interface Swagger {
 export interface SwaggerCodegen {
     resourceLanguage: string;
     codegenLanguage: string;
+    sdkPathLanguage?: string;
     jarPath: string;
     configFile: string;
     extraGeneratorOptions: string[];
     generateApiTests: boolean;
     generateModelTests: boolean;
-
+    isCustomLanguage: boolean;
 }
 
 export interface StageSettings {
@@ -109,3 +110,16 @@ export interface ArgClass {
 }
 
 export type Haystack = Config | Settings | SwaggerCodegen | SDKRepo | StageSettings | Swagger | PureCloud | boolean | {};
+
+export interface LocalConfig {
+    envVars: EnvVars;
+    overrides: Overrides;
+}
+
+export interface Overrides {
+    settings: Settings;
+    stageSettings: StageSettings;
+}
+
+export type valueOverides = Overrides | Settings | StageSettings | Postbuild | Script[] | Prebuild | Build | string | boolean | Array<ArgClass | string | boolean>;
+
