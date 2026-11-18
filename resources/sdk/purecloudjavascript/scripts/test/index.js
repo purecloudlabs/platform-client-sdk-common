@@ -1,4 +1,5 @@
 /* globals describe it */
+require("reflect-metadata");
 
 const assert = require('assert');
 const { HttpsProxyAgent } = require('hpagent');
