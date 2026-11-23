@@ -1,0 +1,138 @@
+import (
+	"fmt"
+	"bytes"
+)
+
+// {{classname}}{{#description}} - {{{description}}}{{/description}}
+type {{classname}} struct {
+	actualInstance interface{}
+}
+
+{{#vendorExtensions.x-gc-discriminator-children}}
+func (o *{{classname}}) Get{{#lambda.gocase}}{{.}}{{/lambda.gocase}}() (*{{#lambda.gocase}}{{.}}{{/lambda.gocase}}, bool) {
+	if o == nil {
+		return nil, false
+	}
+
+	v, ok := o.actualInstance.(*{{#lambda.gocase}}{{.}}{{/lambda.gocase}})
+	return v, ok
+}
+{{/vendorExtensions.x-gc-discriminator-children}}
+
+func (o *{{classname}}) Get{{#lambda.gocase}}{{vendorExtensions.x-gc-discriminator-default}}{{/lambda.gocase}}() (*{{#lambda.gocase}}{{vendorExtensions.x-gc-discriminator-default}}{{/lambda.gocase}}, bool) {
+	if o == nil {
+		return nil, false
+	}
+
+	v, ok := o.actualInstance.(*{{#lambda.gocase}}{{vendorExtensions.x-gc-discriminator-default}}{{/lambda.gocase}})
+	return v, ok
+}
+
+
+func (o *{{classname}}) GetActualInstance() interface{} {
+	if o == nil {
+		return nil
+	}
+
+	return o.actualInstance
+}
+
+func (o *{{classname}}) SetActualInstance(value interface{}) error {
+	switch value.(type) {
+	{{#vendorExtensions.x-gc-discriminator-children}}
+	case *{{#lambda.gocase}}{{.}}{{/lambda.gocase}}:
+	{{/vendorExtensions.x-gc-discriminator-children}}
+	case *{{#lambda.gocase}}{{vendorExtensions.x-gc-discriminator-default}}{{/lambda.gocase}}:
+	default:
+		return fmt.Errorf(
+			"invalid type %T for {{classname}}",
+			value,
+		)
+	}
+
+	o.actualInstance = value
+	return nil
+}
+
+func (o {{classname}}) MarshalJSON() ([]byte, error) {
+	if o.actualInstance == nil {
+		return []byte("null"), nil
+	}
+
+	return json.Marshal(o.actualInstance)
+}
+
+func (o *{{classname}}) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(bytes.TrimSpace(data), []byte("null")) {
+		o.actualInstance = nil
+		return nil
+	}
+
+	// Only deserialize enough to find the discriminator.
+	var discriminator struct {
+		{{#vars}}
+		{{#vendorExtensions.x-gc-is-discriminator-property}}
+		{{name}} string `json:"{{baseName}}"`
+		{{/vendorExtensions.x-gc-is-discriminator-property}}
+		{{/vars}}
+	}
+
+	if err := json.Unmarshal(data, &discriminator); err != nil {
+		return fmt.Errorf(
+			"failed to decode {{classname}} discriminator: %w",
+			err,
+		)
+	}
+
+	{{#vars}}
+	{{#vendorExtensions.x-gc-is-discriminator-property}}
+	if discriminator.{{name}} == "" {
+	{{/vendorExtensions.x-gc-is-discriminator-property}}
+	{{/vars}}
+		return fmt.Errorf(
+			"missing discriminator property \"type\" for {{classname}}",
+		)
+	}
+
+	{{#vars}}
+	{{#vendorExtensions.x-gc-is-discriminator-property}}
+	switch discriminator.{{name}} {
+	{{/vendorExtensions.x-gc-is-discriminator-property}}
+	{{/vars}}
+	{{#vendorExtensions.x-gc-discriminator-mapping}}
+	case "{{value}}":
+		var value {{#lambda.gocase}}{{name}}{{/lambda.gocase}}
+
+		if err := json.Unmarshal(data, &value); err != nil {
+			return fmt.Errorf(
+				"failed to decode {{#lambda.gocase}}{{name}}{{/lambda.gocase}}: %w",
+				err,
+			)
+		}
+
+		o.actualInstance = &value
+		return nil
+
+	{{/vendorExtensions.x-gc-discriminator-mapping}}
+	default:
+		var value {{#lambda.gocase}}{{vendorExtensions.x-gc-discriminator-default}}{{/lambda.gocase}}
+
+		if err := json.Unmarshal(data, &value); err != nil {
+			return fmt.Errorf(
+				"failed to decode {{#lambda.gocase}}{{vendorExtensions.x-gc-discriminator-default}}{{/lambda.gocase}}: %w",
+				err,
+			)
+		}
+
+		o.actualInstance = &value
+		return nil
+	}
+}
+
+// String returns a JSON representation of the model
+func (o *{{classname}}) String() string {
+	j, _ := json.Marshal(o)
+	str, _ := strconv.Unquote(strings.Replace(strconv.Quote(string(j)), `\\u`, `\u`, -1))
+
+	return str
+}
