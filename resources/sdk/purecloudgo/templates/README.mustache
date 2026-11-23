@@ -313,6 +313,98 @@ codeVerifier, err := config.GeneratePKCECodeVerifier(128)
 codeChallenge, err := config.ComputePKCECodeChallenge(codeVerifier)
 ```
 
+### Polymorphism in SDK
+
+The Platform API describes some models as polymorphic: a property can hold one of several classes. The Go SDK represents each of these models as a *holder* struct. The holder keeps the actual value, which is one of the variant structs. Use `GetActualInstance()` to read it, or one of the typed getters (for example `GetAgenticvirtualagentstructuredrule()`) to get a specific variant. Use `SetActualInstance()` to set it.
+
+Every polymorphic model has a fallback variant named `...OutdatedSdkVersion`. It is used when the API returns a variant that this version of the SDK doesn't know about (e.g. outdated SDK version), to prevent deserialization errors.
+
+#### OneOf Union Types
+
+"OneOf" models have been introduced in the Platform API Swagger specification.
+
+A oneOf model is one of several class variants. When the SDK reads JSON, it checks which variants have all their required properties present. If exactly one variant matches, that variant is used. If no variant matches, or more than one matches, the `...OutdatedSdkVersion` variant is used.
+
+OneOf Models: {{#apiInfo}}{{#apis}}{{#-first}}{{#vendorExtensions.x-gc-one-of-details}}
+* {{parentName}} (one-of parent) is one of the following classes: {{#childrenNames}}{{.}}{{^-last}}, {{/-last}}{{/childrenNames}} or {{defaultChildName}}
+{{/vendorExtensions.x-gc-one-of-details}}{{/-first}}{{/apis}}{{/apiInfo}}
+
+In Go, type names are the model names with only the first letter capitalized (for example `AgenticVirtualAgentStructuredRule` is `Agenticvirtualagentstructuredrule`).
+
+The following patterns can be used to determine the concrete type of a one-of value:
+```go
+// condition is a platformclientv2.Agenticvirtualagentstructuredcondition
+switch child := condition.GetActualInstance().(type) {
+case *platformclientv2.Agenticvirtualagentstructuredrule:
+    // Handle a rule
+    fmt.Println(*child.Name)
+case *platformclientv2.Agenticvirtualagentstructuredconditiongroup:
+    // Handle a condition group
+    fmt.Println(*child.Group)
+case *platformclientv2.Agenticvirtualagentstructuredconditionoutdatedsdkversion:
+    // Handle an outdated SDK version condition
+    fmt.Println("Outdated SDK version")
+}
+
+// or, with the typed getters:
+if rule, ok := condition.GetAgenticvirtualagentstructuredrule(); ok {
+    fmt.Println(*rule.Name)
+} else if group, ok := condition.GetAgenticvirtualagentstructuredconditiongroup(); ok {
+    fmt.Println(*group.Group)
+}
+```
+
+To send a one-of value, wrap a variant in the parent:
+```go
+rule := &platformclientv2.Agenticvirtualagentstructuredrule{
+    Name:     platformclientv2.String("age"),
+    Operator: platformclientv2.String("gt"),
+}
+condition := platformclientv2.Agenticvirtualagentstructuredcondition{}
+if err := condition.SetActualInstance(rule); err != nil {
+    panic(err)
+}
+```
+`SetActualInstance` returns an error if the value is not one of the variants of that model.
+
+#### Discriminator
+
+Models with discriminator (polymorphism) have been introduced in the Platform API Swagger specification.
+
+A discriminator model has a parent and several child variants. One property of the JSON, the discriminator, tells which child it is. When the SDK reads JSON, it looks at the discriminator value and uses the matching child. If the value is unknown, it uses the `...OutdatedSdkVersion` child, which keeps the properties of the parent. If the discriminator property is missing, deserialization returns an error.
+
+Discriminator Models: {{#apiInfo}}{{#apis}}{{#-first}}{{#vendorExtensions.x-gc-discriminator-details}}
+* {{parentName}} is the parent class of the following classes: {{#mapping}}{{name}} ("{{value}}"){{^-last}}, {{/-last}}{{/mapping}} and {{defaultChildName}} (default)
+{{/vendorExtensions.x-gc-discriminator-details}}{{/-first}}{{/apis}}{{/apiInfo}}
+
+The following patterns can be used to determine the concrete type of the value:
+```go
+// eventSettings is a platformclientv2.Agenticvirtualagenteventsettings
+switch child := eventSettings.GetActualInstance().(type) {
+case *platformclientv2.Agenticvirtualagentguardrailssettings:
+    // Handle guardrails settings
+    fmt.Println(*child.VarType)
+case *platformclientv2.Agenticvirtualagentescalationeventsettings:
+    // Handle escalation settings
+    fmt.Println(*child.VarType)
+case *platformclientv2.Agenticvirtualagenteventsettingsoutdatedsdkversion:
+    // Handle an unknown event type
+    fmt.Println(*child.VarType)
+}
+```
+
+Each child struct has a constructor that sets the discriminator value. The discriminator is also set automatically when the object is serialized.
+```go
+guardrails := platformclientv2.NewAgenticvirtualagentguardrailssettings()
+guardrails.Message = platformclientv2.String("Please stay on topic")
+guardrails.ViolationThreshold = platformclientv2.Int(3)
+
+eventSettings := platformclientv2.Agenticvirtualagenteventsettings{}
+if err := eventSettings.SetActualInstance(guardrails); err != nil {
+    panic(err)
+}
+```
+
 ### Making Requests
 
 Once the SDK is authorized, API requests can be made. Each function on the API instance returns three values, or just the latter two if the resource does not return any value (e.g. a DELETE operation):
