@@ -1,0 +1,6 @@
+from typing import TypeAlias
+
+{{#vendorExtensions.x-gc-one-of-children}}from .{{#lambda.snakecase}}{{.}}{{/lambda.snakecase}} import {{.}}
+{{/vendorExtensions.x-gc-one-of-children}}from .{{#lambda.snakecase}}{{vendorExtensions.x-gc-one-of-default}}{{/lambda.snakecase}} import {{vendorExtensions.x-gc-one-of-default}}
+
+{{classname}}: TypeAlias = ({{#vendorExtensions.x-gc-one-of-children}}{{.}} | {{/vendorExtensions.x-gc-one-of-children}}{{vendorExtensions.x-gc-one-of-default}})
