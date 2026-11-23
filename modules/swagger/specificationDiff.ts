@@ -92,29 +92,6 @@ export class SpecificationDiff {
 			log.debug('No preview spec path provided, skipping preview spec processing');
 		}
 
-		log.debug(`New spec loaded successfully, length: ${JSON.stringify(newSpec).length}`);
-		log.debug(`New spec info: ${newSpec?.info?.title || 'Unknown'} v${newSpec?.info?.version || 'Unknown'}`);
-
-		// Save files to disk
-		if (saveOldSpecPath) {
-			log.info(`Writing old spec to ${saveOldSpecPath}`);
-			try {
-				fs.writeFileSync(saveOldSpecPath, JSON.stringify(oldSpec));
-				log.debug('Old spec file saved successfully');
-			} catch (error) {
-				log.warn(`Failed to save old spec: ${error.message}`);
-			}
-		}
-		if (saveNewSpecPath) {
-			log.info(`Writing new spec to ${saveNewSpecPath}`);
-			try {
-				fs.writeFileSync(saveNewSpecPath, JSON.stringify(newSpec));
-				log.debug('New spec file saved successfully');
-			} catch (error) {
-				log.warn(`Failed to save new spec: ${error.message}`);
-			}
-		}
-
 		if (newSpec) {
 			if (newSpec && newSpec.swagger && newSpec.swagger.startsWith("2")) {
 				this.swaggerDiffImpl = new SwaggerDiffImpl();
@@ -143,6 +120,29 @@ export class SpecificationDiff {
 			} else {
 				log.warn(`Unknown spec version: ${JSON.stringify(newSpec)}`);
 				throw new Error(`Unknown spec version: ${JSON.stringify(newSpec)}`);	
+			}
+		}
+
+		log.debug(`New spec loaded successfully, length: ${JSON.stringify(newSpec).length}`);
+		log.debug(`New spec info: ${newSpec?.info?.title || 'Unknown'} v${newSpec?.info?.version || 'Unknown'}`);
+
+		// Save files to disk
+		if (saveOldSpecPath) {
+			log.info(`Writing old spec to ${saveOldSpecPath}`);
+			try {
+				fs.writeFileSync(saveOldSpecPath, JSON.stringify(oldSpec));
+				log.debug('Old spec file saved successfully');
+			} catch (error) {
+				log.warn(`Failed to save old spec: ${error.message}`);
+			}
+		}
+		if (saveNewSpecPath) {
+			log.info(`Writing new spec to ${saveNewSpecPath}`);
+			try {
+				fs.writeFileSync(saveNewSpecPath, JSON.stringify(newSpec));
+				log.debug('New spec file saved successfully');
+			} catch (error) {
+				log.warn(`Failed to save new spec: ${error.message}`);
 			}
 		}
 
