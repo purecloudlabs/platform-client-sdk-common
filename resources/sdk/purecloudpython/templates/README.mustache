@@ -410,7 +410,7 @@ These models are represented as a union type (union of classes) - i.e. the model
 Python's `isinstance()` can be used to determine the concrete type of a one-of value. It can also be used to verify the one-of parent type.
 
 OneOf Models: {{#apiInfo}}{{#apis}}{{#-first}}{{#vendorExtensions.x-gc-one-of-details}}
-* {{parentName}} (one-of parent) is one of the following classes: {{#childrenNames}}{{.}}{{^-last}}, {{/-last}}{{/childrenNames}}or {{defaultChildName}}
+* {{parentName}} (one-of parent) is one of the following classes: {{#childrenNames}}{{.}}{{^-last}}, {{/-last}}{{/childrenNames}} or {{defaultChildName}}
 {{/vendorExtensions.x-gc-one-of-details}}{{/-first}}{{/apis}}{{/apiInfo}}
 
 Python's `isinstance()` can be used to determine the concrete type of a one-of value:
@@ -442,7 +442,7 @@ Models with discriminator (polymorphism) have been introduced in the Platform AP
 These models are represented as a parent class (which uses one of its properties as a discriminator) and their children.
 
 Discriminator Models: {{#apiInfo}}{{#apis}}{{#-first}}{{#vendorExtensions.x-gc-discriminator-details}}
-* {{parentName}} is the parent class of the following classes: {{#mapping}}{{name}} ("{{value}}"){{^-last}}, {{/-last}}{{/mapping}}and {{defaultChildName}} (default)
+* {{parentName}} is the parent class of the following classes: {{#mapping}}{{name}} ("{{value}}"){{^-last}}, {{/-last}}{{/mapping}} and {{defaultChildName}} (default)
 {{/vendorExtensions.x-gc-discriminator-details}}{{/-first}}{{/apis}}{{/apiInfo}}
 
 Python's `isinstance()` can be used to determine the concrete type of the value:
